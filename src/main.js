@@ -27,6 +27,7 @@ let hoveredEntity = null;
 let gameStarted = false;
 let menuState = 'title'; // 'title' | 'playing'
 let combatAnimator = null;
+let combatHistory = []; // 战斗历史记录
 
 // ── 初始化 ──
 window.addEventListener('load', async () => {
@@ -377,6 +378,14 @@ document.addEventListener('keydown', (e) => {
         // 帮助面板
         showHelpPanel();
         return;
+      case 'l':
+        // 战斗日志
+        showCombatLog();
+        return;
+      case 'm':
+        // 全地图视图
+        showFullMap();
+        return;
       default: return;
     }
     if (dx !== 0 || dy !== 0) {
@@ -539,6 +548,17 @@ function startCombat(enemy) {
   // 播放战斗动画序列
   combatAnimator.playCombatSequence(result, enemy, () => {
     combatResult = result;
+    
+    // 记录战斗历史
+    combatHistory.push({
+      enemy: enemy.name,
+      victory: result.victory,
+      rounds: result.rounds,
+      log: result.log,
+      floor: chapter.floors[currentFloorIndex]?.id || '?',
+      turn: gameState.turn,
+    });
+    if (combatHistory.length > 20) combatHistory.shift(); // 保留最近20场
 
     if (result.victory) {
       renderer.addFloatText(`+${enemy.rewards?.exp || 0} EXP`, enemy.x, enemy.y - 1, 'rgb(170, 136, 255)');
@@ -938,6 +958,8 @@ function showHelpPanel() {
           <li>收集<strong style="color: #ff8866">力量晶石</strong>和<strong style="color: #6688ff">坚韧晶石</strong>提升属性</li>
           <li>合理使用<strong style="color: #ff4488">急救物品</strong>补充HP</li>
           <li>基因锁激活后攻防大幅提升，关键战斗前记得开启</li>
+          <li>按 <strong style="color: #ff8866">L</strong> 查看战斗日志</li>
+          <li>按 <strong style="color: #44ffff">M</strong> 查看全地图</li>
         </ul>
         <div style="text-align: center; margin-top: 20px;">
           <button id="btn-close-help" style="
@@ -961,6 +983,172 @@ function showHelpPanel() {
     }
   };
   document.addEventListener('keydown', keyHandler);
+}
+
+// ── 全地图视图 ──
+function showFullMap() {
+  if (gameState.state !== GAME_STATE.EXPLORING) return;
+  const floor = chapter.floors[currentFloorIndex];
+  const p = gameState.player;
+  const overlay = document.getElementById('ui-overlay');
+  
+  // Create a canvas for the map
+  const mapScale = Math.min(600 / floor.width, 500 / floor.height);
+  const mapW = Math.floor(floor.width * mapScale);
+  const mapH = Math.floor(floor.height * mapScale);
+  
+  const mapCanvas = document.createElement('canvas');
+  mapCanvas.width = mapW;
+  mapCanvas.height = mapH;
+  const mctx = mapCanvas.getContext('2d');
+  
+  // Draw tiles
+  for (let y = 0; y < floor.height; y++) {
+    for (let x = 0; x < floor.width; x++) {
+      const tile = floor.tiles[y][x];
+      const mx = x * mapScale;
+      const my = y * mapScale;
+      switch (tile) {
+        case 0: mctx.fillStyle = '#000000'; break; // VOID
+        case 1: mctx.fillStyle = '#2a2a3a'; break; // FLOOR
+        case 2: mctx.fillStyle = '#444455'; break; // WALL
+        case 3: mctx.fillStyle = '#886644'; break; // DOOR
+        case 4: mctx.fillStyle = '#44ffff'; break; // STAIRS
+        case 6: mctx.fillStyle = '#ff3322'; break; // LAVA
+        default: mctx.fillStyle = '#1a1a28'; break;
+      }
+      mctx.fillRect(mx, my, mapScale, mapScale);
+      // Grid lines
+      mctx.strokeStyle = 'rgba(60, 60, 80, 0.3)';
+      mctx.lineWidth = 0.5;
+      mctx.strokeRect(mx, my, mapScale, mapScale);
+    }
+  }
+  
+  // Draw entities
+  for (const e of entities) {
+    const mx = e.x * mapScale + mapScale / 2;
+    const my = e.y * mapScale + mapScale / 2;
+    const r = mapScale * 0.35;
+    mctx.beginPath();
+    mctx.arc(mx, my, r, 0, Math.PI * 2);
+    if (e.type === 'enemy' || e.type === 'boss') mctx.fillStyle = '#ff4444';
+    else if (e.type === 'companion') mctx.fillStyle = '#4488ff';
+    else if (e.type === 'item') mctx.fillStyle = '#ffcc44';
+    else if (e.type === 'event') mctx.fillStyle = '#ffffff';
+    else mctx.fillStyle = '#888888';
+    mctx.fill();
+  }
+  
+  // Draw player (blinking)
+  mctx.fillStyle = '#44aaff';
+  mctx.beginPath();
+  mctx.arc(p.x * mapScale + mapScale / 2, p.y * mapScale + mapScale / 2, mapScale * 0.45, 0, Math.PI * 2);
+  mctx.fill();
+  mctx.strokeStyle = '#88ccff';
+  mctx.lineWidth = 2;
+  mctx.stroke();
+  
+  const dataUrl = mapCanvas.toDataURL();
+  
+  overlay.innerHTML = '<div style="' +
+    'position:absolute;top:0;left:0;right:0;bottom:0;' +
+    'display:flex;flex-direction:column;align-items:center;justify-content:center;' +
+    'background:rgba(0,0,0,0.85);"' +
+    ' id="map-backdrop">' +
+    '<h2 style="color:#44ffff;letter-spacing:4px;margin-bottom:16px;font-family:Noto Serif SC,serif;">' +
+    '🗺 ' + floor.id + ' ' + floor.name + '</h2>' +
+    '<img src="' + dataUrl + '" style="border:2px solid #333;border-radius:8px;image-rendering:pixelated;" />' +
+    '<div style="display:flex;gap:20px;margin-top:16px;font-size:12px;color:#888;">' +
+    '<span>🔵 玩家</span><span style="color:#ff4444">🔴 敌人</span>' +
+    '<span style="color:#4488ff">🔵 队友</span><span style="color:#ffcc44">🟡 物品</span>' +
+    '<span style="color:#44ffff">⬜ 楼梯</span>' +
+    '</div>' +
+    '<button id="btn-close-map" style="' +
+    'margin-top:16px;background:transparent;border:1px solid #444;color:#888;' +
+    'padding:8px 30px;cursor:pointer;font-size:14px;font-family:inherit;border-radius:6px;">' +
+    '关闭 (M)</button>' +
+    '</div>';
+
+  const close = () => { overlay.innerHTML = ''; };
+  document.getElementById('btn-close-map').addEventListener('click', close);
+  document.getElementById('map-backdrop').addEventListener('click', (e) => {
+    if (e.target.id === 'map-backdrop') close();
+  });
+  const kh = (e) => {
+    if (e.key === 'm' || e.key === 'Escape') { close(); document.removeEventListener('keydown', kh); }
+  };
+  document.addEventListener('keydown', kh);
+}
+
+// ── 战斗日志面板 ──
+function showCombatLog() {
+  if (gameState.state !== GAME_STATE.EXPLORING) return;
+  const overlay = document.getElementById('ui-overlay');
+  
+  const logs = combatHistory.slice().reverse();
+  const logHtml = logs.length === 0 
+    ? '<p style="color: #666; text-align: center; margin: 20px;">尚无战斗记录</p>'
+    : logs.map((entry, i) => `
+      <div style="
+        background: rgba(${entry.victory ? '40,80,40' : '80,30,30'}, 0.3);
+        border: 1px solid ${entry.victory ? '#44884433' : '#884444'};
+        border-radius: 8px; padding: 12px; margin-bottom: 8px;
+      ">
+        <div style="display: flex; justify-content: space-between; margin-bottom: 6px;">
+          <span style="color: ${entry.victory ? '#44ff88' : '#ff4444'}; font-weight: bold;">
+            ${entry.victory ? '✓ 胜利' : '✗ 败北'} vs ${entry.enemy}
+          </span>
+          <span style="color: #666; font-size: 12px;">${entry.floor} · ${entry.rounds}回合</span>
+        </div>
+        <div style="color: #aaa; font-size: 12px; line-height: 1.6;">
+          ${entry.log.slice(-4).map(l => {
+            let c = '#999';
+            if (l.type === 'attack' || l.type === 'critical') c = '#ff8866';
+            if (l.type === 'enemy_attack') c = '#ff6644';
+            if (l.type === 'victory') c = '#44ff88';
+            if (l.type === 'reward') c = '#ffcc44';
+            if (l.type === 'heal') c = '#44ff88';
+            return '<span style="color:' + c + '">' + l.text + '</span>';
+          }).join('<br>')}
+        </div>
+      </div>
+    `).join('');
+
+  overlay.innerHTML = `
+    <div style="
+      position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+      display: flex; align-items: center; justify-content: center;
+      background: rgba(0,0,0,0.8);
+    " id="log-backdrop">
+      <div style="
+        background: rgba(10,10,20,0.97); border: 1px solid #444; border-radius: 16px;
+        padding: 30px; max-width: 600px; width: 90%; max-height: 80vh; overflow-y: auto;
+      ">
+        <h2 style="color: #ff8866; text-align: center; letter-spacing: 4px; margin-bottom: 16px;">
+          ⚔ 战斗日志 ⚔
+        </h2>
+        ${logHtml}
+        <div style="text-align: center; margin-top: 16px;">
+          <button id="btn-close-log" style="
+            background: transparent; border: 1px solid #444; color: #888;
+            padding: 8px 30px; cursor: pointer; font-size: 14px; font-family: inherit;
+            border-radius: 6px;
+          ">关闭 (L)</button>
+        </div>
+      </div>
+    </div>
+  `;
+
+  const close = () => { overlay.innerHTML = ''; };
+  document.getElementById('btn-close-log').addEventListener('click', close);
+  document.getElementById('log-backdrop').addEventListener('click', (e) => {
+    if (e.target.id === 'log-backdrop') close();
+  });
+  const kh = (e) => {
+    if (e.key === 'l' || e.key === 'Escape') { close(); document.removeEventListener('keydown', kh); }
+  };
+  document.addEventListener('keydown', kh);
 }
 
 // ── 章节完成 ──

@@ -666,11 +666,15 @@ export class Renderer {
     ctx.fillStyle = borderColor;
     ctx.fillRect(x + 20, y + 45, boxW - 40, 1);
 
-    ctx.font = 'bold 18px "Microsoft YaHei"';
+    ctx.font = 'bold 20px "Noto Serif SC", "Microsoft YaHei", serif';
     ctx.fillStyle = result.victory ? '#44ff88' : '#ff4444';
     ctx.textAlign = 'center';
-    const titleGlow = result.victory ? '0 0 20px rgba(68,255,136,0.5)' : '0 0 20px rgba(255,68,68,0.5)';
     ctx.fillText(result.victory ? '⚔ 战 斗 胜 利 ⚔' : '💀 战 斗 失 败 💀', CANVAS_W / 2, y + 32);
+    
+    // 回合数
+    ctx.font = '12px "Microsoft YaHei"';
+    ctx.fillStyle = '#888';
+    ctx.fillText('共 ' + (result.rounds || '?') + ' 回合', CANVAS_W / 2, y + 50);
 
     ctx.font = '13px "Microsoft YaHei"';
     ctx.textAlign = 'left';
