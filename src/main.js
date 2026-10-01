@@ -183,12 +183,15 @@ function loadFloor(index) {
   gameState.player.x = floor.playerStart.x;
   gameState.player.y = floor.playerStart.y;
 
-  // 实例化实体（保留原始maxHp）
-  entities = floor.entities.map(e => {
-    const clone = { ...e };
-    if (clone.hp !== undefined) clone._maxHp = clone.hp;
-    return clone;
-  });
+  // 实例化实体（保留原始maxHp，过滤已移除的）
+  const removedIds = gameState.getRemovedEntityIds(index);
+  entities = floor.entities
+    .filter(e => !removedIds.has(e.id))
+    .map(e => {
+      const clone = { ...e };
+      if (clone.hp !== undefined) clone._maxHp = clone.hp;
+      return clone;
+    });
 
   // 延迟淡入
   setTimeout(() => { if (renderer) renderer.fadeIn(0.04); }, 500);
@@ -536,9 +539,10 @@ function startCombat(enemy) {
   const result = executeBattle(enemy);
 
   if (result.victory) {
-    // 移除被击败的敌人
+    // 移除被击败的敌人并记录
     const idx = entities.indexOf(enemy);
     if (idx >= 0) entities.splice(idx, 1);
+    gameState.markEntityRemoved(currentFloorIndex, enemy.id);
   }
 
   // 暴露玩家位置给战斗动画
@@ -618,9 +622,10 @@ function pickupItem(item) {
       break;
   }
 
-  // 移除已拾取的物品
+  // 移除已拾取的物品并记录
   const idx = entities.indexOf(item);
   if (idx >= 0) entities.splice(idx, 1);
+  gameState.markEntityRemoved(currentFloorIndex, item.id);
 
   eventBus.emit('item:pickup', item);
   return true;
@@ -688,9 +693,10 @@ function triggerEvent(entity) {
       setTimeout(() => showChapterComplete(), 500);
     }
 
-    // 移除事件实体
+    // 移除事件实体并记录
     const idx = entities.indexOf(entity);
     if (idx >= 0) entities.splice(idx, 1);
+    gameState.markEntityRemoved(currentFloorIndex, entity.id);
 
     gameState.save(0);
   };

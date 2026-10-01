@@ -84,6 +84,9 @@ class GameState {
       turnsPlayed: 0,
       deathCount: 0,
     };
+
+    // 已移除的实体ID（按楼层索引存储）
+    this.removedEntityIds = {};  // { floorIndex: Set<entityId> }
   }
 
   setState(newState) {
@@ -205,6 +208,9 @@ class GameState {
       defeatedBosses: [...this.defeatedBosses],
       choices: [...this.choices],
       stats: { ...this.stats },
+      removedEntityIds: Object.fromEntries(
+        Object.entries(this.removedEntityIds).map(([k, v]) => [k, [...(v || [])]])
+      ),
     };
   }
 
@@ -229,12 +235,31 @@ class GameState {
       this.defeatedBosses = new Set(parsed.defeatedBosses || []);
       this.choices = parsed.choices || [];
       this.stats = parsed.stats || this.stats;
+      // 恢复已移除实体
+      this.removedEntityIds = {};
+      if (parsed.removedEntityIds) {
+        for (const [k, v] of Object.entries(parsed.removedEntityIds)) {
+          this.removedEntityIds[k] = new Set(v);
+        }
+      }
       eventBus.emit('game:loaded', { slot });
       return true;
     } catch (e) {
       console.error('Save load failed:', e);
       return false;
     }
+  }
+  /** 记录实体被移除（击杀/拾取） */
+  markEntityRemoved(floorIndex, entityId) {
+    if (!this.removedEntityIds[floorIndex]) {
+      this.removedEntityIds[floorIndex] = new Set();
+    }
+    this.removedEntityIds[floorIndex].add(entityId);
+  }
+
+  /** 获取某楼层已移除的实体ID */
+  getRemovedEntityIds(floorIndex) {
+    return this.removedEntityIds[floorIndex] || new Set();
   }
 }
 
