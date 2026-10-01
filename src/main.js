@@ -211,6 +211,69 @@ function showFloorTitle(floor) {
   }, 2500);
 }
 
+// ── 游戏失败处理 ──
+eventBus.on('player:death', () => {
+  gameStarted = false;
+  audioEngine.playDamage();
+  renderer.shake(10, 800);
+
+  setTimeout(() => {
+    const overlay = document.getElementById('ui-overlay');
+    overlay.innerHTML = `
+      <div style="
+        position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+        display: flex; flex-direction: column; align-items: center; justify-content: center;
+        background: rgba(80, 0, 0, 0.85);
+        animation: fadeIn 0.5s;
+      ">
+        <h1 style="font-size: 56px; color: #ff2222; letter-spacing: 8px;
+          text-shadow: 0 0 40px rgba(255,34,34,0.6); margin-bottom: 16px;">
+          轮 回 终 结
+        </h1>
+        <p style="color: #cc8888; font-size: 18px; margin-bottom: 40px;">
+          郑吒在${chapter.floors[currentFloorIndex]?.name || '未知区域'}中陨落...
+        </p>
+        <div style="display: flex; gap: 20px;">
+          <button id="btn-retry" style="
+            background: transparent; border: 2px solid #ff4444; color: #ff4444;
+            padding: 14px 40px; cursor: pointer; font-size: 16px;
+            letter-spacing: 4px; font-family: inherit; border-radius: 8px;
+            transition: all 0.3s;
+          " onmouseover="this.style.background='rgba(255,68,68,0.2)'"
+             onmouseout="this.style.background='transparent'">
+            当前节点重试
+          </button>
+          <button id="btn-restart" style="
+            background: transparent; border: 1px solid #666; color: #888;
+            padding: 14px 40px; cursor: pointer; font-size: 16px;
+            letter-spacing: 4px; font-family: inherit; border-radius: 8px;
+          ">从头开始</button>
+        </div>
+        <p style="color: #664444; font-size: 12px; margin-top: 24px;">
+          "死亡不是终点，只要主神还需要你。" —— 张杰
+        </p>
+      </div>
+      <style>@keyframes fadeIn { from { opacity: 0 } to { opacity: 1 } }</style>
+    `;
+
+    document.getElementById('btn-retry').addEventListener('click', () => {
+      overlay.innerHTML = '';
+      // 恢复到当前层入口状态
+      const p = gameState.player;
+      p.hp = Math.floor(p.maxHp * 0.5); // 复活50% HP
+      p.stamina = p.maxStamina;
+      loadFloor(currentFloorIndex);
+      gameStarted = true;
+      requestAnimationFrame(gameLoop);
+    });
+
+    document.getElementById('btn-restart').addEventListener('click', () => {
+      overlay.innerHTML = '';
+      startNewGame();
+    });
+  }, 500);
+});
+
 // ── 游戏主循环 ──
 function gameLoop() {
   if (!gameStarted) return;
