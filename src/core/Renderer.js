@@ -122,6 +122,9 @@ export class Renderer {
     // ── 绘制地图 ──
     this._drawMap(ctx, floor);
 
+    // ── 环境粒子（灰尘/光点） ──
+    this._drawAmbientParticles(ctx, floor, p);
+
     // ── 战争迷雾 / 光照 ──
     this._drawFogOfWar(ctx, floor, p);
 
@@ -163,6 +166,16 @@ export class Renderer {
     if (Math.abs(this._transitionAlpha - this._transitionTarget) > 0.01) {
       this._transitionAlpha += (this._transitionTarget - this._transitionAlpha) * this._transitionSpeed;
     }
+
+    // ── 暗角效果（电影感） ──
+    const vignette = ctx.createRadialGradient(
+      CANVAS_W / 2, CANVAS_H / 2, CANVAS_W * 0.35,
+      CANVAS_W / 2, CANVAS_H / 2, CANVAS_W * 0.7
+    );
+    vignette.addColorStop(0, 'rgba(0, 0, 0, 0)');
+    vignette.addColorStop(1, 'rgba(0, 0, 0, 0.4)');
+    ctx.fillStyle = vignette;
+    ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
 
     // ── 通知条 ──
     this._drawNotifications(ctx);
@@ -788,6 +801,49 @@ export class Renderer {
       y += 34;
       return n.life > 0;
     });
+  }
+
+  _drawAmbientParticles(ctx, floor, player) {
+    // 在玩家视野范围内绘制漂浮灰尘粒子
+    if (!this._ambientDust) {
+      this._ambientDust = [];
+      for (let i = 0; i < 30; i++) {
+        this._ambientDust.push({
+          x: Math.random() * floor.width * TILE_SIZE,
+          y: Math.random() * floor.height * TILE_SIZE,
+          size: 0.5 + Math.random() * 1.5,
+          speed: 0.1 + Math.random() * 0.3,
+          alpha: 0.1 + Math.random() * 0.2,
+          drift: Math.random() * Math.PI * 2,
+        });
+      }
+    }
+    
+    const viewR = 6 * TILE_SIZE;
+    const px = player.x * TILE_SIZE + TILE_SIZE / 2;
+    const py = player.y * TILE_SIZE + TILE_SIZE / 2;
+    
+    for (const d of this._ambientDust) {
+      d.y -= d.speed;
+      d.x += Math.sin(this._time * 0.01 + d.drift) * 0.2;
+      
+      // 超出范围就重置
+      if (d.y < 0) {
+        d.y = floor.height * TILE_SIZE;
+        d.x = Math.random() * floor.width * TILE_SIZE;
+      }
+      
+      const dx = d.x - px;
+      const dy = d.y - py;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+      if (dist > viewR) continue;
+      
+      const fadeAlpha = d.alpha * (1 - dist / viewR);
+      ctx.fillStyle = 'rgba(200, 200, 220, ' + fadeAlpha + ')';
+      ctx.beginPath();
+      ctx.arc(d.x, d.y, d.size, 0, Math.PI * 2);
+      ctx.fill();
+    }
   }
 
   _drawFogOfWar(ctx, floor, player) {
