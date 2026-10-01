@@ -370,13 +370,31 @@ export class Renderer {
     if (e.type === ENTITY_TYPE.ENEMY || e.type === ENTITY_TYPE.BOSS) {
       const preview = previewBattle(p, e);
       lines.push(`HP: ${e.hp}  ATK: ${e.atk}  DEF: ${e.def}`);
-      if (e.description) lines.push(e.description);
+      // 描述自动换行（短句显示）
+      if (e.description) {
+        const desc = e.description;
+        // 每40字符左右断行
+        for (let i = 0; i < desc.length; i += 38) {
+          lines.push(desc.slice(i, i + 38));
+        }
+      }
       lines.push('─────────');
       if (preview.canWin) {
         lines.push(`✓ 可击败 (${preview.turnsNeeded}回合)`);
-        lines.push(`预计受伤: ${preview.totalDamage}  |  战后HP: ${preview.hpAfter}`);
+        lines.push(`预计受伤: ${preview.totalDamage}`);
+        lines.push(`战后HP: ${preview.hpAfter}/${p.maxHp}`);
+        // 危险度评估
+        const dangerRatio = preview.totalDamage / p.hp;
+        if (dangerRatio > 0.7) {
+          lines.push('⚠ 高风险 — 建议先提升属性');
+        } else if (dangerRatio > 0.4) {
+          lines.push('△ 中等风险 — 准备急救物品');
+        } else {
+          lines.push('○ 低风险 — 可放心挑战');
+        }
       } else {
         lines.push(`✗ 无法击败！差距过大`);
+        lines.push(`需要ATK>${e.def}才能造成伤害`);
       }
       if (e.rewards) {
         const r = e.rewards;
