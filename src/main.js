@@ -332,6 +332,14 @@ document.addEventListener('keydown', (e) => {
         // 激活/关闭基因锁
         toggleGeneLock();
         return;
+      case 'i':
+        // 打开背包/状态面板
+        showInventoryPanel();
+        return;
+      case 'h': case '?':
+        // 帮助面板
+        showHelpPanel();
+        return;
       default: return;
     }
     if (dx !== 0 || dy !== 0) {
@@ -735,6 +743,164 @@ function toggleGeneLock() {
   } else {
     renderer.addFloatText('基因锁 · 解除', p.x, p.y - 1, 'rgb(180, 180, 180)');
   }
+}
+
+// ── 背包/状态面板 ──
+function showInventoryPanel() {
+  if (gameState.state !== GAME_STATE.EXPLORING) return;
+  gameState.setState(GAME_STATE.INVENTORY);
+  const p = gameState.player;
+  const overlay = document.getElementById('ui-overlay');
+
+  overlay.innerHTML = `
+    <div style="
+      position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+      display: flex; align-items: center; justify-content: center;
+      background: rgba(0,0,0,0.8);
+    " id="inv-backdrop">
+      <div style="
+        background: rgba(10,10,20,0.97); border: 1px solid #444; border-radius: 16px;
+        padding: 30px; max-width: 700px; width: 90%; max-height: 80vh; overflow-y: auto;
+      ">
+        <h2 style="color: #44aaff; text-align: center; letter-spacing: 4px; margin-bottom: 20px;">
+          ⚙ 郑吒 · 状态 ⚙
+        </h2>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+          <!-- 左列：属性 -->
+          <div>
+            <h3 style="color: #ff8866; margin-bottom: 10px;">战斗属性</h3>
+            <table style="width: 100%; color: #ccc; font-size: 14px; line-height: 2;">
+              <tr><td>等级</td><td style="text-align: right; color: #ffcc44;">Lv.${p.level}</td></tr>
+              <tr><td>❤ 生命</td><td style="text-align: right; color: #44cc44;">${p.hp} / ${p.maxHp}</td></tr>
+              <tr><td>⚔ 攻击</td><td style="text-align: right; color: #ff8866;">${p.atk}${p.weapon ? ` (+${p.weapon.atk})` : ''}</td></tr>
+              <tr><td>🛡 防御</td><td style="text-align: right; color: #6688ff;">${p.def}${p.armor ? ` (+${p.armor.def})` : ''}</td></tr>
+              <tr><td>💨 速度</td><td style="text-align: right; color: #44ffaa;">${p.spd}</td></tr>
+              <tr><td>✦ 暴击</td><td style="text-align: right; color: #ffcc44;">${p.crt}%</td></tr>
+              <tr><td>🔑 钥匙</td><td style="text-align: right;">黄${p.keys.yellow} 蓝${p.keys.blue} 红${p.keys.red}</td></tr>
+              <tr><td>💰 金币</td><td style="text-align: right; color: #ffcc44;">${p.gold}G</td></tr>
+              <tr><td>⬡ 奖励点</td><td style="text-align: right; color: #ff8844;">${p.rewardPoints}</td></tr>
+            </table>
+          </div>
+
+          <!-- 右列：装备&技能 -->
+          <div>
+            <h3 style="color: #aa88ff; margin-bottom: 10px;">装备 & 血统</h3>
+            <p style="color: #aaa; font-size: 13px; line-height: 2;">
+              ⚔ 武器: <span style="color: #ffaa44">${p.weapon?.name || '无'}</span><br>
+              🛡 护甲: <span style="color: #6688ff">${p.armor?.name || '无'}</span><br>
+              💍 饰品: <span style="color: #aa88ff">${p.accessory?.name || '无'}</span><br>
+              🩸 血统: <span style="color: #ff4488">${p.activeBloodline !== 'none' ? p.activeBloodline : '未觉醒'}</span><br>
+              🧬 基因锁: <span style="color: #ff6600">${p.geneLock > 0 ? p.geneLock + '阶' + (p.geneLockActive ? ' ●激活' : ' ○待机') : '未开启'}</span>
+            </p>
+
+            ${p.chips.length > 0 ? `
+              <h3 style="color: #aa44ff; margin-top: 16px; margin-bottom: 8px;">技能芯片 (${p.chips.length}/${p.maxChips})</h3>
+              <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                ${p.chips.map(c => `
+                  <span style="
+                    background: rgba(170,68,255,0.15); border: 1px solid #aa44ff44;
+                    padding: 4px 12px; border-radius: 6px; font-size: 13px; color: #cc88ff;
+                  ">${c.name} (${c.stat}+${c.value})</span>
+                `).join('')}
+              </div>
+            ` : ''}
+
+            <h3 style="color: #44ff88; margin-top: 16px; margin-bottom: 8px;">队友</h3>
+            ${gameState.companions.map(c => `
+              <p style="color: ${c.alive ? '#aaa' : '#664444'}; font-size: 13px;">
+                ${c.alive ? '●' : '✝'} ${c.name} · ${c.role} ${c.alive ? '' : '（阵亡）'}
+              </p>
+            `).join('')}
+          </div>
+        </div>
+
+        <div style="text-align: center; margin-top: 24px;">
+          <button id="btn-close-inv" style="
+            background: transparent; border: 1px solid #444; color: #888;
+            padding: 8px 30px; cursor: pointer; font-size: 14px; font-family: inherit;
+            border-radius: 6px;
+          ">关闭 (I)</button>
+        </div>
+      </div>
+    </div>
+  `;
+
+  const close = () => {
+    overlay.innerHTML = '';
+    gameState.setState(GAME_STATE.EXPLORING);
+  };
+  document.getElementById('btn-close-inv').addEventListener('click', close);
+  document.getElementById('inv-backdrop').addEventListener('click', (e) => {
+    if (e.target.id === 'inv-backdrop') close();
+  });
+  // 也可以按 I 或 ESC 关闭
+  const keyHandler = (e) => {
+    if (e.key === 'i' || e.key === 'Escape') {
+      close();
+      document.removeEventListener('keydown', keyHandler);
+    }
+  };
+  document.addEventListener('keydown', keyHandler);
+}
+
+// ── 帮助面板 ──
+function showHelpPanel() {
+  if (gameState.state !== GAME_STATE.EXPLORING) return;
+  const overlay = document.getElementById('ui-overlay');
+  overlay.innerHTML = `
+    <div style="
+      position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+      display: flex; align-items: center; justify-content: center;
+      background: rgba(0,0,0,0.8);
+    " id="help-backdrop">
+      <div style="
+        background: rgba(10,10,20,0.97); border: 1px solid #444; border-radius: 16px;
+        padding: 30px; max-width: 500px; width: 90%;
+      ">
+        <h2 style="color: #ffcc44; text-align: center; letter-spacing: 4px; margin-bottom: 20px;">
+          操 作 指 南
+        </h2>
+        <table style="width: 100%; color: #ccc; font-size: 14px; line-height: 2.2;">
+          <tr><td style="color: #44aaff;">WASD / 方向键</td><td>移动</td></tr>
+          <tr><td style="color: #44aaff;">碰撞敌人</td><td>自动战斗（魔塔式）</td></tr>
+          <tr><td style="color: #44aaff;">空格 / Enter</td><td>对话 / 互动 / 推进剧情</td></tr>
+          <tr><td style="color: #ff6600;">G</td><td>激活/关闭基因锁</td></tr>
+          <tr><td style="color: #aa88ff;">I</td><td>打开状态/背包</td></tr>
+          <tr><td style="color: #ffcc44;">H / ?</td><td>帮助</td></tr>
+          <tr><td style="color: #44ff88;">鼠标悬停</td><td>查看敌人/物品详情</td></tr>
+        </table>
+        <hr style="border-color: #333; margin: 16px 0;">
+        <h3 style="color: #ff4444; margin-bottom: 8px;">战斗提示</h3>
+        <ul style="color: #999; font-size: 13px; line-height: 1.8; padding-left: 20px;">
+          <li>碰怪前<strong style="color: #eee">先用鼠标悬停</strong>查看能否打赢</li>
+          <li>显示 <span style="color: #44ff88">✓</span> 表示可以击败，<span style="color: #ff4444">✗</span> 表示打不过</li>
+          <li>收集<strong style="color: #ff8866">力量晶石</strong>和<strong style="color: #6688ff">坚韧晶石</strong>提升属性</li>
+          <li>合理使用<strong style="color: #ff4488">急救物品</strong>补充HP</li>
+          <li>基因锁激活后攻防大幅提升，关键战斗前记得开启</li>
+        </ul>
+        <div style="text-align: center; margin-top: 20px;">
+          <button id="btn-close-help" style="
+            background: transparent; border: 1px solid #444; color: #888;
+            padding: 8px 30px; cursor: pointer; font-size: 14px; font-family: inherit;
+            border-radius: 6px;
+          ">知道了</button>
+        </div>
+      </div>
+    </div>
+  `;
+  const close = () => { overlay.innerHTML = ''; };
+  document.getElementById('btn-close-help').addEventListener('click', close);
+  document.getElementById('help-backdrop').addEventListener('click', (e) => {
+    if (e.target.id === 'help-backdrop') close();
+  });
+  const keyHandler = (e) => {
+    if (e.key === 'h' || e.key === '?' || e.key === 'Escape') {
+      close();
+      document.removeEventListener('keydown', keyHandler);
+    }
+  };
+  document.addEventListener('keydown', keyHandler);
 }
 
 // ── 章节完成 ──
