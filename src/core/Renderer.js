@@ -99,8 +99,11 @@ export class Renderer {
     const p = gameState.player;
 
     // 计算相机偏移（玩家居中）
-    const camX = p.x * TILE_SIZE - CANVAS_W / 2 + TILE_SIZE / 2;
-    const camY = p.y * TILE_SIZE - CANVAS_H / 2 + TILE_SIZE / 2;
+    // 使用平滑位置做相机，防止初始undefined
+    const vx = this._playerVisualX ?? p.x;
+    const vy = this._playerVisualY ?? p.y;
+    const camX = vx * TILE_SIZE - CANVAS_W / 2 + TILE_SIZE / 2;
+    const camY = vy * TILE_SIZE - CANVAS_H / 2 + TILE_SIZE / 2;
 
     ctx.save();
     ctx.translate(-camX, -camY);
@@ -254,8 +257,20 @@ export class Renderer {
   }
 
   _drawPlayer(ctx, p) {
-    const px = p.x * TILE_SIZE;
-    const py = p.y * TILE_SIZE;
+    // 平滑移动插值
+    if (this._playerVisualX === undefined) {
+      this._playerVisualX = p.x;
+      this._playerVisualY = p.y;
+    }
+    const lerpSpeed = 0.25;
+    this._playerVisualX += (p.x - this._playerVisualX) * lerpSpeed;
+    this._playerVisualY += (p.y - this._playerVisualY) * lerpSpeed;
+    // 接近目标时吸附
+    if (Math.abs(p.x - this._playerVisualX) < 0.05) this._playerVisualX = p.x;
+    if (Math.abs(p.y - this._playerVisualY) < 0.05) this._playerVisualY = p.y;
+
+    const px = this._playerVisualX * TILE_SIZE;
+    const py = this._playerVisualY * TILE_SIZE;
 
     // 玩家光环
     const glowRadius = 20 + 5 * Math.sin(this._time * 0.05);
