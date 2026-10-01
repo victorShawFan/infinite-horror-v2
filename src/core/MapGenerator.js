@@ -314,8 +314,10 @@ function generateFloor_1_3() {
         event: {
           type: 'puzzle',
           lines: [
-            { text: '应急照明终端。需要接通才能看清后面的路。', speaker: '詹岚' },
-            { text: '已恢复应急照明！', speaker: '系统' },
+            { text: '墙壁上嵌着一个布满灰尘的终端面板，上面有「蜂巢应急照明系统」的标识。', speaker: '旁白' },
+            { text: '让我看看……这是应急照明的控制端口。只要接通它，就能恢复走廊的灯光。', speaker: '詹岚' },
+            { text: '嗡——走廊上方的灯管开始一盏接一盏地亮起，惨白的荧光照亮了墙壁上的抓痕和血迹。', speaker: '旁白' },
+            { text: '照明恢复了……但说实话，有些东西还是看不见比较好。', speaker: '詹岚' },
           ],
           flag: 'terminal_light_done',
           rewards: { exp: 20 },
@@ -327,8 +329,10 @@ function generateFloor_1_3() {
           type: 'puzzle',
           requires: 'terminal_light_done',
           lines: [
-            { text: '门控系统终端。照明接通后可以操作。', speaker: '詹岚' },
-            { text: '门控已恢复！还需要主电源。', speaker: '系统' },
+            { text: '「蜂巢安保门控 - B级权限」的终端。屏幕上还残留着上一个操作者的登录信息。', speaker: '旁白' },
+            { text: '照明接通后我才能读取数据。好，开始解锁……', speaker: '詹岚' },
+            { text: '门控序列重启。不过主电源还没恢复——只有核心电力接通，所有安全门才能打开。', speaker: '系统' },
+            { text: '还差一步。继续找主电源终端。', speaker: '詹岚' },
           ],
           flag: 'terminal_door_done',
           rewards: { exp: 20 },
@@ -636,8 +640,10 @@ function generateFloor_1_6() {
         weaknesses: ['fire'],
         onDefeat: {
           lines: [
-            { text: '暴君倒下了！', speaker: '旁白' },
-            { text: '快！列车就在前方！', speaker: '张杰' },
+            { text: '暴君庞大的身躯轰然倒地。地面传来的震动让天花板上的碎片纷纷掉落。', speaker: '旁白' },
+            { text: '它……它真的倒了？', speaker: '郑吒' },
+            { text: '别愣着！这东西不一定死透了。快走！列车就在前面！', speaker: '张杰' },
+            { text: '跑！全速！', speaker: '张杰' },
           ],
           flag: 'boss_tyrant_defeated',
         },
