@@ -274,6 +274,9 @@ eventBus.on('player:death', () => {
         <p style="color: #cc8888; font-size: 18px; margin-bottom: 40px;">
           郑吒在${chapter.floors[currentFloorIndex]?.name || '未知区域'}中陨落...
         </p>
+        <p style="color: #885555; font-size: 14px; max-width: 500px; text-align: center; line-height: 1.6; margin-bottom: 30px;">
+          "死亡不过是另一种开始。在主神的世界里，每一次失败都是通往更强大的你的阶梯。"
+        </p>
         <div style="display: flex; gap: 20px;">
           <button id="btn-retry" style="
             background: transparent; border: 2px solid #ff4444; color: #ff4444;
