@@ -9,6 +9,7 @@ import { gameState } from './core/GameState.js';
 import { Renderer } from './core/Renderer.js';
 import { executeBattle, previewBattle } from './core/CombatSystem.js';
 import { generateChapter1 } from './core/MapGenerator.js';
+import { audioEngine } from './core/AudioEngine.js';
 
 // ── 全局状态 ──
 let renderer;
@@ -113,6 +114,11 @@ function startNewGame() {
   // 重置状态
   Object.assign(gameState, new (gameState.constructor)());
 
+  // 初始化音频
+  audioEngine.init();
+  audioEngine.resume();
+  audioEngine.startAmbience();
+
   // 添加初始队友
   gameState.addCompanion({ id: 'zhang_jie', name: '张杰', role: '战术领队', alive: true });
   gameState.addCompanion({ id: 'zhan_lan', name: '詹岚', role: '情报分析', alive: true });
@@ -132,6 +138,17 @@ function startGame() {
 
   gameState.setState(GAME_STATE.EXPLORING);
   gameStarted = true;
+
+  // 监听升级音效
+  eventBus.on('player:levelup', () => {
+    audioEngine.playLevelUp();
+    renderer.addFloatText('LEVEL UP!', gameState.player.x, gameState.player.y - 1.5, 'rgb(255, 215, 0)');
+    renderer.addParticle(
+      gameState.player.x * TILE_SIZE + TILE_SIZE / 2,
+      gameState.player.y * TILE_SIZE + TILE_SIZE / 2,
+      'rgb(255, 215, 0)', 15
+    );
+  });
 
   // 启动游戏循环
   requestAnimationFrame(gameLoop);
@@ -391,6 +408,7 @@ function startCombat(enemy) {
     renderer.shake(5, 300);
     renderer.addParticle(enemy.x * TILE_SIZE + TILE_SIZE / 2, enemy.y * TILE_SIZE + TILE_SIZE / 2, 'rgb(255, 100, 50)', 10);
     renderer.addFloatText(`+${enemy.rewards?.exp || 0} EXP`, enemy.x, enemy.y - 0.5, 'rgb(170, 136, 255)');
+    audioEngine.playHit(true);
 
     // 检查boss特殊事件
     if (enemy.onDefeat) {
@@ -401,6 +419,7 @@ function startCombat(enemy) {
     }
   } else {
     renderer.shake(8, 500);
+    audioEngine.playDamage();
   }
 
   combatResult = result;
@@ -410,6 +429,7 @@ function startCombat(enemy) {
 // ── 物品拾取 ──
 function pickupItem(item) {
   const p = gameState.player;
+  audioEngine.playPickup();
 
   switch (item.itemType) {
     case 'consumable':
@@ -458,6 +478,7 @@ function pickupItem(item) {
 function triggerEvent(entity) {
   const evt = entity.event;
   if (!evt) return;
+  audioEngine.playDialogue();
 
   // 检查是否已触发
   if (evt.flag && gameState.hasFlag(evt.flag)) return;
@@ -646,6 +667,7 @@ function toggleGeneLock() {
     renderer.addFloatText(`基因锁${p.geneLock}阶 · 激活！`, p.x, p.y - 1, 'rgb(255, 102, 0)');
     renderer.shake(3, 200);
     renderer.addParticle(p.x * TILE_SIZE + TILE_SIZE / 2, p.y * TILE_SIZE + TILE_SIZE / 2, 'rgb(255, 102, 0)', 8);
+    audioEngine.playGeneLock();
   } else {
     renderer.addFloatText('基因锁 · 解除', p.x, p.y - 1, 'rgb(180, 180, 180)');
   }

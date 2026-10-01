@@ -100,6 +100,9 @@ export class Renderer {
     // ── 绘制地图 ──
     this._drawMap(ctx, floor);
 
+    // ── 战争迷雾 / 光照 ──
+    this._drawFogOfWar(ctx, floor, p);
+
     // ── 绘制实体 ──
     this._drawEntities(ctx, entities, hoveredEntity);
 
@@ -116,6 +119,9 @@ export class Renderer {
 
     // ── HUD（固定位置）──
     this._drawHUD(ctx, p, floor);
+
+    // ── 迷你地图 ──
+    this._drawMinimap(ctx, floor, entities, p);
 
     // ── 悬停信息 ──
     if (hoveredEntity && !dialogueState) {
@@ -570,3 +576,96 @@ function wrapText(ctx, text, x, y, maxWidth, lineHeight) {
   }
   ctx.fillText(line, x, lineY);
 }
+import { gameState as gs } from './GameState.js';
+
+  _drawFogOfWar(ctx, floor, player) {
+    const { width, height } = floor;
+    const viewRadius = 5; // 视野半径（格子数）
+
+    for (let y = 0; y < height; y++) {
+      for (let x = 0; x < width; x++) {
+        const dx = x - player.x;
+        const dy = y - player.y;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+
+        if (dist > viewRadius + 2) {
+          // 完全黑暗
+          ctx.fillStyle = 'rgba(0, 0, 0, 0.85)';
+          ctx.fillRect(x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
+        } else if (dist > viewRadius) {
+          // 半透明暗化
+          const alpha = 0.4 + 0.45 * ((dist - viewRadius) / 2);
+          ctx.fillStyle = `rgba(0, 0, 0, ${alpha})`;
+          ctx.fillRect(x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
+        } else if (dist > viewRadius - 1) {
+          // 微弱暗化
+          ctx.fillStyle = 'rgba(0, 0, 0, 0.15)';
+          ctx.fillRect(x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
+        }
+        // 视野内的区域完全可见
+      }
+    }
+
+    // 玩家周围光环效果
+    const px = player.x * TILE_SIZE + TILE_SIZE / 2;
+    const py = player.y * TILE_SIZE + TILE_SIZE / 2;
+    const gradient = ctx.createRadialGradient(px, py, 0, px, py, viewRadius * TILE_SIZE);
+    gradient.addColorStop(0, 'rgba(255, 220, 150, 0.06)');
+    gradient.addColorStop(0.5, 'rgba(255, 200, 120, 0.02)');
+    gradient.addColorStop(1, 'rgba(0, 0, 0, 0)');
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0, 0, width * TILE_SIZE, height * TILE_SIZE);
+  }
+  _drawMinimap(ctx, floor, entities, player) {
+    const mmSize = 3; // 每个格子的迷你地图像素
+    const mmW = floor.width * mmSize;
+    const mmH = floor.height * mmSize;
+    const mmX = CANVAS_W - mmW - 16;
+    const mmY = CANVAS_H - mmH - 50;
+
+    // 背景
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.75)';
+    ctx.fillRect(mmX - 2, mmY - 2, mmW + 4, mmH + 4);
+    ctx.strokeStyle = 'rgba(100, 100, 120, 0.5)';
+    ctx.lineWidth = 1;
+    ctx.strokeRect(mmX - 2, mmY - 2, mmW + 4, mmH + 4);
+
+    // 地图格子
+    for (let y = 0; y < floor.height; y++) {
+      for (let x = 0; x < floor.width; x++) {
+        const tile = floor.tiles[y][x];
+        switch (tile) {
+          case TILE.FLOOR: ctx.fillStyle = '#222233'; break;
+          case TILE.WALL: ctx.fillStyle = '#444455'; break;
+          case TILE.STAIRS: ctx.fillStyle = '#44ffff'; break;
+          case TILE.LAVA: ctx.fillStyle = '#ff3322'; break;
+          case TILE.DOOR: ctx.fillStyle = '#886644'; break;
+          default: ctx.fillStyle = '#000000'; break;
+        }
+        ctx.fillRect(mmX + x * mmSize, mmY + y * mmSize, mmSize, mmSize);
+      }
+    }
+
+    // 实体标记
+    for (const e of entities) {
+      if (e.type === ENTITY_TYPE.ENEMY || e.type === ENTITY_TYPE.BOSS) {
+        ctx.fillStyle = '#ff4444';
+      } else if (e.type === ENTITY_TYPE.ITEM) {
+        ctx.fillStyle = '#ffcc44';
+      } else if (e.type === ENTITY_TYPE.COMPANION) {
+        ctx.fillStyle = '#4488ff';
+      } else if (e.type === ENTITY_TYPE.EVENT) {
+        ctx.fillStyle = '#ffffff';
+      } else {
+        continue;
+      }
+      ctx.fillRect(mmX + e.x * mmSize, mmY + e.y * mmSize, mmSize, mmSize);
+    }
+
+    // 玩家位置（闪烁）
+    const blink = Math.sin(this._time * 0.15) > 0;
+    if (blink) {
+      ctx.fillStyle = '#44aaff';
+      ctx.fillRect(mmX + player.x * mmSize - 1, mmY + player.y * mmSize - 1, mmSize + 2, mmSize + 2);
+    }
+  }
