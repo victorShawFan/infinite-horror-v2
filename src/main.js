@@ -164,6 +164,10 @@ function loadFloor(index) {
     showChapterComplete();
     return;
   }
+
+  // 屏幕过渡
+  if (renderer) renderer.fadeOut(0.08);
+
   currentFloorIndex = index;
   gameState.nodeIndex = index;
   const floor = chapter.floors[index];
@@ -176,6 +180,9 @@ function loadFloor(index) {
     if (clone.hp !== undefined) clone._maxHp = clone.hp;
     return clone;
   });
+
+  // 延迟淡入
+  setTimeout(() => { if (renderer) renderer.fadeIn(0.04); }, 500);
 
   // 显示楼层标题
   showFloorTitle(floor);
@@ -502,6 +509,7 @@ function startCombat(enemy) {
     }
 
     gameState.save(0); // 自动存档
+    renderer.notify('💾 自动存档', '#888888', 60);
   });
 }
 

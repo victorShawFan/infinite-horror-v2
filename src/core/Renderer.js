@@ -27,6 +27,10 @@ export class Renderer {
     this._flashColor = null;
     this._flashDuration = 0;
     this._flashStart = 0;
+    this._notifications = [];  // { text, color, life }
+    this._transitionAlpha = 0; // 0=无过渡, 1=全黑
+    this._transitionTarget = 0;
+    this._transitionSpeed = 0.03;
   }
 
   _resize() {
@@ -135,6 +139,19 @@ export class Renderer {
         this._flashColor = null;
       }
     }
+
+    // ── 屏幕过渡 ──
+    if (this._transitionAlpha > 0.01) {
+      ctx.fillStyle = `rgba(0, 0, 0, ${this._transitionAlpha})`;
+      ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
+    }
+    // 平滑过渡
+    if (Math.abs(this._transitionAlpha - this._transitionTarget) > 0.01) {
+      this._transitionAlpha += (this._transitionTarget - this._transitionAlpha) * this._transitionSpeed;
+    }
+
+    // ── 通知条 ──
+    this._drawNotifications(ctx);
 
     // ── 迷你地图 ──
     this._drawMinimap(ctx, floor, entities, p);
@@ -555,6 +572,53 @@ export class Renderer {
       ctx.fillStyle = pt.color.replace(')', `, ${alpha})`).replace('rgb', 'rgba');
       ctx.fillRect(pt.x - pt.size / 2, pt.y - pt.size / 2, pt.size, pt.size);
       return pt.life > 0;
+    });
+  }
+
+  /** 显示屏幕通知 */
+  notify(text, color = '#44ff88', duration = 90) {
+    this._notifications.push({ text, color, life: duration, maxLife: duration });
+  }
+
+  /** 屏幕过渡：淡入黑色 */
+  fadeOut(speed = 0.05) {
+    this._transitionTarget = 1;
+    this._transitionSpeed = speed;
+  }
+
+  /** 屏幕过渡：淡出黑色 */
+  fadeIn(speed = 0.03) {
+    this._transitionTarget = 0;
+    this._transitionSpeed = speed;
+  }
+
+  _drawNotifications(ctx) {
+    let y = 60;
+    this._notifications = this._notifications.filter(n => {
+      n.life--;
+      const alpha = Math.min(1, n.life / 20, (n.maxLife - (n.maxLife - n.life)) / 20);
+      const finalAlpha = Math.min(alpha, n.life < 20 ? n.life / 20 : 1);
+
+      ctx.fillStyle = `rgba(10, 10, 20, ${finalAlpha * 0.85})`;
+      const textW = ctx.measureText(n.text).width || 150;
+      const boxW = textW + 30;
+      const boxX = (CANVAS_W - boxW) / 2;
+
+      roundRect(ctx, boxX, y, boxW, 28, 6);
+      ctx.fill();
+
+      ctx.font = '13px "Microsoft YaHei"';
+      ctx.fillStyle = n.color.replace(')', `, ${finalAlpha})`).replace('rgb', 'rgba');
+      if (!n.color.startsWith('rgb')) {
+        ctx.fillStyle = n.color;
+        ctx.globalAlpha = finalAlpha;
+      }
+      ctx.textAlign = 'center';
+      ctx.fillText(n.text, CANVAS_W / 2, y + 18);
+      ctx.globalAlpha = 1;
+
+      y += 34;
+      return n.life > 0;
     });
   }
 
