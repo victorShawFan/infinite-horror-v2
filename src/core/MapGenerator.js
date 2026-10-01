@@ -53,6 +53,8 @@ function generateFloor_1_1() {
     subtitle: '你在一列疾驰的列车上醒来，身边是一群同样茫然的陌生人...',
     width: w, height: h, tiles,
     playerStart: { x: 6, y: 10 },
+    ambience: 'train', // 环境氛围标记
+    bgColor: '#0e0e18',
     entities: [
       // 张杰（队长NPC）
       { type: ENTITY_TYPE.COMPANION, id: 'zhang_jie', name: '张杰',
@@ -111,6 +113,28 @@ function generateFloor_1_1() {
         itemType: 'consumable', effect: { heal: 30 },
         description: '恢复30点生命值。',
       },
+      // 隐藏物品：座椅下的手记
+      { type: ENTITY_TYPE.EVENT, id: 'hidden_note', name: '座椅下的纸条',
+        x: 3, y: 5, sprite: '📜', color: '#ccaa66',
+        event: {
+          type: 'investigate',
+          lines: [
+            { text: '你在座椅缝隙中发现了一张折叠的纸条。', speaker: '旁白' },
+            { text: '"第三次了。每次醒来都是这趟列车。记住——红后的激光有规律，注意时机。 ——上一个'我'"', speaker: '纸条' },
+            { text: '这是...前一个轮回的自己留下的？', speaker: '郑吒' },
+          ],
+          flag: 'hidden_note_found',
+          rewards: { exp: 10 },
+        },
+      },
+      // 其他新人（叙事用）
+      { type: ENTITY_TYPE.NPC, id: 'newbie_1', name: '惊慌的新人',
+        x: 8, y: 9, sprite: '人', color: '#888888',
+        dialogue: [
+          { text: '这、这是怎么回事？我明明在家里睡觉...', speaker: '新人' },
+          { text: '你冷静点。先听那边那个人说什么。', speaker: '郑吒' },
+        ],
+      },
       // 开场剧情事件
       { type: ENTITY_TYPE.EVENT, id: 'ch1_intro', name: '主神宣言',
         x: 6, y: 6, sprite: '!', color: '#ffffff',
@@ -153,6 +177,8 @@ function generateFloor_1_2() {
     subtitle: '地下实验室的走廊弥漫着消毒水和腐臭的气味...',
     width: w, height: h, tiles,
     playerStart: { x: 4, y: 12 },
+    ambience: 'hive',
+    bgColor: '#0a0f12',
     entities: [
       // 调查尸体事件
       { type: ENTITY_TYPE.EVENT, id: 'body_1', name: '安保人员遗体',
@@ -245,6 +271,8 @@ function generateFloor_1_3() {
     subtitle: '红后的安全系统仍在运行。你需要恢复三个终端的电力才能打开通道。',
     width: w, height: h, tiles,
     playerStart: { x: 8, y: 8 },
+    ambience: 'machine_room',
+    bgColor: '#0c0c14',
     entities: [
       // 三个终端事件
       { type: ENTITY_TYPE.EVENT, id: 'terminal_light', name: '照明终端',
@@ -349,6 +377,8 @@ function generateFloor_1_4() {
     subtitle: '红色的激光网在走廊中闪烁。一旦触碰，后果不堪设想。',
     width: w, height: h, tiles,
     playerStart: { x: 1, y: 4 },
+    ambience: 'laser',
+    bgColor: '#10080a',
     entities: [
       // 激光是即死陷阱
       { type: ENTITY_TYPE.TRAP, id: 'laser_warn', name: '⚠ 激光警告',
@@ -415,6 +445,8 @@ function generateFloor_1_5() {
     subtitle: '这是蜂巢最深处。爬行者已经苏醒了。',
     width: w, height: h, tiles,
     playerStart: { x: 4, y: 4 },
+    ambience: 'deep_hive',
+    bgColor: '#0a0808',
     entities: [
       // 牟钢固定死亡事件
       { type: ENTITY_TYPE.EVENT, id: 'mou_gang_death', name: '牟钢的最后防线',
@@ -513,6 +545,8 @@ function generateFloor_1_6() {
     subtitle: '六小时倒计时开始了。列车就在前方，但最强的敌人也在前方等待...',
     width: w, height: h, tiles,
     playerStart: { x: 2, y: 4 },
+    ambience: 'city_ruins',
+    bgColor: '#0e0c0a',
     entities: [
       // 补给选择事件
       { type: ENTITY_TYPE.EVENT, id: 'supply_choice', name: '补给抉择',
