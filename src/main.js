@@ -10,6 +10,7 @@ import { Renderer } from './core/Renderer.js';
 import { executeBattle, previewBattle } from './core/CombatSystem.js';
 import { generateChapter1 } from './core/MapGenerator.js';
 import { audioEngine } from './core/AudioEngine.js';
+import { renderLordGodSpace } from './core/LordGodSpace.js';
 
 // ── 全局状态 ──
 let renderer;
@@ -712,11 +713,42 @@ function showChapterComplete() {
           <em>"欢迎回到主神空间。十天后，你们将前往下一个世界。"</em>
         </p>
       </div>
-      <button onclick="location.reload()" style="
+      <button id="btn-enter-hub" style="
         margin-top: 30px; background: transparent; border: 1px solid #444;
-        color: #888; padding: 12px 40px; cursor: pointer; font-size: 16px;
-        letter-spacing: 4px; font-family: inherit;
-      ">返回主菜单</button>
+        color: #ffffff; padding: 14px 50px; cursor: pointer; font-size: 18px;
+        letter-spacing: 6px; font-family: inherit; border-radius: 8px;
+        transition: all 0.3s;
+      " onmouseover="this.style.borderColor='#ffffff';this.style.background='rgba(255,255,255,0.1)'"
+         onmouseout="this.style.borderColor='#444';this.style.background='transparent'">
+        进入主神空间
+      </button>
     </div>
   `;
+
+  document.getElementById('btn-enter-hub').addEventListener('click', () => {
+    renderLordGodSpace(() => {
+      // 从主神空间离开后回主菜单
+      overlay.innerHTML = `
+        <div style="
+          position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+          display: flex; flex-direction: column; align-items: center; justify-content: center;
+          background: rgba(0,0,0,0.95);
+        ">
+          <h2 style="color: #e0e0e0; letter-spacing: 6px; margin-bottom: 16px;">
+            第一章 · 完
+          </h2>
+          <p style="color: #888; max-width: 500px; text-align: center; line-height: 1.8; margin-bottom: 30px;">
+            郑吒用十天时间整备完毕。白色的光柱将他们送往了下一个世界——<br>
+            <strong style="color: #ff8844;">异形一</strong><br><br>
+            <em style="color: #555;">第二章 · 即将到来...</em>
+          </p>
+          <button onclick="location.reload()" style="
+            background: transparent; border: 1px solid #444; color: #888;
+            padding: 12px 40px; cursor: pointer; font-size: 16px;
+            letter-spacing: 4px; font-family: inherit; border-radius: 8px;
+          ">返回主菜单</button>
+        </div>
+      `;
+    });
+  });
 }
