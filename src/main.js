@@ -12,6 +12,7 @@ import { generateChapter1 } from './core/MapGenerator.js';
 import { audioEngine } from './core/AudioEngine.js';
 import { renderLordGodSpace } from './core/LordGodSpace.js';
 import { CombatAnimator } from './core/CombatAnimation.js';
+import { assetLoader } from './core/AssetLoader.js';
 
 // ── 全局状态 ──
 let renderer;
@@ -27,26 +28,21 @@ let menuState = 'title'; // 'title' | 'playing'
 let combatAnimator = null;
 
 // ── 初始化 ──
-window.addEventListener('load', () => {
+window.addEventListener('load', async () => {
   const canvas = document.getElementById('game-canvas');
   renderer = new Renderer(canvas);
 
-  // 加载动画
   const fill = document.querySelector('#loading-bar .fill');
-  let progress = 0;
-  const loadInterval = setInterval(() => {
-    progress += 5 + Math.random() * 10;
-    if (progress >= 100) {
-      progress = 100;
-      clearInterval(loadInterval);
-      fill.style.width = '100%';
-      setTimeout(() => {
-        document.getElementById('loading-screen').classList.add('hidden');
-        showMainMenu();
-      }, 500);
-    }
-    fill.style.width = `${progress}%`;
-  }, 80);
+  
+  // 实际加载资产
+  fill.style.width = '30%';
+  await assetLoader.loadAll();
+  fill.style.width = '100%';
+  
+  setTimeout(() => {
+    document.getElementById('loading-screen').classList.add('hidden');
+    showMainMenu();
+  }, 500);
 });
 
 function showMainMenu() {
@@ -58,8 +54,13 @@ function showMainMenu() {
     <div style="
       position: absolute; top: 0; left: 0; right: 0; bottom: 0;
       display: flex; flex-direction: column; align-items: center; justify-content: center;
-      background: radial-gradient(ellipse at center, #0f0f1a 0%, #050508 100%);
+      background: url('/assets/scenes/1-1_列车醒来_背景.jpg') center/cover no-repeat;
     ">
+    <div style="
+      position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+      background: radial-gradient(ellipse at center, rgba(10,10,20,0.75) 0%, rgba(5,5,10,0.95) 100%);
+    "></div>
+    <div style="position: relative; z-index: 1; display: flex; flex-direction: column; align-items: center;">
       <h1 style="
         font-size: 64px; color: #ff4444; letter-spacing: 12px;
         text-shadow: 0 0 40px rgba(255,68,68,0.4), 0 0 80px rgba(255,68,68,0.2);
@@ -87,9 +88,10 @@ function showMainMenu() {
         继续轮回
       </button>
 
+    </div>
       <p style="
-        position: absolute; bottom: 30px; font-size: 12px; color: #333;
-        letter-spacing: 2px;
+        position: absolute; bottom: 30px; font-size: 12px; color: #444;
+        letter-spacing: 2px; z-index: 1;
       ">WASD移动 · 碰撞敌人战斗 · 空格互动/对话 · 鼠标悬停查看信息</p>
     </div>
   `;
@@ -143,16 +145,19 @@ function startGame() {
   gameState.setState(GAME_STATE.EXPLORING);
   gameStarted = true;
 
-  // 监听升级音效
-  eventBus.on('player:levelup', () => {
-    audioEngine.playLevelUp();
-    renderer.addFloatText('LEVEL UP!', gameState.player.x, gameState.player.y - 1.5, 'rgb(255, 215, 0)');
-    renderer.addParticle(
-      gameState.player.x * TILE_SIZE + TILE_SIZE / 2,
-      gameState.player.y * TILE_SIZE + TILE_SIZE / 2,
-      'rgb(255, 215, 0)', 15
-    );
-  });
+  // 监听升级音效（只注册一次）
+  if (!window._levelupListenerRegistered) {
+    window._levelupListenerRegistered = true;
+    eventBus.on('player:levelup', () => {
+      audioEngine.playLevelUp();
+      renderer.addFloatText('LEVEL UP!', gameState.player.x, gameState.player.y - 1.5, 'rgb(255, 215, 0)');
+      renderer.addParticle(
+        gameState.player.x * TILE_SIZE + TILE_SIZE / 2,
+        gameState.player.y * TILE_SIZE + TILE_SIZE / 2,
+        'rgb(255, 215, 0)', 15
+      );
+    });
+  }
 
   // 启动游戏循环
   requestAnimationFrame(gameLoop);
@@ -391,6 +396,8 @@ document.addEventListener('click', () => {
 // ── 移动与碰撞 ──
 function movePlayer(dx, dy) {
   const p = gameState.player;
+  // 死亡状态不允许移动
+  if (p.hp <= 0) return;
   const nx = p.x + dx;
   const ny = p.y + dy;
   const floor = chapter.floors[currentFloorIndex];
@@ -431,7 +438,8 @@ function movePlayer(dx, dy) {
 
     // 物品 → 拾取
     if (entity.type === ENTITY_TYPE.ITEM) {
-      pickupItem(entity);
+      const consumed = pickupItem(entity);
+      if (consumed === false) return; // 门打不开，不移动
       // 拾取后移动到物品位置
       p.x = nx;
       p.y = ny;
@@ -456,6 +464,15 @@ function movePlayer(dx, dy) {
       if (bossEntities.length > 0) {
         startDialogue([{ text: '前方的路还没有打通。先消灭挡路的强敌吧。', speaker: '系统' }]);
         return;
+      }
+      // 检查楼层特定的剧情前置条件
+      if (floor.clearRequires) {
+        for (const req of floor.clearRequires) {
+          if (!gameState.hasFlag(req.flag)) {
+            startDialogue([{ text: req.message || '还有重要的事情没有完成。', speaker: '系统' }]);
+            return;
+          }
+        }
       }
       startDialogue([{ text: floor.onClear.message, speaker: '旁白' }], null, () => {
         loadFloor(currentFloorIndex + 1);
@@ -549,7 +566,7 @@ function pickupItem(item) {
         renderer.addFloatText('门已打开', item.x, item.y, 'rgb(136, 102, 68)');
       } else {
         startDialogue([{ text: `需要 ${item.doorColor === 'yellow' ? '黄色' : item.doorColor === 'blue' ? '蓝色' : '红色'} 门卡才能打开。`, speaker: '系统' }]);
-        return; // 不移除门
+        return false; // 不移除门，不允许移动
       }
       break;
   }
@@ -559,6 +576,7 @@ function pickupItem(item) {
   if (idx >= 0) entities.splice(idx, 1);
 
   eventBus.emit('item:pickup', item);
+  return true;
 }
 
 // ── 事件触发 ──

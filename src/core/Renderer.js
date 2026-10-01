@@ -3,6 +3,7 @@
 // ═══════════════════════════════════════════════════════════════
 
 import { TILE_SIZE, TILE, COLORS, CANVAS_W, CANVAS_H, ENTITY_TYPE } from './constants.js';
+import { assetLoader } from './AssetLoader.js';
 import { gameState } from './GameState.js';
 import { getEffectiveAtk, getEffectiveDef, previewBattle } from './CombatSystem.js';
 import { drawWallTile, drawFloorTile, drawLavaTile, drawStairsTile, drawCharacterSprite, drawHealthBar } from './SpriteRenderer.js';
@@ -90,6 +91,16 @@ export class Renderer {
     // 清屏
     ctx.fillStyle = floor?.bgColor || COLORS.BG_DARK;
     ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
+
+    // 绘制场景背景图（如果存在）
+    if (floor) {
+      const bgImg = assetLoader.getSceneBg(floor.id);
+      if (bgImg) {
+        ctx.globalAlpha = 0.35;
+        ctx.drawImage(bgImg, 0, 0, CANVAS_W, CANVAS_H);
+        ctx.globalAlpha = 1.0;
+      }
+    }
 
     if (!floor) {
       ctx.restore();
@@ -375,7 +386,7 @@ export class Renderer {
       '按 H 查看完整操作指南',
     ];
     const tipIdx = Math.floor(this._time / 300) % tips.length;
-    const companionCount = (gs.companions || []).filter(c => c.alive).length;
+    const companionCount = (gameState.companions || []).filter(c => c.alive).length;
     ctx.fillText(
       `${floor.id} ${floor.name}  |  🔑 ${p.keys.yellow}/${p.keys.blue}/${p.keys.red}  |  队友×${companionCount}  |  💡 ${tips[tipIdx]}`,
       pad + 8,
@@ -448,28 +459,62 @@ export class Renderer {
       lines.push('按空格互动');
     }
 
+    // 获取敌人概念图
+    const isEnemy = e.type === ENTITY_TYPE.ENEMY || e.type === ENTITY_TYPE.BOSS;
+    const portrait = isEnemy ? assetLoader.getEnemyPortrait(e.id) : null;
+    const portraitW = portrait ? 90 : 0;
+    const portraitPad = portrait ? 8 : 0;
+
     // 绘制tooltip
     ctx.font = '13px "Microsoft YaHei"';
-    const maxW = Math.max(...lines.map(l => ctx.measureText(l).width)) + 24;
-    const h = lines.length * 20 + 16;
+    const textMaxW = Math.max(...lines.map(l => ctx.measureText(l).width)) + 24;
+    const maxW = textMaxW + portraitW + portraitPad;
+    const h = Math.max(lines.length * 20 + 16, portrait ? 130 : 0);
     const tx = Math.min(CANVAS_W - maxW - 10, CANVAS_W / 2);
     const ty = CANVAS_H - h - 50;
 
-    ctx.fillStyle = 'rgba(5, 5, 15, 0.95)';
-    roundRect(ctx, tx, ty, maxW, h, 8);
+    // 背景
+    ctx.fillStyle = 'rgba(5, 5, 15, 0.96)';
+    roundRect(ctx, tx, ty, maxW, h, 10);
     ctx.fill();
+    
+    // 渐变边框
     ctx.strokeStyle = e.color || '#ffffff';
-    ctx.lineWidth = 1.5;
-    roundRect(ctx, tx, ty, maxW, h, 8);
+    ctx.lineWidth = 2;
+    roundRect(ctx, tx, ty, maxW, h, 10);
     ctx.stroke();
 
+    // 敌人概念图
+    if (portrait) {
+      const px = tx + 8;
+      const py = ty + 8;
+      const pw = portraitW - 4;
+      const ph = h - 16;
+      ctx.save();
+      ctx.beginPath();
+      roundRect(ctx, px, py, pw, ph, 6);
+      ctx.clip();
+      const srcH = portrait.height * 0.6;
+      ctx.drawImage(portrait, 0, 0, portrait.width, srcH, px, py, pw, ph);
+      ctx.restore();
+      // 概念图边框
+      ctx.strokeStyle = (e.color || '#ff4444') + '66';
+      ctx.lineWidth = 1;
+      roundRect(ctx, px, py, pw, ph, 6);
+      ctx.stroke();
+    }
+
+    const textX = tx + 12 + portraitW + portraitPad;
     ctx.textAlign = 'left';
     for (let i = 0; i < lines.length; i++) {
       ctx.fillStyle = i === 0 ? (e.color || '#ffffff') : COLORS.TEXT_DIM;
       if (lines[i].startsWith('✓')) ctx.fillStyle = COLORS.TEXT_HEAL;
       if (lines[i].startsWith('✗')) ctx.fillStyle = COLORS.TEXT_DANGER;
+      if (lines[i].startsWith('⚠')) ctx.fillStyle = '#ffaa44';
+      if (lines[i].startsWith('△')) ctx.fillStyle = '#ccaa44';
+      if (lines[i].startsWith('○')) ctx.fillStyle = '#44cc88';
       if (lines[i].startsWith('奖励')) ctx.fillStyle = COLORS.TEXT_GOLD;
-      ctx.fillText(lines[i], tx + 12, ty + 18 + i * 20);
+      ctx.fillText(lines[i], textX, ty + 18 + i * 20);
     }
   }
 
@@ -478,46 +523,97 @@ export class Renderer {
     if (currentLine >= lines.length) return;
 
     const line = lines[currentLine];
-    const boxH = 120;
+    const boxH = 140;
     const y = CANVAS_H - boxH - 10;
+    const portraitSize = 100;
+    const hasPortrait = !!assetLoader.getCharPortrait(line.speaker);
+    const textStartX = hasPortrait ? 30 + portraitSize + 16 : 40;
 
-    // 暗色对话框
-    ctx.fillStyle = 'rgba(5, 5, 15, 0.95)';
+    // 半透明背景遮罩
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.4)';
+    ctx.fillRect(0, y - 20, CANVAS_W, boxH + 30);
+
+    // 对话框背景
+    ctx.fillStyle = 'rgba(8, 8, 20, 0.95)';
     roundRect(ctx, 20, y, CANVAS_W - 40, boxH, 12);
     ctx.fill();
 
     // 边框颜色按说话人
     let borderColor = '#666';
-    if (line.speaker === '主神') borderColor = COLORS.LORD_GOD;
-    else if (line.speaker === '郑吒') borderColor = COLORS.PLAYER;
-    else if (line.speaker === '系统') borderColor = COLORS.GENE_LOCK;
+    if (line.speaker === '主神') borderColor = '#ffffff';
+    else if (line.speaker === '郑吒') borderColor = '#44aaff';
+    else if (line.speaker === '系统') borderColor = '#ff6600';
     else if (line.speaker === '旁白') borderColor = '#888';
+    else if (line.speaker === '张杰') borderColor = '#4488ff';
+    else if (line.speaker === '詹岚') borderColor = '#44ff88';
+    else if (line.speaker === '李萧毅') borderColor = '#ffaa44';
+    else if (line.speaker === '牟钢') borderColor = '#cc8844';
     else borderColor = COLORS.NPC;
 
+    // 渐变边框效果
     ctx.strokeStyle = borderColor;
     ctx.lineWidth = 2;
     roundRect(ctx, 20, y, CANVAS_W - 40, boxH, 12);
     ctx.stroke();
+    
+    // 内侧光晕
+    ctx.strokeStyle = borderColor + '33';
+    ctx.lineWidth = 4;
+    roundRect(ctx, 22, y + 2, CANVAS_W - 44, boxH - 4, 10);
+    ctx.stroke();
 
-    // 说话人名字
-    if (line.speaker) {
-      ctx.font = 'bold 14px "Microsoft YaHei"';
-      ctx.fillStyle = borderColor;
-      ctx.textAlign = 'left';
-      ctx.fillText(line.speaker, 40, y + 24);
+    // 角色立绘（如果有）
+    if (hasPortrait) {
+      const portrait = assetLoader.getCharPortrait(line.speaker);
+      const px = 30;
+      const py = y + 8;
+      const pw = portraitSize - 10;
+      const ph = boxH - 16;
+      
+      // 立绘边框
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
+      roundRect(ctx, px - 2, py - 2, pw + 4, ph + 4, 8);
+      ctx.fill();
+      ctx.strokeStyle = borderColor + '88';
+      ctx.lineWidth = 1;
+      roundRect(ctx, px - 2, py - 2, pw + 4, ph + 4, 8);
+      ctx.stroke();
+      
+      // 绘制立绘（裁切上半身）
+      ctx.save();
+      ctx.beginPath();
+      roundRect(ctx, px, py, pw, ph, 6);
+      ctx.clip();
+      // 绘制上半部分（头和上身）
+      const srcH = portrait.height * 0.5;
+      ctx.drawImage(portrait, 0, 0, portrait.width, srcH, px, py, pw, ph);
+      ctx.restore();
     }
 
-    // 对白内容
-    ctx.font = '16px "Microsoft YaHei"';
-    ctx.fillStyle = COLORS.TEXT_WHITE;
-    wrapText(ctx, line.text, 40, y + 50, CANVAS_W - 80, 22);
+    // 说话人名字（带底色标签）
+    if (line.speaker) {
+      ctx.font = 'bold 14px "Microsoft YaHei"';
+      const nameW = ctx.measureText(line.speaker).width + 16;
+      ctx.fillStyle = borderColor + '33';
+      roundRect(ctx, textStartX - 4, y + 10, nameW + 4, 22, 4);
+      ctx.fill();
+      ctx.fillStyle = borderColor;
+      ctx.textAlign = 'left';
+      ctx.fillText(line.speaker, textStartX + 4, y + 26);
+    }
 
-    // 提示
-    ctx.font = '11px "Microsoft YaHei"';
-    ctx.fillStyle = COLORS.TEXT_DIM;
+    // 对白内容（逐字打字机效果模拟 - 按时间显示字数）
+    ctx.font = '16px "Microsoft YaHei"';
+    ctx.fillStyle = '#e8e8f0';
+    const textWidth = CANVAS_W - textStartX - 50;
+    wrapText(ctx, line.text, textStartX, y + 55, textWidth, 24);
+
+    // 提示（动态闪烁）
+    const blinkAlpha = 0.4 + 0.6 * Math.abs(Math.sin(this._time * 0.05));
+    ctx.font = '12px "Microsoft YaHei"';
+    ctx.fillStyle = `rgba(150, 150, 170, ${blinkAlpha})`;
     ctx.textAlign = 'right';
-    const dots = '.'.repeat(1 + (Math.floor(this._time / 30) % 3));
-    ctx.fillText(`点击或空格继续${dots}  (${currentLine + 1}/${lines.length})`, CANVAS_W - 40, y + boxH - 12);
+    ctx.fillText(`▼ 点击或空格继续  (${currentLine + 1}/${lines.length})`, CANVAS_W - 40, y + boxH - 14);
   }
 
   _drawCombatResult(ctx, result) {

@@ -144,6 +144,8 @@ export function executeBattle(enemy) {
     p.hp = 0;
     log.push({ text: `被 ${enemy.name} 击败了...`, type: 'defeat' });
     eventBus.emit('combat:defeat', { enemy, log });
+    gameState.stats.deathCount++;
+    eventBus.emit('player:death', {});
   }
 
   return { victory, log, rounds: round };
