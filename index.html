@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>无限恐怖：中洲轮回</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      background: #0a0a0f;
+      overflow: hidden;
+      font-family: 'Microsoft YaHei', 'PingFang SC', sans-serif;
+      color: #e0e0e0;
+      user-select: none;
+    }
+    #game-canvas {
+      display: block;
+      margin: 0 auto;
+      image-rendering: pixelated;
+      cursor: crosshair;
+    }
+    #ui-overlay {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      pointer-events: none;
+      z-index: 10;
+    }
+    #ui-overlay > * { pointer-events: auto; }
+    #loading-screen {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: #0a0a0f;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+      transition: opacity 0.8s;
+    }
+    #loading-screen.hidden { opacity: 0; pointer-events: none; }
+    #loading-screen h1 {
+      font-size: 48px;
+      color: #ff4444;
+      text-shadow: 0 0 30px rgba(255,68,68,0.5);
+      margin-bottom: 20px;
+      letter-spacing: 8px;
+    }
+    #loading-screen .subtitle {
+      font-size: 18px;
+      color: #888;
+      letter-spacing: 4px;
+    }
+    #loading-bar {
+      width: 300px;
+      height: 3px;
+      background: #222;
+      margin-top: 40px;
+      border-radius: 2px;
+      overflow: hidden;
+    }
+    #loading-bar .fill {
+      width: 0%;
+      height: 100%;
+      background: linear-gradient(90deg, #ff4444, #ff8844);
+      transition: width 0.3s;
+    }
+  </style>
+</head>
+<body>
+  <div id="loading-screen">
+    <h1>无限恐怖</h1>
+    <div class="subtitle">中 洲 轮 回</div>
+    <div id="loading-bar"><div class="fill"></div></div>
+  </div>
+  <canvas id="game-canvas"></canvas>
+  <div id="ui-overlay"></div>
+  <script type="module" src="/src/main.js"></script>
+</body>
+</html>
