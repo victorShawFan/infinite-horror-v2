@@ -5,6 +5,7 @@
 import { TILE_SIZE, TILE, COLORS, CANVAS_W, CANVAS_H, ENTITY_TYPE } from './constants.js';
 import { gameState } from './GameState.js';
 import { getEffectiveAtk, getEffectiveDef, previewBattle } from './CombatSystem.js';
+import { drawWallTile, drawFloorTile, drawLavaTile, drawStairsTile, drawCharacterSprite, drawHealthBar } from './SpriteRenderer.js';
 
 export class Renderer {
   constructor(canvas) {
@@ -152,40 +153,34 @@ export class Renderer {
         switch (tile) {
           case TILE.VOID:
             ctx.fillStyle = COLORS.BG_DARK;
+            ctx.fillRect(px, py, TILE_SIZE, TILE_SIZE);
             break;
           case TILE.FLOOR:
-            // 棋盘格纹理
-            ctx.fillStyle = (x + y) % 2 === 0 ? COLORS.FLOOR : COLORS.FLOOR_LIGHT;
+            drawFloorTile(ctx, px, py, (x * 7 + y * 13) % 4);
+            continue;
             break;
           case TILE.WALL:
-            ctx.fillStyle = COLORS.WALL;
-            ctx.fillRect(px, py, TILE_SIZE, TILE_SIZE);
-            // 墙顶高光
-            ctx.fillStyle = COLORS.WALL_LIGHT;
-            ctx.fillRect(px, py, TILE_SIZE, 4);
-            ctx.fillRect(px, py, 4, TILE_SIZE);
+            drawWallTile(ctx, px, py);
+            continue;
+          case TILE.STAIRS:
+            drawStairsTile(ctx, px, py, this._time);
+            continue;
+          case TILE.LAVA:
+            drawLavaTile(ctx, px, py, this._time);
             continue;
           case TILE.DOOR:
             ctx.fillStyle = COLORS.DOOR;
             break;
-          case TILE.STAIRS:
+          case TILE.WATER:
+            ctx.fillStyle = '#1a2a44';
+            break;
+          default:
             ctx.fillStyle = COLORS.FLOOR;
-            ctx.fillRect(px, py, TILE_SIZE, TILE_SIZE);
-            // 楼梯闪烁
-            const alpha = 0.5 + 0.5 * Math.sin(this._time * 0.08);
-            ctx.fillStyle = `rgba(68, 255, 255, ${alpha})`;
-            ctx.fillRect(px + 8, py + 8, TILE_SIZE - 16, TILE_SIZE - 16);
-            ctx.strokeStyle = COLORS.STAIRS;
-            ctx.lineWidth = 2;
-            ctx.strokeRect(px + 6, py + 6, TILE_SIZE - 12, TILE_SIZE - 12);
-            continue;
-          case TILE.LAVA:
-            // 激光/岩浆 脉动效果
-            const lavaAlpha = 0.6 + 0.4 * Math.sin(this._time * 0.12 + x * 0.5);
-            ctx.fillStyle = COLORS.FLOOR;
-            ctx.fillRect(px, py, TILE_SIZE, TILE_SIZE);
-            ctx.fillStyle = `rgba(255, 50, 30, ${lavaAlpha})`;
-            ctx.fillRect(px + 4, py + 4, TILE_SIZE - 8, TILE_SIZE - 8);
+        }
+        ctx.fillRect(px, py, TILE_SIZE, TILE_SIZE);
+      }
+    }
+  }
             continue;
           case TILE.WATER:
             ctx.fillStyle = '#1a2a44';
@@ -224,24 +219,15 @@ export class Renderer {
         ctx.strokeRect(px + 1, py + 1, TILE_SIZE - 2, TILE_SIZE - 2);
       }
 
-      // 绘制精灵（汉字）
-      ctx.fillStyle = e.color || '#ffffff';
-      ctx.font = `bold ${TILE_SIZE * 0.6}px "Microsoft YaHei", sans-serif`;
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
+      // 绘制精灵（带阴影和描边的汉字）
       const bob = (e.type === ENTITY_TYPE.ITEM) ? Math.sin(this._time * 0.08 + e.x) * 2 : 0;
-      ctx.fillText(e.sprite, px + TILE_SIZE / 2, py + TILE_SIZE / 2 + bob);
+      drawCharacterSprite(ctx, px, py, e.sprite, e.color || '#ffffff', TILE_SIZE * 0.6, { bob });
 
       // 敌人HP条
       if ((e.type === ENTITY_TYPE.ENEMY || e.type === ENTITY_TYPE.BOSS) && e.hp !== undefined) {
-        const barW = TILE_SIZE - 8;
-        const barH = 4;
         const maxHp = e._maxHp || e.hp;
         const ratio = e.hp / maxHp;
-        ctx.fillStyle = '#333';
-        ctx.fillRect(px + 4, py - 2, barW, barH);
-        ctx.fillStyle = ratio > 0.5 ? COLORS.HP_BAR : (ratio > 0.25 ? '#ccaa44' : COLORS.HP_LOST);
-        ctx.fillRect(px + 4, py - 2, barW * ratio, barH);
+        drawHealthBar(ctx, px, py, ratio);
       }
     }
   }
@@ -273,12 +259,8 @@ export class Renderer {
       ctx.fillRect(px - 15, py - 15, TILE_SIZE + 30, TILE_SIZE + 30);
     }
 
-    // 玩家角色
-    ctx.fillStyle = COLORS.PLAYER;
-    ctx.font = `bold ${TILE_SIZE * 0.65}px "Microsoft YaHei", sans-serif`;
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText('郑', px + TILE_SIZE / 2, py + TILE_SIZE / 2);
+    // 玩家角色（精细绘制）
+    drawCharacterSprite(ctx, px, py, '郑', COLORS.PLAYER, TILE_SIZE * 0.65, { showBase: false });
   }
 
   _drawHUD(ctx, p, floor) {
