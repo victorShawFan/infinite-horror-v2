@@ -120,7 +120,7 @@ function generateFloor_1_1() {
           type: 'investigate',
           lines: [
             { text: '你在座椅缝隙中发现了一张折叠的纸条。', speaker: '旁白' },
-            { text: '"第三次了。每次醒来都是这趟列车。记住——红后的激光有规律，注意时机。 ——上一个'我'"', speaker: '纸条' },
+            { text: '"第三次了。每次醒来都是这趟列车。记住——红后的激光有规律，注意时机。" ——上一个我', speaker: '纸条' },
             { text: '这是...前一个轮回的自己留下的？', speaker: '郑吒' },
           ],
           flag: 'hidden_note_found',
