@@ -12,6 +12,7 @@ import { generateChapter1 } from './core/MapGenerator.js';
 import { audioEngine } from './core/AudioEngine.js';
 import { renderLordGodSpace } from './core/LordGodSpace.js';
 import { CombatAnimator } from './core/CombatAnimation.js';
+import { showOpeningCutscene } from './core/Cutscene.js';
 import { assetLoader } from './core/AssetLoader.js';
 
 // ── 全局状态 ──
@@ -96,7 +97,9 @@ function showMainMenu() {
     </div>
   `;
 
-  document.getElementById('btn-new-game').addEventListener('click', startNewGame);
+  document.getElementById('btn-new-game').addEventListener('click', () => {
+    showOpeningCutscene(() => startNewGame());
+  });
   document.getElementById('btn-continue').addEventListener('click', () => {
     if (gameState.load(0)) {
       startGame();
