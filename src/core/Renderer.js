@@ -344,8 +344,19 @@ export class Renderer {
     ctx.font = '12px "Microsoft YaHei"';
     ctx.textAlign = 'left';
     ctx.fillStyle = COLORS.TEXT_DIM;
+    // 动态提示信息
+    const tips = [
+      '鼠标悬停敌人查看能否击败',
+      '按 I 查看属性和装备',
+      '碰怪前先看数值，打不过绕路',
+      '收集晶石永久提升属性',
+      '基因锁(G)开启后攻防大幅提升',
+      '按 H 查看完整操作指南',
+    ];
+    const tipIdx = Math.floor(this._time / 300) % tips.length;
+    const companionCount = (gs.companions || []).filter(c => c.alive).length;
     ctx.fillText(
-      `${floor.id} ${floor.name}  |  🔑 黄${p.keys.yellow} 蓝${p.keys.blue} 红${p.keys.red}  |  WASD移动 · 碰撞战斗 · 空格交互`,
+      `${floor.id} ${floor.name}  |  🔑 ${p.keys.yellow}/${p.keys.blue}/${p.keys.red}  |  队友×${companionCount}  |  💡 ${tips[tipIdx]}`,
       pad + 8,
       CANVAS_H - 21
     );
