@@ -5,7 +5,7 @@
 import { TILE_SIZE, TILE, COLORS, CANVAS_W, CANVAS_H, ENTITY_TYPE } from './constants.js';
 import { assetLoader } from './AssetLoader.js';
 import { gameState } from './GameState.js';
-import { getEffectiveAtk, getEffectiveDef, previewBattle } from './CombatSystem.js';
+import { getEffectiveAtk, getEffectiveDef, previewBattle, getStatsBreakdown } from './CombatSystem.js';
 import { drawWallTile, drawFloorTile, drawLavaTile, drawStairsTile, drawCharacterSprite, drawHealthBar } from './SpriteRenderer.js';
 
 export class Renderer {

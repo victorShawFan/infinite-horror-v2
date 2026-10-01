@@ -117,6 +117,16 @@ export function executeBattle(enemy) {
   if (victory) {
     // 应用结果
     p.hp = playerHp;
+    
+    // 血族吸血效果
+    if (p.activeBloodline === 'vampire') {
+      const lifeSteal = Math.floor(enemy.hp * 0.08);
+      p.hp = Math.min(p.maxHp, p.hp + lifeSteal);
+      if (lifeSteal > 0) {
+        log.push({ text: `血族吸血：恢复 ${lifeSteal} HP`, type: 'heal' });
+      }
+    }
+    
     gameState.stats.enemiesKilled++;
     gameState.stats.damageDealt += enemy.hp;
 
@@ -161,8 +171,14 @@ export function getEffectiveAtk(player) {
   if (player.weapon) atk += player.weapon.atk || 0;
 
   // 血统加成
-  if (player.activeBloodline === 'vampire') atk += Math.floor(atk * 0.15);
-  if (player.activeBloodline === 'ancient_wu') atk += Math.floor(atk * 0.2);
+  if (player.activeBloodline === 'vampire') {
+    const bonus = Math.floor(atk * 0.15);
+    atk += bonus;
+  }
+  if (player.activeBloodline === 'ancient_wu') {
+    const bonus = Math.floor(atk * 0.2);
+    atk += bonus;
+  }
 
   // 基因锁加成
   if (player.geneLockActive && player.geneLock > 0) {
@@ -195,4 +211,42 @@ export function getEffectiveDef(player) {
   }
 
   return def;
+}
+
+/**
+ * 获取属性加成详细分解
+ */
+export function getStatsBreakdown(player) {
+  const breakdown = {
+    atk: { base: player.atk, weapon: 0, bloodline: 0, geneLock: 0, chips: 0, total: 0 },
+    def: { base: player.def, armor: 0, bloodline: 0, geneLock: 0, chips: 0, total: 0 },
+  };
+
+  // 武器
+  if (player.weapon) breakdown.atk.weapon = player.weapon.atk || 0;
+  if (player.armor) breakdown.def.armor = player.armor.def || 0;
+
+  // 血统
+  let atkWithWeapon = breakdown.atk.base + breakdown.atk.weapon;
+  let defWithArmor = breakdown.def.base + breakdown.def.armor;
+  if (player.activeBloodline === 'vampire') breakdown.atk.bloodline = Math.floor(atkWithWeapon * 0.15);
+  if (player.activeBloodline === 'ancient_wu') breakdown.atk.bloodline = Math.floor(atkWithWeapon * 0.2);
+  if (player.activeBloodline === 'martial') breakdown.def.bloodline = Math.floor(defWithArmor * 0.2);
+
+  // 基因锁
+  if (player.geneLockActive && player.geneLock > 0) {
+    breakdown.atk.geneLock = Math.floor((atkWithWeapon + breakdown.atk.bloodline) * 0.2 * player.geneLock);
+    breakdown.def.geneLock = Math.floor((defWithArmor + breakdown.def.bloodline) * 0.15 * player.geneLock);
+  }
+
+  // 芯片
+  for (const chip of player.chips || []) {
+    if (chip.stat === 'atk') breakdown.atk.chips += chip.value;
+    if (chip.stat === 'def') breakdown.def.chips += chip.value;
+  }
+
+  breakdown.atk.total = breakdown.atk.base + breakdown.atk.weapon + breakdown.atk.bloodline + breakdown.atk.geneLock + breakdown.atk.chips;
+  breakdown.def.total = breakdown.def.base + breakdown.def.armor + breakdown.def.bloodline + breakdown.def.geneLock + breakdown.def.chips;
+
+  return breakdown;
 }
