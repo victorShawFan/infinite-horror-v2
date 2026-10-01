@@ -53,8 +53,19 @@ export function showOpeningCutscene(onFinish) {
   const overlay = document.getElementById('ui-overlay');
   let sceneIdx = 0;
 
+  // Escape to skip entire cutscene
+  const skipHandler = (e) => {
+    if (e.key === 'Escape') {
+      document.removeEventListener('keydown', skipHandler);
+      overlay.innerHTML = '';
+      onFinish();
+    }
+  };
+  document.addEventListener('keydown', skipHandler);
+  
   function renderScene() {
     if (sceneIdx >= SCENES.length) {
+      document.removeEventListener('keydown', skipHandler);
       overlay.innerHTML = '';
       onFinish();
       return;
