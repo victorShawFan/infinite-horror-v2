@@ -240,6 +240,26 @@ function generateFloor_1_2() {
         itemType: 'stat_boost', effect: { atk: 3 },
         description: '永久提升3点攻击力。',
       },
+      // 额外物品
+      { type: ENTITY_TYPE.EVENT, id: 'hive_terminal', name: '安保终端',
+        x: 14, y: 10, sprite: '🖥', color: '#44aaaa',
+        event: {
+          type: 'investigate',
+          lines: [
+            { text: '一台仍在运行的安保终端。屏幕上显示着设施地图。', speaker: '旁白' },
+            { text: '这里标注了一条通向机房的路线...还有一个"红后防御系统"的警告。', speaker: '詹岚' },
+            { text: '红后...电影里那个AI？这是真的？', speaker: '郑吒' },
+            { text: '在这个世界里，一切都是真的。小心。', speaker: '张杰' },
+          ],
+          flag: 'hive_terminal_read',
+          rewards: { exp: 15 },
+        },
+      },
+      { type: ENTITY_TYPE.ITEM, id: 'stamina_potion', name: '能量饮料',
+        x: 2, y: 2, sprite: '🥤', color: '#44ccaa',
+        itemType: 'consumable', effect: { heal: 20 },
+        description: '恢复20点HP。味道一言难尽。',
+      },
     ],
     onClear: { nextFloor: 2, message: '你们深入蜂巢，来到了红后的防御区域...' },
   };
@@ -623,6 +643,28 @@ function generateFloor_1_6() {
       },
     ],
     onClear: null, // 最后一层
+  };
+}
+
+/** 通用宝箱工厂 */
+function makeChest(id, x, y, contents, description) {
+  return {
+    type: ENTITY_TYPE.ITEM, id, name: '物资箱',
+    x, y, sprite: '📦', color: '#cc8844',
+    itemType: 'consumable',
+    effect: contents,
+    description: description || '打开看看里面有什么。',
+  };
+}
+
+/** 通用属性宝石工厂 */
+function makeGem(id, x, y, stat, value, name, color) {
+  return {
+    type: ENTITY_TYPE.ITEM, id, name,
+    x, y, sprite: '◆', color,
+    itemType: 'stat_boost',
+    effect: { [stat]: value },
+    description: `永久提升${value}点${stat === 'atk' ? '攻击力' : stat === 'def' ? '防御力' : stat === 'spd' ? '速度' : '暴击率'}。`,
   };
 }
 
