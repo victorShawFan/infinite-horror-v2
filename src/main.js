@@ -530,6 +530,7 @@ function movePlayer(dx, dy) {
   }
 
   // 正常移动
+  p.facing = dx > 0 ? 'right' : dx < 0 ? 'left' : dy > 0 ? 'down' : 'up';
   p.x = nx;
   p.y = ny;
   gameState.turn++;

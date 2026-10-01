@@ -104,14 +104,20 @@ function _drawHumanoidSprite(ctx, x, y, look, name, color, bobY, options) {
   // 脸
   ctx.fillStyle = look.skin;
   roundRectFill(ctx, cx - s(5), headY + s(2), s(10), s(8), s(2));
-  // 眼睛
+  // 眼睛（根据朝向偏移瞳孔）
+  const facing = options.facing || 'down';
+  let eyeOX = 0, eyeOY = 0;
+  if (facing === 'left') eyeOX = -s(1);
+  else if (facing === 'right') eyeOX = s(1);
+  else if (facing === 'up') eyeOY = -s(1);
+  
   ctx.fillStyle = '#1a1a2a';
-  ctx.fillRect(cx - s(3), headY + s(5), s(2), s(2));
-  ctx.fillRect(cx + s(1), headY + s(5), s(2), s(2));
+  ctx.fillRect(cx - s(3) + eyeOX, headY + s(5) + eyeOY, s(2), s(2));
+  ctx.fillRect(cx + s(1) + eyeOX, headY + s(5) + eyeOY, s(2), s(2));
   // 眼白高光
   ctx.fillStyle = '#ffffff';
-  ctx.fillRect(cx - s(3), headY + s(5), s(1), s(1));
-  ctx.fillRect(cx + s(1), headY + s(5), s(1), s(1));
+  ctx.fillRect(cx - s(3) + eyeOX, headY + s(5) + eyeOY, s(1), s(1));
+  ctx.fillRect(cx + s(1) + eyeOX, headY + s(5) + eyeOY, s(1), s(1));
 
   // ── 角色光环（玩家特有） ──
   if (options.isPlayer) {

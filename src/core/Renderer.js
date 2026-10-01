@@ -337,6 +337,7 @@ export class Renderer {
       showBase: false,
       isPlayer: true,
       fullName: '郑吒',
+      facing: p.facing || 'down',
     });
   }
 
@@ -902,13 +903,15 @@ export class Renderer {
         ctx.fillRect(mmX + x * mmSize, mmY + y * mmSize, mmSize, mmSize);
       }
     }
+    const pulse = 0.5 + 0.5 * Math.sin(this._time * 0.08);
     for (const e of entities) {
       if (e.type === ENTITY_TYPE.ENEMY || e.type === ENTITY_TYPE.BOSS) ctx.fillStyle = '#ff4444';
       else if (e.type === ENTITY_TYPE.ITEM) ctx.fillStyle = '#ffcc44';
       else if (e.type === ENTITY_TYPE.COMPANION) ctx.fillStyle = '#4488ff';
       else if (e.type === ENTITY_TYPE.EVENT) ctx.fillStyle = '#ffffff';
       else continue;
-      ctx.fillRect(mmX + e.x * mmSize, mmY + e.y * mmSize, mmSize, mmSize);
+      const eSize = mmSize + (e.type === ENTITY_TYPE.BOSS ? pulse * 2 : 0);
+      ctx.fillRect(mmX + e.x * mmSize, mmY + e.y * mmSize, eSize, eSize);
     }
     const blink = Math.sin(this._time * 0.15) > 0;
     if (blink) {
