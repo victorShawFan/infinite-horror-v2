@@ -194,23 +194,42 @@ function loadFloor(index) {
 }
 
 function showFloorTitle(floor) {
+  const sceneBgMap = {
+    '1-1': '/assets/scenes/1-1_列车醒来_背景.jpg',
+    '1-2': '/assets/scenes/1-2_蜂巢入口_背景.jpg',
+    '1-3': '/assets/scenes/1-3_红后机房_背景.jpg',
+    '1-4': '/assets/scenes/1-4_激光走廊_背景.jpg',
+    '1-5': '/assets/scenes/1-5_终端控制室_背景.jpg',
+    '1-6': '/assets/scenes/1-6_六小时回归_背景.jpg',
+  };
+  const bgUrl = sceneBgMap[floor.id] || '';
   const overlay = document.getElementById('ui-overlay');
   overlay.innerHTML = `
     <div id="floor-title" style="
       position: absolute; top: 0; left: 0; right: 0; bottom: 0;
       display: flex; flex-direction: column; align-items: center; justify-content: center;
-      background: rgba(0,0,0,0.85);
-      animation: fadeIn 0.5s;
+      background: ${bgUrl ? `url('${bgUrl}') center/cover no-repeat` : 'rgba(0,0,0,0.85)'};
+      animation: fadeIn 0.8s;
     ">
-      <p style="font-size: 14px; color: #ff4444; letter-spacing: 6px; margin-bottom: 8px;">
-        第一章 · 名为生化
-      </p>
-      <h2 style="font-size: 36px; color: #e0e0e0; letter-spacing: 6px; margin-bottom: 16px;">
-        ${floor.id} ${floor.name}
-      </h2>
-      <p style="font-size: 16px; color: #888; max-width: 600px; text-align: center; line-height: 1.6;">
-        ${floor.subtitle}
-      </p>
+      <div style="
+        position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+        background: radial-gradient(ellipse at center, rgba(0,0,0,0.6) 0%, rgba(0,0,0,0.9) 100%);
+      "></div>
+      <div style="position: relative; z-index: 1; text-align: center;">
+        <p style="font-size: 14px; color: #ff4444; letter-spacing: 6px; margin-bottom: 8px;
+          text-shadow: 0 0 20px rgba(255,68,68,0.5);">
+          第一章 · 名为生化
+        </p>
+        <h2 style="font-size: 42px; color: #e0e0e0; letter-spacing: 8px; margin-bottom: 16px;
+          text-shadow: 0 0 30px rgba(255,255,255,0.2);">
+          ${floor.id} ${floor.name}
+        </h2>
+        <div style="width: 200px; height: 1px; background: linear-gradient(90deg, transparent, #ff4444, transparent); margin: 0 auto 16px;"></div>
+        <p style="font-size: 16px; color: #aaa; max-width: 600px; text-align: center; line-height: 1.8;
+          text-shadow: 0 0 10px rgba(0,0,0,0.8);">
+          ${floor.subtitle}
+        </p>
+      </div>
     </div>
     <style>
       @keyframes fadeIn { from { opacity: 0 } to { opacity: 1 } }
@@ -428,11 +447,16 @@ function movePlayer(dx, dy) {
       return;
     }
 
-    // NPC/队友 → 对话
+    // NPC/队友 → 对话（首次自动触发，之后可穿过）
     if (entity.type === ENTITY_TYPE.COMPANION || entity.type === ENTITY_TYPE.NPC) {
-      if (entity.dialogue) {
+      if (entity.dialogue && !entity._dialogueShown) {
+        entity._dialogueShown = true;
         startDialogue(entity.dialogue, entity);
+        return;
       }
+      // 已对话过的队友可以穿过
+      p.x = nx;
+      p.y = ny;
       return;
     }
 

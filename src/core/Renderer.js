@@ -617,24 +617,43 @@ export class Renderer {
   }
 
   _drawCombatResult(ctx, result) {
-    const boxW = 400;
-    const boxH = Math.min(350, 80 + result.log.length * 22);
+    // 全屏暗色遮罩
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+    ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
+    
+    const boxW = 440;
+    const boxH = Math.min(380, 100 + result.log.length * 22);
     const x = (CANVAS_W - boxW) / 2;
     const y = (CANVAS_H - boxH) / 2;
 
-    ctx.fillStyle = 'rgba(5, 5, 15, 0.96)';
-    roundRect(ctx, x, y, boxW, boxH, 12);
+    // 渐变背景
+    const gradient = ctx.createLinearGradient(x, y, x, y + boxH);
+    gradient.addColorStop(0, 'rgba(10, 10, 25, 0.98)');
+    gradient.addColorStop(1, 'rgba(5, 5, 15, 0.98)');
+    ctx.fillStyle = gradient;
+    roundRect(ctx, x, y, boxW, boxH, 14);
     ctx.fill();
 
-    ctx.strokeStyle = result.victory ? COLORS.TEXT_HEAL : COLORS.TEXT_DANGER;
+    // 双层边框
+    const borderColor = result.victory ? '#44ff88' : '#ff4444';
+    ctx.strokeStyle = borderColor;
     ctx.lineWidth = 2;
-    roundRect(ctx, x, y, boxW, boxH, 12);
+    roundRect(ctx, x, y, boxW, boxH, 14);
+    ctx.stroke();
+    ctx.strokeStyle = borderColor + '33';
+    ctx.lineWidth = 4;
+    roundRect(ctx, x + 3, y + 3, boxW - 6, boxH - 6, 11);
     ctx.stroke();
 
-    ctx.font = 'bold 16px "Microsoft YaHei"';
-    ctx.fillStyle = result.victory ? COLORS.TEXT_HEAL : COLORS.TEXT_DANGER;
+    // 顶部装饰线
+    ctx.fillStyle = borderColor;
+    ctx.fillRect(x + 20, y + 45, boxW - 40, 1);
+
+    ctx.font = 'bold 18px "Microsoft YaHei"';
+    ctx.fillStyle = result.victory ? '#44ff88' : '#ff4444';
     ctx.textAlign = 'center';
-    ctx.fillText(result.victory ? '⚔ 战 斗 胜 利 ⚔' : '💀 战 斗 失 败 💀', CANVAS_W / 2, y + 28);
+    const titleGlow = result.victory ? '0 0 20px rgba(68,255,136,0.5)' : '0 0 20px rgba(255,68,68,0.5)';
+    ctx.fillText(result.victory ? '⚔ 战 斗 胜 利 ⚔' : '💀 战 斗 失 败 💀', CANVAS_W / 2, y + 32);
 
     ctx.font = '13px "Microsoft YaHei"';
     ctx.textAlign = 'left';
