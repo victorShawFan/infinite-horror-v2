@@ -24,6 +24,9 @@ export class Renderer {
     this._shakeY = 0;
     this._floatTexts = []; // { text, x, y, color, life }
     this._particles = [];
+    this._flashColor = null;
+    this._flashDuration = 0;
+    this._flashStart = 0;
   }
 
   _resize() {
@@ -81,7 +84,7 @@ export class Renderer {
     ctx.translate(this._shakeX, this._shakeY);
 
     // 清屏
-    ctx.fillStyle = COLORS.BG_DARK;
+    ctx.fillStyle = floor?.bgColor || COLORS.BG_DARK;
     ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
 
     if (!floor) {
@@ -120,6 +123,18 @@ export class Renderer {
 
     // ── HUD（固定位置）──
     this._drawHUD(ctx, p, floor);
+
+    // ── 全屏闪光效果 ──
+    if (this._flashColor && this._flashStart > 0) {
+      const elapsed = performance.now() - this._flashStart;
+      if (elapsed < this._flashDuration) {
+        const alpha = 1 - elapsed / this._flashDuration;
+        ctx.fillStyle = this._flashColor.replace(/[\d.]+\)$/, `${alpha * 0.3})`);
+        ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
+      } else {
+        this._flashColor = null;
+      }
+    }
 
     // ── 迷你地图 ──
     this._drawMinimap(ctx, floor, entities, p);

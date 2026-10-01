@@ -11,6 +11,7 @@ import { executeBattle, previewBattle } from './core/CombatSystem.js';
 import { generateChapter1 } from './core/MapGenerator.js';
 import { audioEngine } from './core/AudioEngine.js';
 import { renderLordGodSpace } from './core/LordGodSpace.js';
+import { CombatAnimator } from './core/CombatAnimation.js';
 
 // ── 全局状态 ──
 let renderer;
@@ -23,6 +24,7 @@ let choiceState = null;    // { choices, callback }
 let hoveredEntity = null;
 let gameStarted = false;
 let menuState = 'title'; // 'title' | 'playing'
+let combatAnimator = null;
 
 // ── 初始化 ──
 window.addEventListener('load', () => {
@@ -132,6 +134,7 @@ function startNewGame() {
 function startGame() {
   menuState = 'playing';
   document.getElementById('ui-overlay').innerHTML = '';
+  combatAnimator = new CombatAnimator(renderer);
 
   chapter = generateChapter1();
   currentFloorIndex = gameState.nodeIndex || 0;
@@ -476,26 +479,30 @@ function startCombat(enemy) {
     // 移除被击败的敌人
     const idx = entities.indexOf(enemy);
     if (idx >= 0) entities.splice(idx, 1);
-
-    renderer.shake(5, 300);
-    renderer.addParticle(enemy.x * TILE_SIZE + TILE_SIZE / 2, enemy.y * TILE_SIZE + TILE_SIZE / 2, 'rgb(255, 100, 50)', 10);
-    renderer.addFloatText(`+${enemy.rewards?.exp || 0} EXP`, enemy.x, enemy.y - 0.5, 'rgb(170, 136, 255)');
-    audioEngine.playHit(true);
-
-    // 检查boss特殊事件
-    if (enemy.onDefeat) {
-      setTimeout(() => {
-        if (enemy.onDefeat.flag) gameState.setFlag(enemy.onDefeat.flag);
-        startDialogue(enemy.onDefeat.lines);
-      }, 300);
-    }
-  } else {
-    renderer.shake(8, 500);
-    audioEngine.playDamage();
   }
 
-  combatResult = result;
-  gameState.save(0); // 自动存档
+  // 暴露玩家位置给战斗动画
+  window._gamePlayerX = gameState.player.x;
+  window._gamePlayerY = gameState.player.y;
+
+  // 播放战斗动画序列
+  combatAnimator.playCombatSequence(result, enemy, () => {
+    combatResult = result;
+
+    if (result.victory) {
+      renderer.addFloatText(`+${enemy.rewards?.exp || 0} EXP`, enemy.x, enemy.y - 1, 'rgb(170, 136, 255)');
+
+      // 检查boss特殊事件
+      if (enemy.onDefeat) {
+        setTimeout(() => {
+          if (enemy.onDefeat.flag) gameState.setFlag(enemy.onDefeat.flag);
+          startDialogue(enemy.onDefeat.lines);
+        }, 300);
+      }
+    }
+
+    gameState.save(0); // 自动存档
+  });
 }
 
 // ── 物品拾取 ──
