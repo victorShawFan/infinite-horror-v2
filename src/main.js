@@ -590,7 +590,7 @@ function pickupItem(item) {
     case 'consumable':
       if (item.effect.heal) {
         const healed = gameState.healPlayer(item.effect.heal);
-        renderer.addFloatText(`+${healed} HP`, item.x, item.y, 'rgb(68, 255, 136)');
+        renderer.addParticle(item.x * TILE_SIZE + TILE_SIZE/2, item.y * TILE_SIZE + TILE_SIZE/2, 'rgb(68, 255, 136)', 6);        renderer.addFloatText(`+${healed} HP`, item.x, item.y, 'rgb(68, 255, 136)');
       }
       break;
 
@@ -604,6 +604,7 @@ function pickupItem(item) {
     case 'weapon':
       p.weapon = item.weapon;
       renderer.addFloatText(`装备: ${item.weapon.name}`, item.x, item.y, 'rgb(255, 170, 0)');
+      renderer.addParticle(item.x * TILE_SIZE + TILE_SIZE/2, item.y * TILE_SIZE + TILE_SIZE/2, 'rgb(255, 170, 0)', 8);
       break;
 
     case 'key':
