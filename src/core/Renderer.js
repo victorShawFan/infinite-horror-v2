@@ -254,9 +254,22 @@ export class Renderer {
         ctx.strokeRect(px + 1, py + 1, TILE_SIZE - 2, TILE_SIZE - 2);
       }
 
-      // 绘制精灵（带阴影和描边的汉字）
+      // 绘制精灵（小人偶）
       const bob = (e.type === ENTITY_TYPE.ITEM) ? Math.sin(this._time * 0.08 + e.x) * 2 : 0;
-      drawCharacterSprite(ctx, px, py, e.sprite, e.color || '#ffffff', TILE_SIZE * 0.6, { bob });
+      const isEnemy = e.type === ENTITY_TYPE.ENEMY || e.type === ENTITY_TYPE.BOSS;
+      const isItem = e.type === ENTITY_TYPE.ITEM || e.type === ENTITY_TYPE.EVENT;
+      if (isItem) {
+        // 物品和事件仍然用图标
+        _drawItemIcon(ctx, px, py, e, this._time);
+      } else {
+        drawCharacterSprite(ctx, px, py, e.sprite, e.color || '#ffffff', TILE_SIZE * 0.6, {
+          bob,
+          fullName: e.name,
+          isEnemy,
+          isBoss: e.type === ENTITY_TYPE.BOSS,
+          _time: this._time,
+        });
+      }
 
       // 敌人HP条
       if ((e.type === ENTITY_TYPE.ENEMY || e.type === ENTITY_TYPE.BOSS) && e.hp !== undefined) {
@@ -306,8 +319,12 @@ export class Renderer {
       ctx.fillRect(px - 15, py - 15, TILE_SIZE + 30, TILE_SIZE + 30);
     }
 
-    // 玩家角色（精细绘制）
-    drawCharacterSprite(ctx, px, py, '郑', COLORS.PLAYER, TILE_SIZE * 0.65, { showBase: false });
+    // 玩家角色（小人偶）
+    drawCharacterSprite(ctx, px, py, '郑吒', COLORS.PLAYER, TILE_SIZE * 0.65, {
+      showBase: false,
+      isPlayer: true,
+      fullName: '郑吒',
+    });
   }
 
   _drawHUD(ctx, p, floor) {
@@ -822,6 +839,40 @@ export class Renderer {
       ctx.fillRect(mmX + player.x * mmSize - 1, mmY + player.y * mmSize - 1, mmSize + 2, mmSize + 2);
     }
   }
+}
+
+
+// ── 物品/事件图标绘制（不用人偶） ──
+function _drawItemIcon(ctx, x, y, entity, time) {
+  const cx = x + TILE_SIZE / 2;
+  const cy = y + TILE_SIZE / 2;
+  const bob = Math.sin(time * 0.08 + x * 0.1) * 2;
+
+  // 脚下阴影
+  ctx.fillStyle = 'rgba(0, 0, 0, 0.25)';
+  ctx.beginPath();
+  ctx.ellipse(cx, y + TILE_SIZE - 4, TILE_SIZE * 0.25, 3, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // 图标底色光晕
+  const glowColor = entity.color || '#ffcc44';
+  const glow = ctx.createRadialGradient(cx, cy + bob, 0, cx, cy + bob, TILE_SIZE * 0.35);
+  glow.addColorStop(0, glowColor + '33');
+  glow.addColorStop(1, glowColor + '00');
+  ctx.fillStyle = glow;
+  ctx.beginPath();
+  ctx.arc(cx, cy + bob, TILE_SIZE * 0.35, 0, Math.PI * 2);
+  ctx.fill();
+
+  // 图标字符
+  ctx.fillStyle = entity.color || '#ffcc44';
+  ctx.font = `${TILE_SIZE * 0.55}px "Noto Serif SC", sans-serif`;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.strokeStyle = 'rgba(0, 0, 0, 0.6)';
+  ctx.lineWidth = 2;
+  ctx.strokeText(entity.sprite, cx, cy + bob);
+  ctx.fillText(entity.sprite, cx, cy + bob);
 }
 
 // ── 工具 ──
