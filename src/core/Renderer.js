@@ -404,6 +404,23 @@ export class Renderer {
     ];
     const tipIdx = Math.floor(this._time / 300) % tips.length;
     const companionCount = (gameState.companions || []).filter(c => c.alive).length;
+    
+    // 楼层进度条
+    const floorId = floor.id || '1-1';
+    const floorNum = parseInt(floorId.split('-')[1]) || 1;
+    const totalFloors = 6;
+    const progressX = CANVAS_W - 180;
+    const progressY = CANVAS_H - 32;
+    ctx.fillStyle = 'rgba(50, 50, 70, 0.6)';
+    ctx.fillRect(progressX, progressY, 120, 8);
+    ctx.fillStyle = 'rgba(68, 170, 255, 0.7)';
+    ctx.fillRect(progressX, progressY, 120 * (floorNum / totalFloors), 8);
+    ctx.font = '10px "Microsoft YaHei"';
+    ctx.fillStyle = '#888';
+    ctx.textAlign = 'center';
+    ctx.fillText('第一章 ' + floorNum + '/' + totalFloors, progressX + 60, progressY - 3);
+    
+    ctx.textAlign = 'left';
     ctx.fillText(
       `${floor.id} ${floor.name}  |  🔑 ${p.keys.yellow}/${p.keys.blue}/${p.keys.red}  |  队友×${companionCount}  |  💡 ${tips[tipIdx]}`,
       pad + 8,

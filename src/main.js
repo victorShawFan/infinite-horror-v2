@@ -528,6 +528,15 @@ function movePlayer(dx, dy) {
   gameState.turn++;
   gameState.stats.turnsPlayed++;
 
+  // 前几回合的教学提示
+  if (gameState.turn === 1) {
+    renderer.notify('WASD或方向键移动 · 空格互动', 'rgb(150,150,180)', 120);
+  } else if (gameState.turn === 3) {
+    renderer.notify('走向敌人即可自动战斗 · 悬停鼠标预览', 'rgb(150,150,180)', 120);
+  } else if (gameState.turn === 6) {
+    renderer.notify('按 M 查看全地图 · 按 I 查看装备', 'rgb(150,150,180)', 100);
+  }
+
   // 自动恢复少量体力
   if (p.stamina < p.maxStamina) {
     p.stamina = Math.min(p.maxStamina, p.stamina + 1);
