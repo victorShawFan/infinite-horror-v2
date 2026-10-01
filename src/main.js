@@ -299,10 +299,14 @@ eventBus.on('player:death', () => {
 
     document.getElementById('btn-retry').addEventListener('click', () => {
       overlay.innerHTML = '';
-      // 恢复到当前层入口状态
+      // 恢复到当前层入口状态（清除本层已移除实体，重新开始）
       const p = gameState.player;
       p.hp = Math.floor(p.maxHp * 0.5); // 复活50% HP
       p.stamina = p.maxStamina;
+      // 重置本层的实体移除记录（敌人重新出现）
+      if (gameState.removedEntityIds[currentFloorIndex]) {
+        gameState.removedEntityIds[currentFloorIndex] = new Set();
+      }
       loadFloor(currentFloorIndex);
       gameStarted = true;
       requestAnimationFrame(gameLoop);
@@ -817,6 +821,15 @@ function interactAdjacent() {
       }
       if (entity.type === ENTITY_TYPE.EVENT || entity.type === ENTITY_TYPE.TRAP) {
         triggerEvent(entity);
+        return;
+      }
+      // 对敌人按空格: 显示战斗预判信息
+      if (entity.type === ENTITY_TYPE.ENEMY || entity.type === ENTITY_TYPE.BOSS) {
+        const preview = previewBattle(p, entity);
+        const msg = preview.canWin
+          ? `✓ vs ${entity.name}: ${preview.turnsNeeded}回合可胜 (受伤${preview.totalDamage})`
+          : `✗ vs ${entity.name}: 无法击败！需要更强的攻击力`;
+        renderer.notify(msg, preview.canWin ? 'rgb(68,255,136)' : 'rgb(255,68,68)', 120);
         return;
       }
     }
