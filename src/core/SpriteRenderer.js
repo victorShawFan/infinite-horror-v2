@@ -209,8 +209,18 @@ function _drawEnemySprite(ctx, x, y, charOrName, color, options) {
 
 // ── 图块绘制 ──
 
-export function drawWallTile(ctx, x, y, time) {
-  ctx.fillStyle = '#1e1e2e';
+// 墙壁主题色表
+const WALL_THEMES = {
+  default: { base: '#1e1e2e', shadeR: 5, shadeG: 0, shadeB: 12, highlight: 'rgba(80, 80, 120, 0.12)' },
+  alien_ship: { base: '#181828', shadeR: 3, shadeG: 5, shadeB: 15, highlight: 'rgba(40, 60, 120, 0.15)' },
+  alien_vent: { base: '#141422', shadeR: 2, shadeG: 4, shadeB: 12, highlight: 'rgba(30, 50, 100, 0.12)' },
+  alien_lab: { base: '#1a1626', shadeR: 6, shadeG: 2, shadeB: 14, highlight: 'rgba(60, 40, 100, 0.12)' },
+  alien_hive: { base: '#201410', shadeR: 10, shadeG: 4, shadeB: 2, highlight: 'rgba(80, 40, 20, 0.15)' },
+};
+
+export function drawWallTile(ctx, x, y, time, theme) {
+  const t = WALL_THEMES[theme] || WALL_THEMES.default;
+  ctx.fillStyle = t.base;
   ctx.fillRect(x, y, TILE_SIZE, TILE_SIZE);
   const brickH = TILE_SIZE / 4;
   const brickW = TILE_SIZE / 2;
@@ -220,22 +230,31 @@ export function drawWallTile(ctx, x, y, time) {
       const bx = x + col * brickW + offset;
       const by = y + row * brickH;
       const shade = 25 + Math.sin(bx * 0.1 + by * 0.07) * 8;
-      ctx.fillStyle = `rgb(${shade + 5}, ${shade}, ${shade + 12})`;
+      ctx.fillStyle = `rgb(${shade + t.shadeR}, ${shade + t.shadeG}, ${shade + t.shadeB})`;
       ctx.fillRect(bx + 1, by + 1, brickW - 2, brickH - 2);
     }
   }
-  ctx.fillStyle = 'rgba(80, 80, 120, 0.12)';
+  ctx.fillStyle = t.highlight;
   ctx.fillRect(x, y, TILE_SIZE, 2);
   ctx.fillStyle = 'rgba(0, 0, 0, 0.25)';
   ctx.fillRect(x, y + TILE_SIZE - 2, TILE_SIZE, 2);
 }
 
-export function drawFloorTile(ctx, x, y, time) {
+const FLOOR_THEMES = {
+  default: { rOff: 2, gOff: 0, bOff: 6, baseVal: 18, gridColor: 'rgba(40, 40, 55, 0.4)' },
+  alien_ship: { rOff: 1, gOff: 2, bOff: 8, baseVal: 16, gridColor: 'rgba(30, 40, 70, 0.4)' },
+  alien_vent: { rOff: 1, gOff: 1, bOff: 6, baseVal: 14, gridColor: 'rgba(25, 35, 60, 0.35)' },
+  alien_lab: { rOff: 3, gOff: 1, bOff: 8, baseVal: 16, gridColor: 'rgba(40, 30, 60, 0.4)' },
+  alien_hive: { rOff: 8, gOff: 3, bOff: 1, baseVal: 14, gridColor: 'rgba(60, 30, 20, 0.4)' },
+};
+
+export function drawFloorTile(ctx, x, y, time, theme) {
+  const ft = FLOOR_THEMES[theme] || FLOOR_THEMES.default;
   const noise = Math.sin(x * 0.15 + y * 0.12) * 3;
-  const base = 18 + noise;
-  ctx.fillStyle = `rgb(${base + 2}, ${base}, ${base + 6})`;
+  const base = ft.baseVal + noise;
+  ctx.fillStyle = `rgb(${base + ft.rOff}, ${base + ft.gOff}, ${base + ft.bOff})`;
   ctx.fillRect(x, y, TILE_SIZE, TILE_SIZE);
-  ctx.strokeStyle = 'rgba(40, 40, 55, 0.4)';
+  ctx.strokeStyle = ft.gridColor;
   ctx.lineWidth = 0.5;
   ctx.strokeRect(x + 0.5, y + 0.5, TILE_SIZE - 1, TILE_SIZE - 1);
   ctx.fillStyle = 'rgba(30, 30, 45, 0.3)';

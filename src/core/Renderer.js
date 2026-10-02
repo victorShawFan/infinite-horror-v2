@@ -228,11 +228,11 @@ export class Renderer {
             ctx.fillRect(px, py, TILE_SIZE, TILE_SIZE);
             break;
           case TILE.FLOOR:
-            drawFloorTile(ctx, px, py, (x * 7 + y * 13) % 4);
+            drawFloorTile(ctx, px, py, (x * 7 + y * 13) % 4, floor?.theme);
             continue;
             break;
           case TILE.WALL:
-            drawWallTile(ctx, px, py);
+            drawWallTile(ctx, px, py, 0, floor?.theme);
             continue;
           case TILE.STAIRS:
             drawStairsTile(ctx, px, py, this._time);
