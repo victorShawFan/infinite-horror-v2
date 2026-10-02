@@ -1120,6 +1120,8 @@ function startCombat(enemy, preScaledEnemy) {
     if (result.victory) {
       try { victoryFlash(document.getElementById('ui-overlay')); } catch {}
       renderer.addFloatText(`+${enemy.rewards?.exp || 0} EXP`, enemy.x, enemy.y - 1, 'rgb(170, 136, 255)');
+      if (enemy.rewards?.gold) renderer.addFloatText(`+${enemy.rewards.gold}G`, enemy.x, enemy.y - 0.4, 'rgb(255, 204, 68)');
+      if (enemy.rewards?.rewardPoints) renderer.addFloatText(`+${enemy.rewards.rewardPoints}RP`, enemy.x + 0.5, enemy.y - 1.5, 'rgb(255, 170, 0)');
 
       // 里程碑：战斗成就
       try { checkCombatMilestones(milestoneTracker, gameState.stats, enemy, result); } catch {}
