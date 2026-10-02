@@ -46,7 +46,7 @@ function f9_5(){const g=makeGrid();carveRoom(g,6,5,14,12);carveRoom(g,1,7,5,10);
 
 // ═══ 9-6 脑虫捕获撤离 ═══
 function f9_6(){const g=makeGrid();carveRoom(g,1,1,6,5);carveCorridor(g,6,3,10,3);carveRoom(g,10,1,16,6);carveCorridor(g,13,6,13,10);carveRoom(g,9,10,16,14);carveRoom(g,1,8,7,13);carveCorridor(g,4,5,4,8);carveCorridor(g,7,12,9,12);carveRoom(g,16,11,19,15);carveCorridor(g,16,13,16,13);g[14][18]=TILE.STAIRS;return{id:'9-6',name:'脑虫捕获撤离',subtitle:'脑虫的巢穴就在前方。零点已经就位。',bgColor:'#0a0810',theme:'scifi_base',tiles:g,width:W,height:H,playerStart:{x:3,y:3},entities:[
-{type:ENTITY_TYPE.BOSS,id:'boss_brainbug',name:'脑虫',x:13,y:3,sprite:'🧠',color:'#886644',hp:300,atk:28,def:10,spd:6,damageType:'psychic',weaknesses:['fire','physical'],rewards:{exp:280,gold:180,rewardPoints:450},lore:'虫族指挥中枢。精神攻击极其强大，但物理防御薄弱。'},
+{type:ENTITY_TYPE.BOSS,id:'boss_brainbug',bossId:'brain_bug',traits:['shield','regen'],name:'脑虫',x:13,y:3,sprite:'🧠',color:'#886644',hp:300,atk:28,def:10,spd:6,damageType:'psychic',weaknesses:['fire','physical'],rewards:{exp:280,gold:180,rewardPoints:450},lore:'虫族指挥中枢。精神攻击极其强大，但物理防御薄弱。'},
 {type:ENTITY_TYPE.ENEMY,id:'guard_bug_1',name:'护卫虫',x:4,y:10,sprite:'🪲',color:'#884422',hp:120,atk:36,def:16,spd:12,rewards:{exp:85,gold:55}},
 {type:ENTITY_TYPE.ENEMY,id:'guard_bug_2',name:'护卫虫',x:17,y:13,sprite:'🪲',color:'#884422',hp:120,atk:36,def:16,spd:12,rewards:{exp:85,gold:55}},
 {type:ENTITY_TYPE.ITEM,id:'medkit_ch9_6',name:'高级急救包',x:4,y:1,sprite:'♥',color:'#ff4488',itemType:'consumable',effect:{heal:130}},

@@ -8,6 +8,10 @@ import { gameState } from './GameState.js';
 import { audioEngine } from './AudioEngine.js';
 import { checkGeneLockAdvancement, advanceGeneLock, getGeneLockProgress, getGeneLockDescription } from './GeneLockSystem.js';
 import { getAvailableSkills, SKILL_DEFINITIONS } from './SkillSystem.js';
+import { enhanceEquipment, socketGem, unsocketGem, getEnhanceCost, 
+         getEquipmentDisplayName, GEM_TYPES, getEquipmentTotalStats } from './EquipmentSystem.js';
+import { allocateTalentPoint, resetTalents, getTalentEffects, 
+         getTalentPathInfo, TALENT_PATHS } from './TalentTree.js';
 
 /** 主神空间商店/强化项目 */
 export const SHOP_ITEMS = {
@@ -148,9 +152,15 @@ export function purchaseItem(item) {
   }
 
   // 装备
-  if (item.weapon) p.weapon = item.weapon;
-  if (item.armor) p.armor = item.armor;
-  if (item.accessory) p.accessory = item.accessory;
+  if (item.weapon) {
+    p.weapon = { ...item.weapon, enhanceLevel: 0, enhanceBonuses: {}, gemSlots: [], maxGemSlots: 2 };
+  }
+  if (item.armor) {
+    p.armor = { ...item.armor, enhanceLevel: 0, enhanceBonuses: {}, gemSlots: [], maxGemSlots: 2 };
+  }
+  if (item.accessory) {
+    p.accessory = { ...item.accessory, enhanceLevel: 0, enhanceBonuses: {}, gemSlots: [], maxGemSlots: 1 };
+  }
 
   audioEngine.playPickup();
   eventBus.emit('shop:purchase', item);
@@ -173,6 +183,8 @@ export function renderLordGodSpace(onClose) {
       { key: 'bloodline', name: '🩸 血统', color: '#ff4488' },
       { key: 'chips', name: '💎 芯片', color: '#aa44ff' },
       { key: 'equipment', name: '⚔ 装备', color: '#ffcc44' },
+      { key: 'forge', name: '🔨 锻造', color: '#ff6644' },
+      { key: 'talents', name: '🌟 天赋', color: '#ffdd44' },
       { key: 'geneLock', name: '🧬 基因锁', color: '#ff6600' },
     ];
 
@@ -256,7 +268,196 @@ export function renderLordGodSpace(onClose) {
     const container = document.getElementById('shop-items');
 
     // ── 基因锁特殊页面 ──
-    if (cat === 'geneLock') {
+    // ── 锻造（装备强化 + 宝石镶嵌） ──
+    if (cat === 'forge') {
+      const p = gameState.player;
+      const slots = [
+        { key: 'weapon', label: '⚔ 武器', item: p.weapon },
+        { key: 'armor', label: '🛡 护甲', item: p.armor },
+        { key: 'accessory', label: '💍 饰品', item: p.accessory },
+      ];
+      
+      container.innerHTML = slots.map(slot => {
+        if (!slot.item) return `<div style="background:rgba(255,255,255,0.03);border:1px solid #333;border-radius:10px;padding:16px;opacity:0.5;">
+          <strong style="color:#666;">${slot.label}: 无装备</strong></div>`;
+        
+        const displayName = getEquipmentDisplayName(slot.item);
+        const enhCost = getEnhanceCost(slot.item);
+        const totalStats = getEquipmentTotalStats(slot.item);
+        const gems = slot.item.gemSlots || [];
+        const maxGems = slot.item.maxGemSlots || 2;
+        
+        return `<div class="forge-slot" data-slot="${slot.key}" style="background:rgba(255,255,255,0.03);border:1px solid #555;border-radius:10px;padding:16px;margin-bottom:8px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+            <strong style="color:#e0e0e0;font-size:14px;">${slot.label}: ${displayName}</strong>
+          </div>
+          <div style="color:#888;font-size:12px;margin-bottom:8px;">
+            ${Object.entries(totalStats).filter(([k,v])=>v>0).map(([k,v])=>`${k.toUpperCase()}:${v}`).join(' | ')}
+          </div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;">
+            ${!enhCost.maxed ? `<button class="btn-enhance" data-slot="${slot.key}" style="
+              background:linear-gradient(135deg,#ff6644,#ff8844);border:none;color:#fff;
+              padding:8px 16px;cursor:pointer;border-radius:6px;font-size:12px;font-family:inherit;">
+              🔨 强化 +${enhCost.nextLevel} (⬡${enhCost.cost}, ${Math.floor(enhCost.successRate*100)}%)
+            </button>` : '<span style="color:#44ff88;font-size:12px;">✓ 满级</span>'}
+            ${gems.length < maxGems ? `<button class="btn-gem" data-slot="${slot.key}" style="
+              background:linear-gradient(135deg,#aa44ff,#cc66ff);border:none;color:#fff;
+              padding:8px 16px;cursor:pointer;border-radius:6px;font-size:12px;font-family:inherit;">
+              💎 镶嵌 (${gems.length}/${maxGems})
+            </button>` : ''}
+          </div>
+          ${gems.length > 0 ? `<div style="margin-top:8px;display:flex;gap:4px;">
+            ${gems.map((g,i) => `<span style="background:${g.color || '#666'};color:#fff;padding:2px 8px;border-radius:4px;font-size:11px;cursor:pointer;" class="btn-unsocket" data-slot="${slot.key}" data-idx="${i}">${g.name} ×</span>`).join('')}
+          </div>` : ''}
+        </div>`;
+      }).join('');
+      
+      // 绑定强化按钮
+      container.querySelectorAll('.btn-enhance').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const slotKey = btn.dataset.slot;
+          const equip = p[slotKey];
+          if (equip) {
+            const result = enhanceEquipment(equip, p);
+            if (result.success) {
+              audioEngine.playUI('purchase');
+            }
+            renderShop();
+            showCategory('forge');
+          }
+        });
+      });
+      
+      // 绑定宝石镶嵌（简化：依次镶嵌可用宝石）
+      container.querySelectorAll('.btn-gem').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const slotKey = btn.dataset.slot;
+          const equip = p[slotKey];
+          if (!equip) return;
+          // 从宝石背包取第一个可用的
+          const gemBag = gameState.gemInventory || [];
+          if (gemBag.length > 0) {
+            const gemId = gemBag.shift();
+            socketGem(equip, gemId);
+            audioEngine.playUI('pickup');
+          }
+          renderShop();
+          showCategory('forge');
+        });
+      });
+      
+      // 移除宝石
+      container.querySelectorAll('.btn-unsocket').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const slotKey = btn.dataset.slot;
+          const idx = parseInt(btn.dataset.idx);
+          const equip = p[slotKey];
+          if (equip) {
+            const result = unsocketGem(equip, idx);
+            if (result.success) {
+              gameState.gemInventory.push(result.gem.id);
+            }
+          }
+          renderShop();
+          showCategory('forge');
+        });
+      });
+      return;
+    }
+
+    // ── 天赋树 ──
+    if (cat === 'talents') {
+      const ts = gameState.talents;
+      const fx = getTalentEffects(ts);
+      
+      container.innerHTML = `
+        <div style="text-align:center;margin-bottom:16px;">
+          <span style="color:#ffdd44;font-size:16px;font-weight:bold;">🌟 可用天赋点: ${ts.points}</span>
+          <button id="btn-reset-talents" style="background:#ff4444;border:none;color:#fff;padding:4px 12px;border-radius:4px;font-size:11px;margin-left:12px;cursor:pointer;">重置 (⬡500)</button>
+        </div>
+        ${Object.entries(TALENT_PATHS).map(([pathId, path]) => {
+          const info = getTalentPathInfo(ts, pathId);
+          const allocated = info.allocated;
+          return `<div style="background:rgba(255,255,255,0.03);border:1px solid ${path.color}30;border-radius:10px;padding:16px;margin-bottom:8px;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+              <strong style="color:${path.color};font-size:14px;">${path.icon} ${path.name} (${allocated}/10)</strong>
+              ${ts.points > 0 && allocated < 10 ? `<button class="btn-talent" data-path="${pathId}" style="
+                background:${path.color};border:none;color:#000;padding:6px 14px;cursor:pointer;
+                border-radius:6px;font-size:12px;font-weight:bold;font-family:inherit;">
+                + 分配
+              </button>` : ''}
+            </div>
+            <p style="color:#888;font-size:11px;margin-bottom:8px;">${path.desc}</p>
+            <div style="background:#1a1a2a;border-radius:4px;height:6px;overflow:hidden;margin-bottom:8px;">
+              <div style="background:${path.color};width:${allocated*10}%;height:100%;border-radius:4px;transition:width 0.3s;"></div>
+            </div>
+            <div style="display:flex;flex-wrap:wrap;gap:4px;">
+              ${path.tiers.map((tier, i) => `<span style="
+                background:${i < allocated ? path.color + '33' : '#1a1a2a'};
+                color:${i < allocated ? path.color : '#555'};
+                border:1px solid ${i < allocated ? path.color + '66' : '#333'};
+                padding:2px 8px;border-radius:4px;font-size:10px;
+                ${i === allocated && ts.points > 0 ? 'cursor:pointer;' : ''}
+              " title="${tier.desc}">${tier.name}</span>`).join('')}
+            </div>
+            ${info.nextTier ? `<p style="color:#666;font-size:11px;margin-top:6px;">下一级: ${info.nextTier.name} — ${info.nextTier.desc}</p>` : 
+              allocated === 10 ? `<p style="color:${path.color};font-size:11px;margin-top:6px;">★ 已解锁终极天赋！</p>` : ''}
+          </div>`;
+        }).join('')}
+        ${Object.keys(fx).some(k => typeof fx[k] === 'number' && fx[k] > 0) ? `
+          <div style="background:rgba(255,221,68,0.05);border:1px solid #ffdd4430;border-radius:10px;padding:12px;margin-top:8px;">
+            <strong style="color:#ffdd44;font-size:12px;">当前天赋加成:</strong>
+            <p style="color:#ccc;font-size:11px;margin-top:4px;">
+              ${[
+                fx.atk > 0 ? 'ATK+'+fx.atk : '',
+                fx.def > 0 ? 'DEF+'+fx.def : '',
+                fx.spd > 0 ? 'SPD+'+fx.spd : '',
+                fx.crt > 0 ? 'CRT+'+fx.crt+'%' : '',
+                fx.maxHp > 0 ? 'MaxHP+'+fx.maxHp : '',
+                fx.maxMana > 0 ? 'MaxMana+'+fx.maxMana : '',
+                fx.dodgeChance > 0 ? '闪避'+Math.floor(fx.dodgeChance*100)+'%' : '',
+                fx.blockChance > 0 ? '格挡'+Math.floor(fx.blockChance*100)+'%' : '',
+                fx.regenPercent > 0 ? '每回合回血'+Math.floor(fx.regenPercent*100)+'%' : '',
+                fx.armorPen > 0 ? '破甲'+Math.floor(fx.armorPen*100)+'%' : '',
+                fx.killHeal > 0 ? '击杀回血'+Math.floor(fx.killHeal*100)+'%' : '',
+                fx.deathSave ? '死亡保护' : '',
+              ].filter(Boolean).join(' | ')}
+            </p>
+          </div>` : ''}
+      `;
+      
+      // 绑定分配按钮
+      container.querySelectorAll('.btn-talent').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const pathId = btn.dataset.path;
+          const result = allocateTalentPoint(ts, pathId);
+          if (result.success) {
+            audioEngine.playUI('purchase');
+            renderShop();
+            showCategory('talents');
+          }
+        });
+      });
+      
+      // 重置按钮
+      const resetBtn = document.getElementById('btn-reset-talents');
+      if (resetBtn) {
+        resetBtn.addEventListener('click', () => {
+          const p = gameState.player;
+          if ((p.rewardPoints || 0) < 500) return;
+          const result = resetTalents(ts, 500);
+          if (result.success) {
+            p.rewardPoints -= 500;
+            audioEngine.playUI('purchase');
+            renderShop();
+            showCategory('talents');
+          }
+        });
+      }
+      return;
+    }
+
+        if (cat === 'geneLock') {
       const progress = getGeneLockProgress(p);
       const check = checkGeneLockAdvancement(p);
       const desc = getGeneLockDescription(progress.currentStage);

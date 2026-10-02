@@ -549,7 +549,7 @@ function generateFloor_3_6() {
         rewards: { exp: 50, gold: 35 },
       },
       // ★ Boss: 伽椰子
-      { type: ENTITY_TYPE.BOSS, id: 'boss_kayako', name: '伽椰子',
+      { type: ENTITY_TYPE.BOSS, id: 'boss_kayako', bossId: 'kayako', traits: ['evasive', 'undying'], name: '伽椰子',
         x: 10, y: 7, sprite: '👩', color: '#440022',
         hp: 250, atk: 28, def: 8, spd: 12,
         damageType: 'spirit', weaknesses: ['spirit'],

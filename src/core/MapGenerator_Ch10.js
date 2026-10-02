@@ -44,7 +44,7 @@ function f10_5(){const g=makeGrid();carveRoom(g,6,5,14,12);carveRoom(g,1,7,5,10)
 
 // ═══ 10-6 团战结算 ═══
 function f10_6(){const g=makeGrid();carveRoom(g,1,1,6,5);carveCorridor(g,6,3,10,3);carveRoom(g,10,1,16,6);carveCorridor(g,13,6,13,10);carveRoom(g,9,10,16,14);carveRoom(g,1,8,7,13);carveCorridor(g,4,5,4,8);carveCorridor(g,7,12,9,12);carveRoom(g,16,11,19,15);carveCorridor(g,16,13,16,13);g[14][18]=TILE.STAIRS;return{id:'10-6',name:'团战结算',subtitle:'天神队的强者现身了。这是最危险的对手。',bgColor:'#0c0808',theme:'fantasy',tiles:g,width:W,height:H,playerStart:{x:3,y:3},entities:[
-{type:ENTITY_TYPE.BOSS,id:'boss_god_team',name:'天神队先锋',x:13,y:3,sprite:'⚡',color:'#ffaa22',hp:400,atk:45,def:20,spd:16,rewards:{exp:350,gold:250,rewardPoints:500},lore:'天神队——最强的轮回者队伍。他们的先锋拥有超越想象的战力。'},
+{type:ENTITY_TYPE.BOSS,id:'boss_god_team',bossId:'divine_vanguard',traits:['enrage'],name:'天神队先锋',x:13,y:3,sprite:'⚡',color:'#ffaa22',hp:350,atk:40,def:18,spd:16,rewards:{exp:350,gold:250,rewardPoints:500},lore:'天神队——最强的轮回者队伍。他们的先锋拥有超越想象的战力。'},
 {type:ENTITY_TYPE.ENEMY,id:'mordor_troll',name:'魔多巨魔',x:4,y:10,sprite:'👹',color:'#775533',hp:180,atk:40,def:24,spd:6,rewards:{exp:110,gold:75}},
 {type:ENTITY_TYPE.ITEM,id:'medkit_ch10_6',name:'生命之水',x:17,y:13,sprite:'♥',color:'#44ffaa',itemType:'consumable',effect:{heal:160}},
 {type:ENTITY_TYPE.EVENT,id:'ch10_ending',name:'第十章结算',x:13,y:12,sprite:'✦',color:'#ffdd88',event:{type:'chapter_end',lines:[{text:'天神队暂时撤退了。但所有人都知道——这只是开始。',speaker:'旁白'},{text:'中洲队全员归队。但最终的战争，还在前方。',speaker:'郑吒'},{text:'第十关「五队大战」通关。获得基础奖励1000点。',speaker:'主神'}],flag:'ch10_complete',rewards:{rewardPoints:1000}}},

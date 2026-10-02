@@ -22,7 +22,7 @@ function f11_2(){const g=makeGrid();carveRoom(g,1,1,7,6);carveCorridor(g,7,3,10,
 
 // ═══ 11-3 郑吒自杀破心魔 ═══
 function f11_3(){const g=makeGrid();carveRoom(g,1,1,5,5);carveCorridor(g,5,3,9,3);carveRoom(g,9,1,14,5);carveCorridor(g,11,5,11,9);carveRoom(g,8,9,14,13);carveRoom(g,1,8,6,12);carveCorridor(g,4,5,4,8);carveCorridor(g,6,10,8,10);carveRoom(g,15,9,19,14);carveCorridor(g,14,11,15,11);g[13][18]=TILE.STAIRS;return{id:'11-3',name:'郑吒自杀破心魔',subtitle:'弗莱迪抓住了郑吒最深的恐惧。唯一的办法——是不再恐惧死亡。',bgColor:'#140810',theme:'nightmare',tiles:g,width:W,height:H,playerStart:{x:3,y:3},entities:[
-{type:ENTITY_TYPE.BOSS,id:'boss_freddy',name:'弗莱迪',x:11,y:9,sprite:'🔪',color:'#cc4422',hp:320,atk:44,def:12,spd:18,damageType:'psychic',weaknesses:['fire'],rewards:{exp:300,gold:200,rewardPoints:400},lore:'猛鬼街的主人。在梦境中几乎无敌，但在清醒者面前不堪一击。'},
+{type:ENTITY_TYPE.BOSS,id:'boss_freddy',bossId:'freddy',traits:['evasive'],name:'弗莱迪',x:11,y:9,sprite:'🔪',color:'#cc4422',hp:300,atk:38,def:12,spd:18,damageType:'psychic',weaknesses:['fire'],rewards:{exp:300,gold:200,rewardPoints:400},lore:'猛鬼街的主人。在梦境中几乎无敌，但在清醒者面前不堪一击。'},
 {type:ENTITY_TYPE.EVENT,id:'heart_demon',name:'心魔对决',x:4,y:10,sprite:'💔',color:'#ff4488',event:{type:'dialogue',lines:[{text:'弗莱迪化作了郑吒自己的模样。那是他最深的恐惧——成为懦夫。',speaker:'旁白'},{text:'你害怕的不是死亡。你害怕的是活着却无法保护任何人。',speaker:'心魔'},{text:'郑吒举起了武器——对准了自己。',speaker:'旁白'},{text:'（郑吒以自杀跨越心魔。这是原著中最关键的转折之一。）',speaker:'主神'}],flag:'heart_demon_defeated'}},
 {type:ENTITY_TYPE.ITEM,id:'medkit_ch11_3',name:'高级急救包',x:17,y:12,sprite:'♥',color:'#ff4488',itemType:'consumable',effect:{heal:150}},
 {type:ENTITY_TYPE.ITEM,id:'spd_ch11',name:'灵速之靴',x:2,y:9,sprite:'◆',color:'#44ffaa',itemType:'stat_boost',effect:{spd:6}}]};}

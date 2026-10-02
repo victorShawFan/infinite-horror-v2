@@ -658,7 +658,7 @@ function generateFloor_1_6() {
         description: '十几个感染者聚集在一起，形成了一面缓慢推进的"肉墙"。单个不足为惧，但这个数量……速度慢是唯一的好消息。硬碰硬不是好主意。',
       },
       // 最终Boss
-      { type: ENTITY_TYPE.BOSS, id: 'boss_tyrant', name: '暴君 T-002',
+      { type: ENTITY_TYPE.BOSS, id: 'boss_tyrant', bossId: 'tyrant_t002', traits: ['enrage', 'armored'], name: '暴君 T-002',
         x: 15, y: 11, sprite: '暴', color: '#ff44ff',
         hp: 150, atk: 22, def: 12, spd: 6,
         crt: 10,

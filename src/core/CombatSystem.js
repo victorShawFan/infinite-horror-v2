@@ -12,6 +12,12 @@ import {
   processStatusEffects, applyStatusEffect, tickCooldowns,
   STATUS_EFFECT
 } from './SkillSystem.js';
+import { getTalentEffects } from './TalentTree.js';
+import { getEquipmentTotalStats, getActiveSetBonuses } from './EquipmentSystem.js';
+import {
+  getBossPhases, getCurrentPhase, applyPhaseModifiers,
+  shouldUseBossSpecial, calcBossSpecialDamage, processEnemyTraits
+} from './EnemyAbilitySystem.js';
 
 // ── 伤害计算 ──
 export function calcDamage(attacker, defender, damageType = DAMAGE_TYPE.PHYSICAL, minDmg = 1) {
@@ -254,6 +260,20 @@ export function executeBattle(enemy) {
     log.push({ text: `⚡ 速度碾压！每回合发动二连击`, type: 'buff' });
   }
 
+  // ── 天赋效果（被动） ──
+  let talentFx = {};
+  try { talentFx = getTalentEffects(gameState.talents) || {}; } catch {}
+  let deathSaveUsed = false;
+  let lastCrit = false;  // 用于连锁暴击
+
+  // ── Boss 相位系统 ──
+  const bossPhases = enemy.bossId ? getBossPhases(enemy.bossId) : null;
+  let currentPhaseIdx = -1;
+  let bossSpecialLastUsed = 0;
+  const enemyMaxHp = enemy.hp;
+  let effectiveEnemyAtk = enemyEffAtk;
+  let effectiveEnemyDef = enemy.def;
+
   // 展示可用技能
   const availSkills = getAvailableSkills(p);
   if (availSkills.length > 0) {
@@ -263,6 +283,45 @@ export function executeBattle(enemy) {
   while (enemyHp > 0 && playerHp > 0) {
     round++;
     combatState.turn = round;
+
+    // ── 天赋：每回合生命恢复 ──
+    if (talentFx.regenPercent && playerHp > 0) {
+      const regenAmt = Math.max(1, Math.floor(p.maxHp * talentFx.regenPercent));
+      playerHp = Math.min(p.maxHp, playerHp + regenAmt);
+      if (round <= 6) log.push({ text: `💚 天赋恢复 +${regenAmt} HP`, type: 'heal' });
+    }
+    // ── 天赋：每回合法力恢复 ──
+    if (talentFx.manaRegen && playerMana < (p.maxMana || 0)) {
+      playerMana = Math.min(p.maxMana, playerMana + talentFx.manaRegen);
+      if (round <= 6) log.push({ text: `💙 天赋恢复 +${talentFx.manaRegen} 法力`, type: 'heal' });
+    }
+
+    // ── Boss 相位检测 ──
+    if (bossPhases && enemyHp > 0) {
+      const phaseInfo = getCurrentPhase(bossPhases, enemyHp, enemyMaxHp);
+      if (phaseInfo.index !== currentPhaseIdx) {
+        currentPhaseIdx = phaseInfo.index;
+        const ph = phaseInfo.phase;
+        effectiveEnemyAtk = Math.floor(enemyEffAtk * (ph.atkMult || 1));
+        effectiveEnemyDef = Math.floor(enemy.def * (ph.defMult || 1));
+        if (round > 1) {
+          log.push({ text: ``, type: 'separator' });
+          log.push({ text: `⚠ ${enemy.name}进入【${ph.name}】阶段！`, type: 'boss_phase' });
+          log.push({ text: `  ${ph.desc}`, type: 'boss_phase' });
+        }
+      }
+    }
+
+    // ── 天赋：处决伤害（每N回合） ──
+    if (talentFx.executeDmg && round % talentFx.executeDmg.interval === 0 && enemyHp > 0) {
+      const execDmg = Math.max(1, Math.floor(enemyHp * talentFx.executeDmg.percent));
+      enemyHp -= execDmg;
+      log.push({ text: `⚔ 灭世之力！真实伤害 ${execDmg}`, type: 'critical' });
+      if (enemyHp <= 0) break;
+    }
+
+    // ── 天赋：额外回合（每N回合） ──
+    // (标记，在本回合结束时额外执行一次攻击)
 
     // ── 回合开始：处理玩家状态效果 ──
     const playerEffects = processStatusEffects('player', combatState);
@@ -303,19 +362,39 @@ export function executeBattle(enemy) {
     const mcBuff = (combatState.statusEffects?.player || []).find(e => e.type === STATUS_EFFECT.BUFF_ATK);
     if (mcBuff && mcBuff.value > 50) atkMultiplier = 2; // muscle_control gives 100% buff
 
+    // ── 天赋：狂暴（低HP加攻） ──
+    let berserkMult = 1;
+    if (talentFx.berserkerThreshold && playerHp < p.maxHp * talentFx.berserkerThreshold) {
+      berserkMult = 1 + talentFx.berserkerAtkBonus;
+      if (round <= 6 || round % 5 === 0) log.push({ text: `🔥 狂暴！ATK +${Math.floor(talentFx.berserkerAtkBonus * 100)}%`, type: 'buff' });
+    }
+    // ── 天赋：连锁暴击 ──
+    let chainCritBonus = lastCrit ? (talentFx.chainCrit || 0) : 0;
+    lastCrit = false;
+
     const attackCount = isDouble ? 2 : 1;
     for (let i = 0; i < attackCount && enemyHp > 0; i++) {
+      // 应用破甲天赋
+      const armorPenDef = talentFx.armorPen ? Math.floor(enemy.def * (1 - talentFx.armorPen)) : enemy.def;
       const pHit = calcDamage(
-        { atk: Math.floor(pAtk * atkMultiplier), crt: pCrt, geneLock: p.geneLock },
-        enemy,
+        { atk: Math.floor(pAtk * atkMultiplier * berserkMult), crt: pCrt + chainCritBonus, geneLock: p.geneLock },
+        { ...enemy, def: bossPhases ? effectiveEnemyDef : armorPenDef },
         p.weapon?.damageType || DAMAGE_TYPE.PHYSICAL
       );
       enemyHp -= pHit.damage;
 
       const hitLabel = isDouble ? `[${i + 1}击] ` : '';
       const multiLabel = atkMultiplier > 1 ? ' 💪强化！' : '';
+      if (pHit.isCrit) lastCrit = true;
+      // 天赋：暴击伤害加成
+      let finalDmg = pHit.damage;
+      if (pHit.isCrit && talentFx.critDmgBonus > 0) {
+        const bonus = Math.floor(pHit.damage * talentFx.critDmgBonus);
+        finalDmg += bonus;
+        enemyHp -= bonus; // 额外扣除
+      }
       log.push({
-        text: `${hitLabel}郑吒 → ${enemy.name} ${pHit.damage}${pHit.isCrit ? ' 暴击！' : ''}${pHit.isWeak ? ' 弱点！' : ''}${multiLabel}`,
+        text: `${hitLabel}郑吒 → ${enemy.name} ${finalDmg}${pHit.isCrit ? ' 暴击！' : ''}${pHit.isWeak ? ' 弱点！' : ''}${multiLabel}`,
         type: pHit.isCrit ? 'critical' : 'attack',
       });
 
@@ -344,6 +423,17 @@ export function executeBattle(enemy) {
       log.push({ text: `🔥 灼烧 ${chipFx.burnDmg}`, type: 'burn' });
     }
 
+    // ── 天赋：节奏打击（每N回合额外一击） ──
+    if (talentFx.rhythmStrike > 0 && round % talentFx.rhythmStrike === 0 && enemyHp > 0) {
+      const rhythmHit = calcDamage(
+        { atk: Math.floor(pAtk * berserkMult), crt: pCrt, geneLock: p.geneLock },
+        { ...enemy, def: bossPhases ? effectiveEnemyDef : enemy.def },
+        p.weapon?.damageType || DAMAGE_TYPE.PHYSICAL
+      );
+      enemyHp -= rhythmHit.damage;
+      log.push({ text: `⚔ 节奏打击！额外攻击 ${rhythmHit.damage}${rhythmHit.isCrit ? ' 暴击！' : ''}`, type: 'critical' });
+    }
+
     if (enemyHp <= 0) break;
 
     // ── 敌人回合：检查眩晕/冻结 ──
@@ -352,9 +442,50 @@ export function executeBattle(enemy) {
     );
 
     if (!enemyStunned) {
+      // ── Boss 特殊技能 ──
+      if (bossPhases && currentPhaseIdx >= 0) {
+        const phase = bossPhases[currentPhaseIdx];
+        if (shouldUseBossSpecial(phase, round, bossSpecialLastUsed)) {
+          const special = calcBossSpecialDamage(effectiveEnemyAtk, phase.specialMove);
+          bossSpecialLastUsed = round;
+          let totalSpecialDmg = special.damage;
+          // 多段攻击
+          if (special.hits) totalSpecialDmg = Math.floor(special.damage / special.hits) * special.hits;
+          // 天赋 lastStand 减伤
+          if (talentFx.lastStand && playerHp < p.maxHp * talentFx.lastStand.threshold) {
+            totalSpecialDmg = Math.floor(totalSpecialDmg * (1 - talentFx.lastStand.dmgReduce));
+          }
+          playerHp -= totalSpecialDmg;
+          log.push({ text: `💥 ${special.name}！→ 郑吒 ${totalSpecialDmg}`, type: 'boss_special' });
+          // 自伤
+          if (special.selfDmg) {
+            const selfHurt = Math.floor(enemyMaxHp * special.selfDmg);
+            enemyHp -= selfHurt;
+            log.push({ text: `🩸 ${enemy.name}自伤 ${selfHurt}`, type: 'enemy_hurt' });
+          }
+          // 吸血
+          if (special.healAmount) {
+            enemyHp = Math.min(enemyMaxHp, enemyHp + special.healAmount);
+            log.push({ text: `💚 ${enemy.name}恢复 ${special.healAmount}`, type: 'enemy_heal' });
+          }
+          if (playerHp <= 0 && talentFx.deathSave && !deathSaveUsed) {
+            deathSaveUsed = true;
+            playerHp = 1;
+            log.push({ text: `🌟 天赋【重生】发动！保留1HP！`, type: 'talent_save' });
+          }
+          if (playerHp <= 0) break;
+        }
+      }
+
+      // ── 天赋：闪避 ──
+      const dodgeRoll = Math.random();
+      if (talentFx.dodgeChance > 0 && dodgeRoll < talentFx.dodgeChance) {
+        log.push({ text: `💨 天赋闪避！躲开了 ${enemy.name} 的攻击`, type: 'dodge' });
+      } else {
+
       // ── 敌人攻击 ──
       const eHit = calcDamage(
-        { atk: enemyEffAtk, crt: enemy.crt || 0 },
+        { atk: bossPhases ? effectiveEnemyAtk : enemyEffAtk, crt: enemy.crt || 0 },
         { def: pDef, res: p.res || 0 },
         enemy.damageType || DAMAGE_TYPE.PHYSICAL,
         0
@@ -376,12 +507,49 @@ export function executeBattle(enemy) {
         }
       }
 
+      // ── 天赋：格挡 ──
+      let blocked = false;
+      if (talentFx.blockChance > 0 && !dodgeBuff && Math.random() < talentFx.blockChance) {
+        const blockAmt = Math.floor(eHit.damage * talentFx.blockReduce);
+        playerHp += blockAmt; // 返还已扣除的部分
+        blocked = true;
+        log.push({ text: `🛡 格挡！减免 ${blockAmt} 伤害`, type: 'block' });
+        // 格挡反击
+        if (talentFx.blockCounter > 0 && enemyHp > 0) {
+          const counterDmg = Math.max(1, Math.floor(eHit.damage * talentFx.blockCounter));
+          enemyHp -= counterDmg;
+          log.push({ text: `⚔ 格挡反击 ${counterDmg}`, type: 'reflect' });
+        }
+      }
+
+      // ── 天赋：最后防线减伤 ──
+      if (talentFx.lastStand && !dodgeBuff && !blocked && playerHp > 0 && playerHp < p.maxHp * talentFx.lastStand.threshold) {
+        const lsReduce = Math.floor(eHit.damage * talentFx.lastStand.dmgReduce);
+        playerHp += lsReduce;
+        if (round <= 6) log.push({ text: `🌟 最后防线减伤 ${lsReduce}`, type: 'buff' });
+      }
+
+      // ── 天赋：死亡保护 ──
+      if (playerHp <= 0 && talentFx.deathSave && !deathSaveUsed) {
+        deathSaveUsed = true;
+        playerHp = 1;
+        log.push({ text: `🌟 天赋【重生】发动！保留1HP！`, type: 'talent_save' });
+      }
+
+      // ── 天赋：受暴击减伤 ──
+      if (eHit.isCrit && talentFx.critDmgReduce > 0 && !dodgeBuff) {
+        const reduce = Math.floor(eHit.damage * talentFx.critDmgReduce);
+        playerHp += reduce;
+      }
+
       // ── 武修反伤 ──
       if (isMartial && !dodgeBuff && eHit.damage > 0 && enemyHp > 0) {
         const reflect = Math.max(1, Math.floor(eHit.damage * 0.15));
         enemyHp -= reflect;
         log.push({ text: `🛡 武修反伤 ${reflect}`, type: 'reflect' });
       }
+
+      } // close talent dodge else
     } else {
       log.push({ text: `💫 ${enemy.name} 处于控制状态，无法行动！`, type: 'control' });
     }
@@ -417,6 +585,30 @@ export function executeBattle(enemy) {
     if (rewards.exp) gameState.addExp(rewards.exp);
     if (rewards.gold) p.gold += rewards.gold;
     if (rewards.rewardPoints) p.rewardPoints += rewards.rewardPoints;
+
+    // ── 宝石掉落 ──
+    if (rewards.gems) {
+      for (const gemId of rewards.gems) {
+        gameState.gemInventory.push(gemId);
+        const gemNames = { ruby:'红宝石', sapphire:'蓝宝石', emerald:'绿宝石', topaz:'黄宝石', diamond:'钻石', amethyst:'紫水晶', obsidian:'黑曜石' };
+        log.push({ text: `💎 获得 ${gemNames[gemId] || gemId}！`, type: 'reward' });
+      }
+    } else if (enemy.bossId) {
+      // Boss 固定掉落随机宝石
+      const gemPool = ['ruby', 'sapphire', 'emerald', 'topaz', 'diamond', 'amethyst'];
+      const drop = gemPool[Math.floor(Math.random() * gemPool.length)];
+      gameState.gemInventory.push(drop);
+      const gemNames = { ruby:'红宝石', sapphire:'蓝宝石', emerald:'绿宝石', topaz:'黄宝石', diamond:'钻石', amethyst:'紫水晶' };
+      log.push({ text: `💎 Boss掉落 ${gemNames[drop]}！`, type: 'reward' });
+    }
+
+    // ── 天赋：击杀回血 ──
+    if (talentFx.killHeal > 0) {
+      const killHealAmt = Math.max(1, Math.floor(p.maxHp * talentFx.killHeal));
+      p.hp = Math.min(p.maxHp, playerHp + killHealAmt);
+      playerHp = p.hp;
+      log.push({ text: `💚 天赋击杀回血 +${killHealAmt}`, type: 'heal' });
+    }
 
     // ── 基因锁充能 + 进阶检测 ──
     if (p.geneLock < GENE_LOCK.STAGE_4) {
@@ -501,8 +693,26 @@ function getCompanionBonuses(stat) {
 
 export function getEffectiveAtk(player) {
   let atk = player.atk;
-  if (player.weapon) atk += player.weapon.atk || 0;
+  if (player.weapon) {
+    atk += player.weapon.atk || 0;
+    // 强化加成
+    if (player.weapon.enhanceBonuses?.atk) atk += player.weapon.enhanceBonuses.atk;
+    // 宝石加成
+    for (const gem of player.weapon.gemSlots || []) {
+      if (gem.stat === 'atk') atk += gem.value;
+    }
+  }
   atk += getCompanionBonuses('atk');
+  // 天赋加成
+  try {
+    const te = getTalentEffects(gameState.talents);
+    atk += te.atk || 0;
+  } catch {}
+  // 套装加成
+  try {
+    const sb = getActiveSetBonuses(player);
+    atk += sb.atk || 0;
+  } catch {}
   if (player.activeBloodline === BLOODLINE.VAMPIRE) atk += Math.floor(atk * 0.15);
   if (player.activeBloodline === BLOODLINE.ANCIENT_WU) atk += Math.floor(atk * 0.2);
   if (player.geneLockActive && player.geneLock > 0) {
@@ -516,8 +726,22 @@ export function getEffectiveAtk(player) {
 
 export function getEffectiveDef(player) {
   let def = player.def;
-  if (player.armor) def += player.armor.def || 0;
+  if (player.armor) {
+    def += player.armor.def || 0;
+    if (player.armor.enhanceBonuses?.def) def += player.armor.enhanceBonuses.def;
+    for (const gem of player.armor.gemSlots || []) {
+      if (gem.stat === 'def') def += gem.value;
+    }
+  }
   def += getCompanionBonuses('def');
+  try {
+    const te = getTalentEffects(gameState.talents);
+    def += te.def || 0;
+  } catch {}
+  try {
+    const sb = getActiveSetBonuses(player);
+    def += sb.def || 0;
+  } catch {}
   if (player.activeBloodline === BLOODLINE.MARTIAL) def += Math.floor(def * 0.2);
   if (player.geneLockActive && player.geneLock > 0) {
     def += Math.floor(def * 0.15 * player.geneLock);
@@ -533,6 +757,14 @@ export function getEffectiveCrt(player) {
   if (player.weapon?.crt) crt += player.weapon.crt;
   if (player.accessory?.crt) crt += player.accessory.crt;
   crt += getCompanionBonuses('crt');
+  try {
+    const te = getTalentEffects(gameState.talents);
+    crt += te.crt || 0;
+  } catch {}
+  try {
+    const sb = getActiveSetBonuses(player);
+    crt += sb.crt || 0;
+  } catch {}
   for (const chip of player.chips || []) {
     if (chip.stat === 'crt') crt += chip.value;
   }
@@ -545,6 +777,14 @@ export function getEffectiveSpd(player) {
   spd += getCompanionBonuses('spd');
   if (player.armor?.spd) spd += player.armor.spd;
   if (player.accessory?.spd) spd += player.accessory.spd;
+  try {
+    const te = getTalentEffects(gameState.talents);
+    spd += te.spd || 0;
+  } catch {}
+  try {
+    const sb = getActiveSetBonuses(player);
+    spd += sb.spd || 0;
+  } catch {}
   for (const chip of player.chips || []) {
     if (chip.stat === 'spd') spd += chip.value;
   }

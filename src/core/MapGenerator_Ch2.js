@@ -502,7 +502,7 @@ function generateFloor_2_6() {
         acidBlood: 8,
       },
       // BOSS — 异形皇后
-      { type: ENTITY_TYPE.BOSS, id: 'boss_queen', name: '异形皇后',
+      { type: ENTITY_TYPE.BOSS, id: 'boss_queen', bossId: 'alien_queen', traits: ['thorns', 'enrage'], name: '异形皇后',
         x: 15, y: 8, sprite: '皇', color: '#ff44ff',
         hp: 250, atk: 28, def: 15, spd: 7, crt: 12,
         weaknesses: ['fire'],

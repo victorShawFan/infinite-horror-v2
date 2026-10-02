@@ -38,7 +38,7 @@ function f12_4(){const g=makeGrid();carveRoom(g,1,6,6,11);carveCorridor(g,6,8,10
 // ═══ 12-5 郑吒对复制体 ═══
 function f12_5(){const g=makeGrid();carveRoom(g,6,5,14,12);carveRoom(g,1,7,5,10);carveCorridor(g,5,8,6,8);carveRoom(g,15,7,19,10);carveCorridor(g,14,8,15,8);carveRoom(g,8,1,12,4);carveCorridor(g,10,4,10,5);carveRoom(g,8,13,12,16);carveCorridor(g,10,12,10,13);g[1][11]=TILE.STAIRS;return{id:'12-5',name:'郑吒对复制体',subtitle:'只剩下郑吒一个人了。面对最强的敌人——另一个自己。',bgColor:'#180808',theme:'biolab',tiles:g,width:W,height:H,playerStart:{x:10,y:15},entities:[
 {type:ENTITY_TYPE.EVENT,id:'yingkong_light',name:'赵樱空的心灵之光',x:10,y:14,sprite:'💫',color:'#ffdd88',event:{type:'dialogue',lines:[{text:'赵樱空倒在郑吒身边。她的副人格在最后一刻觉醒。',speaker:'旁白'},{text:'心灵之光——把我所有的感情都给你。',speaker:'赵樱空'},{text:'一道光芒注入郑吒体内。他的力量发生了质变。',speaker:'旁白'},{text:'（赵樱空的心灵之光使郑吒进阶。赵樱空、张恒、程啸阵亡。）',speaker:'主神'}],flag:'spirit_light',companionDeaths:['zhao_yingkong','zhang_heng','cheng_xiao']}},
-{type:ENTITY_TYPE.BOSS,id:'boss_copy_final',name:'复制体郑吒·终极',x:10,y:5,sprite:'郑',color:'#ff0000',hp:500,atk:52,def:24,spd:18,rewards:{exp:500,gold:400,rewardPoints:800},lore:'你的完美复制体。拥有你所有的能力，以及你所缺少的冷酷。这是最终的决斗。'},
+{type:ENTITY_TYPE.BOSS,id:'boss_copy_final',bossId:'clone_zhengzha_ultimate',traits:['swift','enrage','undying'],name:'复制体郑吒·终极',x:10,y:5,sprite:'郑',color:'#ff0000',hp:500,atk:52,def:24,spd:18,rewards:{exp:500,gold:400,rewardPoints:800},lore:'你的完美复制体。拥有你所有的能力，以及你所缺少的冷酷。这是最终的决斗。'},
 {type:ENTITY_TYPE.ITEM,id:'medkit_ch12_5',name:'最终生命之泉',x:17,y:8,sprite:'♥',color:'#44ffaa',itemType:'consumable',effect:{heal:250}},
 {type:ENTITY_TYPE.ITEM,id:'crt_ch12',name:'洞察之眼·终',x:3,y:8,sprite:'◆',color:'#ffcc44',itemType:'stat_boost',effect:{crt:8}}]};}
 

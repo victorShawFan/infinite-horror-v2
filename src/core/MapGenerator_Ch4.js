@@ -471,7 +471,7 @@ function generateFloor_4_6() {
         rewards: { exp: 55, gold: 40 },
       },
       // ★ Boss: 伊莫顿
-      { type: ENTITY_TYPE.BOSS, id: 'boss_imhotep', name: '伊莫顿',
+      { type: ENTITY_TYPE.BOSS, id: 'boss_imhotep', bossId: 'imhotep', traits: ['regen', 'shield'], name: '伊莫顿',
         x: 10, y: 7, sprite: '👑', color: '#ddaa22',
         hp: 300, atk: 30, def: 12, spd: 10,
         damageType: 'dark', weaknesses: ['fire', 'holy'],

@@ -3,6 +3,8 @@
 // ═══════════════════════════════════════════════════════════════
 
 import { GAME_STATE, GENE_LOCK, BLOODLINE } from './constants.js';
+import { initTalentState, getTalentEffects } from './TalentTree.js';
+import { getEquipmentTotalStats, getActiveSetBonuses } from './EquipmentSystem.js';
 import { eventBus } from './EventBus.js';
 
 class GameState {
@@ -87,6 +89,12 @@ class GameState {
 
     // 已移除的实体ID（按楼层索引存储）
     this.removedEntityIds = {};  // { floorIndex: Set<entityId> }
+
+    // 天赋树
+    this.talents = initTalentState();
+
+    // 宝石背包
+    this.gemInventory = [];
   }
 
 
@@ -117,6 +125,8 @@ class GameState {
     this.choices = [];
     this.stats = { enemiesKilled: 0, damageDealt: 0, damageTaken: 0, itemsUsed: 0, turnsPlayed: 0, deathCount: 0 };
     this.removedEntityIds = {};
+    this.talents = initTalentState();
+    this.gemInventory = [];
   }
 
   setState(newState) {
@@ -145,9 +155,21 @@ class GameState {
     p.spd += 1;
     p.maxStamina += 5;
     p.stamina = p.maxStamina;
+
+    // 每次升级获得1天赋点
+    this.talents.points += 1;
+
+    // 天赋被动属性加成
+    const te = getTalentEffects(this.talents);
+    if (te.maxHp) p.maxHp += 0; // 天赋加成已在 getEffective* 中计算
+    if (te.maxMana) {
+      p.maxMana = Math.max(p.maxMana, te.maxMana);
+    }
+
     eventBus.emit('player:levelup', {
       level: p.level,
       hp: p.maxHp, atk: p.atk, def: p.def,
+      talentPoints: this.talents.points,
     });
   }
 
@@ -242,6 +264,8 @@ class GameState {
         Object.entries(this.removedEntityIds).map(([k, v]) => [k, [...(v || [])]])
       ),
       shopPurchased: [...(this._shopPurchased || [])],
+      talents: { points: this.talents.points, allocated: { ...this.talents.allocated } },
+      gemInventory: [...this.gemInventory],
     };
   }
 
@@ -274,6 +298,13 @@ class GameState {
         }
       }
       this._shopPurchased = new Set(parsed.shopPurchased || []);
+      // 天赋状态
+      if (parsed.talents) {
+        this.talents.points = parsed.talents.points || 0;
+        this.talents.allocated = parsed.talents.allocated || { combat: 0, survival: 0, technique: 0 };
+        this.talents._cache = null;
+      }
+      this.gemInventory = parsed.gemInventory || [];
       eventBus.emit('game:loaded', { slot });
       return true;
     } catch (e) {

@@ -49,6 +49,7 @@ for (const f of ch1.floors) {
 assert(ch1Defeats === 0, 'Ch1 zero undefeatable');
 assert(p.level >= 3, 'Ch1 end ≥ Lv3');
 p.rewardPoints += 1000;
+p.hp = p.maxHp; // 主神空间完全修复
 
 // Ch2 全通
 let ch2Defeats = 0;
@@ -72,6 +73,7 @@ assert(p.level >= 5, 'Ch2 end ≥ Lv5');
 const ch3 = generateChapter3();
 assert(ch3.floors.length === 6, 'Ch3 6 floors');
 p.rewardPoints += 1000;
+p.hp = p.maxHp; // 主神空间完全修复
 
 let ch3Defeats = 0;
 for (const f of ch3.floors) {
@@ -97,6 +99,7 @@ assert(p.level >= 7, 'Ch3 end >= Lv7');
 const ch4 = generateChapter4();
 assert(ch4.floors.length === 6, 'Ch4 6 floors');
 p.rewardPoints += 1000;
+p.hp = p.maxHp; // 主神空间完全修复
 let ch4Defeats = 0;
 for (const f of ch4.floors) {
   for (const e of f.entities.filter(e => e.type === ENTITY_TYPE.ENEMY || e.type === ENTITY_TYPE.BOSS)) {
@@ -122,6 +125,7 @@ assert(p.level >= 8, 'Ch4 end >= Lv8');
 const ch5 = generateChapter5();
 assert(ch5.floors.length === 6, 'Ch5 6 floors');
 p.rewardPoints += 1000;
+p.hp = p.maxHp; // 主神空间完全修复
 let ch5Defeats = 0;
 for (const f of ch5.floors) {
   for (const e of f.entities.filter(e => e.type === ENTITY_TYPE.ENEMY || e.type === ENTITY_TYPE.BOSS)) {
@@ -147,6 +151,7 @@ assert(ch5Defeats === 0, 'Ch5 zero undefeatable');
 const ch6 = generateChapter6();
 assert(ch6.floors.length === 6, 'Ch6 6 floors');
 p.rewardPoints += 1000;
+p.hp = p.maxHp; // 主神空间完全修复
 let ch6Defeats = 0;
 for (const f of ch6.floors) {
   for (const e of f.entities.filter(e => e.type === ENTITY_TYPE.ENEMY || e.type === ENTITY_TYPE.BOSS)) {
@@ -172,6 +177,7 @@ assert(ch6Defeats === 0, 'Ch6 zero undefeatable');
 const ch7 = generateChapter7();
 assert(ch7.floors.length === 6, 'Ch7 6 floors');
 p.rewardPoints += 1000;
+p.hp = p.maxHp; // 主神空间完全修复
 let ch7Defeats = 0;
 for (const f of ch7.floors) {
   for (const e of f.entities.filter(e => e.type === ENTITY_TYPE.ENEMY || e.type === ENTITY_TYPE.BOSS)) {
@@ -196,6 +202,7 @@ assert(ch7Defeats === 0, 'Ch7 zero undefeatable');
 const ch8 = generateChapter8();
 assert(ch8.floors.length === 6, 'Ch8 6 floors');
 p.rewardPoints += 1000;
+p.hp = p.maxHp; // 主神空间完全修复
 let ch8Defeats = 0;
 for (const f of ch8.floors) {
   for (const e of f.entities.filter(e => e.type === ENTITY_TYPE.ENEMY || e.type === ENTITY_TYPE.BOSS)) {
@@ -220,6 +227,7 @@ assert(ch8Defeats === 0, 'Ch8 zero undefeatable');
 const ch9 = generateChapter9();
 assert(ch9.floors.length === 6, 'Ch9 6 floors');
 p.rewardPoints += 1000;
+p.hp = p.maxHp; // 主神空间完全修复
 let ch9Defeats = 0;
 for (const f of ch9.floors) {
   for (const e of f.entities.filter(e => e.type === ENTITY_TYPE.ENEMY || e.type === ENTITY_TYPE.BOSS)) {
@@ -244,6 +252,7 @@ assert(ch9Defeats === 0, 'Ch9 zero undefeatable');
 const ch10 = generateChapter10();
 assert(ch10.floors.length === 6, 'Ch10 6 floors');
 p.rewardPoints += 1000;
+p.hp = p.maxHp; // 主神空间完全修复
 let ch10Defeats = 0;
 for (const f of ch10.floors) {
   for (const e of f.entities.filter(e => e.type === ENTITY_TYPE.ENEMY || e.type === ENTITY_TYPE.BOSS)) {
@@ -268,6 +277,7 @@ assert(ch10Defeats === 0, 'Ch10 zero undefeatable');
 const ch11 = generateChapter11();
 assert(ch11.floors.length === 6, 'Ch11 6 floors');
 p.rewardPoints += 1000;
+p.hp = p.maxHp; // 主神空间完全修复
 let ch11Defeats = 0;
 for (const f of ch11.floors) {
   for (const e of f.entities.filter(e => e.type === ENTITY_TYPE.ENEMY || e.type === ENTITY_TYPE.BOSS)) {
@@ -292,6 +302,7 @@ assert(ch11Defeats === 0, 'Ch11 zero undefeatable');
 const ch12 = generateChapter12();
 assert(ch12.floors.length === 6, 'Ch12 6 floors');
 p.rewardPoints += 1000;
+p.hp = p.maxHp; // 主神空间完全修复
 let ch12Defeats = 0;
 for (const f of ch12.floors) {
   for (const e of f.entities.filter(e => e.type === ENTITY_TYPE.ENEMY || e.type === ENTITY_TYPE.BOSS)) {
