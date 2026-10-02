@@ -23,6 +23,10 @@ export const SHOP_ITEMS = {
     { id: 'hp_boost_1', name: '生命强化 I', desc: 'MaxHP +50', cost: 200, effect: { maxHp: 50 } },
     { id: 'hp_boost_2', name: '生命强化 II', desc: 'MaxHP +100', cost: 500, effect: { maxHp: 100 }, requires: 'hp_boost_1' },
     { id: 'spd_boost', name: '速度强化', desc: 'SPD +5, CRT +5%', cost: 300, effect: { spd: 5, crt: 5 } },
+    { id: 'atk_boost_3', name: '力量强化 III', desc: 'ATK +15', cost: 1000, effect: { atk: 15 }, requires: 'atk_boost_2' },
+    { id: 'def_boost_3', name: '防御强化 III', desc: 'DEF +15', cost: 1000, effect: { def: 15 }, requires: 'def_boost_2' },
+    { id: 'hp_boost_3', name: '生命强化 III', desc: 'MaxHP +200', cost: 1000, effect: { maxHp: 200 }, requires: 'hp_boost_2' },
+    { id: 'mana_boost', name: '法力扩展', desc: 'MaxMana +30', cost: 500, effect: { maxMana: 30 } },
   ],
   // ── 血统兑换 ──
   bloodline: [
@@ -51,6 +55,12 @@ export const SHOP_ITEMS = {
       chip: { id: 'life', name: '生', stat: 'maxHp', value: 30 } },
     { id: 'chip_swift', name: '迅捷芯片', desc: 'SPD +5', cost: 350,
       chip: { id: 'swift', name: '速', stat: 'spd', value: 5 } },
+    { id: 'chip_poison', name: '毒素芯片', desc: 'ATK+2, 毒属性', cost: 500,
+      chip: { id: 'poison', name: '毒', stat: 'atk', value: 2, damageType: 'poison' } },
+    { id: 'chip_psychic', name: '念力芯片', desc: 'ATK+3, 念属性', cost: 600,
+      chip: { id: 'psychic', name: '念', stat: 'atk', value: 3, damageType: 'psychic' } },
+    { id: 'chip_acid_resist_shop', name: '抗酸芯片', desc: 'DEF+4, 抗酸血', cost: 450,
+      chip: { id: 'acid_resist', name: '抗酸', stat: 'def', value: 4, special: 'acid_resist' } },
   ],
   // ── 装备制造 ──
   equipment: [
@@ -58,12 +68,20 @@ export const SHOP_ITEMS = {
       weapon: { name: '强化手枪', atk: 8, damageType: 'physical' } },
     { id: 'weapon_shotgun', name: '霰弹枪', desc: 'ATK+12, CRT+5', cost: 600,
       weapon: { name: '霰弹枪', atk: 12, crt: 5, damageType: 'physical' } },
+    { id: 'weapon_flamer_plus', name: '强化火焰喷射器', desc: 'ATK+14, 火属性', cost: 800,
+      weapon: { name: '强化火焰喷射器', atk: 14, damageType: 'fire', spd: -1 } },
+    { id: 'weapon_plasma', name: '等离子步枪', desc: 'ATK+18, CRT+8', cost: 1200,
+      weapon: { name: '等离子步枪', atk: 18, crt: 8, damageType: 'physical' }, requires: 'weapon_shotgun' },
     { id: 'armor_vest', name: '防弹背心', desc: 'DEF+6', cost: 400,
       armor: { name: '防弹背心', def: 6 } },
     { id: 'armor_combat', name: '战术护甲', desc: 'DEF+10, SPD-2', cost: 700,
       armor: { name: '战术护甲', def: 10, spd: -2 } },
+    { id: 'armor_exo', name: '外骨骼装甲', desc: 'DEF+15, SPD+3', cost: 1500,
+      armor: { name: '外骨骼装甲', def: 15, spd: 3 }, requires: 'armor_combat' },
     { id: 'acc_scope', name: '红点瞄具', desc: 'CRT+8', cost: 350,
       accessory: { name: '红点瞄具', crt: 8 } },
+    { id: 'acc_neural', name: '神经链接器', desc: 'CRT+12, SPD+3', cost: 800,
+      accessory: { name: '神经链接器', crt: 12, spd: 3 }, requires: 'acc_scope' },
   ],
 };
 
