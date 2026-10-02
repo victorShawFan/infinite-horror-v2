@@ -540,6 +540,15 @@ function showMainMenu() {
         📖 章节选择
       </button>
 
+      <button id="btn-credits" style="
+        background: transparent; border: 1px solid #222; color: #444;
+        font-size: 12px; padding: 6px 30px; cursor: pointer; letter-spacing: 2px;
+        transition: all 0.3s; font-family: inherit; margin-top: 4px;
+      " onmouseover="this.style.color='#888'"
+         onmouseout="this.style.color='#444'">
+        制作信息
+      </button>
+
       <div id="menu-difficulty" style="margin-top: 24px; display: flex; gap: 8px;"></div>
 
     </div>
@@ -558,6 +567,8 @@ function showMainMenu() {
   document.getElementById('btn-chapter-select')?.addEventListener('click', () => {
     _showChapterSelectMenu();
   });
+  // 制作信息
+  document.getElementById('btn-credits')?.addEventListener('click', _showCredits);
   // Check if save exists and update continue button
   const saveKey = 'infinite_horror_save_0';
   const saveData = localStorage.getItem(saveKey);
@@ -1929,6 +1940,60 @@ function _updatePendingBuffsPreview() {
 
 // ── 探索中道具面板（Q键） ──
 
+
+
+// ── 制作信息 ──
+function _showCredits() {
+  const overlay = document.getElementById('ui-overlay');
+  overlay.innerHTML = `
+    <div style="position:absolute;top:0;left:0;right:0;bottom:0;
+      display:flex;align-items:center;justify-content:center;
+      background:rgba(0,0,0,0.95);" id="credits-backdrop">
+      <div style="max-width:500px;width:90%;text-align:center;animation:fadeIn 1s;">
+        <h1 style="color:#ff4444;font-size:40px;letter-spacing:8px;
+          text-shadow:0 0 40px rgba(255,68,68,0.4);margin-bottom:8px;">
+          无限恐怖
+        </h1>
+        <p style="color:#666;font-size:16px;letter-spacing:6px;margin-bottom:40px;">中 洲 轮 回</p>
+        
+        <div style="color:#888;font-size:13px;line-height:2.2;">
+          <p style="color:#aaa;font-size:14px;margin-bottom:16px;">— 制作信息 —</p>
+          <p>原著 <span style="color:#ddd;">《无限恐怖》 · zhttty</span></p>
+          <p>游戏设计与开发 <span style="color:#ddd;">AI Codex Agent</span></p>
+          <p>策划监督 <span style="color:#ddd;">肖钒</span></p>
+          <p style="margin-top:20px;color:#555;">───────</p>
+          <p style="margin-top:16px;">本作基于同名小说改编</p>
+          <p>采用2D Canvas魔塔式战斗系统</p>
+          <p style="color:#555;margin-top:16px;">
+            ${new Date().getFullYear()} · Made with ❤
+          </p>
+          <p style="color:#444;font-size:11px;margin-top:12px;">
+            技术栈: Vite + Canvas2D + 程序化生成
+          </p>
+          <p style="color:#444;font-size:11px;">
+            62个源文件 · 22000+行代码 · 12章72层
+          </p>
+        </div>
+        
+        <button id="btn-close-credits" style="
+          margin-top:30px;background:transparent;border:1px solid #333;
+          color:#666;padding:8px 30px;cursor:pointer;font-size:14px;
+          font-family:inherit;border-radius:6px;">返回</button>
+      </div>
+    </div>
+  `;
+  
+  document.getElementById('btn-close-credits')?.addEventListener('click', () => {
+    overlay.innerHTML = '';
+  });
+  document.getElementById('credits-backdrop')?.addEventListener('click', (e) => {
+    if (e.target.id === 'credits-backdrop') overlay.innerHTML = '';
+  });
+  const kh = (e) => {
+    if (e.key === 'Escape') { overlay.innerHTML = ''; document.removeEventListener('keydown', kh); }
+  };
+  document.addEventListener('keydown', kh);
+}
 
 // ── 暂停菜单 (Esc) ──
 function _showPauseMenu() {
