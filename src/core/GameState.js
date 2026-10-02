@@ -241,6 +241,7 @@ class GameState {
       removedEntityIds: Object.fromEntries(
         Object.entries(this.removedEntityIds).map(([k, v]) => [k, [...(v || [])]])
       ),
+      shopPurchased: [...(this._shopPurchased || [])],
     };
   }
 
@@ -272,6 +273,7 @@ class GameState {
           this.removedEntityIds[k] = new Set(v);
         }
       }
+      this._shopPurchased = new Set(parsed.shopPurchased || []);
       eventBus.emit('game:loaded', { slot });
       return true;
     } catch (e) {

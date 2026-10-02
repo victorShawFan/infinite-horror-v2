@@ -86,7 +86,11 @@ export const SHOP_ITEMS = {
 };
 
 /** 已购买记录 */
-const purchased = new Set();
+// purchased 从 gameState 读取，确保存档可持久化
+function getPurchased() {
+  if (!gameState._shopPurchased) gameState._shopPurchased = new Set();
+  return gameState._shopPurchased;
+}
 
 /**
  * 尝试购买
@@ -95,11 +99,11 @@ const purchased = new Set();
 export function purchaseItem(item) {
   const p = gameState.player;
 
-  if (purchased.has(item.id)) {
+  if (getPurchased().has(item.id)) {
     return { success: false, message: '已经购买过了。' };
   }
 
-  if (item.requires && !purchased.has(item.requires)) {
+  if (item.requires && !getPurchased().has(item.requires)) {
     return { success: false, message: '需要先购买前置项目。' };
   }
 
@@ -107,9 +111,14 @@ export function purchaseItem(item) {
     return { success: false, message: `奖励点不足（需要${item.cost}，当前${p.rewardPoints}）` };
   }
 
+  // 预检芯片槽（在扣费前）
+  if (item.chip && p.chips.length >= p.maxChips) {
+    return { success: false, message: '芯片槽已满（最多4个）' };
+  }
+
   // 扣费
   p.rewardPoints -= item.cost;
-  purchased.add(item.id);
+  getPurchased().add(item.id);
 
   // 应用效果
   const eff = item.effect || {};
@@ -132,11 +141,8 @@ export function purchaseItem(item) {
 
   // 芯片
   if (item.chip) {
-    if (p.chips.length < p.maxChips) {
-      p.chips.push(item.chip);
-    } else {
-      return { success: false, message: '芯片槽已满（最多4个）' };
-    }
+    // 芯片槽已在扣费前预检
+    p.chips.push(item.chip);
   }
 
   // 装备
@@ -248,9 +254,9 @@ export function renderLordGodSpace(onClose) {
     const items = SHOP_ITEMS[cat] || [];
 
     container.innerHTML = items.map(item => {
-      const owned = purchased.has(item.id);
+      const owned = getPurchased().has(item.id);
       const canAfford = p.rewardPoints >= item.cost;
-      const needsPre = item.requires && !purchased.has(item.requires);
+      const needsPre = item.requires && !getPurchased().has(item.requires);
 
       return `
         <div class="shop-item" data-id="${item.id}" style="
@@ -275,7 +281,7 @@ export function renderLordGodSpace(onClose) {
     container.querySelectorAll('.shop-item').forEach(el => {
       el.addEventListener('click', () => {
         const item = items.find(i => i.id === el.dataset.id);
-        if (!item || purchased.has(item.id)) return;
+        if (!item || getPurchased().has(item.id)) return;
         const result = purchaseItem(item);
         if (result.success) {
           renderShop(); // 刷新整个界面
@@ -286,13 +292,13 @@ export function renderLordGodSpace(onClose) {
         }
       });
       el.addEventListener('mouseover', () => {
-        if (!purchased.has(el.dataset.id)) {
+        if (!getPurchased().has(el.dataset.id)) {
           el.style.borderColor = '#888';
           el.style.background = 'rgba(255,255,255,0.06)';
         }
       });
       el.addEventListener('mouseout', () => {
-        el.style.borderColor = purchased.has(el.dataset.id) ? '#333' : '#555';
+        el.style.borderColor = getPurchased().has(el.dataset.id) ? '#333' : '#555';
         el.style.background = 'rgba(255,255,255,0.03)';
       });
     });

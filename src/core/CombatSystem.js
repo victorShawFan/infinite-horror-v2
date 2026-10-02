@@ -368,6 +368,7 @@ export function getEffectiveDef(player) {
 
 export function getEffectiveCrt(player) {
   let crt = player.crt || 0;
+  if (player.weapon?.crt) crt += player.weapon.crt;
   if (player.accessory?.crt) crt += player.accessory.crt;
   crt += getCompanionBonuses('crt');
   for (const chip of player.chips || []) {
@@ -413,8 +414,12 @@ export function getStatsBreakdown(player) {
     if (chip.stat === 'def') breakdown.def.chips += chip.value;
   }
 
-  breakdown.atk.total = breakdown.atk.base + breakdown.atk.weapon + breakdown.atk.bloodline + breakdown.atk.geneLock + breakdown.atk.chips;
-  breakdown.def.total = breakdown.def.base + breakdown.def.armor + breakdown.def.bloodline + breakdown.def.geneLock + breakdown.def.chips;
+  // 队友被动加成
+  breakdown.atk.companion = getCompanionBonuses('atk');
+  breakdown.def.companion = getCompanionBonuses('def');
+
+  breakdown.atk.total = breakdown.atk.base + breakdown.atk.weapon + breakdown.atk.bloodline + breakdown.atk.geneLock + breakdown.atk.chips + breakdown.atk.companion;
+  breakdown.def.total = breakdown.def.base + breakdown.def.armor + breakdown.def.bloodline + breakdown.def.geneLock + breakdown.def.chips + breakdown.def.companion;
 
   return breakdown;
 }
