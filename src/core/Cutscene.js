@@ -352,3 +352,115 @@ export function showChapter3Cutscene(onFinish) {
     setTimeout(() => advance(), SCENES_CH3[0].duration);
   }
 }
+
+// ═══ 第四章 过场：主神空间→神鬼传奇世界 ═══
+const SCENES_CH4 = [
+  {
+    bg: '/assets/scenes/lord_god_space.jpg',
+    text: '十天整备期结束了。\n主神空间的光柱再次笼罩所有人。',
+    duration: 3500,
+  },
+  {
+    bg: '/assets/scenes/lord_god_space.jpg',
+    text: '这一次队伍更大了。张恒——一个眼神锐利的青年。\n萧宏律——一个看似普通却出人意料的胖子。',
+    duration: 4000,
+  },
+  {
+    bg: '/assets/scenes/lord_god_space.jpg',
+    speaker: '赵樱空',
+    text: '"我感应到了。这次不只是怪物——\n另一支主神队伍也会进入同一个世界。"',
+    duration: 4000,
+  },
+  {
+    bg: '/assets/scenes/lord_god_space.jpg',
+    speaker: '主神',
+    text: '"下一个世界——\n《神鬼传奇》。\n特殊任务：取得复活真经。\n警告：印洲队将争夺同一目标。"',
+    duration: 4500,
+  },
+  {
+    bg: '/assets/scenes/lord_god_space.jpg',
+    text: '灼热的光芒消散后，滚烫的沙漠热浪扑面而来。\n远处是无尽的黄沙，以及一支缓缓前行的骆驼商队。\n哈姆纳塔——死亡之城。',
+    duration: 4500,
+  },
+  {
+    bg: '/assets/scenes/lord_god_space.jpg',
+    text: '第四章',
+    type: 'title',
+    duration: 2000,
+  },
+  {
+    bg: '/assets/scenes/lord_god_space.jpg',
+    text: '神 鬼 秘 宝',
+    type: 'subtitle',
+    duration: 2500,
+  },
+];
+
+export function showChapter4Cutscene(onFinish) {
+  const overlay = document.getElementById('ui-overlay');
+  let sceneIdx = 0;
+
+  const skipHandler = (e) => {
+    if (e.key === 'Escape') {
+      document.removeEventListener('keydown', skipHandler);
+      overlay.innerHTML = '';
+      onFinish();
+    }
+  };
+  document.addEventListener('keydown', skipHandler);
+
+  function renderScene() {
+    if (sceneIdx >= SCENES_CH4.length) {
+      document.removeEventListener('keydown', skipHandler);
+      overlay.innerHTML = '';
+      onFinish();
+      return;
+    }
+
+    const s = SCENES_CH4[sceneIdx];
+    const isTitle = s.type === 'title';
+    const isSubtitle = s.type === 'subtitle';
+    const bgOverlay = (isTitle || isSubtitle)
+      ? 'radial-gradient(ellipse at center, rgba(0,0,0,0.5) 0%, rgba(0,0,0,0.9) 100%)'
+      : 'linear-gradient(180deg, rgba(0,0,0,0.3) 0%, rgba(0,0,0,0.7) 40%, rgba(0,0,0,0.95) 100%)';
+
+    overlay.innerHTML = `
+      <div style="
+        width: 100%; height: 100%;
+        background-image: ${bgOverlay};
+        background-size: cover;
+        display: flex; align-items: ${isTitle || isSubtitle ? 'center' : 'flex-end'};
+        justify-content: center;
+        animation: fadeIn 0.8s ease;
+      ">
+        <div style="
+          ${isTitle ? 'font-size: 56px; letter-spacing: 12px; color: #f0d888; text-shadow: 0 0 30px rgba(200, 160, 40, 0.6);' : ''}
+          ${isSubtitle ? 'font-size: 36px; letter-spacing: 20px; color: #ddbb66; text-shadow: 0 0 20px rgba(200, 160, 40, 0.4);' : ''}
+          ${!isTitle && !isSubtitle ? `
+            max-width: 700px; padding: 30px 40px; margin-bottom: 60px;
+            background: rgba(0, 0, 0, 0.6); border-radius: 12px;
+            border-left: 3px solid rgba(200, 160, 40, 0.5);
+          ` : ''}
+          font-family: "Microsoft YaHei", sans-serif;
+        ">
+          ${s.speaker ? `<p style="color: #ddbb66; font-size: 14px; margin-bottom: 8px; letter-spacing: 2px;">${s.speaker}</p>` : ''}
+          ${!isTitle && !isSubtitle ? `<p style="color: #e8e0d0; font-size: 18px; line-height: 1.8; white-space: pre-line;">${s.text}</p>` : s.text}
+        </div>
+      </div>
+      <style>@keyframes fadeIn { from { opacity: 0 } to { opacity: 1 } }</style>
+    `;
+  }
+
+  function advance() {
+    sceneIdx++;
+    renderScene();
+    if (sceneIdx < SCENES_CH4.length) {
+      setTimeout(() => advance(), SCENES_CH4[sceneIdx]?.duration || 3000);
+    }
+  }
+
+  renderScene();
+  if (SCENES_CH4.length > 0) {
+    setTimeout(() => advance(), SCENES_CH4[0].duration);
+  }
+}
