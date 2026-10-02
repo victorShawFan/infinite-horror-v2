@@ -7,6 +7,7 @@ import { getStash, addToStash, removeFromStash, isStashFull, serializeStash, des
 import { EQUIPMENT_SETS, getActiveSetBonuses, formatSetBonusHTML } from './src/core/EquipmentSystem.js';
 import { getCompanionCombatBonuses, getCompanionBattleCry, formatCompanionCombatHTML } from './src/core/CompanionCombat.js';
 import { getCurrentQuests, formatQuestPanelHTML } from './src/core/QuestTracker.js';
+import { getCodexEntries } from './src/core/Codex.js';
 
 let pass = 0, fail = 0;
 function assert(cond, msg) {
@@ -136,6 +137,48 @@ for (let ch = 1; ch <= 12; ch++) {
 }
 
 // ═══ Summary ═══
+
+// ── 知识典籍系统测试 ──
+try {
+  const entries = getCodexEntries();
+  assert(entries.length >= 8, '至少8个世界观条目');
+  
+  const worldEntries = entries.filter(e => e.type === 'world');
+  assert(worldEntries.length >= 8, '世界观条目>=8');
+  
+  // Check required fields
+  for (const e of worldEntries) {
+    assert(e.title, '每个条目有title: ' + e.id);
+    assert(e.text, '每个条目有text: ' + e.id);
+    assert(e.icon, '每个条目有icon: ' + e.id);
+    assert(e.category, '每个条目有category: ' + e.id);
+  }
+  
+  // Check specific entries exist
+  const ids = entries.map(e => e.id);
+  assert(ids.includes('lord_god'), '有主神条目');
+  assert(ids.includes('gene_lock'), '有基因锁条目');
+  assert(ids.includes('reward_points'), '有奖励点条目');
+  assert(ids.includes('bloodline'), '有血统条目');
+  assert(ids.includes('zhongzhou_team'), '有中洲队条目');
+  assert(ids.includes('demon_team'), '有恶魔队条目');
+  assert(ids.includes('movie_worlds'), '有恐怖电影世界条目');
+  assert(ids.includes('lord_god_space'), '有主神空间条目');
+  
+  pass++;
+  console.log('  ✓ 知识典籍世界观条目完整 (8项)');
+} catch(e) { fail++; console.log('  ✗ 知识典籍:', e.message); }
+
+try {
+  const entries = getCodexEntries();
+  const categories = [...new Set(entries.map(e => e.category))];
+  assert(categories.length >= 2, '至少2个分类: ' + categories.join(','));
+  assert(categories.includes('核心设定'), '有核心设定分类');
+  assert(categories.includes('能力体系'), '有能力体系分类');
+  pass++;
+  console.log('  ✓ 知识典籍分类体系正确');
+} catch(e) { fail++; console.log('  ✗ 分类:', e.message); }
+
 console.log(`\n══════════════════════════════════════════`);
 console.log(`新功能测试: ${pass}通过, ${fail}失败`);
 if (fail > 0) { console.log('❌ 有测试失败'); process.exit(1); }

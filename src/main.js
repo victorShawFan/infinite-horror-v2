@@ -48,6 +48,7 @@ import { initPanelContext, showInventoryPanel, showStatsPanel, showBestiaryPanel
 import { ngPlusState, formatClearScreen, formatCycleInfo, TITLES, getActiveMutators } from './core/NewGamePlus.js';
 import { fadeBlackTransition, chapterIntroTransition, floorTransition, victoryFlash } from './core/TransitionSystem.js';
 import { MiniMap } from './core/MiniMap.js';
+import { openCodex } from './core/Codex.js';
 import { atmosphereRenderer } from './core/AtmosphereSystem.js';
 import { tutorialManager } from './core/TutorialSystem.js';
 import { triggerTrap as fireTrap, openChest, TRAP_TYPES, CHEST_TYPES } from './core/TrapSystem.js';
@@ -1362,6 +1363,10 @@ case 'h': case '?':
       case 't':
         // 战斗统计
         _showCombatStatsPanel();
+        return;
+      case 'c':
+        // 知识典籍
+        openCodex();
         return;
       case 'p':
         // 设置面板
