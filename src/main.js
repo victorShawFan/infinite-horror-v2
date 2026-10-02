@@ -43,7 +43,7 @@ import { getPlayerActiveElements, ELEMENT_INFO, checkElementalResonance } from '
 import { changeRelationship, getRelationshipLevel, getRelationshipSummary, COMPANION_PROFILES } from './core/RelationshipSystem.js';
 import { loreTracker, LORE_ENTRIES, formatLorePopup } from './core/LoreSystem.js';
 import { bestiary, getDifficulty, setDifficulty, getDifficultyConfig, applyDifficultyScaling, formatBestiaryPanel, formatDifficultySelector, DIFFICULTY, DIFFICULTY_CONFIG } from './core/DifficultySystem.js';
-import { ngPlusState, formatClearScreen, formatCycleInfo, TITLES } from './core/NewGamePlus.js';
+import { ngPlusState, formatClearScreen, formatCycleInfo, TITLES, getActiveMutators } from './core/NewGamePlus.js';
 import { fadeBlackTransition, chapterIntroTransition, floorTransition, victoryFlash } from './core/TransitionSystem.js';
 import { MiniMap } from './core/MiniMap.js';
 import { atmosphereRenderer } from './core/AtmosphereSystem.js';
@@ -1341,6 +1341,11 @@ function triggerEvent(entity) {
       }
       if (evt.rewards.gold) gameState.player.gold += evt.rewards.gold;
     gameState.stats.goldEarned += (evt.rewards.gold);
+          // NG+ 变异器: 诅咒黄金 — 拾取金币扣1HP
+          if (getActiveMutators().some(m => m.id === 'cursed_gold') && evt.rewards.gold > 0) {
+            gameState.player.hp = Math.max(1, gameState.player.hp - 1);
+            renderer.addFloatText('💀 -1 HP', gameState.player.x, gameState.player.y - 0.5, 'rgb(255, 100, 100)');
+          }
       if (evt.rewards.rewardPoints) gameState.player.rewardPoints += evt.rewards.rewardPoints;
       if (evt.rewards.keys) {
         for (const [color, count] of Object.entries(evt.rewards.keys)) {

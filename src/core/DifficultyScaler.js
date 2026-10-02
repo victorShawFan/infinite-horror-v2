@@ -6,7 +6,7 @@
 // 方案：按章节倍率缩放敌人属性，保持前期手感，加强后期挑战
 
 import { getDifficultyConfig } from './DifficultySystem.js';
-import { ngPlusState } from './NewGamePlus.js';
+import { ngPlusState, getActiveMutators } from './NewGamePlus.js';
 import { ENEMY_AFFIXES } from './DifficultySystem.js';
 function await_sync_affixes() { return { ENEMY_AFFIXES }; }
 
@@ -81,8 +81,26 @@ export function scaleEnemy(enemy, chapter) {
     geneLockCharge: Math.floor((enemy.geneLockCharge || 5) * Math.sqrt(chapterScale)),
   };
 
+  // ── NG+ 变异器效果 ──
+  const mutators = getActiveMutators();
+  for (const mut of mutators) {
+    if (mut.id === 'speed_demon') {
+      scaled.spd = Math.ceil(scaled.spd * 1.3);
+      if (scaled.rewards?.exp) scaled.rewards.exp = Math.floor(scaled.rewards.exp * 1.2);
+    } else if (mut.id === 'glass_cannon') {
+      scaled.atk = Math.ceil(scaled.atk * 1.5);
+      scaled.hp = Math.floor(scaled.hp * 0.7);
+    } else if (mut.id === 'iron_fortress') {
+      scaled.def = Math.ceil(scaled.def * 1.8);
+      scaled.atk = Math.floor(scaled.atk * 0.8);
+    } else if (mut.id === 'cursed_gold' && scaled.rewards) {
+      scaled.rewards.gold = Math.floor((scaled.rewards.gold || 0) * 2);
+    }
+  }
+
   // 精英词缀(非Boss时按难度概率触发)
-  if (!isBoss && diff.affixChance > 0 && Math.random() < diff.affixChance) {
+  const eliteBoost = mutators.some(m => m.id === 'elite_invasion') ? 2 : 1;
+  if (!isBoss && diff.affixChance > 0 && Math.random() < diff.affixChance * eliteBoost) {
     const { ENEMY_AFFIXES } = await_sync_affixes();
     if (ENEMY_AFFIXES) {
       const keys = Object.keys(ENEMY_AFFIXES);

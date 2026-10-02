@@ -1,3 +1,4 @@
+import { getActiveMutators } from './NewGamePlus.js';
 // ═══════════════════════════════════════════════════════════════
 // 战斗系统 — 魔塔式数值对撞 + 血统特技 + 芯片元素 + 速度双击
 //            + 主动技能 + 状态效果 + 基因锁进阶
@@ -735,6 +736,12 @@ if (chipFx.hasIceChip && enemy.atk !== enemyEffAtk) {
             text: `${enemy.name} → 郑吒 ${eHit.damage}${eHit.isCrit ? ' 暴击！' : ''}`,
             type: 'enemy_attack',
           });
+          // ── NG+ 变异器: 幻痛 ──
+          if (getActiveMutators().some(m => m.id === 'phantom_pain') && Math.random() < 0.10) {
+            const phantomDmg = eHit.damage;
+            playerHp -= phantomDmg;
+            log.push({ text: `💀 幻痛！额外 ${phantomDmg} 伤害`, type: 'affix_damage' });
+          }
         }
       }
 
