@@ -20,6 +20,10 @@ import { getGeneLockDescription, getGeneLockProgress } from './GeneLockSystem.js
 import { getInventoryList, useConsumable, CONSUMABLE_DEFS } from './ConsumableSystem.js';
 import { getAvailableRecipes, forgeRecipe, disassembleEquipment, reforgeAffixes, fuseEquipment, getDisassemblePreview, getFusionCost, QUALITY } from './ForgeSystem.js';
 import { achievementTracker, ACHIEVEMENTS } from './AchievementSystem.js';
+import { formatCompanionCombatHTML } from './CompanionCombat.js';
+import { formatSetBonusHTML } from './EquipmentSystem.js';
+import { formatQuestPanelHTML } from './QuestTracker.js';
+import { getStashSize } from './EquipmentStash.js';
 
 // 需要从 main.js 注入的共享状态
 let _ctx = {};
@@ -492,6 +496,18 @@ export function showStatsPanel() {
             </table>
           </div>
         </div>
+
+        <!-- 套装效果 -->
+        <div style="margin-top:12px;border-top:1px solid #333;padding-top:10px;">
+          <h3 style="color:#ffcc44;font-size:13px;margin-bottom:6px;">🛡 套装效果</h3>
+          \${formatSetBonusHTML(gameState.player)}
+        </div>
+        
+        <!-- 当前任务 -->
+        <div style="margin-top:12px;border-top:1px solid #333;padding-top:10px;">
+          \${formatQuestPanelHTML()}
+        </div>
+
         <div style="text-align: center; margin-top: 24px;">
           <button id="btn-close-stats" style="
             background: transparent; border: 1px solid #444; color: #888;
@@ -619,6 +635,11 @@ export function showRelationshipPanel() {
     '<p style="color:#666;text-align:center;font-size:11px;margin-bottom:16px;">关系影响: 战斗加成 · 对话台词 · 羁绊回忆 · 危难救援 · 团队士气</p>' +
     companionHTML +
     '<div style="text-align:center;margin-top:20px;">' +
+    '<div style="margin-top:16px;border-top:1px solid #333;padding-top:12px;">' +
+    '<h3 style="color:#44aaff;font-size:14px;margin-bottom:8px;">⚔ 同伴战斗支援</h3>' +
+    formatCompanionCombatHTML() +
+    '</div>' +
+    '<div style="text-align:center;margin-top:16px;">' +
     '<button id="btn-close-rel" style="background:transparent;border:1px solid #444;color:#888;padding:8px 30px;cursor:pointer;font-size:14px;font-family:inherit;border-radius:6px;">关闭 (R)</button>' +
     '</div></div></div>';
 
