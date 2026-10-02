@@ -36,6 +36,10 @@ import { renderLordGodSpace } from './core/LordGodSpace.js';
 import { CombatAnimator } from './core/CombatAnimation.js';
 import { showOpeningCutscene, showChapter2Cutscene, showChapter3Cutscene, showChapter4Cutscene, showChapter5Cutscene, showChapter6Cutscene, showChapter7Cutscene, showChapter8Cutscene, showChapter9Cutscene, showChapter10Cutscene, showChapter11Cutscene, showChapter12Cutscene } from './core/Cutscene.js';
 import { assetLoader } from './core/AssetLoader.js';
+import { milestoneTracker, checkCombatMilestones, checkGrowthMilestones, checkChapterMilestones, checkEquipmentMilestones } from './core/MilestoneSystem.js';
+import { getTalentEffects, TALENT_PATHS } from './core/TalentTree.js';
+import { getEquipmentDisplayName, getEquipmentTotalStats } from './core/EquipmentSystem.js';
+import { getPlayerActiveElements, ELEMENT_INFO, checkElementalResonance } from './core/ElementalSystem.js';
 
 // ── 全局状态 ──
 let renderer;
@@ -69,6 +73,37 @@ window.addEventListener('load', async () => {
     showMainMenu();
   }, 500);
 });
+
+// ── 里程碑弹窗 ──
+let _milestoneTimeout = null;
+function showMilestonePopup(milestone) {
+  if (_milestoneTimeout) return; // 已有弹窗
+  const popup = document.createElement('div');
+  popup.style.cssText = `
+    position: fixed; top: 60px; right: 20px; z-index: 9999;
+    background: rgba(10,10,20,0.95); border: 1px solid ${milestone.color};
+    border-radius: 12px; padding: 16px 24px; min-width: 200px;
+    box-shadow: 0 0 30px ${milestone.color}44;
+    transform: translateX(300px); transition: transform 0.4s ease;
+    font-family: "Microsoft YaHei", sans-serif;
+  `;
+  popup.innerHTML = `
+    <div style="display:flex;align-items:center;gap:12px;">
+      <span style="font-size:28px;">${milestone.icon}</span>
+      <div>
+        <div style="color:${milestone.color};font-weight:bold;font-size:14px;letter-spacing:2px;">🏆 成就解锁</div>
+        <div style="color:#e0e0e0;font-size:16px;margin-top:2px;">${milestone.name}</div>
+        <div style="color:#888;font-size:12px;margin-top:2px;">${milestone.desc}</div>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(popup);
+  requestAnimationFrame(() => { popup.style.transform = 'translateX(0)'; });
+  _milestoneTimeout = setTimeout(() => {
+    popup.style.transform = 'translateX(300px)';
+    setTimeout(() => { popup.remove(); _milestoneTimeout = null; }, 400);
+  }, 3000);
+}
 
 function showMainMenu() {
   menuState = 'title';
@@ -156,6 +191,7 @@ function showMainMenu() {
 
   btnCont.addEventListener('click', () => {
     if (gameState.load(0)) {
+      try { const ms = localStorage.getItem('ih_milestones'); if (ms) milestoneTracker.fromJSON(JSON.parse(ms)); } catch {}
       const chapterGens = { 1: generateChapter1, 2: generateChapter2, 3: generateChapter3, 4: generateChapter4, 5: generateChapter5, 6: generateChapter6, 7: generateChapter7, 8: generateChapter8, 9: generateChapter9, 10: generateChapter10, 11: generateChapter11, 12: generateChapter12 };
       const gen = chapterGens[gameState.chapter] || generateChapter1;
 
@@ -518,6 +554,7 @@ document.addEventListener('keydown', (e) => {
   if (e.key === 'F5') {
     e.preventDefault();
     gameState.save(0);
+    try { localStorage.setItem('ih_milestones', JSON.stringify(milestoneTracker.toJSON())); } catch {}
     renderer.notify('💾 手动存档完成', '#44ff88', 90);
     return;
   }

@@ -8,6 +8,7 @@ import { gameState } from './GameState.js';
 import { getNoise, getIsSneaking, getAmmo, getMaxAmmo } from './StealthSystem.js';
 import { getEffectiveAtk, getEffectiveDef, getEffectiveCrt, getEffectiveSpd, previewBattle, getStatsBreakdown } from './CombatSystem.js';
 import { getGeneLockProgress } from './GeneLockSystem.js';
+import { getTalentEffects } from './TalentTree.js';
 import { scaleEnemy } from './DifficultyScaler.js';
 import { getAvailableSkills } from './SkillSystem.js';
 import { drawWallTile, drawFloorTile, drawLavaTile, drawStairsTile, drawCharacterSprite, drawHealthBar } from './SpriteRenderer.js';
@@ -434,10 +435,10 @@ export class Renderer {
 
     // ── 右上：战斗属性 ──
     ctx.fillStyle = 'rgba(10, 10, 20, 0.88)';
-    roundRect(ctx, CANVAS_W - 160 - pad, pad, 160, 118, 8);
+    roundRect(ctx, CANVAS_W - 160 - pad, pad, 160, 136, 8);
     ctx.fill();
     ctx.strokeStyle = 'rgba(255, 100, 100, 0.3)';
-    roundRect(ctx, CANVAS_W - 160 - pad, pad, 160, 118, 8);
+    roundRect(ctx, CANVAS_W - 160 - pad, pad, 160, 136, 8);
     ctx.stroke();
 
     const rx = CANVAS_W - 150;
@@ -454,6 +455,15 @@ export class Renderer {
     ctx.fillText(`💰 ${p.gold}G  ⬡${p.rewardPoints}`, rx, pad + 92);
     ctx.fillStyle = '#666';
     ctx.fillText(`回合 ${gameState.stats.turnsPlayed}`, rx, pad + 110);
+
+    // 天赋点提醒
+    try {
+      const tp = gameState.talents?.points || 0;
+      if (tp > 0) {
+        ctx.fillStyle = '#ffdd44';
+        ctx.fillText(`🌟 ${tp}天赋点可用`, rx, pad + 128);
+      }
+    } catch {}
 
     // ── 潜行/弹药 HUD（Ch2+）──
     if (gameState.chapter >= 2) {
