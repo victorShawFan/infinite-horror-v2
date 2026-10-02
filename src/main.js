@@ -73,6 +73,27 @@ let gameStarted = false;
 let menuState = 'title'; // 'title' | 'playing'
 let combatAnimator = null;
 let combatHistory = []; // 战斗历史记录
+
+// ── 自动保存 ──
+let _lastAutoSave = 0;
+function autoSave(reason = '') {
+  const now = Date.now();
+  if (now - _lastAutoSave < 2000) return; // 防抖: 2秒内不重复保存
+  _lastAutoSave = now;
+  try {
+    gameState.save(0);
+    localStorage.setItem('ih_milestones', JSON.stringify(milestoneTracker.toJSON()));
+    localStorage.setItem('ih_lore', JSON.stringify(loreTracker.toJSON()));
+    localStorage.setItem('ih_tutorial', JSON.stringify(tutorialManager.toJSON()));
+    localStorage.setItem('ih_streak', JSON.stringify(killStreak.toJSON()));
+    localStorage.setItem('ih_bestiary', JSON.stringify(bestiary.toJSON()));
+    localStorage.setItem('ih_challenge', JSON.stringify(challengeState.toJSON()));
+    try { renderer.showSaveIndicator(); } catch {}
+    if (reason) console.log('[AutoSave]', reason);
+  } catch (e) {
+    console.warn('[AutoSave] failed:', e);
+  }
+}
 let gameLoopRunning = false; // 防止gameLoop重复启动
 
 // ── 初始化 ──
@@ -302,6 +323,7 @@ function _showChallengeResults(overlay, rewards, reason, challenge) {
 
   document.getElementById('ch-close').addEventListener('click', () => {
     // 发放奖励
+    autoSave('挑战副本结束');
     eventBus.emit('challenge:end', { rewards, reason, type: challenge.type, wave: challengeState.currentWave });
     // 返回主神空间
     // renderLordGodSpace is imported at module scope
@@ -671,6 +693,7 @@ function startGame() {
     window._levelupListenerRegistered = true;
     eventBus.on('player:levelup', () => {
       audioEngine.playLevelUp();
+      autoSave('升级到Lv.' + gameState.player.level);
       tutorialManager.trigger('first_level_up');
       try { checkGrowthMilestones(milestoneTracker, gameState.player); } catch {}
       const p = gameState.player;
@@ -827,6 +850,9 @@ function loadFloor(index, isAdvancing) {
 
   // 恢复已破坏的密道状态（存档持久化）
   restoreBrokenSecrets(floor, gameState.chapter, index);
+
+  // 自动保存 — 进入新楼层
+  if (index > 0) autoSave('进入 ' + (floor.name || ('第' + (index+1) + '层')));
 
   // 更新迷雾视野
   fogOfWar.updateVision(index, floor.playerStart.x, floor.playerStart.y);
@@ -1993,6 +2019,7 @@ function startCombat(enemy, preScaledEnemy) {
           const closeBossPanel = () => {
             overlay.innerHTML = '';
             document.removeEventListener('keydown', bkh);
+            autoSave('击败Boss: ' + (enemy.name || 'unknown'));
             // 触发boss击败事件和对话
             if (enemy.onDefeat) {
               if (enemy.onDefeat.flag) gameState.setFlag(enemy.onDefeat.flag);
@@ -2531,6 +2558,7 @@ function toggleGeneLock() {
 
 // ── 章节完成 ──
 function showChapterComplete() {
+  autoSave('章节完成');
   gameStarted = false;
   if (!gameState._chapterClearCounted) { gameState.stats.chaptersCleared++; gameState._chapterClearCounted = true; }
   const p = gameState.player;
