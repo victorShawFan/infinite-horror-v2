@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "build:file": "vite build && node scripts/make-file-compatible.mjs"
   },
   "devDependencies": {
     "vite": "^6.0.0"

@@ -101,6 +101,7 @@ class GameState {
 
     // 已移除的实体ID（按楼层索引存储）
     this.removedEntityIds = {};  // { floorIndex: Set<entityId> }
+    this.brokenSecrets = {};     // { "chapterIdx-floorIdx": Set<secretId> }
 
     // 天赋树
     this.talents = initTalentState();
@@ -280,6 +281,9 @@ class GameState {
         Object.entries(this.removedEntityIds).map(([k, v]) => [k, [...(v || [])]])
       ),
       shopPurchased: [...(this._shopPurchased || [])],
+      brokenSecrets: Object.fromEntries(
+        Object.entries(this.brokenSecrets).map(([k, v]) => [k, [...(v || [])]])
+      ),
       talents: { points: this.talents.points, allocated: { ...this.talents.allocated } },
       gemInventory: [...this.gemInventory],
       relationships: { ...this.relationships },
@@ -309,12 +313,20 @@ class GameState {
       this.stats = parsed.stats || this.stats;
       // 恢复已移除实体
       this.removedEntityIds = {};
+    this.brokenSecrets = {};
       if (parsed.removedEntityIds) {
         for (const [k, v] of Object.entries(parsed.removedEntityIds)) {
           this.removedEntityIds[k] = new Set(v);
         }
       }
       this._shopPurchased = new Set(parsed.shopPurchased || []);
+      // 恢复已破坏密道
+      this.brokenSecrets = {};
+      if (parsed.brokenSecrets) {
+        for (const [k, v] of Object.entries(parsed.brokenSecrets)) {
+          this.brokenSecrets[k] = new Set(v);
+        }
+      }
       // 天赋状态
       if (parsed.talents) {
         this.talents.points = parsed.talents.points || 0;
@@ -341,6 +353,21 @@ class GameState {
   /** 获取某楼层已移除的实体ID */
   getRemovedEntityIds(floorIndex) {
     return this.removedEntityIds[floorIndex] || new Set();
+  }
+
+  /** 记录密道被破坏 */
+  markSecretBroken(chapterIdx, floorIdx, secretId) {
+    const key = `${chapterIdx}-${floorIdx}`;
+    if (!this.brokenSecrets[key]) {
+      this.brokenSecrets[key] = new Set();
+    }
+    this.brokenSecrets[key].add(secretId);
+  }
+
+  /** 获取某楼层已破坏的密道ID集合 */
+  getBrokenSecrets(chapterIdx, floorIdx) {
+    const key = `${chapterIdx}-${floorIdx}`;
+    return this.brokenSecrets[key] || new Set();
   }
 }
 

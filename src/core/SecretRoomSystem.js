@@ -181,7 +181,7 @@ export function generateSecretEntities(floor, chapter = 1) {
  * 尝试破坏密墙
  * @returns {{ success: boolean, message: string, reward?: object }}
  */
-export function tryBreakSecret(secret, player, chapter = 1) {
+export function tryBreakSecret(secret, player, chapter = 1, chapterIdx = 0, floorIdx = 0) {
   if (secret.broken) return { success: false, message: '已经被打开了' };
   
   const def = SECRET_TYPES[secret.secretType];
@@ -197,10 +197,27 @@ export function tryBreakSecret(secret, player, chapter = 1) {
   const reward = getSecretRoomReward(chapter);
   applySecretReward(reward);
   secret.broken = true;
+
+  // 持久化到 GameState (跨存档保留)
+  gameState.markSecretBroken(chapterIdx, floorIdx, secret.id || secret.secretType);
   
   return {
     success: true,
     message: `${def.icon} ${def.name}被打开了！\n${reward.text}`,
     reward,
   };
+}
+
+
+// ── 从存档恢复已破坏密道 ──
+export function restoreBrokenSecrets(floor, chapterIdx, floorIdx) {
+  if (!floor || !floor._secrets) return;
+  const brokenSet = gameState.getBrokenSecrets(chapterIdx, floorIdx);
+  if (brokenSet.size === 0) return;
+  for (const secret of floor._secrets) {
+    const key = secret.id || secret.secretType;
+    if (brokenSet.has(key)) {
+      secret.broken = true;
+    }
+  }
 }

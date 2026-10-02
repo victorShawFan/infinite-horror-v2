@@ -52,7 +52,7 @@ import { atmosphereRenderer } from './core/AtmosphereSystem.js';
 import { tutorialManager } from './core/TutorialSystem.js';
 import { triggerTrap as fireTrap, openChest, TRAP_TYPES, CHEST_TYPES } from './core/TrapSystem.js';
 import { addConsumable, useConsumable, getInventoryList, consumePendingBuffs, giveStarterConsumables, CONSUMABLE_DEFS } from './core/ConsumableSystem.js';
-import { generateSecretEntities, tryBreakSecret, SECRET_TYPES } from './core/SecretRoomSystem.js';
+import { generateSecretEntities, tryBreakSecret, restoreBrokenSecrets, SECRET_TYPES } from './core/SecretRoomSystem.js';
 import { getCurrentStance, setStance, getAvailableStances, getStanceId, restoreStance } from './core/CombatStance.js';
 import { challengeState, CHALLENGE_TYPES } from './core/ChallengeDungeon.js';
 import { getQualityColor, getQualityName, formatEquipmentTooltip, getAllAffixEffects } from './core/EquipmentAffixes.js';
@@ -825,6 +825,9 @@ function loadFloor(index, isAdvancing) {
       return clone;
     });
 
+  // 恢复已破坏的密道状态（存档持久化）
+  restoreBrokenSecrets(floor, gameState.chapter, index);
+
   // 更新迷雾视野
   fogOfWar.updateVision(index, floor.playerStart.x, floor.playerStart.y);
   // 延迟淡入
@@ -1185,7 +1188,7 @@ function movePlayer(dx, dy) {
       const secret = floor._secrets.find(s => s.x === nx && s.y === ny && !s.broken);
       if (secret) {
         const ch = gameState.chapter || 1;
-        const result = tryBreakSecret(secret, p, ch);
+        const result = tryBreakSecret(secret, p, ch, gameState.chapter, currentFloorIndex);
         if (result.success) {
           // 打通墙壁：修改地图数据
           floor.map[ny][nx] = 0; // 变成地板
@@ -1374,7 +1377,7 @@ function showCombatConfirm(enemy) {
         <!-- 双栏对比 -->
         <div style="display:flex; gap:12px; margin-bottom: 12px;">
           <!-- 左：玩家 -->
-          <div style="flex:1; background:rgba(68,136,255,0.06); border:1px solid rgba(68,136,255,0.15); border-radius:8px; padding:10px; text-align:center;">
+          <div id="preview-player-stats" style="flex:1; background:rgba(68,136,255,0.06); border:1px solid rgba(68,136,255,0.15); border-radius:8px; padding:10px; text-align:center;">
             <p style="color:#6699ff; font-size:11px; letter-spacing:2px; margin-bottom:4px;">郑吒 Lv.${p.level}</p>
             <p style="color:#eee; font-size:13px;">HP <span style="color:#44ff88">${p.hp}</span>/${p.maxHp}</p>
             <p style="color:#ff8866; font-size:12px;">ATK ${effectiveAtk}${p.weapon ? ' <span style="color:#665533;font-size:10px;">(+' + (p.weapon.atk||0) + ')</span>' : ''}</p>
@@ -1397,7 +1400,7 @@ function showCombatConfirm(enemy) {
         </div>
         
         <!-- 伤害预测 -->
-        <div style="display:flex; gap:8px; margin-bottom: 10px; text-align:center;">
+        <div id="preview-damage-calc" style="display:flex; gap:8px; margin-bottom: 10px; text-align:center;">
           <div style="flex:1; background:rgba(255,170,0,0.08); border-radius:6px; padding:6px;">
             <p style="color:#ffaa44; font-size:10px;">你的伤害/回合</p>
             <p style="color:#ffcc44; font-size:16px; font-weight:bold;">${yourDmg}</p>
@@ -1442,6 +1445,9 @@ function showCombatConfirm(enemy) {
           return tags.length > 0 ? '<div style="display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin-top:8px;">' + tags.join('') + '</div>' : '';
         })()}
         
+        <!-- 加成明细 -->
+        <div id="preview-bonus-info" style="text-align:center;margin-bottom:6px;min-height:14px;"></div>
+
         <!-- 姿态选择 -->
         <div style="display:flex;gap:6px;justify-content:center;margin-top:8px;flex-wrap:wrap;" id="stance-selector">
           ${getAvailableStances().map(s => {
@@ -1499,7 +1505,7 @@ function showCombatConfirm(enemy) {
     _showPreBattleItemPanel(overlay, scaledEnemy, enemy);
   });
   
-  // 姿态切换事件
+  // 姿态切换事件 — 切换时实时重算预测
   document.querySelectorAll('.stance-btn').forEach(btn => {
     btn.addEventListener('click', () => {
       const sid = btn.dataset.stance;
@@ -1513,12 +1519,15 @@ function showCombatConfirm(enemy) {
           b.style.color = isActive ? (s?.color || '#fff') : '#666';
           b.style.boxShadow = isActive ? '0 0 8px ' + (s?.color || '#fff') + '33' : 'none';
         });
+        // 实时重算战斗预测
+        _updateBattlePreviewNumbers(scaledEnemy);
       }
     });
   });
   
-  // 显示已有增益
+  // 显示已有增益和加成明细
   _updatePendingBuffsPreview();
+  _updateBattlePreviewNumbers(scaledEnemy);
   
   // Keyboard shortcuts
   const kh = (e) => {
@@ -1541,6 +1550,54 @@ function showCombatConfirm(enemy) {
 
 // ── 战斗 ──
 // ── 战前道具子面板 ──
+function _updateBattlePreviewNumbers(scaledEnemy) {
+  const p = gameState.player;
+  const newPreview = previewBattle(p, scaledEnemy);
+  const newEffAtk = getEffectiveAtk(p);
+  const newEffDef = getEffectiveDef(p);
+  const stanceInfo = getCurrentStance();
+  const streakBonus = killStreak.getBonus();
+
+  // 更新玩家属性栏
+  const playerPanel = document.getElementById('preview-player-stats');
+  if (playerPanel) {
+    playerPanel.innerHTML =
+      `<p style="color:#6699ff; font-size:11px; letter-spacing:2px; margin-bottom:4px;">郑吒 Lv.${p.level}</p>` +
+      `<p style="color:#eee; font-size:13px;">HP <span style="color:#44ff88">${p.hp}</span>/${p.maxHp}</p>` +
+      `<p style="color:#ff8866; font-size:12px;">ATK ${newEffAtk}${p.weapon ? ' <span style="color:#665533;font-size:10px;">(+' + (p.weapon.atk||0) + ')</span>' : ''}</p>` +
+      `<p style="color:#6688ff; font-size:12px;">DEF ${newEffDef}${p.armor ? ' <span style="color:#334466;font-size:10px;">(+' + (p.armor.def||0) + ')</span>' : ''}</p>` +
+      `<p style="color:${stanceInfo.color}; font-size:10px;">${stanceInfo.icon} ${stanceInfo.name}</p>`;
+  }
+
+  // 更新伤害预测栏
+  const dmgPanel = document.getElementById('preview-damage-calc');
+  if (dmgPanel) {
+    const canWinColor = newPreview.canWin ? '#44ff88' : '#ff4444';
+    const canWinIcon = newPreview.canWin ? '✓' : '✗';
+    const canWinText = newPreview.canWin
+      ? `${newPreview.turnsNeeded}回合击败 · 受伤${newPreview.totalDamage}`
+      : '无法击败 — 建议撤退';
+    dmgPanel.innerHTML =
+      `<div style="flex:1;text-align:center;"><p style="color:#ff8866;font-size:11px;">你的伤害</p><p style="color:#ffaa66;font-size:16px;font-weight:bold;">${newPreview.playerDmgPerHit}${newPreview.isDouble ? ' ×2' : ''}</p></div>` +
+      `<div style="flex:1;text-align:center;"><p style="color:#6688ff;font-size:11px;">敌方伤害</p><p style="color:#6688ff;font-size:16px;font-weight:bold;">${newPreview.enemyDmgPerHit}</p></div>` +
+      `<div style="flex:1;text-align:center;"><p style="color:${canWinColor};font-size:11px;">${canWinIcon} 预测</p><p style="color:${canWinColor};font-size:12px;">${canWinText}</p></div>`;
+  }
+
+  // 更新连杀/词缀加成栏
+  const bonusPanel = document.getElementById('preview-bonus-info');
+  if (bonusPanel) {
+    const parts = [];
+    if (streakBonus.atkPct > 0) parts.push('<span style="color:#ff6644;font-size:10px;">🔥连杀 ATK+' + streakBonus.atkPct + '%</span>');
+    if (streakBonus.crt > 0) parts.push('<span style="color:#ffaa44;font-size:10px;">⚡连杀 CRT+' + streakBonus.crt + '</span>');
+    const affixFx = getAllAffixEffects(p);
+    if (affixFx.flatAtk > 0) parts.push('<span style="color:#ff8833;font-size:10px;">⚔词缀 ATK+' + affixFx.flatAtk + '</span>');
+    if (affixFx.flatDef > 0) parts.push('<span style="color:#6688ff;font-size:10px;">🛡词缀 DEF+' + affixFx.flatDef + '</span>');
+    if (affixFx.lifesteal > 0) parts.push('<span style="color:#ff4488;font-size:10px;">🩸吸血' + Math.round(affixFx.lifesteal*100) + '%</span>');
+    if (affixFx.thorns > 0) parts.push('<span style="color:#44ff44;font-size:10px;">🌿荆棘' + Math.round(affixFx.thorns*100) + '%</span>');
+    bonusPanel.innerHTML = parts.length > 0 ? parts.join(' · ') : '';
+  }
+}
+
 function _updatePendingBuffsPreview() {
   const el = document.getElementById('pending-buffs-preview');
   if (!el) return;
@@ -1837,6 +1894,10 @@ function startCombat(enemy, preScaledEnemy) {
     // 记录图鉴（含战败）
     if (!result.victory) { try { bestiary.record(scaledEnemy || enemy, { victory: false }); localStorage.setItem("ih_bestiary", JSON.stringify(bestiary.toJSON())); } catch {} }
     
+    // 战斗评级 — 只计算一次
+    const battleRating = result.victory ? rateBattle(result, gameState.player) : null;
+    if (battleRating) recordRating(battleRating);
+
     // 记录战斗历史
     combatHistory.push({
       enemy: enemy.name,
@@ -1845,15 +1906,12 @@ function startCombat(enemy, preScaledEnemy) {
       log: result.log,
       floor: chapter.floors[currentFloorIndex]?.id || '?',
       turn: gameState.turn,
-      rating: result.victory ? rateBattle(result, gameState.player) : null,
+      rating: battleRating,
     });
     if (combatHistory.length > 20) combatHistory.shift(); // 保留最近20场
 
     if (result.victory) {
       try { victoryFlash(document.getElementById('ui-overlay')); } catch {}
-      // 战斗评级
-      const battleRating = rateBattle(result, gameState.player);
-      recordRating(battleRating);
       renderer.addFloatText(battleRating.icon + ' ' + battleRating.grade, gameState.player.x, gameState.player.y - 2.5, battleRating.color);
       renderer.addFloatText(`+${scaledEnemy.rewards?.exp || 0} EXP`, enemy.x, enemy.y - 1, 'rgb(170, 136, 255)');
       if (scaledEnemy.rewards?.gold) renderer.addFloatText(`+${scaledEnemy.rewards.gold}G`, enemy.x, enemy.y - 0.4, 'rgb(255, 204, 68)');
