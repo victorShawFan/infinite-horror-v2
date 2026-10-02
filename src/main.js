@@ -1776,8 +1776,46 @@ function showChapterComplete() {
           else doStart();
         });
       } else {
-        // 无更多章节
-        overlay.innerHTML = `
+        // 无更多章节 — 游戏通关
+        const isGameComplete = chapterNum >= 12;
+        overlay.innerHTML = isGameComplete ? `
+          <div style="
+            position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            background: linear-gradient(180deg, rgba(0,0,0,0.98) 0%, rgba(10,5,15,0.95) 50%, rgba(0,0,0,0.98) 100%);
+            animation: fadeIn 2s ease;
+          ">
+            <p style="color: #666; font-size: 14px; letter-spacing: 6px; margin-bottom: 20px;">THE END</p>
+            <h1 style="
+              color: #ff4444; font-size: 48px; letter-spacing: 10px;
+              text-shadow: 0 0 30px rgba(255,68,68,0.3);
+              margin-bottom: 8px;
+            ">无限恐怖</h1>
+            <p style="color: #888; letter-spacing: 6px; margin-bottom: 40px;">中 洲 轮 回 · 完</p>
+            <div style="color: #666; max-width: 500px; text-align: center; line-height: 2; margin-bottom: 40px;">
+              <p>最终幸存者：<span style="color: #e0c080;">郑吒、刘郁、林俊天</span></p>
+              <br>
+              <p style="font-size: 13px;">十二个世界。无数次生死。</p>
+              <p style="font-size: 13px;">他们用生命换来了——活着的权利。</p>
+              <br>
+              <p style="color: #555; font-size: 12px; font-style: italic;">
+                "只要活着，就有希望。" —— 郑吒
+              </p>
+            </div>
+            <div style="color: #444; font-size: 11px; letter-spacing: 2px; margin-bottom: 30px;">
+              <p>通关等级: Lv.${p.level} · 总奖励点: ${p.rewardPoints}</p>
+              <p>存活同伴: ${gameState.companions.filter(c=>c.alive).length} / ${gameState.companions.length}</p>
+            </div>
+            <button onclick="location.reload()" style="
+              background: transparent; border: 1px solid #ff4444; color: #ff4444;
+              padding: 14px 50px; cursor: pointer; font-size: 16px;
+              letter-spacing: 6px; font-family: inherit; border-radius: 8px;
+              transition: all 0.3s;
+            " onmouseover="this.style.background='rgba(255,68,68,0.1)'"
+               onmouseout="this.style.background='transparent'">重新轮回</button>
+          </div>
+          <style>@keyframes fadeIn{from{opacity:0}to{opacity:1}}</style>
+        ` : `
           <div style="
             position: absolute; top: 0; left: 0; right: 0; bottom: 0;
             display: flex; flex-direction: column; align-items: center; justify-content: center;

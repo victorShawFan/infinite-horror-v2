@@ -21,6 +21,23 @@
       margin: 0 auto;
       image-rendering: pixelated;
       cursor: crosshair;
+      filter: contrast(1.05) brightness(1.02);
+      box-shadow: 0 0 80px rgba(255,68,68,0.05), 0 0 160px rgba(0,0,0,0.5);
+      border-radius: 2px;
+    }
+    /* 微妙的扫描线效果 */
+    #game-canvas::after {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: repeating-linear-gradient(
+        0deg,
+        rgba(0,0,0,0) 0px,
+        rgba(0,0,0,0) 2px,
+        rgba(0,0,0,0.03) 2px,
+        rgba(0,0,0,0.03) 4px
+      );
+      pointer-events: none;
     }
     #ui-overlay {
       position: fixed;
@@ -84,6 +101,18 @@
       font-size: 12px;
       color: #444;
       letter-spacing: 3px;
+    }
+      /* 战斗信息提示 */
+    .combat-tooltip {
+      position: absolute;
+      background: rgba(5, 5, 15, 0.95);
+      border: 1px solid rgba(255, 68, 68, 0.3);
+      border-radius: 6px;
+      padding: 8px 12px;
+      color: #e0e0e0;
+      font-size: 12px;
+      pointer-events: none;
+      z-index: 20;
     }
   </style>
 </head>
