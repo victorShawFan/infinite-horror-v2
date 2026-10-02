@@ -5,7 +5,7 @@
 import { TILE_SIZE, TILE, COLORS, CANVAS_W, CANVAS_H, ENTITY_TYPE } from './constants.js';
 import { assetLoader } from './AssetLoader.js';
 import { gameState } from './GameState.js';
-import { getEffectiveAtk, getEffectiveDef, getEffectiveCrt, previewBattle, getStatsBreakdown } from './CombatSystem.js';
+import { getEffectiveAtk, getEffectiveDef, getEffectiveCrt, getEffectiveSpd, previewBattle, getStatsBreakdown } from './CombatSystem.js';
 import { drawWallTile, drawFloorTile, drawLavaTile, drawStairsTile, drawCharacterSprite, drawHealthBar } from './SpriteRenderer.js';
 
 export class Renderer {
@@ -359,11 +359,12 @@ export class Renderer {
 
     // ── 左上：生存状态 ──
     ctx.fillStyle = 'rgba(10, 10, 20, 0.88)';
-    roundRect(ctx, pad, pad, 220, 130, 8);
+    const hudH = p.maxMana > 0 ? 155 : 130;
+    roundRect(ctx, pad, pad, 220, hudH, 8);
     ctx.fill();
     ctx.strokeStyle = 'rgba(68, 170, 255, 0.4)';
     ctx.lineWidth = 1;
-    roundRect(ctx, pad, pad, 220, 130, 8);
+    roundRect(ctx, pad, pad, 220, hudH, 8);
     ctx.stroke();
 
     ctx.font = 'bold 14px "Microsoft YaHei"';
@@ -381,14 +382,23 @@ export class Renderer {
     this._drawBar(ctx, pad + 10, pad + 62, 200, 8, p.stamina, p.maxStamina, COLORS.STAMINA_BAR, '#333');
     ctx.fillText(`体力 ${p.stamina}/${p.maxStamina}`, pad + 10, pad + 82);
 
+    // 法力条（道法血统时显示）
+    if (p.maxMana > 0) {
+      this._drawBar(ctx, pad + 10, pad + 88, 200, 8, p.mana || 0, p.maxMana, COLORS.MANA_BAR, '#222');
+      ctx.fillStyle = '#88aaff';
+      ctx.fillText(`MP ${p.mana || 0}/${p.maxMana}`, pad + 10, pad + 108);
+    }
+
     // 经验条
-    this._drawBar(ctx, pad + 10, pad + 90, 200, 6, p.exp, p.expToNext, '#aa88ff', '#222');
-    ctx.fillText(`EXP ${p.exp}/${p.expToNext}`, pad + 10, pad + 108);
+    const manaOffset = p.maxMana > 0 ? 25 : 0;
+    this._drawBar(ctx, pad + 10, pad + 90 + manaOffset, 200, 6, p.exp, p.expToNext, '#aa88ff', '#222');
+    ctx.fillStyle = COLORS.TEXT_WHITE;
+    ctx.fillText(`EXP ${p.exp}/${p.expToNext}`, pad + 10, pad + 108 + manaOffset);
 
     // 基因锁状态
     if (p.geneLock > 0) {
       ctx.fillStyle = COLORS.GENE_LOCK;
-      ctx.fillText(`基因锁 ${p.geneLock}阶 ${p.geneLockActive ? '●激活' : '○待机'}`, pad + 10, pad + 125);
+      ctx.fillText(`基因锁 ${p.geneLock}阶 ${p.geneLockActive ? '●激活' : '○待机'}`, pad + 10, pad + 125 + manaOffset);
     }
 
     // ── 右上：战斗属性 ──
@@ -406,7 +416,7 @@ export class Renderer {
     ctx.fillStyle = '#6688ff';
     ctx.fillText(`🛡 防御 ${getEffectiveDef(p)}`, rx, pad + 38);
     ctx.fillStyle = '#44ffaa';
-    ctx.fillText(`💨 速度 ${p.spd}`, rx, pad + 56);
+    ctx.fillText(`💨 速度 ${getEffectiveSpd(p)}`, rx, pad + 56);
     ctx.fillStyle = '#ffcc44';
     ctx.fillText(`✦ 暴击 ${getEffectiveCrt(p)}%`, rx, pad + 74);
     ctx.fillStyle = '#ffaa44';

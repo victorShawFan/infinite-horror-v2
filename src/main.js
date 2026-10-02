@@ -7,7 +7,7 @@ import { TILE, TILE_SIZE, ENTITY_TYPE, GAME_STATE, GENE_LOCK, COLORS, CANVAS_W, 
 import { eventBus } from './core/EventBus.js';
 import { gameState } from './core/GameState.js';
 import { Renderer } from './core/Renderer.js';
-import { executeBattle, previewBattle, getEffectiveAtk, getEffectiveDef, getEffectiveCrt } from './core/CombatSystem.js';
+import { executeBattle, previewBattle, getEffectiveAtk, getEffectiveDef, getEffectiveCrt, getEffectiveSpd } from './core/CombatSystem.js';
 import { generateChapter1 } from './core/MapGenerator.js';
 import { audioEngine } from './core/AudioEngine.js';
 import { renderLordGodSpace } from './core/LordGodSpace.js';
@@ -658,6 +658,18 @@ function showCombatConfirm(enemy) {
         
         ${descText}
         
+        <!-- Build特效提示 -->
+        ${(() => {
+          const tags = [];
+          if (preview.isDouble) tags.push('<span style="color:#ffcc44;background:rgba(255,204,68,0.1);padding:2px 8px;border-radius:4px;font-size:11px;">⚡ 二连击</span>');
+          if (preview.burnDmg > 0) tags.push('<span style="color:#ff6633;background:rgba(255,102,51,0.1);padding:2px 8px;border-radius:4px;font-size:11px;">🔥 灼烧+' + preview.burnDmg + '/回合</span>');
+          if (preview.reflectDmg > 0) tags.push('<span style="color:#6699ff;background:rgba(102,153,255,0.1);padding:2px 8px;border-radius:4px;font-size:11px;">🛡 反伤' + preview.reflectDmg + '</span>');
+          if (preview.isDaoist) tags.push('<span style="color:#aa66ff;background:rgba(170,102,255,0.1);padding:2px 8px;border-radius:4px;font-size:11px;">✦ 法术+' + preview.spellDmgEst + '</span>');
+          if (preview.lifeStealPerHit > 0) tags.push('<span style="color:#ff4466;background:rgba(255,68,102,0.1);padding:2px 8px;border-radius:4px;font-size:11px;">🩸 吸血+' + preview.lifeStealPerHit + '/击</span>');
+          if (preview.hasIceChip) tags.push('<span style="color:#66ccff;background:rgba(102,204,255,0.1);padding:2px 8px;border-radius:4px;font-size:11px;">❄ 冰冻减攻</span>');
+          return tags.length > 0 ? '<div style="display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin-top:8px;">' + tags.join('') + '</div>' : '';
+        })()}
+        
         <!-- 按钮 -->
         <div style="display: flex; gap: 12px; justify-content: center; margin-top: 12px;">
           <button id="btn-fight" style="
@@ -1079,12 +1091,13 @@ function showInventoryPanel() {
                 <span style="color:#88aaff;font-weight:bold;">${getEffectiveDef(p)}</span>
                 <span style="color:#334466;font-size:11px;">(${p.def}${p.armor ? '+' + (p.armor.def||0) : ''}${p.chips.filter(c=>c.stat==='def').reduce((s,c)=>s+c.value,0) > 0 ? '+' + p.chips.filter(c=>c.stat==='def').reduce((s,c)=>s+c.value,0) : ''})</span>
               </td></tr>
-              <tr><td>💨 速度</td><td style="text-align: right; color: #44ffaa;">${p.spd}</td></tr>
+              <tr><td>💨 速度</td><td style="text-align: right; color: #44ffaa;">${getEffectiveSpd(p)}</td></tr>
               <tr><td>✦ 暴击</td><td style="text-align: right; color: #ffcc44;">
                 <span style="font-weight:bold;">${getEffectiveCrt(p)}%</span>
                 ${p.accessory?.crt ? '<span style="color:#555;font-size:11px;">(+' + p.accessory.crt + ')</span>' : ''}
               </td></tr>
               <tr><td>🔑 钥匙</td><td style="text-align: right;">黄${p.keys.yellow} 蓝${p.keys.blue} 红${p.keys.red}</td></tr>
+              ${p.maxMana > 0 ? '<tr><td>✦ 法力</td><td style="text-align: right; color: #88aaff;">' + (p.mana||0) + '/' + p.maxMana + '</td></tr>' : ''}
               <tr><td>💰 金币</td><td style="text-align: right; color: #ffcc44;">${p.gold}G</td></tr>
               <tr><td>⬡ 奖励点</td><td style="text-align: right; color: #ff8844;">${p.rewardPoints}</td></tr>
             </table>
@@ -1097,7 +1110,10 @@ function showInventoryPanel() {
               ⚔ 武器: <span style="color: #ffaa44">${p.weapon?.name || '无'}</span><br>
               🛡 护甲: <span style="color: #6688ff">${p.armor?.name || '无'}</span><br>
               💍 饰品: <span style="color: #aa88ff">${p.accessory?.name || '无'}</span><br>
-              🩸 血统: <span style="color: #ff4488">${p.activeBloodline !== 'none' ? p.activeBloodline : '未觉醒'}</span><br>
+              🩸 血统: <span style="color: #ff4488">${(() => {
+                const bm = { vampire: '血族 · ATK+15% 吸血', ancient_wu: '古武 · ATK+20%', martial: '武修 · DEF+20% 反伤', daoist: '道法 · 法术攻击' };
+                return bm[p.activeBloodline] || '未觉醒';
+              })()}</span><br>
               🧬 基因锁: <span style="color: #ff6600">${p.geneLock > 0 ? p.geneLock + '阶' + (p.geneLockActive ? ' ●激活' : ' ○待机') : '未开启'}</span>
             </p>
 
