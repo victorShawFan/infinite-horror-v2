@@ -5,6 +5,7 @@
 import { TILE_SIZE, TILE, COLORS, CANVAS_W, CANVAS_H, ENTITY_TYPE } from './constants.js';
 import { assetLoader } from './AssetLoader.js';
 import { gameState } from './GameState.js';
+import { atmosphereRenderer } from './AtmosphereSystem.js';
 import { getNoise, getIsSneaking, getAmmo, getMaxAmmo } from './StealthSystem.js';
 import { getEffectiveAtk, getEffectiveDef, getEffectiveCrt, getEffectiveSpd, previewBattle, getStatsBreakdown } from './CombatSystem.js';
 import { getGeneLockProgress } from './GeneLockSystem.js';
@@ -149,6 +150,9 @@ export class Renderer {
     this._updateAmbientParticles(ctx, floor);
 
     ctx.restore();
+
+    // ── 大气效果层 ──
+    try { atmosphereRenderer.render(ctx, this.canvas.width, this.canvas.height); } catch {}
 
     // ── HUD（固定位置）──
     this._drawHUD(ctx, p, floor);

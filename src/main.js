@@ -46,6 +46,7 @@ import { bestiary, getDifficulty, setDifficulty, getDifficultyConfig, applyDiffi
 import { ngPlusState, formatClearScreen, formatCycleInfo, TITLES } from './core/NewGamePlus.js';
 import { fadeBlackTransition, chapterIntroTransition, floorTransition, victoryFlash } from './core/TransitionSystem.js';
 import { MiniMap } from './core/MiniMap.js';
+import { atmosphereRenderer } from './core/AtmosphereSystem.js';
 
 // ── 全局状态 ──
 let renderer;
@@ -340,6 +341,8 @@ function startGame() {
   combatAnimator = new CombatAnimator(renderer);
 
   chapter = generateChapter1();
+  // 初始化大气效果
+  atmosphereRenderer.setChapter(1);
   currentFloorIndex = gameState.nodeIndex || 0;
   loadFloor(currentFloorIndex);
 
@@ -426,6 +429,7 @@ function loadFloor(index) {
   currentFloorIndex = index;
   gameState.nodeIndex = index;
   const floor = chapter.floors[index];
+  try { if (floor.theme) atmosphereRenderer.setFloorTheme(floor.theme); } catch {}
   gameState.player.x = floor.playerStart.x;
   gameState.player.y = floor.playerStart.y;
 
