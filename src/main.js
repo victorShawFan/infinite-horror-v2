@@ -3092,6 +3092,20 @@ function showChapterComplete() {
   const p = gameState.player;
   const chapterNum = gameState.chapter;
   const chapterNames = { 1: '名为生化', 2: '异形杀戮', 3: '咒怨阴影', 4: '神鬼秘宝', 5: '死神绝境', 6: '异形再临', 7: '恶魔初临', 8: '重建中洲', 9: '星河远征', 10: '五队大战', 11: '心魔与终战前奏', 12: '生化终战' };
+  const chapterRecaps = {
+    1: '郑吒从生化危机的世界中活了下来。蜂巢实验室的噩梦还未散去，但主神已经在准备下一场轮回。中洲队初步成型，但前路漫漫。',
+    2: '异形飞船上的杀戮结束了。皇后的嘶鸣还在耳畔回荡。这一次，郑吒学会了——恐惧不能消灭你，但恐惧能让你变强。',
+    3: '伽椰子的诅咒终于被封印。咒怨的世界教会了中洲队：有些敌人不能用力量击败，需要智慧和牺牲。楚轩的录像带揭示了更大的秘密。',
+    4: '复活真经到手，但代价惨重。印洲队的伏击让团队付出了血的教训。在古埃及的沙漠中，郑吒明白了——强大不是一个人的事。',
+    5: '死神的世界无处可逃。张杰的告别让每个人都沉默了。但郑吒的选择证明了——真正的队长，是在最黑暗的时刻站出来的人。',
+    6: '又一次面对异形，但这次不同了。中洲队更强了。程啸的加入为队伍注入了新的力量。然而，更大的挑战已在前方等待。',
+    7: '恶魔队出现了。在浣熊市的废墟中，郑吒见识到了真正的敌人——不是怪物，而是同样来自主神空间的人。郑吒选择了复活，选择了不再逃避。',
+    8: '楚轩复活了。中洲队终于再度完整。在侏罗纪世界的磨练中，团队的配合达到了新的高度。前方，是更强大的对手——五队混战。',
+    9: '星河远征结束。脑虫被成功捕获。在虫族的星球上，郑吒领悟了战略的重要性。下一个世界，是真正的战场——五队大战。',
+    10: '魔戒世界的五队混战终于落幕。联盟与背叛交织，每一步都是生死抉择。幸存下来的中洲队，将迎来最后的考验。',
+    11: '心魔被破除，郑吒觉醒了真正的力量。变形金刚、猛鬼街、天煞……每一场试炼都是对心灵的锤炼。现在，该是终结一切的时候了。',
+    12: '一切结束了。主神碎片被摧毁，恶魔队被击败。中洲队的轮回之旅画上了句号。但故事并未真正结束——因为恐惧永远存在，而面对恐惧的勇气，也永远不会消失。',
+  };
   const nextChapterNames = { 1: '异形一', 2: '咒怨', 3: '神鬼秘宝', 4: '死神绝境', 5: '异形再临', 6: '恶魔初临', 7: '重建中洲', 8: '星河远征', 9: '五队大战', 10: '心魔与终战前奏', 11: '生化终战', 12: '终局' };
   const chapterName = chapterNames[chapterNum] || `第${chapterNum}章`;
   const nextWorld = nextChapterNames[chapterNum];
@@ -3113,7 +3127,11 @@ function showChapterComplete() {
         background: rgba(20,20,30,0.9); border: 1px solid #333; border-radius: 12px;
         padding: 30px; max-width: 500px; width: 90%;
       ">
-        <h3 style="color: #ffcc44; margin-bottom: 16px;">轮回结算</h3>
+        <p style="color:#888;font-size:12px;line-height:1.8;margin-bottom:16px;font-style:italic;
+        border-left:2px solid #ff444433;padding-left:12px;">
+        ${chapterRecaps[chapterNum] || '又一次轮回结束了。'}
+      </p>
+      <h3 style="color: #ffcc44; margin-bottom: 16px;">轮回结算</h3>
         <p style="color: #aaa; line-height: 1.8;">
           ⚔ 击杀: ${p.stats?.enemiesKilled || gameState.stats.enemiesKilled}<br>
           💀 死亡: ${gameState.stats.deathCount}<br>
