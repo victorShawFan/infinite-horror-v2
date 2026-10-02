@@ -149,6 +149,24 @@ export class Renderer {
     this._drawFogOfWar(ctx, floor, p);
 
     // ── 绘制实体 ──
+    // ── 密道提示渲染 ──
+    try {
+      if (floor._secrets) {
+        const p = gameState.player;
+        for (const s of floor._secrets) {
+          if (s.broken) continue;
+          const dist = Math.abs(s.x - p.x) + Math.abs(s.y - p.y);
+          if (dist <= 3) {
+            const px = s.x * TILE_SIZE;
+            const py = s.y * TILE_SIZE;
+            const pulse = 0.03 + 0.02 * Math.sin(this._time * 0.08 + s.x * 5 + s.y * 3);
+            ctx.fillStyle = `rgba(255, 220, 150, ${pulse})`;
+            ctx.fillRect(px + 1, py + 1, TILE_SIZE - 2, TILE_SIZE - 2);
+          }
+        }
+      }
+    } catch {}
+
     this._drawEntities(ctx, entities, hoveredEntity);
 
     // ── 绘制玩家 ──

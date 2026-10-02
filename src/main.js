@@ -51,6 +51,7 @@ import { atmosphereRenderer } from './core/AtmosphereSystem.js';
 import { tutorialManager } from './core/TutorialSystem.js';
 import { triggerTrap as fireTrap, openChest, TRAP_TYPES, CHEST_TYPES } from './core/TrapSystem.js';
 import { addConsumable, useConsumable, getInventoryList, consumePendingBuffs, giveStarterConsumables, CONSUMABLE_DEFS } from './core/ConsumableSystem.js';
+import { generateSecretEntities, tryBreakSecret, SECRET_TYPES } from './core/SecretRoomSystem.js';
 
 // ── 全局状态 ──
 let renderer;
@@ -857,8 +858,39 @@ function movePlayer(dx, dy) {
 
   const tile = floor.tiles[ny][nx];
 
-  // 墙壁
-  if (tile === TILE.WALL || tile === TILE.VOID) return;
+  // 墙壁 — 检查是否是密道
+  if (tile === TILE.WALL || tile === TILE.VOID) {
+    const floor = chapter.floors[currentFloorIndex];
+    if (floor?._secrets) {
+      const secret = floor._secrets.find(s => s.x === nx && s.y === ny && !s.broken);
+      if (secret) {
+        const ch = gameState.chapter || 1;
+        const result = tryBreakSecret(secret, p, ch);
+        if (result.success) {
+          // 打通墙壁：修改地图数据
+          floor.map[ny][nx] = 0; // 变成地板
+          if (floor.tiles) floor.tiles[ny][nx] = 0;
+          renderer.shake(6, 300);
+          renderer.flash('rgba(255, 200, 100)', 200);
+          audioEngine.playDamage();
+          // 添加密室奖励消耗品（通过事件）
+          if (result.reward?.type === 'consumable') {
+            try { addConsumable(result.reward.id, result.reward.count || 1); } catch {}
+          }
+          startDialogue([
+            { text: result.message, speaker: '系统' },
+            { text: '密道已打通，可以通过了。', speaker: '旁白' },
+          ]);
+          return;
+        } else {
+          // 提示但不能打开
+          renderer.addFloatText(secret.hint || '...', p.x, p.y - 1, 'rgb(180, 180, 140)');
+          return;
+        }
+      }
+    }
+    return;
+  }
 
   // 岩浆/激光 - 造成伤害但可以走
   if (tile === TILE.LAVA) {
