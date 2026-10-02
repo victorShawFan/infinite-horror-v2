@@ -49,6 +49,7 @@ import { ngPlusState, formatClearScreen, formatCycleInfo, TITLES, getActiveMutat
 import { fadeBlackTransition, chapterIntroTransition, floorTransition, victoryFlash } from './core/TransitionSystem.js';
 import { MiniMap } from './core/MiniMap.js';
 import { openCodex } from './core/Codex.js';
+import { tryUpgradeToElite, getEliteDescription, recordEliteKill, getEliteStats, resetEliteStats, serializeEliteStats, deserializeEliteStats } from './core/EliteMonsterSystem.js';
 import { atmosphereRenderer } from './core/AtmosphereSystem.js';
 import { tutorialManager } from './core/TutorialSystem.js';
 import { triggerTrap as fireTrap, openChest, TRAP_TYPES, CHEST_TYPES } from './core/TrapSystem.js';
@@ -117,6 +118,7 @@ function autoSave(reason = '') {
     localStorage.setItem('ih_streak', JSON.stringify(killStreak.toJSON()));
     localStorage.setItem('ih_bestiary', JSON.stringify(bestiary.toJSON()));
     localStorage.setItem('ih_challenge', JSON.stringify(challengeState.toJSON()));
+    localStorage.setItem('ih_elite', JSON.stringify(serializeEliteStats()));
     // 设置持久化：难度 + 音量 + 迷雾
     try {
       const settingsData = {
@@ -894,7 +896,8 @@ function startGame() {
       p.def += 1;
     }
 
-    try { localStorage.setItem('ih_challenge', JSON.stringify(challengeState.toJSON())); } catch {}
+    try { localStorage.setItem('ih_challenge', JSON.stringify(challengeState.toJSON()));
+    localStorage.setItem('ih_elite', JSON.stringify(serializeEliteStats())); } catch {}
     try { localStorage.setItem('ih_streak', JSON.stringify(killStreak.toJSON())); } catch {}
     try { localStorage.setItem('ih_fog', JSON.stringify(fogOfWar.toJSON())); } catch {}
   });
@@ -986,8 +989,13 @@ function loadFloor(index, isAdvancing) {
   entities = floor.entities
     .filter(e => !removedIds.has(e.id))
     .map(e => {
-      const clone = { ...e };
+      let clone = { ...e };
       if (clone.hp !== undefined) clone._maxHp = clone.hp;
+      // 精英怪物升级
+      if (clone.type === ENTITY_TYPE.ENEMY && !clone.isBoss && !clone.boss) {
+        clone = tryUpgradeToElite(clone, gameState.chapter || 1, getDifficulty());
+        if (clone._eliteTier) clone._maxHp = clone.hp;
+      }
       return clone;
     });
 
@@ -1279,7 +1287,8 @@ document.addEventListener('keydown', (e) => {
     try { if (window._miniMap) localStorage.setItem('ih_minimap', JSON.stringify(window._miniMap.toJSON())); } catch {}
     try { localStorage.setItem('ih_ngplus', JSON.stringify(ngPlusState.toJSON())); } catch {}
     try { localStorage.setItem('ih_stance', getStanceId()); } catch {}
-    try { localStorage.setItem('ih_challenge', JSON.stringify(challengeState.toJSON())); } catch {}
+    try { localStorage.setItem('ih_challenge', JSON.stringify(challengeState.toJSON()));
+    localStorage.setItem('ih_elite', JSON.stringify(serializeEliteStats())); } catch {}
     renderer.notify('💾 手动存档完成', '#44ff88', 90);
     return;
   }
