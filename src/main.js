@@ -42,6 +42,7 @@ import { getEquipmentDisplayName, getEquipmentTotalStats } from './core/Equipmen
 import { getPlayerActiveElements, ELEMENT_INFO, checkElementalResonance } from './core/ElementalSystem.js';
 import { changeRelationship, getRelationshipLevel, getRelationshipSummary, COMPANION_PROFILES } from './core/RelationshipSystem.js';
 import { loreTracker, LORE_ENTRIES, formatLorePopup } from './core/LoreSystem.js';
+import { bestiary, getDifficulty, setDifficulty, getDifficultyConfig, applyDifficultyScaling, formatBestiaryPanel, formatDifficultySelector, DIFFICULTY, DIFFICULTY_CONFIG } from './core/DifficultySystem.js';
 
 // ── 全局状态 ──
 let renderer;
@@ -195,6 +196,7 @@ function showMainMenu() {
     if (gameState.load(0)) {
       try { const ms = localStorage.getItem('ih_milestones'); if (ms) milestoneTracker.fromJSON(JSON.parse(ms)); } catch {}
       try { const lr = localStorage.getItem('ih_lore'); if (lr) loreTracker.fromJSON(JSON.parse(lr)); } catch {}
+      try { const br = localStorage.getItem('ih_bestiary'); if (br) bestiary.fromJSON(JSON.parse(br)); } catch {}
       const chapterGens = { 1: generateChapter1, 2: generateChapter2, 3: generateChapter3, 4: generateChapter4, 5: generateChapter5, 6: generateChapter6, 7: generateChapter7, 8: generateChapter8, 9: generateChapter9, 10: generateChapter10, 11: generateChapter11, 12: generateChapter12 };
       const gen = chapterGens[gameState.chapter] || generateChapter1;
 
@@ -266,6 +268,9 @@ function menuLoop() {
 function startNewGame() {
   // 重置状态
   gameState.reset();
+  // 重置图鉴和难度
+  bestiary.fromJSON({});
+  try { localStorage.removeItem('ih_bestiary'); } catch {}
   // 重置线索收集
   loreTracker.fromJSON({ discovered: [] });
   try { localStorage.removeItem("ih_lore"); } catch {}
@@ -638,6 +643,10 @@ document.addEventListener('keydown', (e) => {
         // 打开背包/状态面板
         showInventoryPanel();
         return;
+      case 'b':
+        // 怪物图鉴
+        showBestiaryPanel();
+        return;
       case 'r':
         // 同伴关系面板
         showRelationshipPanel();
@@ -986,7 +995,11 @@ function startCombat(enemy) {
     if (idx >= 0) entities.splice(idx, 1);
     gameState.markEntityRemoved(currentFloorIndex, enemy.id);
     
-    // 并肩作战 → 存活同伴关系+3
+        // 记录怪物图鉴
+    try { bestiary.record(scaledEnemy, { victory: true, damageDealt: scaledEnemy.hp, damageTaken: 0 }); } catch {}
+    try { localStorage.setItem('ih_bestiary', JSON.stringify(bestiary.toJSON())); } catch {}
+
+// 并肩作战 → 存活同伴关系+3
     for (const c of gameState.companions.filter(c => c.alive)) {
       changeRelationship(c.id, 'fight_together', gameState.relationships);
     }
@@ -999,6 +1012,8 @@ function startCombat(enemy) {
   // 播放战斗动画序列
   combatAnimator.playCombatSequence(result, enemy, () => {
     combatResult = result;
+    // 记录图鉴（含战败）
+    if (!result.victory) { try { bestiary.record(scaledEnemy || enemy, { victory: false }); localStorage.setItem("ih_bestiary", JSON.stringify(bestiary.toJSON())); } catch {} }
     
     // 记录战斗历史
     combatHistory.push({
@@ -1758,6 +1773,56 @@ function showInventoryPanel() {
   document.addEventListener('keydown', keyHandler);
 }
 
+// ── 怪物图鉴面板 ──
+function showBestiaryPanel() {
+  if (gameState.state !== GAME_STATE.EXPLORING) return;
+  gameState.setState(GAME_STATE.INVENTORY);
+  const overlay = document.getElementById('ui-overlay');
+  const diffCfg = getDifficultyConfig();
+
+  overlay.innerHTML = `
+    <div style="
+      position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+      display: flex; align-items: center; justify-content: center;
+      background: rgba(0,0,0,0.8);
+    " id="bestiary-backdrop">
+      <div style="
+        background: rgba(10,10,20,0.97); border: 1px solid #444; border-radius: 16px;
+        padding: 30px; max-width: 700px; width: 90%; max-height: 80vh; overflow-y: auto;
+      ">
+        <h2 style="color: #ff8866; text-align: center; letter-spacing: 4px; margin-bottom: 8px;">
+          📖 怪物图鉴
+        </h2>
+        <p style="color: #666; text-align: center; font-size: 11px; margin-bottom: 16px;">
+          已发现 ${bestiary.getDiscoveredCount()} 种怪物 · 
+          当前难度: <span style="color:${diffCfg.color};">${diffCfg.icon} ${diffCfg.name}</span>
+        </p>
+        ${formatBestiaryPanel()}
+        <div style="text-align: center; margin-top: 24px;">
+          <button id="btn-close-bestiary" style="
+            background: transparent; border: 1px solid #444; color: #888;
+            padding: 8px 30px; cursor: pointer; font-size: 14px; font-family: inherit;
+            border-radius: 6px;
+          ">关闭 (B)</button>
+        </div>
+      </div>
+    </div>
+  `;
+
+  const close = () => {
+    overlay.innerHTML = '';
+    gameState.setState(GAME_STATE.EXPLORING);
+  };
+  document.getElementById('btn-close-bestiary').addEventListener('click', close);
+  document.getElementById('bestiary-backdrop').addEventListener('click', (e) => {
+    if (e.target.id === 'bestiary-backdrop') close();
+  });
+  const kh = (e) => {
+    if (e.key === 'b' || e.key === 'Escape') { close(); document.removeEventListener('keydown', kh); }
+  };
+  document.addEventListener('keydown', kh);
+}
+
 // ── 同伴关系面板 ──
 function showRelationshipPanel() {
   if (gameState.state !== GAME_STATE.EXPLORING) return;
@@ -1847,6 +1912,7 @@ function showHelpPanel() {
           <tr><td style="color: #44aaff;">空格 / Enter</td><td>对话 / 互动 / 推进剧情</td></tr>
           <tr><td style="color: #ff6600;">G</td><td>激活/关闭基因锁</td></tr>
           <tr><td style="color: #aa88ff;">I</td><td>打开状态/背包</td></tr>
+          <tr><td style="color: #ff8866;">B</td><td>怪物图鉴</td></tr>
           <tr><td style="color: #ffcc44;">H / ?</td><td>帮助</td></tr>
           <tr><td style="color: #44ff88;">鼠标悬停</td><td>查看敌人/物品详情</td></tr>
           <tr><td style="color: #ff8866;">L</td><td>战斗日志回顾</td></tr>
