@@ -449,14 +449,14 @@ function generateFloor_2_5() {
         x: 16, y: 8, sprite: '🧬', color: '#ff6600',
         event: {
           type: 'gene_lock',
-          requires: 'gene_lock_awakened',
+          requires: 'gene_lock_1',
           lines: [
             { text: '面对成群的异形，你体内的基因锁再次共鸣。', speaker: '旁白' },
             { text: '你能感受到肌肉纤维在分子层面重组——第二阶，肌肉控制。', speaker: '旁白' },
             { text: '（基因锁提升至二阶。ATK/DEF进一步强化。）', speaker: '主神' },
           ],
           flag: 'gene_lock_stage2',
-          geneLockLevel: 2,
+          effect: { geneLock: 2 },
         },
       },
       // 楼梯
