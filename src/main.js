@@ -49,6 +49,7 @@ import { ngPlusState, formatClearScreen, formatCycleInfo, TITLES, getActiveMutat
 import { fadeBlackTransition, chapterIntroTransition, floorTransition, victoryFlash } from './core/TransitionSystem.js';
 import { MiniMap } from './core/MiniMap.js';
 import { openCodex } from './core/Codex.js';
+import { recordChapterSnapshot, recordMilestone, serializeGrowth, deserializeGrowth } from './core/GrowthTracker.js';
 import { recordVictory as ddRecordVictory, recordDeath as ddRecordDeath, getDynamicFactor, applyDynamicScaling, serializeDynamicDifficulty, deserializeDynamicDifficulty, getDynamicDifficultyInfo } from './core/DynamicDifficulty.js';
 import { addEffect, tickEffects, getActiveEffects, getEffectModifiers, renderEffectHUD, serializeEffects, deserializeEffects, clearAllEffects } from './core/StatusEffectTracker.js';
 import { recordBattle, showBattleReplay, showBattleHistoryPanel, serializeBattleHistory, deserializeBattleHistory } from './core/BattleReplay.js';
@@ -125,6 +126,7 @@ function autoSave(reason = '') {
     localStorage.setItem('ih_battle_history', JSON.stringify(serializeBattleHistory()));
     localStorage.setItem('ih_status_effects', JSON.stringify(serializeEffects()));
     localStorage.setItem('ih_dynamic_diff', JSON.stringify(serializeDynamicDifficulty()));
+    localStorage.setItem('ih_growth', JSON.stringify(serializeGrowth()));
     // 设置持久化：难度 + 音量 + 迷雾
     try {
       const settingsData = {
@@ -906,7 +908,8 @@ function startGame() {
     localStorage.setItem('ih_elite', JSON.stringify(serializeEliteStats()));
     localStorage.setItem('ih_battle_history', JSON.stringify(serializeBattleHistory()));
     localStorage.setItem('ih_status_effects', JSON.stringify(serializeEffects()));
-    localStorage.setItem('ih_dynamic_diff', JSON.stringify(serializeDynamicDifficulty())); } catch {}
+    localStorage.setItem('ih_dynamic_diff', JSON.stringify(serializeDynamicDifficulty()));
+    localStorage.setItem('ih_growth', JSON.stringify(serializeGrowth())); } catch {}
     try { localStorage.setItem('ih_streak', JSON.stringify(killStreak.toJSON())); } catch {}
     try { localStorage.setItem('ih_fog', JSON.stringify(fogOfWar.toJSON())); } catch {}
   });
@@ -1301,7 +1304,8 @@ document.addEventListener('keydown', (e) => {
     localStorage.setItem('ih_elite', JSON.stringify(serializeEliteStats()));
     localStorage.setItem('ih_battle_history', JSON.stringify(serializeBattleHistory()));
     localStorage.setItem('ih_status_effects', JSON.stringify(serializeEffects()));
-    localStorage.setItem('ih_dynamic_diff', JSON.stringify(serializeDynamicDifficulty())); } catch {}
+    localStorage.setItem('ih_dynamic_diff', JSON.stringify(serializeDynamicDifficulty()));
+    localStorage.setItem('ih_growth', JSON.stringify(serializeGrowth())); } catch {}
     renderer.notify('💾 手动存档完成', '#44ff88', 90);
     return;
   }
@@ -3310,6 +3314,8 @@ function toggleGeneLock() {
 // ── 章节完成 ──
 function showChapterComplete() {
   autoSave('章节完成');
+  // 记录成长快照
+  try { const _p = gameState.player; const _s = gameState.stats; recordChapterSnapshot(gameState.chapter, { level: _p.level, maxHp: _p.maxHp, atk: _p.atk, def: _p.def, spd: _p.spd || 5, crt: _p.crt || 0, gold: _p.gold || 0, geneLock: _p.geneLock || 0, activeBloodline: _p.activeBloodline, _totalKills: _s.enemiesKilled, _totalDeaths: _s.deathCount, weapon: _p.weapon, armor: _p.armor }); } catch {}
   // Save max unlocked chapter
   try {
     const prevMax = parseInt(localStorage.getItem('ih_max_chapter') || '1');
