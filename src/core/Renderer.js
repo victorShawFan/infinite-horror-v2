@@ -562,6 +562,9 @@ export class Renderer {
       if (lines[i].startsWith('△')) ctx.fillStyle = '#ccaa44';
       if (lines[i].startsWith('○')) ctx.fillStyle = '#44cc88';
       if (lines[i].startsWith('奖励')) ctx.fillStyle = COLORS.TEXT_GOLD;
+      if (lines[i].includes('弱点')) ctx.fillStyle = '#ff8844';
+      if (lines[i].includes('暴击')) ctx.fillStyle = '#ffcc00';
+      if (lines[i].includes('吸血')) ctx.fillStyle = '#ff44aa';
       ctx.fillText(lines[i], textX, ty + 18 + i * 20);
     }
   }

@@ -152,10 +152,13 @@ export function renderLordGodSpace(onClose) {
     overlay.innerHTML = `
       <div style="
         position: absolute; top: 0; left: 0; right: 0; bottom: 0;
-        background: radial-gradient(ellipse at center, #0a0a1a 0%, #030308 100%);
+        background: url('/assets/scenes/lord_god_space.jpg') center/cover no-repeat;
         overflow-y: auto; padding: 30px;
       ">
-        <div style="max-width: 800px; margin: 0 auto;">
+        <div style="position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+          background: radial-gradient(ellipse at center, rgba(5,5,15,0.7) 0%, rgba(2,2,8,0.95) 100%);
+          pointer-events: none;"></div>
+        <div style="max-width: 800px; margin: 0 auto; position: relative;">
           <h1 style="text-align: center; color: #ffffff; letter-spacing: 8px;
             text-shadow: 0 0 40px rgba(255,255,255,0.3); margin-bottom: 8px;">
             主 神 空 间
