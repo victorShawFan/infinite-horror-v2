@@ -686,6 +686,9 @@ export function showHelpPanel() {
           <tr><td style="color: #ffcc44;">J</td><td>成就面板</td></tr>
           <tr><td style="color: #ddaa44;">C</td><td>知识典籍</td></tr>
           <tr><td style="color: #ff8866;">F</td><td>战斗回放</td></tr>
+          <tr><td style="color: #ffcc44;">Y</td><td>成长轨迹</td></tr>
+          <tr><td style="color: #66aaff;">X</td><td>详细统计</td></tr>
+          <tr><td style="color: #ff88aa;">R</td><td>同伴关系</td></tr>
           <tr><td style="color: #44ccaa;">V</td><td>迷雾开关</td></tr>
           <tr><td style="color: #44ffff;">M</td><td>全地图视图</td></tr>
           <tr><td style="color: #44cc88;">Q</td><td>道具背包</td></tr>
@@ -1043,7 +1046,7 @@ export function showSettingsPanel() {
           <!-- 快捷键提示 -->
           <div style="background:rgba(255,255,255,0.03);border:1px solid #222;border-radius:8px;padding:10px;margin-bottom:16px;">
             <p style="color:#555;font-size:11px;text-align:center;">
-              F5 存档 · F9 读档 · H 帮助 · V 迷雾 · Tab 小地图 · M 全图
+              F5 存档 · F9 读档 · H 帮助 · V 迷雾 · Tab 小地图 · Y 成长 · M 全图
             </p>
           </div>
           
