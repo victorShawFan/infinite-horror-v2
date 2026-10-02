@@ -632,6 +632,10 @@ document.addEventListener('keydown', (e) => {
         // 打开背包/状态面板
         showInventoryPanel();
         return;
+      case 'r':
+        // 同伴关系面板
+        showRelationshipPanel();
+        return;
       case 'h': case '?':
         // 帮助面板
         showHelpPanel();
@@ -1703,6 +1707,72 @@ function showInventoryPanel() {
     }
   };
   document.addEventListener('keydown', keyHandler);
+}
+
+// ── 同伴关系面板 ──
+function showRelationshipPanel() {
+  if (gameState.state !== GAME_STATE.EXPLORING) return;
+  gameState.setState(GAME_STATE.INVENTORY);
+  const overlay = document.getElementById('ui-overlay');
+  const companions = gameState.companions || [];
+
+  let companionHTML = '';
+  if (companions.length === 0) {
+    companionHTML = '<p style="color:#666;text-align:center;">尚无同伴</p>';
+  } else {
+    for (const c of companions) {
+      const relVal = gameState.relationships[c.id] || 0;
+      const relLevel = getRelationshipLevel(relVal);
+      const profile = COMPANION_PROFILES[c.id];
+      const isBond = relVal >= 71;
+      const barWidth = Math.max(0, (relVal + 100) / 200 * 100);
+      
+      companionHTML += '<div style="margin-bottom:12px;padding:10px 12px;background:rgba(255,255,255,0.02);border-left:3px solid ' + (c.alive ? relLevel.color : '#333') + ';border-radius:0 8px 8px 0;">';
+      companionHTML += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">';
+      companionHTML += '<span style="color:' + (c.alive ? '#e0e0e0' : '#664444') + ';font-size:14px;font-weight:bold;">';
+      companionHTML += (c.alive ? '●' : '✝') + ' ' + c.name;
+      if (profile?.title) companionHTML += ' <span style="color:#888;font-size:11px;">· ' + profile.title + '</span>';
+      companionHTML += '</span>';
+      companionHTML += '<span style="color:' + relLevel.color + ';font-size:13px;font-weight:bold;">' + relLevel.name + ' (' + relVal + ')' + (isBond ? ' ✦' : '') + '</span>';
+      companionHTML += '</div>';
+      // Bar
+      companionHTML += '<div style="height:4px;background:#222;border-radius:2px;margin-bottom:6px;">';
+      companionHTML += '<div style="height:100%;width:' + barWidth + '%;background:' + relLevel.color + ';border-radius:2px;"></div></div>';
+      // Combat bonus
+      companionHTML += '<span style="color:#888;font-size:10px;">战斗加成: ' + (relLevel.combatBonus > 0 ? '+' : '') + Math.floor(relLevel.combatBonus * 100) + '%</span>';
+      if (!c.alive) companionHTML += ' <span style="color:#664444;font-size:10px;">（阵亡）</span>';
+      // Personality
+      if (profile?.personality) companionHTML += '<p style="color:#777;font-size:10px;margin:4px 0 0 0;">性格: ' + profile.personality + '</p>';
+      // Quote
+      if (profile?.quote) companionHTML += '<p style="color:#555;font-size:10px;font-style:italic;margin:2px 0 0 0;">' + profile.quote + '</p>';
+      // Bond memoir
+      if (isBond && profile?.memoir) {
+        companionHTML += '<div style="margin-top:6px;padding:6px 8px;background:rgba(255,170,0,0.06);border:1px solid rgba(255,170,0,0.15);border-radius:4px;">';
+        companionHTML += '<span style="color:#ffaa00;font-size:10px;">✦ 羁绊回忆</span>';
+        companionHTML += '<p style="color:#aa8844;font-size:10px;font-style:italic;margin-top:2px;line-height:1.5;">' + profile.memoir + '</p></div>';
+      }
+      companionHTML += '</div>';
+    }
+  }
+
+  overlay.innerHTML = '<div style="position:absolute;top:0;left:0;right:0;bottom:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.85);" id="rel-backdrop">' +
+    '<div style="background:rgba(10,10,20,0.97);border:1px solid #444;border-radius:16px;padding:30px;max-width:650px;width:90%;max-height:80vh;overflow-y:auto;">' +
+    '<h2 style="color:#ffaa00;text-align:center;letter-spacing:4px;margin-bottom:20px;">✦ 同伴关系</h2>' +
+    '<p style="color:#666;text-align:center;font-size:11px;margin-bottom:16px;">关系影响: 战斗加成 · 对话台词 · 羁绊回忆 · 危难救援 · 团队士气</p>' +
+    companionHTML +
+    '<div style="text-align:center;margin-top:20px;">' +
+    '<button id="btn-close-rel" style="background:transparent;border:1px solid #444;color:#888;padding:8px 30px;cursor:pointer;font-size:14px;font-family:inherit;border-radius:6px;">关闭 (R)</button>' +
+    '</div></div></div>';
+
+  const close = () => { overlay.innerHTML = ''; gameState.setState(GAME_STATE.EXPLORING); };
+  document.getElementById('btn-close-rel').addEventListener('click', close);
+  document.getElementById('rel-backdrop').addEventListener('click', (e) => {
+    if (e.target.id === 'rel-backdrop') close();
+  });
+  const kh = (e) => {
+    if (e.key === 'r' || e.key === 'Escape') { close(); document.removeEventListener('keydown', kh); }
+  };
+  document.addEventListener('keydown', kh);
 }
 
 // ── 帮助面板 ──
