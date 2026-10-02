@@ -72,6 +72,45 @@ export const BOSS_PHASES = {
       specialMove: { name: '瘟疫之触', dmgMult: 2.5, cooldown: 2, type: 'plague', dot: 5 } },
   ],
 
+  // Ch5: 死神 — 流克
+  ryuk: [
+    { hpThreshold: 1.0, name: '旁观者', atkMult: 0.8, defMult: 1.5,
+      desc: '流克以死神之眼观察你',
+      specialMove: { name: '死亡笔记', dmgMult: 2.0, cooldown: 5, type: 'execute', executeThreshold: 0.15 } },
+    { hpThreshold: 0.5, name: '死神之翼', atkMult: 1.2, defMult: 1.0,
+      desc: '流克展开黑色翅膀，空间扭曲',
+      specialMove: { name: '命运宣告', dmgMult: 1.8, cooldown: 3, type: 'fate', ignoresDef: true } },
+    { hpThreshold: 0.2, name: '死之手', atkMult: 1.6, defMult: 0.8,
+      desc: '流克亲自动手，死亡不可避免',
+      specialMove: { name: '寿命剥夺', dmgMult: 3.0, cooldown: 2, type: 'reaper' } },
+  ],
+
+  // Ch6: 异形再临 — 进化皇后
+  evolved_queen: [
+    { hpThreshold: 1.0, name: '进化体', atkMult: 1.1, defMult: 1.3,
+      desc: '完全进化的异形皇后，外甲更加坚硬',
+      specialMove: { name: '强酸血喷', dmgMult: 1.6, cooldown: 3, type: 'acid_evolved', dot: 4 } },
+    { hpThreshold: 0.6, name: '蜂巢意志', atkMult: 1.3, defMult: 1.1,
+      desc: '连接巢穴意识，异形协同攻击',
+      specialMove: { name: '集群撕裂', dmgMult: 1.4, cooldown: 2, type: 'swarm_evolved', hits: 4 } },
+    { hpThreshold: 0.25, name: '母体核心', atkMult: 1.7, defMult: 0.7,
+      desc: '暴露核心以换取毁灭性攻击力',
+      specialMove: { name: '吞噬', dmgMult: 3.5, cooldown: 3, type: 'devour', healPct: 0.3 } },
+  ],
+
+  // Ch8: 重建中洲 — 兽人族长 阿佐格
+  azog: [
+    { hpThreshold: 1.0, name: '铁拳', atkMult: 1.2, defMult: 1.0,
+      desc: '阿佐格以蛮力压制',
+      specialMove: { name: '战争之吼', dmgMult: 1.3, cooldown: 4, type: 'warcry', selfBuff: { atk: 0.2 } } },
+    { hpThreshold: 0.5, name: '兽群统帅', atkMult: 1.4, defMult: 1.1,
+      desc: '召唤座狼骑兵增援',
+      specialMove: { name: '狼骑突击', dmgMult: 2.0, cooldown: 3, type: 'cavalry', hits: 2 } },
+    { hpThreshold: 0.2, name: '死战', atkMult: 1.8, defMult: 0.6,
+      desc: '阿佐格进入殊死搏斗',
+      specialMove: { name: '断臂之击', dmgMult: 3.0, cooldown: 2, type: 'berserk' } },
+  ],
+
   // Ch7: 复制体郑吒
   clone_zhengzha: [
     { hpThreshold: 1.0, name: '镜像', atkMult: 1.0, defMult: 1.0,

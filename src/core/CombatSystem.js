@@ -21,6 +21,7 @@ import {
 } from './EnemyAbilitySystem.js';
 import { calcElementalModifier, getPlayerActiveElements, getEnemyElement, checkElementalResonance, ELEMENT_INFO } from './ElementalSystem.js';
 import { generateLoot, formatLootLog, applyLoot } from './LootSystem.js';
+import { applyStanceModifiers, getCurrentStance } from './CombatStance.js';
 import { getCompanionCombatBonus } from './RelationshipSystem.js';
 import { generateCombatDialogue, getVictoryComment } from './CompanionDialogue.js';
 import { COMPANION_PROFILES } from './RelationshipSystem.js';
@@ -283,6 +284,12 @@ export function executeBattle(enemy) {
   const preview = previewBattle(p, enemy);
   const log = [];
 
+  // 记录姿态
+  const stance = getCurrentStance();
+  if (stance.id !== 'balanced') {
+    log.push({ text: `${stance.icon} 姿态: ${stance.name}`, type: 'buff' });
+  }
+
   if (!preview.canWin) {
     return { victory: false, log: [{ text: `${enemy.name}的防御太高了，无法造成有效伤害！`, type: 'danger' }] };
   }
@@ -291,10 +298,17 @@ export function executeBattle(enemy) {
   let playerHp = p.hp;
   let playerMana = p.mana || 0;
   let round = 0;
-  const pAtk = getEffectiveAtk(p);
-  const pDef = getEffectiveDef(p);
-  const pCrt = getEffectiveCrt(p);
-  const pSpd = getEffectiveSpd(p);
+  // 应用战斗姿态修正
+  const _rawAtk = getEffectiveAtk(p);
+  const _rawDef = getEffectiveDef(p);
+  const _rawCrt = getEffectiveCrt(p);
+  const _rawSpd = getEffectiveSpd(p);
+  const stanceMod = applyStanceModifiers(_rawAtk, _rawDef, _rawCrt, _rawSpd);
+  const pAtk = stanceMod.atk;
+  const pDef = stanceMod.def;
+  const pCrt = stanceMod.crt;
+  const pSpd = stanceMod.spd;
+  const stanceCritDmgBonus = stanceMod.critDmgBonus || 0;
   const chipFx = getChipEffects(p);
   const isDouble = canDoubleAttack(pSpd, enemy.spd || 5);
   const isDaoist = p.activeBloodline === BLOODLINE.DAOIST;
@@ -579,8 +593,8 @@ if (chipFx.hasIceChip && enemy.atk !== enemyEffAtk) {
       if (pHit.isCrit) { lastCrit = true; gameState.stats.criticalHits++; }
       // 天赋：暴击伤害加成
       let finalDmg = pHit.damage;
-      if (pHit.isCrit && talentFx.critDmgBonus > 0) {
-        const bonus = Math.floor(pHit.damage * talentFx.critDmgBonus);
+      if (pHit.isCrit && (talentFx.critDmgBonus > 0 || stanceCritDmgBonus > 0)) {
+        const bonus = Math.floor(pHit.damage * (talentFx.critDmgBonus + stanceCritDmgBonus));
         finalDmg += bonus;
         enemyHp -= bonus; // 额外扣除
       }

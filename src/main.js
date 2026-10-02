@@ -52,6 +52,7 @@ import { tutorialManager } from './core/TutorialSystem.js';
 import { triggerTrap as fireTrap, openChest, TRAP_TYPES, CHEST_TYPES } from './core/TrapSystem.js';
 import { addConsumable, useConsumable, getInventoryList, consumePendingBuffs, giveStarterConsumables, CONSUMABLE_DEFS } from './core/ConsumableSystem.js';
 import { generateSecretEntities, tryBreakSecret, SECRET_TYPES } from './core/SecretRoomSystem.js';
+import { getCurrentStance, setStance, getAvailableStances, getStanceId, restoreStance } from './core/CombatStance.js';
 
 // ── 全局状态 ──
 let renderer;
@@ -1145,6 +1146,21 @@ function showCombatConfirm(enemy) {
           return tags.length > 0 ? '<div style="display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin-top:8px;">' + tags.join('') + '</div>' : '';
         })()}
         
+        <!-- 姿态选择 -->
+        <div style="display:flex;gap:6px;justify-content:center;margin-top:8px;flex-wrap:wrap;" id="stance-selector">
+          ${getAvailableStances().map(s => {
+            const active = getCurrentStance().id === s.id;
+            return '<button class="stance-btn" data-stance="' + s.id + '" style="' +
+              'background:' + (active ? 'rgba(255,255,255,0.1)' : 'transparent') + ';' +
+              'border:1px solid ' + (active ? s.color : '#33333380') + ';' +
+              'color:' + (active ? s.color : '#666') + ';' +
+              'padding:4px 10px;cursor:pointer;font-size:11px;border-radius:6px;' +
+              'font-family:inherit;transition:all 0.2s;' +
+              (active ? 'box-shadow:0 0 8px ' + s.color + '33;' : '') +
+              '"title="' + s.desc + '">' + s.icon + ' ' + s.name + '</button>';
+          }).join('')}
+        </div>
+        
         <!-- 待生效增益提示 -->
         <div id="pending-buffs-preview" style="text-align:center;margin-top:6px;min-height:16px;"></div>
         
@@ -1185,6 +1201,24 @@ function showCombatConfirm(enemy) {
   // ── 战前道具面板 ──
   document.getElementById('btn-use-item').addEventListener('click', () => {
     _showPreBattleItemPanel(overlay, scaledEnemy, enemy);
+  });
+  
+  // 姿态切换事件
+  document.querySelectorAll('.stance-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const sid = btn.dataset.stance;
+      if (setStance(sid)) {
+        // 更新UI高亮
+        document.querySelectorAll('.stance-btn').forEach(b => {
+          const s = getAvailableStances().find(st => st.id === b.dataset.stance);
+          const isActive = b.dataset.stance === sid;
+          b.style.background = isActive ? 'rgba(255,255,255,0.1)' : 'transparent';
+          b.style.borderColor = isActive ? (s?.color || '#fff') : '#33333380';
+          b.style.color = isActive ? (s?.color || '#fff') : '#666';
+          b.style.boxShadow = isActive ? '0 0 8px ' + (s?.color || '#fff') + '33' : 'none';
+        });
+      }
+    });
   });
   
   // 显示已有增益
