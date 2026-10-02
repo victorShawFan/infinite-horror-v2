@@ -41,6 +41,7 @@ import { getTalentEffects, TALENT_PATHS } from './core/TalentTree.js';
 import { getEquipmentDisplayName, getEquipmentTotalStats } from './core/EquipmentSystem.js';
 import { getPlayerActiveElements, ELEMENT_INFO, checkElementalResonance } from './core/ElementalSystem.js';
 import { changeRelationship, getRelationshipLevel, getRelationshipSummary, COMPANION_PROFILES } from './core/RelationshipSystem.js';
+import { loreTracker, LORE_ENTRIES, formatLorePopup } from './core/LoreSystem.js';
 
 // ── 全局状态 ──
 let renderer;
@@ -193,6 +194,7 @@ function showMainMenu() {
   btnCont.addEventListener('click', () => {
     if (gameState.load(0)) {
       try { const ms = localStorage.getItem('ih_milestones'); if (ms) milestoneTracker.fromJSON(JSON.parse(ms)); } catch {}
+      try { const lr = localStorage.getItem('ih_lore'); if (lr) loreTracker.fromJSON(JSON.parse(lr)); } catch {}
       const chapterGens = { 1: generateChapter1, 2: generateChapter2, 3: generateChapter3, 4: generateChapter4, 5: generateChapter5, 6: generateChapter6, 7: generateChapter7, 8: generateChapter8, 9: generateChapter9, 10: generateChapter10, 11: generateChapter11, 12: generateChapter12 };
       const gen = chapterGens[gameState.chapter] || generateChapter1;
 
@@ -593,6 +595,7 @@ document.addEventListener('keydown', (e) => {
     e.preventDefault();
     gameState.save(0);
     try { localStorage.setItem('ih_milestones', JSON.stringify(milestoneTracker.toJSON())); } catch {}
+    try { localStorage.setItem('ih_lore', JSON.stringify(loreTracker.toJSON())); } catch {}
     renderer.notify('💾 手动存档完成', '#44ff88', 90);
     return;
   }
@@ -1033,6 +1036,23 @@ function pickupItem(item) {
   audioEngine.playPickup();
 
   switch (item.itemType) {
+    case 'lore':
+      if (item.loreId) {
+        const discovered = loreTracker.discover(item.loreId);
+        if (discovered) {
+          const entry = LORE_ENTRIES[item.loreId];
+          if (entry) {
+            // Show lore popup as a dialogue
+            startDialogue([{
+              text: entry.text,
+              speaker: entry.title,
+            }]);
+            renderer.addFloatText('线索发现！', item.x, item.y - 1, 'rgb(255, 204, 68)');
+            renderer.addParticle(item.x * 48 + 24, item.y * 48 + 24, 'rgb(255, 204, 68)', 8);
+          }
+        }
+      }
+      break;
     case 'consumable':
       if (item.effect.heal) {
         const healed = gameState.healPlayer(item.effect.heal);

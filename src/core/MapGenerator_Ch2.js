@@ -214,6 +214,11 @@ function generateFloor_2_2() {
         x: 19, y: 8, sprite: '▼', color: '#44ffff',
         itemType: 'stairs',
       },
+      { type: ENTITY_TYPE.ITEM, id: 'lore_weyland', name: '韦兰备忘录',
+        x: 19, y: 1, sprite: '📋', color: '#ffcc44',
+        itemType: 'lore', loreId: 'lore_2_weyland',
+        description: '一份韦兰集团的内部备忘录。',
+      },
     ],
   };
 }

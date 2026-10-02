@@ -283,6 +283,12 @@ function generateFloor_1_2() {
         itemType: 'consumable', effect: { heal: 20 },
         description: '恢复20点HP。味道一言难尽。',
       },
+      // 环境线索
+      { type: ENTITY_TYPE.ITEM, id: 'lore_research', name: '实验日志',
+        x: 15, y: 1, sprite: '📋', color: '#ffcc44',
+        itemType: 'lore', loreId: 'lore_1_research',
+        description: '一本散落在地上的实验日志，封面沾满了血迹。',
+      },
     ],
     onClear: { nextFloor: 2, message: '你们深入蜂巢，来到了红后的防御区域...' },
   };
@@ -591,6 +597,12 @@ function generateFloor_1_5() {
       { type: ENTITY_TYPE.ITEM, id: 'atkgem_2', name: '力量晶石',
         x: 14, y: 14, sprite: '◆', color: '#ff6644',
         itemType: 'stat_boost', effect: { atk: 4 },
+      },
+      // 主神碎片线索
+      { type: ENTITY_TYPE.ITEM, id: 'lore_zhushen', name: '主神碎片',
+        x: 14, y: 2, sprite: '✦', color: '#ffdd44',
+        itemType: 'lore', loreId: 'lore_1_zhushen',
+        description: '一块发出微光的碎片，上面刻着古老的文字。',
       },
     ],
     onClear: { nextFloor: 5, message: '你们从蜂巢深处逃出。现在，必须在六小时内赶到撤离点...' },
