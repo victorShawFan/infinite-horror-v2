@@ -6,6 +6,7 @@
 // 玩家可通过高SPD闪避陷阱、用钥匙/芯片解除、或硬扛
 
 import { eventBus } from './EventBus.js';
+import { addConsumable } from './ConsumableSystem.js';
 import { gameState } from './GameState.js';
 import { getEffectiveSpd, getEffectiveDef } from './CombatSystem.js';
 
@@ -95,6 +96,8 @@ const CHEST_LOOT = {
     { type: 'heal', value: 30 },
     { type: 'key', keyType: 'yellow', count: 1 },
     { type: 'exp', min: 15, max: 40 },
+    { type: 'consumable', consumableId: 'potion_small', count: 1 },
+    { type: 'consumable', consumableId: 'antidote', count: 1 },
   ],
   uncommon: [
     { type: 'gold', min: 50, max: 150 },
@@ -103,6 +106,9 @@ const CHEST_LOOT = {
     { type: 'stat', stat: 'def', value: 2 },
     { type: 'key', keyType: 'blue', count: 1 },
     { type: 'exp', min: 40, max: 80 },
+    { type: 'consumable', consumableId: 'potion_medium', count: 1 },
+    { type: 'consumable', consumableId: 'atk_tonic', count: 1 },
+    { type: 'consumable', consumableId: 'trap_detector', count: 1 },
   ],
   rare: [
     { type: 'gold', min: 150, max: 400 },
@@ -112,6 +118,9 @@ const CHEST_LOOT = {
     { type: 'key', keyType: 'red', count: 1 },
     { type: 'exp', min: 80, max: 160 },
     { type: 'rewardPoints', min: 5, max: 15 },
+    { type: 'consumable', consumableId: 'potion_large', count: 1 },
+    { type: 'consumable', consumableId: 'berserker_draught', count: 1 },
+    { type: 'consumable', consumableId: 'teleport_stone', count: 1 },
   ],
   rare_cursed: [
     { type: 'gold', min: 300, max: 800 },
@@ -282,6 +291,9 @@ function applyChestLoot(item) {
     case 'rewardPoints':
       p.rewardPoints = (p.rewardPoints || 0) + item.value;
       break;
+    case 'consumable':
+      addConsumable(item.consumableId, item.count || 1);
+      break;
   }
 }
 
@@ -299,6 +311,7 @@ function formatChestResult(loot, trapResult) {
       case 'key': return `🔑 +${item.count || 1}${item.keyType === 'yellow' ? '黄' : item.keyType === 'blue' ? '蓝' : '红'}钥匙`;
       case 'stat': return `⬆ ${item.stat.toUpperCase()} +${item.value}`;
       case 'rewardPoints': return `🏆 +${item.value}RP`;
+      case 'consumable': return `📦 ${item.consumableId} x${item.count || 1}`;
       default: return `? ${item.type}`;
     }
   });

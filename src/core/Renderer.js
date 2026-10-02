@@ -315,6 +315,28 @@ export class Renderer {
       } else if (e.type === ENTITY_TYPE.COMPANION) {
         ctx.fillStyle = 'rgba(68, 136, 255, 0.12)';
         ctx.fillRect(px + 2, py + 2, TILE_SIZE - 4, TILE_SIZE - 4);
+      } else if (e.type === ENTITY_TYPE.TRAP) {
+        // 隐藏陷阱: 玩家距离<=2时显示微弱光芒作为提示
+        const p_ = gameState.player;
+        const dist = Math.abs(e.x - p_.x) + Math.abs(e.y - p_.y);
+        if (dist <= 2 || e.visible) {
+          const pulse = 0.05 + 0.04 * Math.sin(this._time * 0.12 + e.x * 3);
+          ctx.fillStyle = `rgba(255, 60, 40, ${pulse})`;
+          ctx.fillRect(px + 4, py + 4, TILE_SIZE - 8, TILE_SIZE - 8);
+          // 近距离显示警告标记
+          if (dist <= 1) {
+            ctx.font = '10px sans-serif';
+            ctx.fillStyle = 'rgba(255, 80, 40, 0.6)';
+            ctx.textAlign = 'center';
+            ctx.fillText('⚠', px + TILE_SIZE / 2, py + TILE_SIZE / 2 + 3);
+            ctx.textAlign = 'left';
+          }
+        }
+      } else if (e.isChest) {
+        // 宝箱特效
+        const shimmer = 0.1 + 0.06 * Math.sin(this._time * 0.06 + e.y * 2);
+        ctx.fillStyle = `rgba(255, 204, 68, ${shimmer})`;
+        ctx.fillRect(px + 4, py + 4, TILE_SIZE - 8, TILE_SIZE - 8);
       } else if (e.type === ENTITY_TYPE.ITEM) {
         const bob = Math.sin(this._time * 0.08 + e.x) * 2;
         ctx.fillStyle = 'rgba(255, 255, 100, 0.08)';
@@ -331,7 +353,7 @@ export class Renderer {
       // 绘制精灵（小人偶）
       const bob = (e.type === ENTITY_TYPE.ITEM) ? Math.sin(this._time * 0.08 + e.x) * 2 : 0;
       const isEnemy = e.type === ENTITY_TYPE.ENEMY || e.type === ENTITY_TYPE.BOSS;
-      const isItem = e.type === ENTITY_TYPE.ITEM || e.type === ENTITY_TYPE.EVENT;
+      const isItem = e.type === ENTITY_TYPE.ITEM || e.type === ENTITY_TYPE.EVENT || e.type === ENTITY_TYPE.TRAP;
       if (isItem) {
         // 物品和事件仍然用图标
         _drawItemIcon(ctx, px, py, e, this._time);
@@ -1208,6 +1230,11 @@ export class Renderer {
     const pulse = 0.5 + 0.5 * Math.sin(this._time * 0.08);
     for (const e of entities) {
       if (e.type === ENTITY_TYPE.ENEMY || e.type === ENTITY_TYPE.BOSS) ctx.fillStyle = '#ff4444';
+      else if (e.type === ENTITY_TYPE.TRAP) { 
+        // 隐藏陷阱在小地图不显示(除非已可见)
+        if (!e.visible) continue;
+        ctx.fillStyle = '#ff6622';
+      }
       else if (e.type === ENTITY_TYPE.ITEM) ctx.fillStyle = '#ffcc44';
       else if (e.type === ENTITY_TYPE.COMPANION) ctx.fillStyle = '#4488ff';
       else if (e.type === ENTITY_TYPE.EVENT) ctx.fillStyle = '#ffffff';

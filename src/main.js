@@ -49,6 +49,8 @@ import { fadeBlackTransition, chapterIntroTransition, floorTransition, victoryFl
 import { MiniMap } from './core/MiniMap.js';
 import { atmosphereRenderer } from './core/AtmosphereSystem.js';
 import { tutorialManager } from './core/TutorialSystem.js';
+import { triggerTrap as fireTrap, openChest, TRAP_TYPES, CHEST_TYPES } from './core/TrapSystem.js';
+import { addConsumable, useConsumable, getInventoryList, consumePendingBuffs, giveStarterConsumables, CONSUMABLE_DEFS } from './core/ConsumableSystem.js';
 
 // ── 全局状态 ──
 let renderer;
@@ -372,6 +374,9 @@ function startNewGame() {
     loreTracker.fromJSON({ discovered: [] });
     try { localStorage.removeItem("ih_lore"); } catch {}
   }
+
+  // 初始道具
+  giveStarterConsumables();
 
   // 初始化音频
   audioEngine.init();
@@ -1133,8 +1138,30 @@ function startCombat(enemy, preScaledEnemy) {
   
   // 使用预缩放敌人（从战前确认传入），避免二次随机缩放导致数值不一致
   const scaledEnemy = preScaledEnemy || scaleEnemy(enemy, gameState.chapter);
-  const hpBeforeCombat = gameState.player.hp;
+  
+  // ── 消耗品战斗增益 ──
+  const pendingBuffs = consumePendingBuffs();
+  const p = gameState.player;
+  const savedStats = { atk: p.atk, def: p.def, crt: p.crt || 0 };
+  for (const buff of pendingBuffs) {
+    if (buff.stat === 'atk' && buff.multiplier) p.atk = Math.floor(p.atk * buff.multiplier);
+    if (buff.stat === 'def' && buff.multiplier) p.def = Math.floor(p.def * buff.multiplier);
+    if (buff.stat === 'crt' && buff.bonus) p.crt = (p.crt || 0) + buff.bonus;
+    if (buff.penalty) {
+      if (buff.penalty.stat === 'def' && buff.penalty.multiplier) p.def = Math.floor(p.def * buff.penalty.multiplier);
+      if (buff.penalty.stat === 'atk' && buff.penalty.multiplier) p.atk = Math.floor(p.atk * buff.penalty.multiplier);
+    }
+  }
+  
+  const hpBeforeCombat = p.hp;
   const result = executeBattle(scaledEnemy);
+  
+  // 恢复临时buff修改的基础属性
+  if (pendingBuffs.length > 0) {
+    p.atk = savedStats.atk;
+    p.def = savedStats.def;
+    p.crt = savedStats.crt;
+  }
 
   if (result.victory) {
     // 移除被击败的敌人并记录
@@ -1400,6 +1427,9 @@ function triggerEvent(entity) {
     startDialogue([{ text: result.effect, speaker: '系统' }]);
     return;
   }
+
+  // ── 陷阱探测器效果（全局处理） ──
+  // (通过道具使用事件在事件总线上处理)
 
   // ── 宝箱事件 ──
   if (evt.isChest && evt.chestType) {
