@@ -63,6 +63,7 @@ import { rateBattle, recordRating, formatRatingHTML, getRatingStats } from './co
 import { fogOfWar } from './core/FogOfWar.js';
 import { openMerchantShop } from './core/FieldMerchant.js';
 import { getStash, addToStash, removeFromStash, isStashFull, openEquipmentStash, serializeStash, deserializeStash } from './core/EquipmentStash.js';
+import { getCompanionCombatBonuses, getCompanionBattleCry, formatCompanionCombatHTML } from './core/CompanionCombat.js';
 
 // ── 全局状态 ──
 let renderer;
