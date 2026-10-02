@@ -1718,6 +1718,18 @@ function showCombatConfirm(enemy) {
   const traitsHtml = (scaledEnemy.traits || []).length > 0 
     ? '<div style="display:flex;gap:4px;justify-content:center;flex-wrap:wrap;margin-bottom:6px;">' + scaledEnemy.traits.map(t => '<span style="color:#ff8844;background:rgba(255,136,68,0.1);padding:1px 6px;border-radius:3px;font-size:10px;">' + (traitNames[t]||t) + '</span>').join('') + '</div>' 
     : '';
+  // 精英怪物词缀显示
+  const eliteHtml = (() => {
+    if (!enemy._eliteTier) return '';
+    const tier = enemy._eliteTierData;
+    const affixes = enemy._eliteAffixes || [];
+    let h = '<div style="margin-top:4px;padding:4px 6px;background:rgba(' + (tier.color === '#4488ff' ? '68,136,255' : tier.color === '#aa44ff' ? '170,68,255' : '255,136,0') + ',0.08);border:1px solid ' + tier.color + '30;border-radius:4px;text-align:center;">';
+    h += '<span style="color:' + tier.color + ';font-size:10px;font-weight:bold;">' + tier.icon + ' ' + tier.name + '</span> ';
+    for (const a of affixes) h += '<span style="color:' + a.color + ';font-size:9px;margin:0 2px;">' + a.icon + a.name + '</span>';
+    h += '<p style="color:#888;font-size:9px;margin-top:2px;">' + affixes.map(a => a.desc).join(' \u00b7 ') + '</p>';
+    h += '<p style="color:#ffcc44;font-size:9px;">\u5956\u52b1 \u00d7' + tier.rewardMul + '</p></div>';
+    return h;
+  })();
   
   overlay.innerHTML = `
     <div style="
@@ -1741,6 +1753,7 @@ function showCombatConfirm(enemy) {
             <p style="color:#eee; font-size:13px;">HP <span style="color:#44ff88">${p.hp}</span>/${p.maxHp}</p>
             <p style="color:#ff8866; font-size:12px;">ATK ${effectiveAtk}${p.weapon ? ' <span style="color:#665533;font-size:10px;">(+' + (p.weapon.atk||0) + ')</span>' : ''}</p>
             <p style="color:#6688ff; font-size:12px;">DEF ${effectiveDef}${p.armor ? ' <span style="color:#334466;font-size:10px;">(+' + (p.armor.def||0) + ')</span>' : ''}</p>
+            ${(() => { const efx = getActiveEffects(); return efx.length > 0 ? '<div style="margin-top:4px;display:flex;gap:2px;flex-wrap:wrap;justify-content:center;">' + efx.map(e => '<span style="color:' + e.type.color + ';font-size:9px;padding:1px 3px;border:1px solid ' + e.type.color + '30;border-radius:2px;">' + e.type.icon + (e.value > 0 ? '+' : '') + e.value + '</span>').join('') + '</div>' : ''; })()}
           </div>
           <!-- 中：VS -->
           <div style="display:flex; align-items:center; justify-content:center;">
