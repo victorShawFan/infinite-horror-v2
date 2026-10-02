@@ -2913,10 +2913,23 @@ function triggerEvent(entity) {
         // 阵亡特写通知
         const profile = COMPANION_PROFILES[comp.id];
         const farewell = profile?.deathQuote || profile?.quote || '"……"';
+        // 全屏悼念效果
         setTimeout(() => {
-          renderer.notify(`✝ ${comp.name} 永远离开了队伍`, '#ff2222', 120);
-          setTimeout(() => renderer.notify(`"${farewell}" —— ${comp.name}`, '#aa6666', 150), 2000);
+          const memorialOverlay = document.getElementById('ui-overlay');
+          const prevHtml = memorialOverlay.innerHTML;
+          memorialOverlay.innerHTML = '<div style="position:absolute;top:0;left:0;right:0;bottom:0;display:flex;flex-direction:column;align-items:center;justify-content:center;background:rgba(0,0,0,0.95);animation:fadeIn 1s;">' +
+            '<p style="color:#ff222266;font-size:48px;margin-bottom:12px;">\u2020</p>' +
+            '<h2 style="color:#ff4444;font-size:24px;letter-spacing:8px;margin-bottom:16px;">' + comp.name + '</h2>' +
+            '<p style="color:#aa6666;font-size:14px;font-style:italic;max-width:400px;text-align:center;line-height:1.8;">"\u2019 + farewell + \u2018"</p>' +
+            '<p style="color:#443333;font-size:11px;margin-top:20px;">\u2500\u2500 \u6c38\u8fdc\u79bb\u5f00\u4e86\u961f\u4f0d \u2500\u2500</p>' +
+            '<p style="color:#333;font-size:10px;margin-top:24px;">\u70b9\u51fb\u4efb\u610f\u5904\u7ee7\u7eed</p></div>';
+          const dismiss = () => { memorialOverlay.innerHTML = prevHtml || ''; memorialOverlay.removeEventListener('click', dismiss); document.removeEventListener('keydown', dismissK); };
+          const dismissK = () => dismiss();
+          memorialOverlay.addEventListener('click', dismiss);
+          document.addEventListener('keydown', dismissK);
+          setTimeout(() => { try { dismiss(); } catch {} }, 8000);
         }, 800);
+        try { recordMilestone(comp.name + ' \u9635\u4ea1', gameState.chapter, 'companion_death'); } catch {}
       }
       // 也从地图实体移除队友图标
       const compEntIdx = entities.findIndex(e => e.id === evt.companionDeath);
