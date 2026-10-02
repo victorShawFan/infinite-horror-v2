@@ -13,6 +13,7 @@ import { getGeneLockProgress } from './GeneLockSystem.js';
 import { getTalentEffects } from './TalentTree.js';
 import { scaleEnemy } from './DifficultyScaler.js';
 import { getAvailableSkills } from './SkillSystem.js';
+import { getPlayerPowerRating, getEnemyPowerRating, comparePower } from './PowerRating.js';
 import { drawWallTile, drawFloorTile, drawLavaTile, drawStairsTile, drawCharacterSprite, drawHealthBar } from './SpriteRenderer.js';
 
 export class Renderer {
@@ -548,10 +549,10 @@ export class Renderer {
 
     // ── 右上：战斗属性 ──
     ctx.fillStyle = 'rgba(10, 10, 20, 0.88)';
-    roundRect(ctx, CANVAS_W - 160 - pad, pad, 160, 148, 8);
+    roundRect(ctx, CANVAS_W - 160 - pad, pad, 160, 165, 8);
     ctx.fill();
     ctx.strokeStyle = 'rgba(255, 100, 100, 0.3)';
-    roundRect(ctx, CANVAS_W - 160 - pad, pad, 160, 148, 8);
+    roundRect(ctx, CANVAS_W - 160 - pad, pad, 160, 165, 8);
     ctx.stroke();
 
     const rx = CANVAS_W - 150;
@@ -581,6 +582,14 @@ export class Renderer {
       ctx.fillStyle = stance.color || '#888';
       ctx.fillText('⚔ ' + stance.name, rx + 80, pad + 128);
     }
+
+    // 战力评估
+    try {
+      const pr = getPlayerPowerRating(p);
+      ctx.fillStyle = pr.rank.color;
+      ctx.font = 'bold 11px "Microsoft YaHei"';
+      ctx.fillText('战力 ' + pr.rank.name + ' ' + pr.total, rx, pad + 145);
+    } catch {}
 
     // ── 下方：楼层信息条 ──
     {
@@ -803,6 +812,11 @@ export class Renderer {
         const r = e.rewards;
         lines.push(`奖励: ${r.exp || 0}EXP  ${r.gold || 0}G`);
       }
+      // 战力对比
+      try {
+        const cmp = comparePower(p, scaledE);
+        lines.push(cmp.verdictIcon + ' 战力 ' + cmp.player.total + ' vs ' + cmp.enemy.total + ' — ' + cmp.verdict);
+      } catch {}
     } else if (e.type === ENTITY_TYPE.COMPANION) {
       lines.push(`角色: ${e.role}`);
       lines.push('按空格对话');
