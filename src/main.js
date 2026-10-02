@@ -43,6 +43,7 @@ import { getPlayerActiveElements, ELEMENT_INFO, checkElementalResonance } from '
 import { changeRelationship, getRelationshipLevel, getRelationshipSummary, COMPANION_PROFILES } from './core/RelationshipSystem.js';
 import { loreTracker, LORE_ENTRIES, formatLorePopup } from './core/LoreSystem.js';
 import { bestiary, getDifficulty, setDifficulty, getDifficultyConfig, applyDifficultyScaling, formatBestiaryPanel, formatDifficultySelector, DIFFICULTY, DIFFICULTY_CONFIG } from './core/DifficultySystem.js';
+import { ngPlusState, formatClearScreen, formatCycleInfo, TITLES } from './core/NewGamePlus.js';
 
 // ── 全局状态 ──
 let renderer;
@@ -224,6 +225,7 @@ function showMainMenu() {
       try { const ms = localStorage.getItem('ih_milestones'); if (ms) milestoneTracker.fromJSON(JSON.parse(ms)); } catch {}
       try { const lr = localStorage.getItem('ih_lore'); if (lr) loreTracker.fromJSON(JSON.parse(lr)); } catch {}
       try { const br = localStorage.getItem('ih_bestiary'); if (br) bestiary.fromJSON(JSON.parse(br)); } catch {}
+      try { const ng = localStorage.getItem('ih_ngplus'); if (ng) ngPlusState.fromJSON(JSON.parse(ng)); } catch {}
       const chapterGens = { 1: generateChapter1, 2: generateChapter2, 3: generateChapter3, 4: generateChapter4, 5: generateChapter5, 6: generateChapter6, 7: generateChapter7, 8: generateChapter8, 9: generateChapter9, 10: generateChapter10, 11: generateChapter11, 12: generateChapter12 };
       const gen = chapterGens[gameState.chapter] || generateChapter1;
 
@@ -631,6 +633,7 @@ document.addEventListener('keydown', (e) => {
     gameState.save(0);
     try { localStorage.setItem('ih_milestones', JSON.stringify(milestoneTracker.toJSON())); } catch {}
     try { localStorage.setItem('ih_lore', JSON.stringify(loreTracker.toJSON())); } catch {}
+    try { localStorage.setItem('ih_ngplus', JSON.stringify(ngPlusState.toJSON())); } catch {}
     renderer.notify('💾 手动存档完成', '#44ff88', 90);
     return;
   }
@@ -1673,7 +1676,11 @@ function showInventoryPanel() {
         </div>
 
 
-        <!-- 线索收集 -->
+        
+        <!-- 周目信息 -->
+        ${formatCycleInfo()}
+
+<!-- 线索收集 -->
         <div style="margin-top: 20px; border-top: 1px solid #333; padding-top: 16px;">
           <h3 style="color: #ffcc44; margin-bottom: 10px;">📖 环境线索 <span style="color:#888;font-size:11px;">(${loreTracker.getDiscoveredCount()}/${loreTracker.getTotalCount()})</span></h3>
           ${(() => {

@@ -6,6 +6,7 @@
 // 方案：按章节倍率缩放敌人属性，保持前期手感，加强后期挑战
 
 import { getDifficultyConfig } from './DifficultySystem.js';
+import { ngPlusState } from './NewGamePlus.js';
 import { ENEMY_AFFIXES } from './DifficultySystem.js';
 function await_sync_affixes() { return { ENEMY_AFFIXES }; }
 
@@ -52,6 +53,8 @@ export function scaleEnemy(enemy, chapter) {
   const isBoss = !!enemy.bossId || enemy.type === 'boss';
   const bossExtra = isBoss ? (BOSS_EXTRA_SCALING[chapter] || 1.0) : 1.0;
   const chapterScale = scale * bossExtra;
+  // 叠加周目(NG+)增强
+  const ngBonus = ngPlusState.getEnemyScaleBonus();
 
   // 叠加玩家选择的难度倍率
   const diff = getDifficultyConfig();
@@ -63,9 +66,9 @@ export function scaleEnemy(enemy, chapter) {
 
   const scaled = {
     ...enemy,
-    hp: Math.floor(enemy.hp * chapterScale * hpMult),
-    atk: Math.floor(enemy.atk * chapterScale * atkMult),
-    def: Math.floor(enemy.def * chapterScale * defMult),
+    hp: Math.floor(enemy.hp * chapterScale * hpMult * (1 + ngBonus)),
+    atk: Math.floor(enemy.atk * chapterScale * atkMult * (1 + ngBonus)),
+    def: Math.floor(enemy.def * chapterScale * defMult * (1 + ngBonus)),
     spd: enemy.spd || 5,
     rewards: enemy.rewards ? {
       ...enemy.rewards,
