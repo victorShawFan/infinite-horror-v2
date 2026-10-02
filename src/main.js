@@ -486,9 +486,9 @@ function movePlayer(dx, dy) {
   const entity = entities.find(e => e.x === nx && e.y === ny);
 
   if (entity) {
-    // 敌人 → 战斗
+    // 敌人 → 战前确认
     if (entity.type === ENTITY_TYPE.ENEMY || entity.type === ENTITY_TYPE.BOSS) {
-      startCombat(entity);
+      showCombatConfirm(entity);
       return;
     }
 
@@ -572,6 +572,91 @@ function movePlayer(dx, dy) {
   if (p.stamina < p.maxStamina) {
     p.stamina = Math.min(p.maxStamina, p.stamina + 1);
   }
+}
+
+// ── 战前确认 ──
+function showCombatConfirm(enemy) {
+  const p = gameState.player;
+  const preview = previewBattle(p, enemy);
+  
+  gameState.setState(GAME_STATE.DIALOGUE); // Block movement
+  const overlay = document.getElementById('ui-overlay');
+  
+  const canWinColor = preview.canWin ? '#44ff88' : '#ff4444';
+  const canWinText = preview.canWin 
+    ? `✓ 可击败 (${preview.turnsNeeded}回合, 受伤${preview.totalDamage})` 
+    : '✗ 无法击败！建议撤退';
+  const hpAfterText = preview.canWin ? `战后HP: ${preview.hpAfter}/${p.maxHp}` : '';
+  
+  overlay.innerHTML = `
+    <div style="
+      position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+      display: flex; align-items: center; justify-content: center;
+      background: rgba(0,0,0,0.6);
+    " id="combat-confirm">
+      <div style="
+        background: rgba(10,10,20,0.97); border: 2px solid #ff444488;
+        border-radius: 14px; padding: 24px 30px; max-width: 420px; width: 90%;
+        text-align: center;
+      ">
+        <p style="color: #ff4444; font-size: 12px; letter-spacing: 4px; margin-bottom: 8px;">遭遇敌人</p>
+        <h3 style="color: ${enemy.color || '#ff4444'}; font-size: 22px; margin-bottom: 4px;">
+          ${enemy.name}
+        </h3>
+        <p style="color: #888; font-size: 13px; margin-bottom: 16px;">
+          HP ${enemy.hp} | ATK ${enemy.atk} | DEF ${enemy.def}
+        </p>
+        
+        <div style="
+          background: rgba(${preview.canWin ? '40,80,40' : '80,30,30'},0.3);
+          border: 1px solid ${canWinColor}33; border-radius: 8px;
+          padding: 12px; margin-bottom: 16px;
+        ">
+          <p style="color: ${canWinColor}; font-size: 15px; font-weight: bold;">${canWinText}</p>
+          ${hpAfterText ? `<p style="color: #aaa; font-size: 12px; margin-top: 4px;">${hpAfterText}</p>` : ''}
+        </div>
+        
+        <div style="display: flex; gap: 12px; justify-content: center;">
+          <button id="btn-fight" style="
+            background: rgba(255,68,68,0.15); border: 2px solid #ff4444; color: #ff4444;
+            padding: 10px 30px; cursor: pointer; font-size: 15px; font-weight: bold;
+            font-family: inherit; border-radius: 8px; transition: all 0.2s;
+          ">⚔ 战斗</button>
+          <button id="btn-retreat" style="
+            background: rgba(100,100,100,0.1); border: 1px solid #555; color: #888;
+            padding: 10px 30px; cursor: pointer; font-size: 14px;
+            font-family: inherit; border-radius: 8px; transition: all 0.2s;
+          ">← 撤退</button>
+        </div>
+      </div>
+    </div>
+  `;
+  
+  document.getElementById('btn-fight').addEventListener('click', () => {
+    overlay.innerHTML = '';
+    gameState.setState(GAME_STATE.EXPLORING);
+    startCombat(enemy);
+  });
+  
+  document.getElementById('btn-retreat').addEventListener('click', () => {
+    overlay.innerHTML = '';
+    gameState.setState(GAME_STATE.EXPLORING);
+  });
+  
+  // Keyboard shortcuts
+  const kh = (e) => {
+    if (e.key === ' ' || e.key === 'Enter' || e.key === 'f') {
+      overlay.innerHTML = '';
+      gameState.setState(GAME_STATE.EXPLORING);
+      startCombat(enemy);
+      document.removeEventListener('keydown', kh);
+    } else if (e.key === 'Escape' || e.key === 'r') {
+      overlay.innerHTML = '';
+      gameState.setState(GAME_STATE.EXPLORING);
+      document.removeEventListener('keydown', kh);
+    }
+  };
+  document.addEventListener('keydown', kh);
 }
 
 // ── 战斗 ──
