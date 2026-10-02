@@ -235,7 +235,68 @@ export const ngPlusState = new NewGamePlusState();
 /**
  * 格式化通关结算面板
  */
+
+// ═══════════════════════════════════════════════════════════════
+// 周目变异器 — 每次轮回的独特游戏体验修改
+// ═══════════════════════════════════════════════════════════════
+export const NG_MUTATORS = {
+  // 二周目变异器
+  speed_demon: { 
+    name: '疾风模式', icon: '⚡', 
+    desc: '所有敌人速度+30%, 但掉落经验+20%',
+    apply: (enemy) => { enemy.spd = Math.ceil((enemy.spd || 5) * 1.3); if (enemy.rewards?.exp) enemy.rewards.exp = Math.floor(enemy.rewards.exp * 1.2); }
+  },
+  glass_cannon: { 
+    name: '玻璃大炮', icon: '💥', 
+    desc: '敌人攻击+50%, HP-30%',
+    apply: (enemy) => { enemy.atk = Math.ceil(enemy.atk * 1.5); enemy.hp = Math.floor(enemy.hp * 0.7); }
+  },
+  iron_fortress: { 
+    name: '铁壁堡垒', icon: '🛡', 
+    desc: '敌人防御+80%, 但攻击-20%',
+    apply: (enemy) => { enemy.def = Math.ceil(enemy.def * 1.8); enemy.atk = Math.floor(enemy.atk * 0.8); }
+  },
+  elite_invasion: { 
+    name: '精英入侵', icon: '👑', 
+    desc: '精英词缀出现率翻倍',
+    // Applied in DifficultyScaler, not per-enemy
+  },
+  cursed_gold: { 
+    name: '诅咒黄金', icon: '💰', 
+    desc: '金币掉落+100%, 但每次拾取扣1HP',
+  },
+  phantom_pain: {
+    name: '幻痛', icon: '💀',
+    desc: '战斗受伤后有10%几率额外受到等量伤害',
+  },
+};
+
+/**
+ * 获取当前周目激活的变异器列表
+ * 每个新周目随机激活 1-2 个变异器
+ */
+export function getActiveMutators() {
+  if (ngPlusState.cycle <= 0) return [];
+  // 使用周目数作为种子，保证同一周目相同变异器
+  const seed = ngPlusState.cycle * 31;
+  const keys = Object.keys(NG_MUTATORS);
+  const count = Math.min(ngPlusState.cycle, 2); // 最多2个
+  const selected = [];
+  for (let i = 0; i < count; i++) {
+    const idx = (seed + i * 17) % keys.length;
+    if (!selected.includes(keys[idx])) selected.push(keys[idx]);
+  }
+  return selected.map(k => ({ id: k, ...NG_MUTATORS[k] }));
+}
+
 export function formatClearScreen(ngPlusData, gameStats) {
+  // 显示下一周目变异器
+  const mutators = getActiveMutators();
+  const mutatorHtml = mutators.length > 0 
+    ? '<div style="margin-top:16px;"><p style="color:#ff8844;font-size:12px;letter-spacing:2px;margin-bottom:8px;">🎲 下一周目变异</p>' +
+      mutators.map(m => '<div style="display:inline-block;background:rgba(255,136,68,0.1);border:1px solid rgba(255,136,68,0.3);border-radius:6px;padding:4px 10px;margin:2px;"><span style="font-size:14px;">' + m.icon + '</span> <span style="color:#ffaa44;font-size:12px;">' + m.name + '</span> <span style="color:#888;font-size:10px;">— ' + m.desc + '</span></div>').join('') +
+      '</div>'
+    : '';
   const rules = CARRY_OVER[ngPlusState.cycle - 1] || CARRY_OVER.default;
   const timeStr = gameStats?.totalTime
     ? `${Math.floor(gameStats.totalTime / 60000)}分${Math.floor((gameStats.totalTime % 60000) / 1000)}秒`
