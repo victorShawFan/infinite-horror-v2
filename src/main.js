@@ -14,6 +14,7 @@ import { generateChapter3 } from './core/MapGenerator_Ch3.js';
 import { generateChapter4 } from './core/MapGenerator_Ch4.js';
 import { generateChapter5 } from './core/MapGenerator_Ch5.js';
 import { generateChapter6 } from './core/MapGenerator_Ch6.js';
+import { generateChapter7 } from './core/MapGenerator_Ch7.js';
 import {
   setShiftHeld, onPlayerMove, onCombatNoise, decayNoise,
   isPatrolAlerted, consumeAmmo, reloadAmmo, resetStealth, initAmmo,
@@ -24,7 +25,7 @@ import {
 import { audioEngine } from './core/AudioEngine.js';
 import { renderLordGodSpace } from './core/LordGodSpace.js';
 import { CombatAnimator } from './core/CombatAnimation.js';
-import { showOpeningCutscene, showChapter2Cutscene, showChapter3Cutscene, showChapter4Cutscene, showChapter5Cutscene, showChapter6Cutscene } from './core/Cutscene.js';
+import { showOpeningCutscene, showChapter2Cutscene, showChapter3Cutscene, showChapter4Cutscene, showChapter5Cutscene, showChapter6Cutscene, showChapter7Cutscene } from './core/Cutscene.js';
 import { assetLoader } from './core/AssetLoader.js';
 
 // ── 全局状态 ──
@@ -128,6 +129,7 @@ function showMainMenu() {
         4: ['沙漠车队', '开罗情报', '陵墓机关', '印洲队伏击', '复活真经争夺', '伊莫顿与团战终局'],
         5: ['高速巴士异变', '连锁事故救援', '死神征兆分析', '队友被精神控制', '郑吒对全队考验', '张杰告别与队长确认'],
         6: ['实验船醒来', '新人筛选', '感染隔离', '水下通道', '程啸救援', '新生异形与逃生艇'],
+        7: ['浣熊市降临', '保护剧情人物', '恶魔队信号', '分队撤离', '团灭危机', '郑吒复活与誓言'],
       };
       const ch = save.chapter || 1;
       const floors = chapterFloors[ch] || chapterFloors[1];
@@ -141,7 +143,7 @@ function showMainMenu() {
   btnCont.addEventListener('click', () => {
     if (gameState.load(0)) {
       // 根据存档章节加载对应地图
-      const chapterGens = { 1: generateChapter1, 2: generateChapter2, 3: generateChapter3, 4: generateChapter4, 5: generateChapter5, 6: generateChapter6 };
+      const chapterGens = { 1: generateChapter1, 2: generateChapter2, 3: generateChapter3, 4: generateChapter4, 5: generateChapter5, 6: generateChapter6, 7: generateChapter7 };
       const gen = chapterGens[gameState.chapter] || generateChapter1;
       audioEngine.init();
       audioEngine.resume();
@@ -381,7 +383,7 @@ eventBus.on('player:death', () => {
     document.getElementById('btn-load')?.addEventListener('click', () => {
       overlay.innerHTML = '';
       if (gameState.load(0)) {
-        const chapterGens = { 1: generateChapter1, 2: generateChapter2, 3: generateChapter3, 4: generateChapter4, 5: generateChapter5, 6: generateChapter6 };
+        const chapterGens = { 1: generateChapter1, 2: generateChapter2, 3: generateChapter3, 4: generateChapter4, 5: generateChapter5, 6: generateChapter6, 7: generateChapter7 };
         const gen = chapterGens[gameState.chapter] || generateChapter1;
         chapter = gen();
         currentFloorIndex = gameState.nodeIndex || 0;
@@ -471,7 +473,7 @@ document.addEventListener('keydown', (e) => {
     e.preventDefault();
     if (gameState.load(0)) {
       // 根据存档章节加载对应地图
-      const chapterGens = { 1: generateChapter1, 2: generateChapter2, 3: generateChapter3, 4: generateChapter4, 5: generateChapter5, 6: generateChapter6 };
+      const chapterGens = { 1: generateChapter1, 2: generateChapter2, 3: generateChapter3, 4: generateChapter4, 5: generateChapter5, 6: generateChapter6, 7: generateChapter7 };
       const gen = chapterGens[gameState.chapter] || generateChapter1;
       chapter = gen();
       currentFloorIndex = gameState.nodeIndex || 0;
@@ -1024,6 +1026,47 @@ function triggerEvent(entity) {
       gameState.markEntityRemoved(currentFloorIndex, evt.companionDeath);
     }
 
+    // 批量同伴死亡（数组）
+    if (evt.companionDeaths && Array.isArray(evt.companionDeaths)) {
+      for (const cid of evt.companionDeaths) {
+        const comp = gameState.companions.find(c => c.id === cid);
+        if (comp) comp.alive = false;
+        const compEntIdx = entities.findIndex(e => e.id === cid);
+        if (compEntIdx >= 0) entities.splice(compEntIdx, 1);
+        gameState.markEntityRemoved(currentFloorIndex, cid);
+      }
+      renderer.shake(12, 800);
+    }
+
+    // 全队阵亡（标记所有存活同伴死亡）
+    if (evt.killAllCompanions) {
+      for (const comp of gameState.companions) {
+        if (comp.alive) {
+          comp.alive = false;
+          renderer.addFloatText(`${comp.name} 阵亡`, gameState.player.x, gameState.player.y - 1, 'rgb(255, 0, 0)');
+        }
+      }
+      renderer.shake(16, 1000);
+    }
+
+    // 复活同伴
+    if (evt.reviveCompanion) {
+      const comp = gameState.companions.find(c => c.id === evt.reviveCompanion);
+      if (comp) {
+        comp.alive = true;
+        renderer.addFloatText(`${comp.name} 复活！`, gameState.player.x, gameState.player.y - 1, 'rgb(68, 255, 136)');
+      }
+    }
+    if (evt.reviveCompanions && Array.isArray(evt.reviveCompanions)) {
+      for (const cid of evt.reviveCompanions) {
+        const comp = gameState.companions.find(c => c.id === cid);
+        if (comp) {
+          comp.alive = true;
+          renderer.addFloatText(`${comp.name} 复活！`, gameState.player.x, gameState.player.y - 1, 'rgb(68, 255, 136)');
+        }
+      }
+    }
+
     // 生成新敌人
     if (evt.spawnEnemies) {
       for (const spawn of evt.spawnEnemies) {
@@ -1549,8 +1592,8 @@ function showChapterComplete() {
   gameStarted = false;
   const p = gameState.player;
   const chapterNum = gameState.chapter;
-  const chapterNames = { 1: '名为生化', 2: '异形杀戮', 3: '咒怨阴影', 4: '神鬼秘宝', 5: '死神绝境', 6: '异形再临' };
-  const nextChapterNames = { 1: '异形一', 2: '咒怨', 3: '神鬼秘宝', 4: '死神绝境', 5: '异形再临', 6: '恶魔初临', 7: '重建中洲' };
+  const chapterNames = { 1: '名为生化', 2: '异形杀戮', 3: '咒怨阴影', 4: '神鬼秘宝', 5: '死神绝境', 6: '异形再临', 7: '恶魔初临' };
+  const nextChapterNames = { 1: '异形一', 2: '咒怨', 3: '神鬼秘宝', 4: '死神绝境', 5: '异形再临', 6: '恶魔初临', 7: '重建中洲', 8: '星河远征' };
   const chapterName = chapterNames[chapterNum] || `第${chapterNum}章`;
   const nextWorld = nextChapterNames[chapterNum];
 
@@ -1604,7 +1647,7 @@ function showChapterComplete() {
     renderLordGodSpace(() => {
       // 从主神空间离开 — 进入下一章或结束
       const nextChapter = gameState.chapter + 1;
-      const chapterGenerators = { 2: generateChapter2 };
+      const chapterGenerators = { 2: generateChapter2, 3: generateChapter3, 4: generateChapter4, 5: generateChapter5, 6: generateChapter6, 7: generateChapter7 };
       const gen = chapterGenerators[nextChapter];
 
       if (gen) {
@@ -1635,7 +1678,7 @@ function showChapterComplete() {
         `;
         document.getElementById('btn-next-chapter').addEventListener('click', () => {
           // 播放下一章过场动画
-          const cutscenes = { 2: showChapter2Cutscene, 3: showChapter3Cutscene, 4: showChapter4Cutscene, 5: showChapter5Cutscene, 6: showChapter6Cutscene };
+          const cutscenes = { 2: showChapter2Cutscene, 3: showChapter3Cutscene, 4: showChapter4Cutscene, 5: showChapter5Cutscene, 6: showChapter6Cutscene, 7: showChapter7Cutscene };
           const cutsceneFn = cutscenes[nextChapter];
           const doStart = () => {
           gameState.chapter = nextChapter;
@@ -1698,6 +1741,8 @@ function showChapterComplete() {
             const existingIds = gameState.companions.map(c => c.id);
             if (!existingIds.includes('cheng_xiao')) gameState.addCompanion({ id: 'cheng_xiao', name: '程啸', role: '武器专家', alive: true });
           }
+
+          // Ch7恶魔初临：无新队友加入（恶魔队对战章节）
 
           chapter = gen();
           gameState.worldName = chapter.world;

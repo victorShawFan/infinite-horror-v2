@@ -7,6 +7,7 @@ import { generateChapter3 } from './src/core/MapGenerator_Ch3.js';
 import { generateChapter4 } from './src/core/MapGenerator_Ch4.js';
 import { generateChapter5 } from './src/core/MapGenerator_Ch5.js';
 import { generateChapter6 } from './src/core/MapGenerator_Ch6.js';
+import { generateChapter7 } from './src/core/MapGenerator_Ch7.js';
 import { gameState } from './src/core/GameState.js';
 import { executeBattle, previewBattle, getEffectiveAtk, getEffectiveDef } from './src/core/CombatSystem.js';
 import { ENTITY_TYPE } from './src/core/constants.js';
@@ -160,6 +161,30 @@ for (const f of ch6.floors) {
 }
 assert(ch6Defeats === 0, 'Ch6 zero undefeatable');
 
+
+// Ch7 全通
+const ch7 = generateChapter7();
+assert(ch7.floors.length === 6, 'Ch7 6 floors');
+p.rewardPoints += 1000;
+let ch7Defeats = 0;
+for (const f of ch7.floors) {
+  for (const e of f.entities.filter(e => e.type === ENTITY_TYPE.ENEMY || e.type === ENTITY_TYPE.BOSS)) {
+    if (!previewBattle(p, e).canWin) { ch7Defeats++; continue; }
+    executeBattle({...e});
+  }
+  for (const e of f.entities.filter(e => e.type === ENTITY_TYPE.ITEM)) {
+    if (e.effect?.heal) p.hp = Math.min(p.maxHp, p.hp + e.effect.heal);
+    if (e.effect?.atk) p.atk += e.effect.atk;
+    if (e.effect?.def) p.def += e.effect.def;
+    if (e.effect?.spd) p.spd += e.effect.spd;
+    if (e.effect?.maxHp) { p.maxHp += e.effect.maxHp; p.hp += e.effect.maxHp; }
+    if (e.effect?.crt) p.crt += e.effect.crt;
+    if (e.itemType === 'weapon' && e.weapon) p.weapon = e.weapon;
+    if (e.itemType === 'armor' && e.armor) p.armor = e.armor;
+    if (e.itemType === 'chip' && e.chip && p.chips.length < p.maxChips) p.chips.push(e.chip);
+  }
+}
+assert(ch7Defeats === 0, 'Ch7 zero undefeatable');
 // 存档往返
 gameState.save(0);
 const lvBefore = p.level;
@@ -171,6 +196,6 @@ assert(gameState.player.level === lvBefore, 'Level preserved');
 assert(Object.values(SHOP_ITEMS).flat().length >= 30, '30+ shop items');
 
 console.log(`${pass + fail} checks: ${pass} pass, ${fail} fail`);
-console.log(`Ch1-6: Lv${p.level}`);
+console.log(`Ch1-7: Lv${p.level}`);
 if (fail === 0) console.log('✅ 全游戏模拟通过');
 else { console.log('❌ 有失败'); process.exit(1); }

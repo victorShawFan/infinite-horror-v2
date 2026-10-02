@@ -1,0 +1,47 @@
+import { TILE, ENTITY_TYPE } from './constants.js';
+const W = 21, H = 17;
+function makeGrid(fill = TILE.WALL) { return Array.from({ length: H }, () => Array(W).fill(fill)); }
+function carveRoom(g, x1, y1, x2, y2) { for (let y = y1; y <= y2; y++) for (let x = x1; x <= x2; x++) if (y>=0&&y<H&&x>=0&&x<W) g[y][x] = TILE.FLOOR; }
+function carveCorridor(g, x1, y1, x2, y2) { let cx=x1,cy=y1; while(cx!==x2){g[cy][cx]=TILE.FLOOR;cx+=cx<x2?1:-1;} while(cy!==y2){g[cy][cx]=TILE.FLOOR;cy+=cy<y2?1:-1;} g[cy][cx]=TILE.FLOOR; }
+
+function f11_1(){const g=makeGrid();carveRoom(g,1,7,6,10);carveCorridor(g,6,8,10,8);carveRoom(g,10,5,16,11);carveCorridor(g,16,8,19,8);carveRoom(g,16,6,19,10);carveRoom(g,3,1,8,5);carveCorridor(g,5,5,5,7);carveRoom(g,10,13,16,16);carveCorridor(g,13,11,13,13);g[15][15]=TILE.STAIRS;return{id:'11-1',name:'变形金刚与罗甘道之死',subtitle:'罗甘道在变形金刚世界战死。',bgColor:'#0c0608',theme:'nightmare',tiles:g,width:W,height:H,playerStart:{x:3,y:8},entities:[
+{type:ENTITY_TYPE.EVENT,id:'ch11_intro',name:'章节开始',x:4,y:8,sprite:'✦',color:'#ffffff',event:{type:'dialogue',lines:[{text:'新的世界展开在眼前。战斗还在继续。',speaker:'旁白'},{text:'为了活着的人——也为了已经离开的人。前进。',speaker:'郑吒'}]}},
+{type:ENTITY_TYPE.ENEMY,id:'e11_1a',name:'先锋敌',x:13,y:8,sprite:'⚔',color:'#886644',hp:115,atk:42,def:17,spd:19,rewards:{exp:95,gold:63}},
+{type:ENTITY_TYPE.ITEM,id:'med_11_1',name:'急救包',x:14,y:14,sprite:'♥',color:'#ff4488',itemType:'consumable',effect:{heal:125}},
+{type:ENTITY_TYPE.ITEM,id:'stat_11_1',name:'属性结晶',x:18,y:7,sprite:'◆',color:'#ffcc44',itemType:'stat_boost',effect:{atk:6}},
+]};}
+
+function f11_2(){const g=makeGrid();carveRoom(g,1,1,7,6);carveCorridor(g,7,3,10,3);carveRoom(g,10,1,16,6);carveCorridor(g,13,6,13,9);carveRoom(g,10,9,16,13);carveRoom(g,1,9,7,13);carveCorridor(g,4,6,4,9);carveCorridor(g,7,11,10,11);carveRoom(g,16,10,19,15);carveCorridor(g,16,12,16,12);g[14][18]=TILE.STAIRS;return{id:'11-2',name:'猛鬼街梦层',subtitle:'弗莱迪的梦境世界。分不清真假。',bgColor:'#0c0608',theme:'nightmare',tiles:g,width:W,height:H,playerStart:{x:4,y:3},entities:[
+{type:ENTITY_TYPE.ENEMY,id:'e11_2a',name:'精锐敌',x:13,y:11,sprite:'⚔',color:'#886644',hp:120,atk:44,def:18,spd:20,rewards:{exp:100,gold:65}},
+{type:ENTITY_TYPE.ITEM,id:'med_11_2',name:'急救包',x:4,y:14,sprite:'♥',color:'#ff4488',itemType:'consumable',effect:{heal:125}},
+]};}
+
+function f11_3(){const g=makeGrid();carveRoom(g,1,1,5,5);carveCorridor(g,5,3,9,3);carveRoom(g,9,1,14,5);carveCorridor(g,11,5,11,9);carveRoom(g,8,9,14,13);carveRoom(g,1,8,6,12);carveCorridor(g,4,5,4,8);carveCorridor(g,6,10,8,10);carveRoom(g,15,9,19,14);carveCorridor(g,14,11,15,11);g[13][18]=TILE.STAIRS;return{id:'11-3',name:'郑吒自杀破心魔',subtitle:'唯一打败心魔的方式——直面死亡本身。',bgColor:'#0c0608',theme:'nightmare',tiles:g,width:W,height:H,playerStart:{x:3,y:3},entities:[
+{type:ENTITY_TYPE.ENEMY,id:'e11_3a',name:'特殊敌',x:11,y:9,sprite:'👤',color:'#884444',hp:125,atk:46,def:19,spd:21,rewards:{exp:105,gold:68}},
+{type:ENTITY_TYPE.ENEMY,id:'e11_3b',name:'伏击敌',x:4,y:10,sprite:'🗡',color:'#884444',hp:120,atk:48,def:16,spd:23,rewards:{exp:103,gold:66}},
+{type:ENTITY_TYPE.ITEM,id:'med_11_3',name:'急救包',x:14,y:14,sprite:'♥',color:'#ff4488',itemType:'consumable',effect:{heal:125}},
+{type:ENTITY_TYPE.ITEM,id:'stat_11_3',name:'属性结晶',x:18,y:7,sprite:'◆',color:'#ffcc44',itemType:'stat_boost',effect:{def:6}},
+]};}
+
+function f11_4(){const g=makeGrid();carveRoom(g,1,6,6,11);carveCorridor(g,6,8,10,8);carveRoom(g,10,4,15,12);carveCorridor(g,15,8,18,8);carveRoom(g,16,5,19,11);carveRoom(g,5,1,10,3);carveCorridor(g,8,3,8,4);carveRoom(g,8,13,14,16);carveCorridor(g,11,12,11,13);g[15][13]=TILE.STAIRS;return{id:'11-4',name:'复活与苏醒',subtitle:'回到神鬼世界复活郑吒与铭烟薇。',bgColor:'#0c0608',theme:'nightmare',tiles:g,width:W,height:H,playerStart:{x:3,y:8},entities:[
+{type:ENTITY_TYPE.ENEMY,id:'e11_4a',name:'重装敌',x:12,y:8,sprite:'🛡',color:'#666644',hp:135,atk:44,def:23,spd:17,rewards:{exp:110,gold:71}},
+{type:ENTITY_TYPE.ITEM,id:'med_11_4',name:'急救包',x:4,y:1,sprite:'♥',color:'#ff4488',itemType:'consumable',effect:{heal:125}},
+]};}
+
+function f11_5(){const g=makeGrid();carveRoom(g,6,5,14,12);carveRoom(g,1,7,5,10);carveCorridor(g,5,8,6,8);carveRoom(g,15,7,19,10);carveCorridor(g,14,8,15,8);carveRoom(g,8,1,12,4);carveCorridor(g,10,4,10,5);carveRoom(g,8,13,12,16);carveCorridor(g,10,12,10,13);g[1][11]=TILE.STAIRS;return{id:'11-5',name:'龙骑士远征',subtitle:'龙骑士世界的冒险。',bgColor:'#0c0608',theme:'nightmare',tiles:g,width:W,height:H,playerStart:{x:10,y:15},entities:[
+{type:ENTITY_TYPE.ENEMY,id:'e11_5a',name:'Boss护卫',x:13,y:3,sprite:'⚔',color:'#884422',hp:140,atk:48,def:21,spd:21,rewards:{exp:113,gold:73}},
+{type:ENTITY_TYPE.ITEM,id:'med_11_5',name:'急救包',x:14,y:1,sprite:'♥',color:'#ff4488',itemType:'consumable',effect:{heal:125}},
+{type:ENTITY_TYPE.ITEM,id:'stat_11_5',name:'属性结晶',x:18,y:7,sprite:'◆',color:'#ffcc44',itemType:'stat_boost',effect:{spd:6}},
+]};}
+
+function f11_6(){const g=makeGrid();carveRoom(g,1,1,6,5);carveCorridor(g,6,3,10,3);carveRoom(g,10,1,16,6);carveCorridor(g,13,6,13,10);carveRoom(g,9,10,16,14);carveRoom(g,1,8,7,13);carveCorridor(g,4,5,4,8);carveCorridor(g,7,12,9,12);carveRoom(g,16,11,19,15);carveCorridor(g,16,13,16,13);g[14][18]=TILE.STAIRS;return{id:'11-6',name:'完美风暴整备',subtitle:'最终大战前的最后准备。',bgColor:'#0c0608',theme:'nightmare',tiles:g,width:W,height:H,playerStart:{x:3,y:3},entities:[
+{type:ENTITY_TYPE.BOSS,id:'boss_freddy',name:'弗莱迪',x:10,y:7,sprite:'🔪',color:'#884422',hp:350,atk:32,def:12,spd:15,damageType:'psychic',weaknesses:['holy','fire'],rewards:{exp:320,gold:220,rewardPoints:480},lore:'梦中杀手弗莱迪。在梦境中几乎无敌，但清醒时力量大减。'},
+{type:ENTITY_TYPE.ENEMY,id:'e11_6a',name:'Boss护卫',x:3,y:8,sprite:'⚔',color:'#884422',hp:135,atk:46,def:21,spd:19,rewards:{exp:110,gold:71}},
+{type:ENTITY_TYPE.ENEMY,id:'e11_6b',name:'Boss护卫',x:17,y:8,sprite:'⚔',color:'#884422',hp:135,atk:46,def:21,spd:19,rewards:{exp:110,gold:71}},
+{type:ENTITY_TYPE.ITEM,id:'med_11_6',name:'急救包',x:4,y:1,sprite:'♥',color:'#ff4488',itemType:'consumable',effect:{heal:125}},
+{type:ENTITY_TYPE.EVENT,id:'ch11_ending',name:'第11章结算',x:10,y:2,sprite:'✦',color:'#ffdd88',event:{type:'chapter_end',lines:[{text:'又一个世界的战斗结束了。但最终的战争还在前方。',speaker:'旁白'},{text:'第11关「心魔与终战前奏」通关。获得基础奖励1000点。',speaker:'主神'}],flag:'ch11_complete',rewards:{rewardPoints:1000}}},
+]};}
+
+export function generateChapter11(){return{name:'第11章 · 心魔与终战前奏',world:'猛鬼街',floors:[
+f11_1(),f11_2(),f11_3(),f11_4(),f11_5(),f11_6(),
+]}};

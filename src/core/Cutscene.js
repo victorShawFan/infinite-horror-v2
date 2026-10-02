@@ -509,3 +509,22 @@ export function showChapter6Cutscene(onFinish) {
   function adv() { si++; rs(); if(si<SCENES_CH6.length) setTimeout(adv, SCENES_CH6[si]?.duration||3000); }
   rs(); if(SCENES_CH6.length>0) setTimeout(adv, SCENES_CH6[0].duration);
 }
+
+export function showChapter7Cutscene(onFinish) {
+  const overlay = document.getElementById('ui-overlay');
+  const scenes = [
+    { bg: 'rgba(10,0,0,0.95)', text: '主神再次传送，目的地——浣熊市。' },
+    { bg: 'rgba(10,0,0,0.95)', text: '又是生化危机的世界。但这一次，空气中弥漫着不同寻常的杀意。' },
+    { bg: 'rgba(20,0,0,0.95)', text: '恶魔队——由中洲队的"复制体"组成的对手。他们拥有完全相同的能力。' },
+    { bg: 'rgba(30,0,0,0.95)', text: '一场注定惨烈的战斗即将展开。' },
+    { bg: 'rgba(15,0,0,0.95)', text: '第七关「恶魔初临」' },
+  ];
+  let idx = 0;
+  function show() {
+    if (idx >= scenes.length) { overlay.innerHTML = ''; onFinish(); return; }
+    const s = scenes[idx];
+    overlay.innerHTML = `<div style="position:absolute;top:0;left:0;right:0;bottom:0;display:flex;align-items:center;justify-content:center;background:${s.bg};cursor:pointer;animation:fadeIn 0.8s ease"><p style="color:#e0e0e0;font-size:22px;max-width:600px;text-align:center;line-height:1.8;letter-spacing:2px">${s.text}</p></div><style>@keyframes fadeIn{from{opacity:0}to{opacity:1}}</style>`;
+    overlay.querySelector('div').addEventListener('click', () => { idx++; show(); });
+  }
+  show();
+}
