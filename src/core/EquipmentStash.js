@@ -47,6 +47,9 @@ export function openEquipmentStash() {
   const overlay = document.getElementById('ui-overlay');
   const p = gameState.player;
 
+  const _stashKh = (e) => { if (e.key === 'Escape') { overlay.innerHTML = ''; document.removeEventListener('keydown', _stashKh); gameState.setState(prevState); } };
+  document.addEventListener('keydown', _stashKh);
+
   function _renderStash() {
     const stash = getStash();
     const slots = ['weapon', 'armor', 'accessory'];
@@ -145,7 +148,7 @@ export function openEquipmentStash() {
     // ── Handlers ──
     const close = () => {
       overlay.innerHTML = '';
-      document.removeEventListener('keydown', kh);
+      document.removeEventListener('keydown', _stashKh);
       gameState.setState(prevState);
     };
 
@@ -212,10 +215,7 @@ export function openEquipmentStash() {
       if (e.target.id === 'stash-backdrop') close();
     });
 
-    const kh = (e) => {
-      if (e.key === 'Escape') { document.removeEventListener('keydown', kh); close(); }
-    };
-    document.addEventListener('keydown', kh);
+    // keyboard handler registered once outside _renderStash
   }
 
   _renderStash();

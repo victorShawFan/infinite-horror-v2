@@ -51,6 +51,10 @@ export function openMerchantShop(merchantName, chapter) {
   const overlay = document.getElementById('ui-overlay');
   const stock = getStockForChapter(chapter || gameState.chapter);
   
+  const close = () => { overlay.innerHTML = ''; gameState.setState(prevState); document.removeEventListener('keydown', _merchantKh); };
+  const _merchantKh = (e) => { if (e.key === 'Escape') close(); };
+  document.addEventListener('keydown', _merchantKh);
+
   function _render() {
     const p = gameState.player;
     overlay.innerHTML = `
@@ -150,13 +154,12 @@ export function openMerchantShop(merchantName, chapter) {
     });
     
     // Close
-    const close = () => { overlay.innerHTML = ''; gameState.setState(prevState); };
+    // close() defined outside _render
     document.getElementById('btn-close-merchant')?.addEventListener('click', close);
     document.getElementById('merchant-backdrop')?.addEventListener('click', e => {
       if (e.target.id === 'merchant-backdrop') close();
     });
-    const kh = (e) => { if (e.key === 'Escape') { document.removeEventListener('keydown', kh); close(); } };
-    document.addEventListener('keydown', kh);
+    // keyboard handler registered once outside _render — no re-registration here
   }
   
   _render();
