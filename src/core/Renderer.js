@@ -393,10 +393,10 @@ export class Renderer {
 
     // ── 右上：战斗属性 ──
     ctx.fillStyle = 'rgba(10, 10, 20, 0.88)';
-    roundRect(ctx, CANVAS_W - 160 - pad, pad, 160, 100, 8);
+    roundRect(ctx, CANVAS_W - 160 - pad, pad, 160, 118, 8);
     ctx.fill();
     ctx.strokeStyle = 'rgba(255, 100, 100, 0.3)';
-    roundRect(ctx, CANVAS_W - 160 - pad, pad, 160, 100, 8);
+    roundRect(ctx, CANVAS_W - 160 - pad, pad, 160, 118, 8);
     ctx.stroke();
 
     const rx = CANVAS_W - 150;
@@ -411,6 +411,8 @@ export class Renderer {
     ctx.fillText(`✦ 暴击 ${p.crt}%`, rx, pad + 74);
     ctx.fillStyle = '#ffaa44';
     ctx.fillText(`💰 ${p.gold}G  ⬡${p.rewardPoints}`, rx, pad + 92);
+    ctx.fillStyle = '#666';
+    ctx.fillText(`回合 ${gameState.stats.turnsPlayed}`, rx, pad + 110);
 
     // ── 底部：钥匙 + 楼层信息 ──
     ctx.fillStyle = 'rgba(10, 10, 20, 0.85)';
