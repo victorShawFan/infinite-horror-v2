@@ -321,6 +321,24 @@ function startGame() {
     });
   }
 
+  // 关系变化通知
+  if (!window._relationshipListenerRegistered) {
+    window._relationshipListenerRegistered = true;
+    eventBus.on('relationship:change', (data) => {
+      if (data.levelChanged) {
+        const color = getRelationshipLevel(data.newValue).color;
+        const profile = COMPANION_PROFILES[data.companionId];
+        const name = profile?.name || data.companionId;
+        renderer.addFloatText(`${name} → ${data.newLevel}`, gameState.player.x, gameState.player.y - 2, color);
+        if (data.newLevel === '羁绊') {
+          renderer.shake(6, 500);
+          renderer.flash('rgba(255, 170, 0, 0.3)', 500);
+          renderer.notify(`✦ ${name}的羁绊回忆已解锁！`, '#ffaa00', 180);
+        }
+      }
+    });
+  }
+
   // 里程碑通知轮询
   if (!window._milestonePollerRegistered) {
     window._milestonePollerRegistered = true;
@@ -1498,14 +1516,17 @@ function showInventoryPanel() {
               const relLevel = typeof getRelationshipLevel === 'function' ? getRelationshipLevel(relVal) : { name: '中立', color: '#888' };
               const profile = typeof COMPANION_PROFILES !== 'undefined' ? COMPANION_PROFILES[c.id] : null;
               const quote = profile?.quote || '';
+              const isBond = relVal >= 71;
+              const memoir = isBond && profile?.memoir ? profile.memoir : '';
               return '<div style="margin-bottom:6px;padding:6px 8px;background:rgba(255,255,255,0.02);border-left:2px solid ' + (c.alive ? relLevel.color : '#333') + ';border-radius:0 4px 4px 0;">' +
                 '<div style="display:flex;justify-content:space-between;align-items:center;">' +
                 '<span style="color:' + (c.alive ? '#ccc' : '#664444') + ';font-size:13px;">' + (c.alive ? '●' : '✝') + ' ' + c.name + ' · ' + c.role + '</span>' +
-                '<span style="color:' + relLevel.color + ';font-size:11px;">' + relLevel.name + ' (' + relVal + ')</span>' +
+                '<span style="color:' + relLevel.color + ';font-size:11px;">' + relLevel.name + ' (' + relVal + ')' + (isBond ? ' ✦' : '') + '</span>' +
                 '</div>' +
                 (c.alive && bonus ? '<span style="color:#44ff88;font-size:10px;">' + bonus + '</span>' : '') +
                 (c.alive ? '' : ' <span style="color:#664444;font-size:10px;">（阵亡）</span>') +
-                (quote ? '<p style="color:#555;font-size:10px;font-style:italic;margin-top:2px;">' + quote + '</p>' : '') +
+                (isBond ? '<div style="margin-top:4px;padding:4px 6px;background:rgba(255,170,0,0.08);border:1px solid rgba(255,170,0,0.2);border-radius:4px;"><span style="color:#ffaa00;font-size:10px;">✦ 羁绊回忆</span><p style="color:#aa8844;font-size:10px;font-style:italic;margin-top:2px;line-height:1.4;">' + memoir + '</p></div>' : '') +
+                (!isBond && quote ? '<p style="color:#555;font-size:10px;font-style:italic;margin-top:2px;">' + quote + '</p>' : '') +
               '</div>';
             }).join('')}
           </div>
