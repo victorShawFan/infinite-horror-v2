@@ -1356,7 +1356,7 @@ document.addEventListener('keydown', (e) => {
         // 打开背包/状态面板
         showInventoryPanel();
         return;
-      case 's':
+      case 'x':
         // 统计面板
         showStatsPanel();
         return;
@@ -1368,7 +1368,7 @@ document.addEventListener('keydown', (e) => {
         // 同伴关系面板
         showRelationshipPanel();
         return;
-            case 'Tab':
+            case 'tab':
         // 迷你地图开关
         e.preventDefault();
         if (window._miniMap) window._miniMap.toggle();
@@ -1711,8 +1711,9 @@ function _showRandomEncounter(encounter) {
 function showCombatConfirm(enemy) {
   tutorialManager.trigger('first_combat_confirm');
   const p = gameState.player;
-  // 难度缩放：根据章节动态调整敌人属性
-  const scaledEnemy = scaleEnemy(enemy, gameState.chapter);
+  // 难度缩放：根据章节动态调整敌人属性 + 动态难度
+  // 一次性构造最终敌人快照，预判和实战共用同一份
+  const scaledEnemy = applyDynamicScaling(scaleEnemy(enemy, gameState.chapter));
   const preview = previewBattle(p, scaledEnemy);
   
   gameState.setState(GAME_STATE.DIALOGUE);
@@ -2118,7 +2119,7 @@ function _showPauseMenu() {
   document.getElementById('pause-quit')?.addEventListener('click', () => {
     autoSave('退出前存档');
     close();
-    showTitleScreen();
+    showMainMenu();
   });
   document.getElementById('pause-backdrop')?.addEventListener('click', (e) => {
     if (e.target.id === 'pause-backdrop') close();
@@ -3226,19 +3227,19 @@ function _showChapterSelectMenu() {
 
   document.getElementById('btn-close-chapter-select')?.addEventListener('click', () => {
     overlay.innerHTML = '';
-    showTitleScreen();
+    showMainMenu();
   });
   document.getElementById('chapter-select-bg')?.addEventListener('click', (e) => {
     if (e.target.id === 'chapter-select-bg') {
       overlay.innerHTML = '';
-      showTitleScreen();
+      showMainMenu();
     }
   });
   const kh = (e) => {
     if (e.key === 'Escape') {
       document.removeEventListener('keydown', kh);
       overlay.innerHTML = '';
-      showTitleScreen();
+      showMainMenu();
     }
   };
   document.addEventListener('keydown', kh);

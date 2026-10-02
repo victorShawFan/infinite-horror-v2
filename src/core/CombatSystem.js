@@ -1,4 +1,5 @@
 import { getActiveMutators } from './NewGamePlus.js';
+import { getEffectModifiers, addEffect as addStatusEffect } from './StatusEffectTracker.js';
 // ═══════════════════════════════════════════════════════════════
 // 战斗系统 — 魔塔式数值对撞 + 血统特技 + 芯片元素 + 速度双击
 //            + 主动技能 + 状态效果 + 基因锁进阶
@@ -25,6 +26,7 @@ import { applyStanceModifiers, getCurrentStance } from './CombatStance.js';
 import { killStreak } from './KillStreak.js';
 import { getAllAffixEffects } from './EquipmentAffixes.js';
 import { getCompanionCombatBonus } from './RelationshipSystem.js';
+import { getEliteCombatEffects, recordEliteKill } from './EliteMonsterSystem.js';
 import { generateCombatDialogue, getVictoryComment } from './CompanionDialogue.js';
 import { COMPANION_PROFILES } from './RelationshipSystem.js';
 
@@ -189,6 +191,7 @@ export function previewBattle(player, enemy) {
 
   // 精英词缀预判调整
   const affix = enemy.affix || null;
+  const elitePrev = getEliteCombatEffects(enemy);
   if (affix) {
     // 暗影闪避：部分攻击会miss，实际击杀更慢
     if (affix.dodgeChance) {
@@ -351,6 +354,12 @@ export function executeBattle(enemy) {
   
   // ── 精英词缀战斗效果 ──
   const affix = enemy.affix || null;
+  // ── 精英词缀完整效果 ──
+  const eliteFx = getEliteCombatEffects(enemy);
+  let eliteShield = eliteFx ? eliteFx.shieldHp : 0;
+  if (eliteFx && enemy._eliteTier) {
+    log.push({ text: `⚠ ${enemy._eliteTierData?.name || '精英'}怪物！词缀效果已激活`, type: 'affix_warning' });
+  }
   if (affix) {
     log.push({ text: `⚠ 精英敌人【${affix.name}】${affix.desc}`, type: 'affix_warning' });
   }
@@ -467,6 +476,40 @@ if (chipFx.hasIceChip && enemy.atk !== enemyEffAtk) {
         const healAmt = Math.max(1, Math.floor(effectiveEnemyAtk * affix.lifeSteal));
         enemyHp = Math.min(enemyMaxHp, enemyHp + healAmt);
         if (round <= 6) log.push({ text: `🩸 【${affix.name}】吸血 +${healAmt} HP`, type: 'affix_heal' });
+      }
+    }
+    // ── 精英词缀: 回合效果 ──
+    if (eliteFx) {
+      // 精英再生
+      if (eliteFx.regenPercent > 0 && enemyHp > 0 && enemyHp < enemyMaxHp) {
+        const eliteRegen = Math.max(1, Math.floor(enemyMaxHp * eliteFx.regenPercent));
+        enemyHp = Math.min(enemyMaxHp, enemyHp + eliteRegen);
+        if (round <= 6) log.push({ text: `💚 精英再生 +${eliteRegen} HP`, type: 'enemy_heal' });
+      }
+      // 精英onHitPlayer效果（毒素等）
+      for (const onHit of (eliteFx.onHitPlayer || [])) {
+        if (typeof onHit === 'function' && playerHp > 0) {
+          try {
+            const hitResult = onHit({ maxHp: p.maxHp, hp: playerHp }, round);
+            if (hitResult && hitResult.damage) {
+              playerHp -= hitResult.damage;
+              if (round <= 6) log.push({ text: `☠ ${hitResult.text || '精英词缀伤害 -' + hitResult.damage}`, type: 'affix_damage' });
+            }
+          } catch {}
+        }
+      }
+      // 精英combatMods（狂暴觉醒等）
+      for (const modFn of (eliteFx.combatMods || [])) {
+        if (typeof modFn === 'function') {
+          try {
+            const modResult = modFn(enemy, enemyHp, enemyMaxHp);
+            if (modResult && modResult.atkMul && !enemy._eliteEnraged) {
+              effectiveEnemyAtk = Math.floor(effectiveEnemyAtk * modResult.atkMul);
+              enemy._eliteEnraged = true;
+              log.push({ text: `🔥 ${modResult.desc || '精英觉醒！'}`, type: 'affix_warning' });
+            }
+          } catch {}
+        }
       }
     }
 
@@ -671,6 +714,25 @@ if (chipFx.hasIceChip && enemy.atk !== enemyEffAtk) {
         if (round <= 6 || i === 0) log.push({ text: `🌿 荆棘反弹 ${thornDmg}！`, type: 'reflect' });
       }
       // ── 精英词缀: 荆棘反伤 ──
+      // ── 精英词缀: 护盾吸收 ──
+      if (eliteShield > 0 && pHit.damage > 0) {
+        const absorbed = Math.min(eliteShield, pHit.damage);
+        eliteShield -= absorbed;
+        enemyHp += absorbed;
+        if (round <= 4) log.push({ text: `🔷 护盾吸收 ${absorbed}！剩余 ${eliteShield}`, type: 'affix_warning' });
+      }
+      // ── 精英词缀: 格挡 ──
+      if (eliteFx && eliteFx.blockEveryN > 0 && round % eliteFx.blockEveryN === 0 && pHit.damage > 0) {
+        const blockAmt = Math.floor(pHit.damage * 0.7);
+        enemyHp += blockAmt;
+        if (round <= 6) log.push({ text: `🛡 精英格挡！减免 ${blockAmt}`, type: 'affix_warning' });
+      }
+      // ── 精英词缀: 荆棘反伤 ──
+      if (eliteFx && eliteFx.thornPercent > 0 && pHit.damage > 0 && playerHp > 0) {
+        const thornDmg = Math.max(1, Math.floor(pHit.damage * eliteFx.thornPercent));
+        playerHp -= thornDmg;
+        if (round <= 6 || i === 0) log.push({ text: `🌵 荆棘反伤 ${thornDmg}！`, type: 'affix_damage' });
+      }
       if (affix && affix.reflectPct && pHit.damage > 0) {
         const affixThornDmg = Math.max(1, Math.floor(pHit.damage * affix.reflectPct));
         playerHp -= affixThornDmg;
@@ -842,6 +904,22 @@ if (chipFx.hasIceChip && enemy.atk !== enemyEffAtk) {
         log.push({ text: `🛡 武修反伤 ${reflect}`, type: 'reflect' });
       }
 
+      // ── 精英词缀: 连击 ──
+      if (eliteFx && eliteFx.doubleStrikeChance > 0 && Math.random() < eliteFx.doubleStrikeChance && enemyHp > 0 && playerHp > 0) {
+        const dsHit = calcDamage(
+          { atk: Math.floor((bossPhases ? effectiveEnemyAtk : enemyEffAtk) * enemyEnrageMult), crt: enemy.crt || 0 },
+          { def: pDef, res: p.res || 0 },
+          enemy.damageType || DAMAGE_TYPE.PHYSICAL, 0
+        );
+        playerHp -= dsHit.damage;
+        if (dsHit.damage > 0) log.push({ text: `⚡ 精英连击！${dsHit.damage}`, type: 'enemy_attack' });
+      }
+      // ── 精英词缀: 嗜血 ──
+      if (eliteFx && eliteFx.lifestealRatio > 0 && eHit && eHit.damage > 0 && enemyHp > 0) {
+        const eliteVamp = Math.max(1, Math.floor(eHit.damage * eliteFx.lifestealRatio));
+        enemyHp = Math.min(enemyMaxHp, enemyHp + eliteVamp);
+        if (round <= 6) log.push({ text: `🩸 精英吸血 +${eliteVamp}`, type: 'enemy_heal' });
+      }
       // ── 敌人特性：迅捷（20%双击） ──
       if ((enemy.traits || []).includes('swift') && Math.random() < 0.20 && enemyHp > 0 && playerHp > 0) {
         const eHit2 = calcDamage(
@@ -921,6 +999,26 @@ if (chipFx.hasIceChip && enemy.atk !== enemyEffAtk) {
     }
 
     gameState.stats.enemiesKilled++;
+    // ── 精英词缀: 死亡效果 ──
+    if (eliteFx && enemy._eliteTier) {
+      try { recordEliteKill(enemy._eliteTier); } catch {}
+      // 爆裂词缀
+      if (eliteFx.onDeathDamagePercent > 0) {
+        const deathDmg = Math.max(1, Math.floor(p.maxHp * eliteFx.onDeathDamagePercent));
+        p.hp = Math.max(1, (p.hp || playerHp) - deathDmg);
+        playerHp = p.hp;
+        log.push({ text: `💥 精英爆裂！-${deathDmg} HP`, type: 'affix_damage' });
+      }
+      // 诅咒词缀
+      if (eliteFx.onDefeatDebuff) {
+        try {
+          const db = eliteFx.onDefeatDebuff;
+          
+          addStatusEffect('atk_debuff', Math.floor(p.atk * (db.percent || -0.1)), db.duration || 3, db.name || '诅咒');
+          log.push({ text: `👁 ${db.name || '诅咒'}！ATK降低${db.duration || 3}场`, type: 'affix_warning' });
+        } catch {}
+      }
+    }
     if (enemy.bossId || enemy.type === 'boss') gameState.stats.bossesKilled++;
     gameState.stats.damageDealt += enemy.hp;
 
@@ -1182,6 +1280,11 @@ export function getEffectiveAtk(player) {
   // 团队士气加成
   const morale = getTeamMoraleBonus();
   if (morale.atkPct > 0) atk = Math.max(1, Math.floor(atk * (1 + morale.atkPct)));
+  // 状态效果修正
+  try {
+    const statusMods = getEffectModifiers();
+    if (statusMods.atk) atk += statusMods.atk;
+  } catch {}
   return atk;
 }
 
@@ -1216,6 +1319,11 @@ export function getEffectiveDef(player) {
   // 团队士气加成
   const moraleDef = getTeamMoraleBonus();
   if (moraleDef.defPct > 0) def = Math.max(1, Math.floor(def * (1 + moraleDef.defPct)));
+  // 状态效果修正
+  try {
+    const statusMods = getEffectModifiers();
+    if (statusMods.def) def += statusMods.def;
+  } catch {}
   return def;
 }
 
@@ -1237,6 +1345,11 @@ export function getEffectiveCrt(player) {
   }
   // 团队士气CRT加成
   try { crt += getTeamMoraleBonus().crtFlat; } catch {}
+  // 状态效果修正
+  try {
+    const statusMods = getEffectModifiers();
+    if (statusMods.crt) crt += statusMods.crt;
+  } catch {}
   return Math.min(crt, 100);
 }
 
@@ -1257,6 +1370,11 @@ export function getEffectiveSpd(player) {
   for (const chip of player.chips || []) {
     if (chip.stat === 'spd') spd += chip.value;
   }
+  // 状态效果修正
+  try {
+    const statusMods = getEffectModifiers();
+    if (statusMods.spd) spd += statusMods.spd;
+  } catch {}
   return spd;
 }
 
