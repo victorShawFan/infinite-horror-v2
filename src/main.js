@@ -10,6 +10,13 @@ import { Renderer } from './core/Renderer.js';
 import { executeBattle, previewBattle, getEffectiveAtk, getEffectiveDef, getEffectiveCrt, getEffectiveSpd } from './core/CombatSystem.js';
 import { generateChapter1 } from './core/MapGenerator.js';
 import { generateChapter2 } from './core/MapGenerator_Ch2.js';
+import {
+  setShiftHeld, onPlayerMove, onCombatNoise, decayNoise,
+  isPatrolAlerted, consumeAmmo, reloadAmmo, resetStealth, initAmmo,
+  getNoise, getIsSneaking, getAmmo, getMaxAmmo,
+  serializeStealth, deserializeStealth,
+  updateAmmoForWeapon,
+} from './core/StealthSystem.js';
 import { audioEngine } from './core/AudioEngine.js';
 import { renderLordGodSpace } from './core/LordGodSpace.js';
 import { CombatAnimator } from './core/CombatAnimation.js';
@@ -413,6 +420,8 @@ function gameLoop() {
 
 // ── 输入处理 ──
 document.addEventListener('keydown', (e) => {
+  // 潜行 Shift 追踪
+  if (e.key === 'Shift') setShiftHeld(true);
   if (!gameStarted) return;
 
   // 对话模式
@@ -507,6 +516,11 @@ document.addEventListener('keydown', (e) => {
   }
 });
 
+// Shift 释放
+document.addEventListener('keyup', (e) => {
+  if (e.key === 'Shift') setShiftHeld(false);
+});
+
 // 鼠标悬停
 document.addEventListener('mousemove', (e) => {
   if (!gameStarted || !chapter) return;
@@ -567,6 +581,15 @@ function movePlayer(dx, dy) {
   if (entity) {
     // 敌人 → 战前确认
     if (entity.type === ENTITY_TYPE.ENEMY || entity.type === ENTITY_TYPE.BOSS) {
+      // Ch2 巡逻异形：未惊动时可穿过
+      if (entity.patrol && !isPatrolAlerted(entity, nx, ny)) {
+        renderer.notify('潜行通过...异形未察觉', 'rgb(80,200,120)', 80);
+        p.x = nx;
+        p.y = ny;
+        onPlayerMove();
+        decayNoise();
+        return;
+      }
       showCombatConfirm(entity);
       return;
     }
@@ -637,6 +660,10 @@ function movePlayer(dx, dy) {
   p.y = ny;
   gameState.turn++;
   gameState.stats.turnsPlayed++;
+
+  // 潜行系统 — 移动噪音 + 噪音衰减
+  onPlayerMove();
+  decayNoise();
 
   // 前几回合的教学提示
   if (gameState.turn === 1) {
@@ -902,6 +929,12 @@ function pickupItem(item) {
     case 'key':
       p.keys[item.keyColor] = (p.keys[item.keyColor] || 0) + 1;
       renderer.addFloatText(`+1 ${item.keyColor === 'yellow' ? '黄色' : item.keyColor === 'blue' ? '蓝色' : '红色'}钥匙`, item.x, item.y, 'rgb(255, 204, 68)');
+      break;
+
+    case 'ammo':
+      reloadAmmo(item.effect.ammo || 10);
+      renderer.addFloatText(`+${item.effect.ammo} 弹药`, item.x, item.y, 'rgb(170, 221, 255)');
+      renderer.addParticle(item.x * TILE_SIZE + TILE_SIZE/2, item.y * TILE_SIZE + TILE_SIZE/2, 'rgb(170, 221, 255)', 6);
       break;
 
     case 'door':

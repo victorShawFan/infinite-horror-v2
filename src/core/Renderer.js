@@ -5,6 +5,7 @@
 import { TILE_SIZE, TILE, COLORS, CANVAS_W, CANVAS_H, ENTITY_TYPE } from './constants.js';
 import { assetLoader } from './AssetLoader.js';
 import { gameState } from './GameState.js';
+import { getNoise, getIsSneaking, getAmmo, getMaxAmmo } from './StealthSystem.js';
 import { getEffectiveAtk, getEffectiveDef, getEffectiveCrt, getEffectiveSpd, previewBattle, getStatsBreakdown } from './CombatSystem.js';
 import { drawWallTile, drawFloorTile, drawLavaTile, drawStairsTile, drawCharacterSprite, drawHealthBar } from './SpriteRenderer.js';
 
@@ -426,6 +427,34 @@ export class Renderer {
     ctx.fillText(`💰 ${p.gold}G  ⬡${p.rewardPoints}`, rx, pad + 92);
     ctx.fillStyle = '#666';
     ctx.fillText(`回合 ${gameState.stats.turnsPlayed}`, rx, pad + 110);
+
+    // ── 潜行/弹药 HUD（Ch2+）──
+    if (gameState.chapter >= 2) {
+      const stX = CANVAS_W - 160 - pad;
+      const stY = pad + 130;
+      ctx.fillStyle = 'rgba(10, 10, 20, 0.85)';
+      roundRect(ctx, stX, stY, 160, 52, 8);
+      ctx.fill();
+      ctx.strokeStyle = getIsSneaking() ? 'rgba(80, 200, 120, 0.5)' : 'rgba(100, 100, 100, 0.3)';
+      roundRect(ctx, stX, stY, 160, 52, 8);
+      ctx.stroke();
+
+      // 噪音条
+      const noise = getNoise();
+      const noiseColor = noise > 60 ? '#ff4444' : noise > 30 ? '#ffaa44' : '#44ff88';
+      ctx.font = '11px "Microsoft YaHei"';
+      ctx.textAlign = 'left';
+      ctx.fillStyle = noiseColor;
+      ctx.fillText(`${getIsSneaking() ? '🤫' : '👂'} 噪音 ${noise}`, stX + 10, stY + 16);
+      this._drawBar(ctx, stX + 10, stY + 20, 140, 6, noise, 100, noiseColor, '#222');
+
+      // 弹药
+      const ammo = getAmmo();
+      const ammoMax = getMaxAmmo();
+      const ammoColor = ammo <= 5 ? '#ff4444' : ammo <= 15 ? '#ffaa44' : '#aaddff';
+      ctx.fillStyle = ammoColor;
+      ctx.fillText(`🔫 弹药 ${ammo}/${ammoMax}`, stX + 10, stY + 44);
+    }
 
     // ── 底部：钥匙 + 楼层信息 ──
     ctx.fillStyle = 'rgba(10, 10, 20, 0.85)';
