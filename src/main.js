@@ -1193,6 +1193,8 @@ function startCombat(enemy, preScaledEnemy) {
         const hpPercent = Math.round((gameState.player.hp / gameState.player.maxHp) * 100);
         const ratingStars = hpPercent >= 80 ? '★★★' : hpPercent >= 50 ? '★★☆' : hpPercent >= 20 ? '★☆☆' : '☆☆☆';
         const ratingText = hpPercent >= 80 ? '完美击杀' : hpPercent >= 50 ? '漂亮！' : hpPercent >= 20 ? '险胜' : '惨胜';
+        // 暂停探索防止输入穿透
+        gameState.setState(GAME_STATE.DIALOGUE);
         setTimeout(() => {
           const overlay = document.getElementById('ui-overlay');
           overlay.innerHTML = `
@@ -1238,16 +1240,20 @@ function startCombat(enemy, preScaledEnemy) {
             </div>
             <style>@keyframes fadeIn{from{opacity:0}to{opacity:1}}</style>
           `;
-          document.getElementById('btn-boss-ok').addEventListener('click', () => {
+          const closeBossPanel = () => {
             overlay.innerHTML = '';
+            document.removeEventListener('keydown', bkh);
             // 触发boss击败事件和对话
             if (enemy.onDefeat) {
               if (enemy.onDefeat.flag) gameState.setFlag(enemy.onDefeat.flag);
               startDialogue(enemy.onDefeat.lines);
+            } else {
+              gameState.setState(GAME_STATE.EXPLORING);
             }
-          });
+          };
+          document.getElementById('btn-boss-ok').addEventListener('click', closeBossPanel);
           // 也允许空格/回车关闭
-          const bkh = (e) => { if (e.key === ' ' || e.key === 'Enter') { document.getElementById('btn-boss-ok')?.click(); document.removeEventListener('keydown', bkh); } };
+          const bkh = (e) => { if (e.key === ' ' || e.key === 'Enter') closeBossPanel(); };
           document.addEventListener('keydown', bkh);
         }, 800);
       } else if (enemy.onDefeat) {
