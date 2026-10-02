@@ -508,6 +508,15 @@ function showMainMenu() {
         继续轮回
       </button>
 
+      <button id="btn-chapter-select" style="
+        background: transparent; border: 1px solid #335; color: #558;
+        font-size: 14px; padding: 8px 40px; cursor: pointer; letter-spacing: 3px;
+        transition: all 0.3s; font-family: inherit; margin-top: 8px;
+      " onmouseover="this.style.borderColor='#66aaff';this.style.color='#88bbff'"
+         onmouseout="this.style.borderColor='#335';this.style.color='#558'">
+        📖 章节选择
+      </button>
+
       <div id="menu-difficulty" style="margin-top: 24px; display: flex; gap: 8px;"></div>
 
     </div>
@@ -520,6 +529,11 @@ function showMainMenu() {
 
   document.getElementById('btn-new-game').addEventListener('click', () => {
     showOpeningCutscene(() => startNewGame());
+  });
+
+  // 章节选择
+  document.getElementById('btn-chapter-select')?.addEventListener('click', () => {
+    _showChapterSelectMenu();
   });
   // Check if save exists and update continue button
   const saveKey = 'infinite_horror_save_0';
@@ -2870,6 +2884,144 @@ function resolveChoice(index) {
   callback(index);
 }
 
+
+// ── 章节选择菜单 ──
+function _showChapterSelectMenu() {
+  const overlay = document.getElementById('ui-overlay');
+  const chapterNames = {
+    1: '名为生化', 2: '异形杀戮', 3: '咒怨阴影', 4: '神鬼秘宝',
+    5: '死神绝境', 6: '异形再临', 7: '恶魔初临', 8: '重建中洲',
+    9: '星河远征', 10: '五队大战', 11: '心魔与终战前奏', 12: '生化终战'
+  };
+  const chapterIcons = {
+    1: '🧬', 2: '👽', 3: '👻', 4: '🏺', 5: '💀', 6: '🛸',
+    7: '😈', 8: '⚔', 9: '🚀', 10: '🏰', 11: '🧠', 12: '🔥'
+  };
+  const chapterColors = {
+    1: '#44ff44', 2: '#4488ff', 3: '#aa66ff', 4: '#ffcc44',
+    5: '#888888', 6: '#4488ff', 7: '#ff4444', 8: '#ffaa44',
+    9: '#44ccff', 10: '#ff6644', 11: '#aa44ff', 12: '#ff2222'
+  };
+  
+  // Check which chapters are unlocked (cleared or currently on)
+  const maxChapter = parseInt(localStorage.getItem('ih_max_chapter') || '1');
+
+  overlay.innerHTML = `
+    <div style="position:absolute;top:0;left:0;right:0;bottom:0;
+      display:flex;align-items:center;justify-content:center;
+      background:rgba(0,0,0,0.92);" id="chapter-select-bg">
+      <div style="background:rgba(8,8,18,0.98);border:1px solid #445566;border-radius:16px;
+        padding:28px;max-width:650px;width:96%;max-height:85vh;overflow-y:auto;">
+        <h2 style="color:#44aaff;letter-spacing:4px;font-size:20px;text-align:center;margin-bottom:20px;">
+          📖 章 节 选 择
+        </h2>
+        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px;">
+          ${Object.entries(chapterNames).map(([ch, name]) => {
+            const num = parseInt(ch);
+            const unlocked = num <= maxChapter;
+            const color = chapterColors[num] || '#888';
+            const icon = chapterIcons[num] || '📖';
+            return '<button class="ch-select-btn" data-ch="' + ch + '" ' +
+              (unlocked ? '' : 'disabled') +
+              ' style="' +
+              'background:' + (unlocked ? 'rgba(255,255,255,0.03)' : 'rgba(30,30,30,0.5)') + ';' +
+              'border:1px solid ' + (unlocked ? color + '44' : '#222') + ';' +
+              'color:' + (unlocked ? color : '#333') + ';' +
+              'padding:14px 10px;cursor:' + (unlocked ? 'pointer' : 'default') + ';' +
+              'border-radius:8px;font-family:inherit;font-size:12px;text-align:center;' +
+              'transition:all 0.2s;' +
+              (unlocked ? '' : 'opacity:0.4;') +
+              '">' +
+              '<span style="font-size:24px;display:block;margin-bottom:4px;">' + icon + '</span>' +
+              '第' + ch + '章<br>' +
+              '<span style="font-size:10px;">' + name + '</span>' +
+              (unlocked ? '' : '<br><span style="font-size:9px;color:#444;">🔒</span>') +
+              '</button>';
+          }).join('')}
+        </div>
+        <div style="text-align:center;margin-top:20px;">
+          <button id="btn-close-chapter-select" style="
+            background:transparent;border:1px solid #444;color:#888;
+            padding:8px 30px;cursor:pointer;font-size:14px;font-family:inherit;
+            border-radius:6px;">返回 (Esc)</button>
+        </div>
+      </div>
+    </div>
+  `;
+
+  // Handlers
+  overlay.querySelectorAll('.ch-select-btn:not([disabled])').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const ch = parseInt(btn.dataset.ch);
+      overlay.innerHTML = '';
+      _startFromChapter(ch);
+    });
+    btn.addEventListener('mouseover', () => {
+      btn.style.background = 'rgba(255,255,255,0.08)';
+      btn.style.transform = 'scale(1.03)';
+    });
+    btn.addEventListener('mouseout', () => {
+      btn.style.background = 'rgba(255,255,255,0.03)';
+      btn.style.transform = 'scale(1)';
+    });
+  });
+
+  document.getElementById('btn-close-chapter-select')?.addEventListener('click', () => {
+    overlay.innerHTML = '';
+    showTitleScreen();
+  });
+  document.getElementById('chapter-select-bg')?.addEventListener('click', (e) => {
+    if (e.target.id === 'chapter-select-bg') {
+      overlay.innerHTML = '';
+      showTitleScreen();
+    }
+  });
+  const kh = (e) => {
+    if (e.key === 'Escape') {
+      document.removeEventListener('keydown', kh);
+      overlay.innerHTML = '';
+      showTitleScreen();
+    }
+  };
+  document.addEventListener('keydown', kh);
+}
+
+// ── 从指定章节开始 ──
+function _startFromChapter(chapterNum) {
+  startNewGame();
+  // Override chapter
+  gameState.chapter = chapterNum;
+  // Scale player stats for chapter
+  const p = gameState.player;
+  if (chapterNum > 1) {
+    p.level = Math.max(p.level, chapterNum * 3);
+    p.atk += chapterNum * 3;
+    p.def += chapterNum * 2;
+    p.maxHp += chapterNum * 20;
+    p.hp = p.maxHp;
+    p.gold += chapterNum * 50;
+    p.rewardPoints += chapterNum * 30;
+    p.exp = 0;
+    p.geneLock = Math.min(Math.floor(chapterNum / 3), 4);
+    if (chapterNum >= 6) p.geneLock = Math.max(p.geneLock, 2);
+    if (chapterNum >= 9) p.geneLock = Math.max(p.geneLock, 3);
+  }
+  
+  // Load appropriate chapter
+  const generators = {
+    1: generateChapter1, 2: generateChapter2, 3: generateChapter3,
+    4: generateChapter4, 5: generateChapter5, 6: generateChapter6,
+    7: generateChapter7, 8: generateChapter8, 9: generateChapter9,
+    10: generateChapter10, 11: generateChapter11, 12: generateChapter12,
+  };
+  
+  chapter = (generators[chapterNum] || generateChapter1)();
+  atmosphereRenderer.setChapter(chapterNum);
+  currentFloorIndex = 0;
+  loadFloor(0);
+  gameState.setState(GAME_STATE.EXPLORING);
+}
+
 // ── 空格互动 ──
 function interactAdjacent() {
   const p = gameState.player;
@@ -2928,6 +3080,13 @@ function toggleGeneLock() {
 // ── 章节完成 ──
 function showChapterComplete() {
   autoSave('章节完成');
+  // Save max unlocked chapter
+  try {
+    const prevMax = parseInt(localStorage.getItem('ih_max_chapter') || '1');
+    if (gameState.chapter + 1 > prevMax) {
+      localStorage.setItem('ih_max_chapter', String(gameState.chapter + 1));
+    }
+  } catch {}
   gameStarted = false;
   if (!gameState._chapterClearCounted) { gameState.stats.chaptersCleared++; gameState._chapterClearCounted = true; }
   const p = gameState.player;
