@@ -316,6 +316,14 @@ function generateFloor_3_3() {
         itemType: 'lore', loreId: 'lore_3_curse',
         description: '一本泛黄的日记，记录着对付诅咒的方法。',
       },
+    
+      // 野外商人
+      { type: ENTITY_TYPE.NPC, id: 'merchant_ch3', name: '神秘行商人',
+        x: 2, y: 3, sprite: '🏪', color: '#ffcc44', merchant: true,
+        dialogue: [
+          { text: '"这宅子里什么都有……要买点什么保命吗？"', speaker: '神秘行商人' },
+        ],
+      },
     ],
   };
 }

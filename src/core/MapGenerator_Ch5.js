@@ -145,6 +145,14 @@ function generateFloor_5_2() {
         x: 15, y: 1, sprite: '◆', color: '#6688ff',
         itemType: 'stat_boost', effect: { def: 3 },
       },
+    
+      // 野外商人
+      { type: ENTITY_TYPE.NPC, id: 'merchant_ch5', name: '幽灵商贩',
+        x: 6, y: 5, sprite: '🏪', color: '#ffcc44', merchant: true,
+        dialogue: [
+          { text: '"死神的世界里……只有实力才是硬通货。来看看吧。"', speaker: '幽灵商贩' },
+        ],
+      },
     ],
   };
 }

@@ -37,7 +37,15 @@ function f10_4(){const g=makeGrid();carveRoom(g,1,6,6,11);carveCorridor(g,6,8,10
 {type:ENTITY_TYPE.ENEMY,id:'rival_mage',name:'敌队法师',x:8,y:1,sprite:'🔮',color:'#8844aa',hp:95,atk:44,def:10,spd:15,damageType:'dark',rewards:{exp:95,gold:65,rewardPoints:70}},
 {type:ENTITY_TYPE.ITEM,id:'medkit_ch10_4',name:'精灵草药',x:11,y:14,sprite:'♥',color:'#44ff88',itemType:'consumable',effect:{heal:130}},
 {type:ENTITY_TYPE.ITEM,id:'spd_ch10',name:'精灵轻靴',x:18,y:7,sprite:'◆',color:'#44ffaa',itemType:'stat_boost',effect:{spd:6}},
-{type:ENTITY_TYPE.ENEMY,id:'rival_assassin',name:'敌队刺客',x:17,y:9,sprite:'🗡',color:'#cc4444',hp:85,atk:44,def:8,spd:20,rewards:{exp:90,gold:62,rewardPoints:60}}]};}
+{type:ENTITY_TYPE.ENEMY,id:'rival_assassin',name:'敌队刺客',x:17,y:9,sprite:'🗡',color:'#cc4444',hp:85,atk:44,def:8,spd:20,rewards:{exp:90,gold:62,rewardPoints:60}},
+      // 野外商人  
+      { type: ENTITY_TYPE.NPC, id: 'merchant_ch10', name: '跨界旅行商',
+        x: 5, y: 8, sprite: '🏪', color: '#ffcc44', merchant: true,
+        dialogue: [
+          { text: '"五支队伍混战之际，正是补给的好时机。"', speaker: '跨界旅行商' },
+        ],
+      },
+    ]};}
 
 // ═══ 10-5 魔多战场 ═══
 function f10_5(){const g=makeGrid();carveRoom(g,6,5,14,12);carveRoom(g,1,7,5,10);carveCorridor(g,5,8,6,8);carveRoom(g,15,7,19,10);carveCorridor(g,14,8,15,8);carveRoom(g,8,1,12,4);carveCorridor(g,10,4,10,5);carveRoom(g,8,13,12,16);carveCorridor(g,10,12,10,13);g[1][11]=TILE.STAIRS;return{id:'10-5',name:'魔多战场',subtitle:'黑暗之门打开。魔多军势如潮水般涌来。',bgColor:'#0c0808',theme:'fantasy',tiles:g,width:W,height:H,playerStart:{x:10,y:15},entities:[

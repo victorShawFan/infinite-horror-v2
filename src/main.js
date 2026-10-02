@@ -61,6 +61,7 @@ import { getQualityColor, getQualityName, formatEquipmentTooltip, getAllAffixEff
 import { killStreak } from './core/KillStreak.js';
 import { rateBattle, recordRating, formatRatingHTML, getRatingStats } from './core/BattleRating.js';
 import { fogOfWar } from './core/FogOfWar.js';
+import { openMerchantShop } from './core/FieldMerchant.js';
 
 // ── 全局状态 ──
 let renderer;
@@ -1395,6 +1396,11 @@ function movePlayer(dx, dy) {
 
     // NPC/队友 → 对话（首次自动触发，之后可穿过）
     if (entity.type === ENTITY_TYPE.COMPANION || entity.type === ENTITY_TYPE.NPC) {
+      // 商人NPC → 打开商店
+      if (entity.merchant) {
+        openMerchantShop(entity.name, gameState.chapter);
+        return;
+      }
       if (entity.dialogue && !entity._dialogueShown) {
         entity._dialogueShown = true;
         startDialogue(entity.dialogue, entity);
@@ -2731,8 +2737,17 @@ function interactAdjacent() {
   for (const dir of dirs) {
     const entity = entities.find(e => e.x === p.x + dir.x && e.y === p.y + dir.y);
     if (entity) {
+      // 商人NPC → 打开商店（空格互动）
+      if ((entity.type === ENTITY_TYPE.NPC || entity.type === ENTITY_TYPE.COMPANION) && entity.merchant) {
+        openMerchantShop(entity.name, gameState.chapter);
+        return;
+      }
       if (entity.type === ENTITY_TYPE.COMPANION && entity.dialogue) {
         startDialogue(entity.dialogue);
+        return;
+      }
+      if (entity.type === ENTITY_TYPE.NPC && entity.dialogue) {
+        startDialogue(entity.dialogue, entity);
         return;
       }
       if (entity.type === ENTITY_TYPE.EVENT || entity.type === ENTITY_TYPE.TRAP) {
