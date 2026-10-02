@@ -2912,6 +2912,30 @@ function showChapterComplete() {
               <div style="color: #444; font-size: 11px; letter-spacing: 2px; margin-bottom: 30px;">
                 <p>通关等级: Lv.${p.level} · 总奖励点: ${p.rewardPoints}</p>
                 <p>存活同伴: ${gameState.companions.filter(c=>c.alive).length} / ${gameState.companions.length}</p>
+                <p>击杀: ${gameState.stats.enemiesKilled} · 死亡: ${gameState.stats.deathCount} · 回合: ${gameState.stats.turnsPlayed}</p>
+              </div>
+
+              <!-- 角色追忆 -->
+              <div style="max-width:500px;margin-bottom:24px;animation:scrollCredits 15s ease-in-out;">
+                <div style="text-align:center;margin-bottom:16px;">
+                  <p style="color:#ffcc44;font-size:12px;letter-spacing:4px;margin-bottom:12px;">中 洲 队 全 员</p>
+                  ${gameState.companions.map(c => {
+                    const alive = c.alive;
+                    const color = alive ? '#44ff88' : '#664444';
+                    const icon = alive ? '●' : '✝';
+                    return '<p style="color:' + color + ';font-size:12px;line-height:2;">' + icon + ' ' + c.name + (c.role ? ' — ' + c.role : '') + '</p>';
+                  }).join('')}
+                  <p style="color:#44aaff;font-size:12px;line-height:2;margin-top:4px;">● 郑吒 — 主角·队长</p>
+                </div>
+                <hr style="border:none;border-top:1px solid #222;margin:12px 0;">
+                <div style="text-align:center;color:#444;font-size:10px;letter-spacing:2px;line-height:1.8;">
+                  <p>原著: 无限恐怖 · zhttty</p>
+                  <p>改编制作: AI Game Studio</p>
+                  <p>引擎: HTML5 Canvas · Vite</p>
+                  <br>
+                  <p style="color:#555;">感谢每一位坚持到最后的玩家。</p>
+                  <p style="color:#555;">无限恐怖的故事，在你心中延续。</p>
+                </div>
               </div>
               <div style="display:flex;gap:16px;flex-wrap:wrap;justify-content:center;">
                 <button id="btn-ng-plus" style="
@@ -2930,7 +2954,7 @@ function showChapterComplete() {
                    onmouseout="this.style.background='transparent'">返回标题</button>
               </div>
             </div>
-            <style>@keyframes fadeIn{from{opacity:0}to{opacity:1}}</style>
+            <style>@keyframes fadeIn{from{opacity:0}to{opacity:1}}@keyframes scrollCredits{0%{opacity:0;transform:translateY(20px)}20%{opacity:1;transform:translateY(0)}80%{opacity:1}100%{opacity:0.8}}</style>
           `;
           // ── NG+ 结算逻辑 ──
           setTimeout(() => {
