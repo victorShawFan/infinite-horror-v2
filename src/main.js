@@ -1305,6 +1305,10 @@ case 'h': case '?':
         // 装备仓库
         openEquipmentStash();
         return;
+      case 't':
+        // 战斗统计
+        _showCombatStatsPanel();
+        return;
       case 'p':
         // 设置面板
         showSettingsPanel();
@@ -1877,6 +1881,102 @@ function _updatePendingBuffsPreview() {
 }
 
 // ── 探索中道具面板（Q键） ──
+
+// ── 战斗统计面板 (T键) ──
+function _showCombatStatsPanel() {
+  if (gameState.state !== GAME_STATE.EXPLORING) return;
+  const overlay = document.getElementById('ui-overlay');
+  const p = gameState.player;
+  const s = gameState.stats;
+  const companions = gameState.companions || [];
+  const aliveComps = companions.filter(c => c.alive).length;
+  const totalComps = companions.length;
+  const playTime = Math.floor((Date.now() - (s.startTime || Date.now())) / 60000);
+  const kd = s.deathCount > 0 ? (s.enemiesKilled / s.deathCount).toFixed(1) : s.enemiesKilled;
+  const avgDmgPerKill = s.enemiesKilled > 0 ? Math.floor(s.damageDealt / s.enemiesKilled) : 0;
+  const ratingStats = getRatingStats();
+  
+  overlay.innerHTML = `
+    <div style="position:absolute;top:0;left:0;right:0;bottom:0;
+      display:flex;align-items:center;justify-content:center;
+      background:rgba(0,0,0,0.88);" id="stats-backdrop">
+      <div style="background:rgba(8,8,18,0.98);border:1px solid #445566;border-radius:16px;
+        padding:24px;max-width:580px;width:96%;max-height:85vh;overflow-y:auto;">
+        <h2 style="color:#44aaff;letter-spacing:4px;font-size:18px;text-align:center;margin-bottom:16px;">
+          📊 战斗统计
+        </h2>
+        
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px;">
+          <div style="background:rgba(255,68,68,0.05);border:1px solid #ff444422;border-radius:8px;padding:12px;">
+            <p style="color:#ff6644;font-size:11px;letter-spacing:2px;">⚔ 战斗</p>
+            <p style="color:#ff8866;font-size:24px;font-weight:bold;">${s.enemiesKilled}</p>
+            <p style="color:#666;font-size:10px;">敌人击杀</p>
+            <p style="color:#888;font-size:10px;margin-top:4px;">Boss: ${s.bossesKilled || 0} · K/D: ${kd}</p>
+          </div>
+          <div style="background:rgba(68,255,136,0.05);border:1px solid #44ff8822;border-radius:8px;padding:12px;">
+            <p style="color:#44ff88;font-size:11px;letter-spacing:2px;">💰 经济</p>
+            <p style="color:#ffcc44;font-size:24px;font-weight:bold;">${p.gold || 0}G</p>
+            <p style="color:#666;font-size:10px;">当前金币</p>
+            <p style="color:#888;font-size:10px;margin-top:4px;">总收入: ${s.goldEarned || 0}G · 支出: ${s.goldSpent || 0}G</p>
+          </div>
+          <div style="background:rgba(68,136,255,0.05);border:1px solid #4488ff22;border-radius:8px;padding:12px;">
+            <p style="color:#4488ff;font-size:11px;letter-spacing:2px;">📈 伤害</p>
+            <p style="color:#aabbff;font-size:24px;font-weight:bold;">${s.damageDealt || 0}</p>
+            <p style="color:#666;font-size:10px;">总输出伤害</p>
+            <p style="color:#888;font-size:10px;margin-top:4px;">受伤: ${s.damageTaken || 0} · 单次最高: ${s.maxSingleHit || 0}</p>
+            <p style="color:#888;font-size:10px;">暴击: ${s.criticalHits || 0}次 · 均伤: ${avgDmgPerKill}/杀</p>
+          </div>
+          <div style="background:rgba(255,204,68,0.05);border:1px solid #ffcc4422;border-radius:8px;padding:12px;">
+            <p style="color:#ffcc44;font-size:11px;letter-spacing:2px;">🗺 探索</p>
+            <p style="color:#ccaa44;font-size:24px;font-weight:bold;">${s.floorsCleared || 0}</p>
+            <p style="color:#666;font-size:10px;">层数通过</p>
+            <p style="color:#888;font-size:10px;margin-top:4px;">步数: ${s.stepsWalked || 0} · 回合: ${s.turnsPlayed || 0}</p>
+            <p style="color:#888;font-size:10px;">章节: ${s.chaptersCleared || 0}/12 · 线索: ${s.loreFound || 0}</p>
+          </div>
+        </div>
+        
+        ${ratingStats.total > 0 ? `
+        <div style="background:rgba(255,204,68,0.05);border:1px solid #ffcc4422;border-radius:8px;padding:10px;margin-bottom:12px;">
+          <p style="color:#ffcc44;font-size:11px;letter-spacing:2px;margin-bottom:4px;">🏆 战斗评级</p>
+          <p style="color:#888;font-size:11px;">
+            S级: <span style="color:#ffcc44">${ratingStats.S}</span> · 
+            A级: <span style="color:#44ff88">${ratingStats.A || 0}</span> · 
+            均分: <span style="color:#aaa">${ratingStats.avgScore}</span> · 
+            总计: ${ratingStats.total}场
+          </p>
+        </div>` : ''}
+        
+        <div style="background:rgba(68,136,255,0.04);border:1px solid #4488ff22;border-radius:8px;padding:10px;margin-bottom:12px;">
+          <p style="color:#4488ff;font-size:11px;letter-spacing:2px;margin-bottom:4px;">👥 队伍</p>
+          <p style="color:#888;font-size:11px;">
+            同伴: ${aliveComps}/${totalComps}存活 · 
+            Lv.${p.level} · 
+            死亡: ${s.deathCount}次 · 
+            游玩: ${playTime}分钟
+          </p>
+        </div>
+
+        <div style="text-align:center;margin-top:12px;">
+          <button id="btn-close-stats-panel" style="
+            background:transparent;border:1px solid #444;color:#888;
+            padding:8px 30px;cursor:pointer;font-size:14px;font-family:inherit;
+            border-radius:6px;">关闭 (T/Esc)</button>
+        </div>
+      </div>
+    </div>
+  `;
+  
+  const close = () => { overlay.innerHTML = ''; };
+  document.getElementById('btn-close-stats-panel')?.addEventListener('click', close);
+  document.getElementById('stats-backdrop')?.addEventListener('click', (e) => {
+    if (e.target.id === 'stats-backdrop') close();
+  });
+  const kh = (e) => {
+    if (e.key === 't' || e.key === 'Escape') { close(); document.removeEventListener('keydown', kh); }
+  };
+  document.addEventListener('keydown', kh);
+}
+
 function _showExplorationItemPanel() {
   if (gameState.state !== GAME_STATE.EXPLORING) return;
   gameState.setState(GAME_STATE.INVENTORY);

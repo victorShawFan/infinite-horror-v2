@@ -659,6 +659,7 @@ export function showHelpPanel() {
           <tr><td style="color: #ff8866;">B</td><td>装备仓库</td></tr>
           <tr><td style="color: #ffcc44;">H / ?</td><td>帮助</td></tr>
           <tr><td style="color: #ff6644;">N</td><td>怪物图鉴</td></tr>
+          <tr><td style="color: #4488ff;">T</td><td>战斗统计</td></tr>
           <tr><td style="color: #44ff88;">鼠标悬停</td><td>查看敌人/物品详情</td></tr>
           <tr><td style="color: #ff8866;">L</td><td>战斗日志回顾</td></tr>
           <tr><td style="color: #ffcc44;">J</td><td>成就面板</td></tr>
