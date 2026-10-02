@@ -1497,6 +1497,23 @@ function showChapterComplete() {
           gameState.nodeIndex = 0;
           // 清除已移除实体（新章节新地图）
           gameState.removedEntityIds = {};
+
+          // 根据章节添加新队友
+          if (nextChapter === 2) {
+            // Ch2新人：楚轩、零点、霸王、李帅西
+            const existingIds = gameState.companions.map(c => c.id);
+            const ch2Companions = [
+              { id: 'chuxuan', name: '楚轩', role: '军师/战略家', alive: true },
+              { id: 'lingdian', name: '零点', role: '狙击手', alive: true },
+              { id: 'bawang', name: '霸王', role: '近战强手', alive: true },
+              { id: 'lishuaixi', name: '李帅西', role: '新人', alive: true },
+            ];
+            for (const c of ch2Companions) {
+              if (!existingIds.includes(c.id)) gameState.addCompanion(c);
+            }
+            // 按原著：牟钢在Ch1已死，Ch2李萧毅仍存活到异形世界
+          }
+
           chapter = gen();
           gameState.worldName = chapter.world;
           currentFloorIndex = 0;

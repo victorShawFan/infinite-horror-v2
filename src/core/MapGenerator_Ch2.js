@@ -43,7 +43,7 @@ function generateFloor_2_1() {
   carveCorridor(grid, 8, 10, 8, 8);
 
   return {
-    id: '2-1', name: '飞船封锁',
+    id: '2-1', name: '飞船封锁', bgColor: '#080812', theme: 'alien_ship',
     grid, playerStart: { x: 2, y: 8 },
     entities: [
       // 开场对话
@@ -143,7 +143,7 @@ function generateFloor_2_2() {
   carveCorridor(grid, 19, 5, 19, 11);
 
   return {
-    id: '2-2', name: '新人分队',
+    id: '2-2', name: '新人分队', bgColor: '#080812', theme: 'alien_ship',
     grid, playerStart: { x: 2, y: 8 },
     entities: [
       // 分路选择事件
@@ -233,7 +233,7 @@ function generateFloor_2_3() {
   carveCorridor(grid, 6, 10, 6, 12);
 
   return {
-    id: '2-3', name: '通风管潜行',
+    id: '2-3', name: '通风管潜行', bgColor: '#060610', theme: 'alien_vent',
     grid, playerStart: { x: 2, y: 2 },
     entities: [
       { type: ENTITY_TYPE.EVENT, id: 'stealth_tutorial', name: '潜行提示',
@@ -315,7 +315,7 @@ function generateFloor_2_4() {
   carveRoom(grid, 15, 11, 19, 15); // 出口区
 
   return {
-    id: '2-4', name: '抱脸虫隔离',
+    id: '2-4', name: '抱脸虫隔离', bgColor: '#0a0810', theme: 'alien_lab',
     grid, playerStart: { x: 3, y: 8 },
     entities: [
       // 卵囊群
@@ -394,7 +394,7 @@ function generateFloor_2_5() {
   carveCorridor(grid, 16, 5, 16, 11);
 
   return {
-    id: '2-5', name: '巢穴救援',
+    id: '2-5', name: '巢穴救援', bgColor: '#0c0808', theme: 'alien_hive',
     grid, playerStart: { x: 2, y: 8 },
     entities: [
       // 异形战士群
@@ -481,7 +481,7 @@ function generateFloor_2_6() {
   grid[12][10] = TILE.WALL; grid[12][14] = TILE.WALL;
 
   return {
-    id: '2-6', name: '皇后与撤离',
+    id: '2-6', name: '皇后与撤离', bgColor: '#100808', theme: 'alien_hive',
     grid, playerStart: { x: 3, y: 8 },
     entities: [
       // 异形守卫
