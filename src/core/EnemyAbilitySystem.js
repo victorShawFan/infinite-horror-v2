@@ -72,16 +72,16 @@ export const BOSS_PHASES = {
       specialMove: { name: '瘟疫之触', dmgMult: 2.5, cooldown: 2, type: 'plague', dot: 5 } },
   ],
 
-  // Ch5: 死神 — 流克
-  ryuk: [
+  // Ch5: 张杰（引导者）— 死亡笔记世界
+  zhangjie: [
     { hpThreshold: 1.0, name: '旁观者', atkMult: 0.8, defMult: 1.5,
-      desc: '流克以死神之眼观察你',
+      desc: '张杰以引导者身份试探你',
       specialMove: { name: '死亡笔记', dmgMult: 2.0, cooldown: 5, type: 'execute', executeThreshold: 0.15 } },
     { hpThreshold: 0.5, name: '死神之翼', atkMult: 1.2, defMult: 1.0,
-      desc: '流克展开黑色翅膀，空间扭曲',
+      desc: '张杰展现真正力量，死亡笔记的威压',
       specialMove: { name: '命运宣告', dmgMult: 1.8, cooldown: 3, type: 'fate', ignoresDef: true } },
     { hpThreshold: 0.2, name: '死之手', atkMult: 1.6, defMult: 0.8,
-      desc: '流克亲自动手，死亡不可避免',
+      desc: '张杰全力出手，引导者的最终考验',
       specialMove: { name: '寿命剥夺', dmgMult: 3.0, cooldown: 2, type: 'reaper' } },
   ],
 
@@ -98,17 +98,17 @@ export const BOSS_PHASES = {
       specialMove: { name: '吞噬', dmgMult: 3.5, cooldown: 3, type: 'devour', healPct: 0.3 } },
   ],
 
-  // Ch8: 重建中洲 — 兽人族长 阿佐格
-  azog: [
-    { hpThreshold: 1.0, name: '铁拳', atkMult: 1.2, defMult: 1.0,
-      desc: '阿佐格以蛮力压制',
-      specialMove: { name: '战争之吼', dmgMult: 1.3, cooldown: 4, type: 'warcry', selfBuff: { atk: 0.2 } } },
-    { hpThreshold: 0.5, name: '兽群统帅', atkMult: 1.4, defMult: 1.1,
-      desc: '召唤座狼骑兵增援',
-      specialMove: { name: '狼骑突击', dmgMult: 2.0, cooldown: 3, type: 'cavalry', hits: 2 } },
-    { hpThreshold: 0.2, name: '死战', atkMult: 1.8, defMult: 0.6,
-      desc: '阿佐格进入殊死搏斗',
-      specialMove: { name: '断臂之击', dmgMult: 3.0, cooldown: 2, type: 'berserk' } },
+  // Ch8: 重建中洲 — 远古巨龙
+  ancient_dragon: [
+    { hpThreshold: 1.0, name: '龙息', atkMult: 1.2, defMult: 1.0,
+      desc: '巨龙以灼热龙息横扫',
+      specialMove: { name: '烈焰吐息', dmgMult: 1.3, cooldown: 4, type: 'warcry', selfBuff: { atk: 0.2 } } },
+    { hpThreshold: 0.5, name: '展翅高飞', atkMult: 1.4, defMult: 1.1,
+      desc: '巨龙升空俯冲攻击',
+      specialMove: { name: '俯冲轰炸', dmgMult: 2.0, cooldown: 3, type: 'cavalry', hits: 2 } },
+    { hpThreshold: 0.2, name: '龙之怒', atkMult: 1.8, defMult: 0.6,
+      desc: '巨龙坠落大地的最终狂暴',
+      specialMove: { name: '毁灭吐息', dmgMult: 3.0, cooldown: 2, type: 'berserk' } },
   ],
 
   // Ch7: 复制体郑吒
@@ -124,53 +124,60 @@ export const BOSS_PHASES = {
       specialMove: { name: '灭世之光', dmgMult: 3.0, cooldown: 5, type: 'ultimate' } },
   ],
 
+  
   // Ch9: 脑虫
   brain_bug: [
-    { hpThreshold: 1.0, name: '心灵屏障', atkMult: 0.7, defMult: 2.0,
-      desc: '脑虫用念力护盾保护自己',
-      specialMove: { name: '精神控制', dmgMult: 0.5, cooldown: 3, type: 'confuse', skipTurn: true } },
-    { hpThreshold: 0.4, name: '绝望呼唤', atkMult: 1.5, defMult: 1.0,
-      desc: '脑虫放弃防御全力攻击',
-      specialMove: { name: '脑波摧毁', dmgMult: 2.5, cooldown: 2, type: 'psychic_blast' } },
+    { hpThreshold: 1.0, name: '精神网络', atkMult: 0.9, defMult: 1.3,
+      desc: '脑虫通过精神网络操控虫群',
+      specialMove: { name: '精神侵蚀', dmgMult: 1.4, cooldown: 3, type: 'psychic', debuff: { stat: 'atk', value: -5 } } },
+    { hpThreshold: 0.5, name: '虫巢觉醒', atkMult: 1.3, defMult: 1.0,
+      desc: '脑虫激活全部虫群意识',
+      specialMove: { name: '意识风暴', dmgMult: 2.0, cooldown: 4, type: 'psychic_storm', hits: 3 } },
+    { hpThreshold: 0.2, name: '绝望尖啸', atkMult: 1.5, defMult: 0.7,
+      desc: '脑虫陷入绝境，释放毁灭性精神冲击',
+      specialMove: { name: '灭绝脉冲', dmgMult: 3.0, cooldown: 2, type: 'extinction_pulse' } },
   ],
 
   // Ch10: 天神队先锋
   divine_vanguard: [
-    { hpThreshold: 1.0, name: '天神之威', atkMult: 1.2, defMult: 1.2,
-      desc: '天神队先锋展现绝对实力',
-      specialMove: { name: '神力打击', dmgMult: 1.8, cooldown: 3, type: 'divine' } },
-    { hpThreshold: 0.6, name: '基因锁开放', atkMult: 1.5, defMult: 1.0,
-      desc: '先锋开放基因锁',
-      specialMove: { name: '四阶之力', dmgMult: 2.5, cooldown: 4, type: 'gene_lock_4' } },
-    { hpThreshold: 0.25, name: '殊死一搏', atkMult: 2.0, defMult: 0.8,
-      desc: '先锋燃烧生命力量',
-      specialMove: { name: '天罚', dmgMult: 3.5, cooldown: 3, type: 'judgment', selfDmg: 0.1 } },
+    { hpThreshold: 1.0, name: '审判者', atkMult: 1.1, defMult: 1.2,
+      desc: '天神队先锋以绝对实力碾压',
+      specialMove: { name: '圣光斩', dmgMult: 1.5, cooldown: 3, type: 'holy' } },
+    { hpThreshold: 0.5, name: '基因锁·四阶', atkMult: 1.5, defMult: 1.1,
+      desc: '先锋开启基因锁四阶，力量暴增',
+      specialMove: { name: '次元斩击', dmgMult: 2.5, cooldown: 4, type: 'dimension_slash' } },
+    { hpThreshold: 0.2, name: '终极形态', atkMult: 2.0, defMult: 0.8,
+      desc: '以燃烧生命为代价的最终攻击',
+      specialMove: { name: '破灭之光', dmgMult: 4.0, cooldown: 3, type: 'annihilation' } },
   ],
 
   // Ch11: 弗莱迪
   freddy: [
-    { hpThreshold: 1.0, name: '梦境操控', atkMult: 1.0, defMult: 1.0,
+    { hpThreshold: 1.0, name: '梦境主宰', atkMult: 1.0, defMult: 1.4,
       desc: '在梦境中弗莱迪几乎无敌',
-      specialMove: { name: '噩梦利爪', dmgMult: 1.5, cooldown: 2, type: 'nightmare' } },
-    { hpThreshold: 0.5, name: '现实入侵', atkMult: 1.3, defMult: 1.3,
-      desc: '弗莱迪将梦境侵入现实',
-      specialMove: { name: '梦魇领域', dmgMult: 2.0, cooldown: 3, type: 'domain', debuff: { stat: 'atk', value: -5 } } },
+      specialMove: { name: '噩梦利爪', dmgMult: 1.6, cooldown: 3, type: 'nightmare', debuff: { stat: 'spd', value: -4 } } },
+    { hpThreshold: 0.5, name: '梦境坍塌', atkMult: 1.4, defMult: 1.0,
+      desc: '梦境与现实的边界开始模糊',
+      specialMove: { name: '梦境囚笼', dmgMult: 2.0, cooldown: 4, type: 'dream_cage', stunChance: 0.3 } },
+    { hpThreshold: 0.2, name: '现实侵蚀', atkMult: 1.7, defMult: 0.7,
+      desc: '弗莱迪将梦境的恐惧带入现实',
+      specialMove: { name: '恐惧实体化', dmgMult: 3.0, cooldown: 2, type: 'fear_manifest' } },
   ],
 
   // Ch12: 复制体郑吒·终极
   clone_zhengzha_ultimate: [
     { hpThreshold: 1.0, name: '完美镜像', atkMult: 1.2, defMult: 1.2,
-      desc: '终极复制体完美复刻一切',
-      specialMove: { name: '全属性复制', dmgMult: 1.5, cooldown: 3, type: 'perfect_copy' } },
-    { hpThreshold: 0.7, name: '融合', atkMult: 1.4, defMult: 1.4,
-      desc: '融合多条血统之力',
-      specialMove: { name: '血统融合', dmgMult: 2.0, cooldown: 4, type: 'bloodline_fusion', heal: 0.1 } },
-    { hpThreshold: 0.4, name: '第四阶开放', atkMult: 1.8, defMult: 1.0,
-      desc: '复制体突破至第四阶基因锁',
-      specialMove: { name: '心灵之光·伪', dmgMult: 3.0, cooldown: 3, type: 'fake_enlightenment' } },
-    { hpThreshold: 0.15, name: '最终决战', atkMult: 2.2, defMult: 0.8,
-      desc: '燃烧一切的最终搏杀',
-      specialMove: { name: '灭世真言', dmgMult: 4.0, cooldown: 5, type: 'extinction', selfDmg: 0.15 } },
+      desc: '终极复制体完美复制了你的一切能力',
+      specialMove: { name: '镜像反转', dmgMult: 1.5, cooldown: 2, type: 'mirror_ultimate' } },
+    { hpThreshold: 0.6, name: '基因锁·五阶', atkMult: 1.6, defMult: 1.0,
+      desc: '复制体突破五阶基因锁，超越原体',
+      specialMove: { name: '五阶·灭世', dmgMult: 2.5, cooldown: 4, type: 'gene5_annihilate' } },
+    { hpThreshold: 0.3, name: '超越者', atkMult: 2.0, defMult: 1.0,
+      desc: '复制体展现超越极限的力量',
+      specialMove: { name: '命运终结', dmgMult: 3.5, cooldown: 3, type: 'destiny_end' } },
+    { hpThreshold: 0.1, name: '最终决战', atkMult: 2.5, defMult: 0.5,
+      desc: '与原体的共鸣引发毁灭性爆发',
+      specialMove: { name: '双子灭世', dmgMult: 5.0, cooldown: 5, type: 'twin_apocalypse' } },
   ],
 };
 

@@ -102,7 +102,7 @@ function generateFloor_6_6() {
     ],flag:'newborn_intro_done'}},
     { type:ENTITY_TYPE.ENEMY, id:'xeno_elite', name:'异形禁卫', x:3,y:8, sprite:'🦎', color:'#557744', hp:80, atk:24, def:8, spd:10, acidBlood:12, rewards:{exp:55,gold:40}},
     { type:ENTITY_TYPE.ENEMY, id:'xeno_elite_2', name:'异形禁卫', x:17,y:8, sprite:'🦎', color:'#557744', hp:80, atk:24, def:8, spd:10, acidBlood:12, rewards:{exp:55,gold:40}},
-    { type:ENTITY_TYPE.BOSS, id:'boss_newborn',bossId:'alien_queen',traits:['thorns','enrage'],damageType:'poison', name:'新生异形', x:10,y:7, sprite:'👾', color:'#884422', hp:280, atk:32, def:12, spd:13, acidBlood:20, weaknesses:['fire'], rewards:{exp:250,gold:150,rewardPoints:400}, lore:'人类与异形的混合体。极高攻击力和酸血伤害。火焰是弱点。'},
+    { type:ENTITY_TYPE.BOSS, id:'boss_newborn',bossId:'evolved_queen',traits:['thorns','enrage'],damageType:'poison', name:'新生异形', x:10,y:7, sprite:'👾', color:'#884422', hp:280, atk:32, def:12, spd:13, acidBlood:20, weaknesses:['fire'], rewards:{exp:250,gold:150,rewardPoints:400}, lore:'人类与异形的混合体。极高攻击力和酸血伤害。火焰是弱点。'},
     { type:ENTITY_TYPE.ITEM, id:'medkit_ch6_6', name:'高级急救包', x:8,y:5, sprite:'♥', color:'#ff4488', itemType:'consumable', effect:{heal:100}},
     // 重生十字勋章
     { type:ENTITY_TYPE.EVENT, id:'ch6_ending', name:'第六章结算', x:10,y:2, sprite:'✦', color:'#ffdd88', event:{type:'chapter_end',lines:[

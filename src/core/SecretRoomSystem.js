@@ -113,11 +113,10 @@ export function applySecretReward(reward) {
       p.keys[reward.keyType] = (p.keys[reward.keyType] || 0) + (reward.count || 1);
       break;
     case 'consumable':
-      // 延迟到运行时import避免循环
-      try {
-        const { addConsumable } = require('./ConsumableSystem.js');
-        addConsumable(reward.id, reward.count || 1);
-      } catch { /* ESM fallback — handled via eventBus */ }
+      // 动态import避免ESM循环依赖
+      import('./ConsumableSystem.js').then(m => {
+        m.addConsumable(reward.id, reward.count || 1);
+      }).catch(() => { /* fallback via eventBus */ });
       break;
   }
   gameState.stats.secretsFound = (gameState.stats.secretsFound || 0) + 1;

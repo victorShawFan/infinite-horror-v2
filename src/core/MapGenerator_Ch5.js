@@ -381,7 +381,7 @@ function generateFloor_5_6() {
     tiles: grid, width: W, height: H, playerStart: { x: 10, y: 15 },
     entities: [
       // Boss: 张杰（非致命考验，实际是对话+仪式战）
-      { type: ENTITY_TYPE.BOSS, id: 'boss_zhangjie', name: '张杰（引导者）',
+      { type: ENTITY_TYPE.BOSS, id: 'boss_zhangjie', bossId: 'zhangjie', name: '张杰（引导者）',
         x: 10, y: 7, sprite: '张', color: '#ffaa44',
         hp: 200, atk: 25, def: 15, spd: 12,
         damageType: 'psychic',

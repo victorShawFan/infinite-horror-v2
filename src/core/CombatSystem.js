@@ -88,10 +88,16 @@ function canDoubleAttack(playerSpd, enemySpd) {
 
 // ── 战斗预判（保持原有接口兼容） ──
 export function previewBattle(player, enemy) {
-  const pAtk = getEffectiveAtk(player);
-  const pDef = getEffectiveDef(player);
-  const pSpd = getEffectiveSpd(player);
-  const pCrt = getEffectiveCrt(player);
+  // 应用战斗姿态修正（与executeBattle保持一致）
+  const _rawAtk = getEffectiveAtk(player);
+  const _rawDef = getEffectiveDef(player);
+  const _rawSpd = getEffectiveSpd(player);
+  const _rawCrt = getEffectiveCrt(player);
+  const stanceMod = applyStanceModifiers(_rawAtk, _rawDef, _rawCrt, _rawSpd);
+  const pAtk = stanceMod.atk;
+  const pDef = stanceMod.def;
+  const pSpd = stanceMod.spd;
+  const pCrt = stanceMod.crt;
   const chipFx = getChipEffects(player);
 
   const isDaoist = player.activeBloodline === BLOODLINE.DAOIST;

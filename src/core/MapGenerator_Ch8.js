@@ -37,7 +37,7 @@ function f8_5(){const g=makeGrid();carveRoom(g,6,5,14,12);carveRoom(g,1,7,5,10);
 ]};}
 
 function f8_6(){const g=makeGrid();carveRoom(g,1,1,6,5);carveCorridor(g,6,3,10,3);carveRoom(g,10,1,16,6);carveCorridor(g,13,6,13,10);carveRoom(g,9,10,16,14);carveRoom(g,1,8,7,13);carveCorridor(g,4,5,4,8);carveCorridor(g,7,12,9,12);carveRoom(g,16,11,19,15);carveCorridor(g,16,13,16,13);g[14][18]=TILE.STAIRS;return{id:'8-6',name:'巨龙血战与负点结算',subtitle:'最终Boss——远古巨龙。郑吒融合龙族细胞的关键一战。',bgColor:'#0a0c06',theme:'jungle',tiles:g,width:W,height:H,playerStart:{x:3,y:3},entities:[
-{type:ENTITY_TYPE.BOSS,id:'boss_dragon',name:'远古巨龙',x:11,y:6,sprite:'🐉',color:'#884422',hp:350,atk:35,def:14,spd:8,weaknesses:['ice'],rewards:{exp:300,gold:200,rewardPoints:500},lore:'侏罗纪世界的终极猎食者。击败它可获得龙族细胞。'},
+{type:ENTITY_TYPE.BOSS,id:'boss_dragon',bossId:'ancient_dragon',name:'远古巨龙',x:11,y:6,sprite:'🐉',color:'#884422',hp:350,atk:35,def:14,spd:8,weaknesses:['ice'],rewards:{exp:300,gold:200,rewardPoints:500},lore:'侏罗纪世界的终极猎食者。击败它可获得龙族细胞。'},
 {type:ENTITY_TYPE.ENEMY,id:'dragon_guard',name:'龙族护卫',x:3,y:8,sprite:'🦎',color:'#775533',hp:80,atk:24,def:10,spd:7,rewards:{exp:55,gold:40}},
 {type:ENTITY_TYPE.ENEMY,id:'dragon_guard_2',name:'龙族护卫',x:15,y:5,sprite:'🦎',color:'#775533',hp:80,atk:24,def:10,spd:7,rewards:{exp:55,gold:40}},
 {type:ENTITY_TYPE.ITEM,id:'medkit_ch8_6',name:'高级急救包',x:6,y:3,sprite:'♥',color:'#ff4488',itemType:'consumable',effect:{heal:120}},

@@ -248,6 +248,7 @@ function showMainMenu() {
       try { if (window._miniMap) { const mm = localStorage.getItem('ih_minimap'); if (mm) window._miniMap.fromJSON(JSON.parse(mm)); } } catch {}
       try { const br = localStorage.getItem('ih_bestiary'); if (br) bestiary.fromJSON(JSON.parse(br)); } catch {}
       try { const ng = localStorage.getItem('ih_ngplus'); if (ng) ngPlusState.fromJSON(JSON.parse(ng)); } catch {}
+      try { const st = localStorage.getItem('ih_stance'); if (st) restoreStance(st); } catch {}
       const chapterGens = { 1: generateChapter1, 2: generateChapter2, 3: generateChapter3, 4: generateChapter4, 5: generateChapter5, 6: generateChapter6, 7: generateChapter7, 8: generateChapter8, 9: generateChapter9, 10: generateChapter10, 11: generateChapter11, 12: generateChapter12 };
       const gen = chapterGens[gameState.chapter] || generateChapter1;
 
@@ -754,6 +755,7 @@ document.addEventListener('keydown', (e) => {
     try { localStorage.setItem('ih_tutorial', JSON.stringify(tutorialManager.toJSON())); } catch {}
     try { if (window._miniMap) localStorage.setItem('ih_minimap', JSON.stringify(window._miniMap.toJSON())); } catch {}
     try { localStorage.setItem('ih_ngplus', JSON.stringify(ngPlusState.toJSON())); } catch {}
+    try { localStorage.setItem('ih_stance', getStanceId()); } catch {}
     renderer.notify('💾 手动存档完成', '#44ff88', 90);
     return;
   }
