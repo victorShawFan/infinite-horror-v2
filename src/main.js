@@ -1007,6 +1007,11 @@ function triggerEvent(entity) {
           if (choice.effect.healFull) { p.hp = p.maxHp; renderer.addFloatText('HP全恢复！', p.x, p.y - 1, 'rgb(68, 255, 136)'); }
           if (choice.effect.atk) { p.atk += choice.effect.atk; renderer.addFloatText(`ATK+${choice.effect.atk}`, p.x, p.y - 1, 'rgb(255, 100, 68)'); }
           if (choice.effect.def) { p.def += choice.effect.def; renderer.addFloatText(`DEF+${choice.effect.def}`, p.x, p.y - 1, 'rgb(68, 136, 255)'); }
+          if (choice.effect.spd) { p.spd += choice.effect.spd; renderer.addFloatText(`SPD+${choice.effect.spd}`, p.x, p.y - 1, 'rgb(68, 255, 170)'); }
+          if (choice.effect.crt) { p.crt += choice.effect.crt; renderer.addFloatText(`CRT+${choice.effect.crt}%`, p.x, p.y - 1, 'rgb(255, 204, 68)'); }
+          if (choice.effect.hp) { p.maxHp += choice.effect.hp; p.hp += choice.effect.hp; renderer.addFloatText(`MaxHP+${choice.effect.hp}`, p.x, p.y - 1, 'rgb(68, 255, 136)'); }
+          if (choice.effect.flag) gameState.setFlag(choice.effect.flag);
+          if (choice.effect.description) renderer.notify(choice.effect.description, '#ffcc44', 120);
         }
 
         startDialogue([{ text: `选择了"${choice.text}"`, speaker: '系统' }], null, onComplete);

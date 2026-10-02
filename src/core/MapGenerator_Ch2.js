@@ -156,8 +156,10 @@ function generateFloor_2_2() {
             { text: '必须分队行动。上面的控制室可以封锁舱门，下面的动力舱可以断开这一层的电力。', speaker: '楚轩' },
           ],
           choices: [
-            { text: '上路 — 跟随楚轩前往控制室', effect: { flag: 'chose_upper_route' } },
-            { text: '下路 — 率队前往动力舱', effect: { flag: 'chose_lower_route' } },
+            { id: 'upper', text: '上路 — 跟随楚轩前往控制室', 
+              effect: { flag: 'chose_upper_route', spd: 2, description: '楚轩的路线规划让你获得了战术优势' } },
+            { id: 'lower', text: '下路 — 率队前往动力舱', 
+              effect: { flag: 'chose_lower_route', atk: 3, description: '在动力舱的危险环境中，你的战斗本能得到了磨炼' } },
           ],
         },
       },
