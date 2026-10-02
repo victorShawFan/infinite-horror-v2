@@ -10,6 +10,7 @@ import { Renderer } from './core/Renderer.js';
 import { executeBattle, previewBattle, getEffectiveAtk, getEffectiveDef, getEffectiveCrt, getEffectiveSpd } from './core/CombatSystem.js';
 import { generateChapter1 } from './core/MapGenerator.js';
 import { generateChapter2 } from './core/MapGenerator_Ch2.js';
+import { generateChapter3 } from './core/MapGenerator_Ch3.js';
 import {
   setShiftHeld, onPlayerMove, onCombatNoise, decayNoise,
   isPatrolAlerted, consumeAmmo, reloadAmmo, resetStealth, initAmmo,
@@ -20,7 +21,7 @@ import {
 import { audioEngine } from './core/AudioEngine.js';
 import { renderLordGodSpace } from './core/LordGodSpace.js';
 import { CombatAnimator } from './core/CombatAnimation.js';
-import { showOpeningCutscene, showChapter2Cutscene } from './core/Cutscene.js';
+import { showOpeningCutscene, showChapter2Cutscene, showChapter3Cutscene } from './core/Cutscene.js';
 import { assetLoader } from './core/AssetLoader.js';
 
 // ── 全局状态 ──
@@ -120,6 +121,7 @@ function showMainMenu() {
       const chapterFloors = {
         1: ['列车醒来', '蜂巢入口', '红后机房', '激光通道', '丧尸巢穴', '六小时回归'],
         2: ['飞船封锁', '新人分队', '通风管潜行', '抱脸虫隔离', '巢穴救援', '皇后与撤离'],
+        3: ['宅邸触发诅咒', '第一夜分散', '佛经线索', '新人冲突', '楚轩录像', '七波诅咒终战'],
       };
       const ch = save.chapter || 1;
       const floors = chapterFloors[ch] || chapterFloors[1];
@@ -133,7 +135,7 @@ function showMainMenu() {
   btnCont.addEventListener('click', () => {
     if (gameState.load(0)) {
       // 根据存档章节加载对应地图
-      const chapterGens = { 1: generateChapter1, 2: generateChapter2 };
+      const chapterGens = { 1: generateChapter1, 2: generateChapter2, 3: generateChapter3 };
       const gen = chapterGens[gameState.chapter] || generateChapter1;
       audioEngine.init();
       audioEngine.resume();
@@ -373,7 +375,7 @@ eventBus.on('player:death', () => {
     document.getElementById('btn-load')?.addEventListener('click', () => {
       overlay.innerHTML = '';
       if (gameState.load(0)) {
-        const chapterGens = { 1: generateChapter1, 2: generateChapter2 };
+        const chapterGens = { 1: generateChapter1, 2: generateChapter2, 3: generateChapter3 };
         const gen = chapterGens[gameState.chapter] || generateChapter1;
         chapter = gen();
         currentFloorIndex = gameState.nodeIndex || 0;
@@ -463,7 +465,7 @@ document.addEventListener('keydown', (e) => {
     e.preventDefault();
     if (gameState.load(0)) {
       // 根据存档章节加载对应地图
-      const chapterGens = { 1: generateChapter1, 2: generateChapter2 };
+      const chapterGens = { 1: generateChapter1, 2: generateChapter2, 3: generateChapter3 };
       const gen = chapterGens[gameState.chapter] || generateChapter1;
       chapter = gen();
       currentFloorIndex = gameState.nodeIndex || 0;
@@ -1002,6 +1004,20 @@ function triggerEvent(entity) {
       if (compIdx >= 0) entities.splice(compIdx, 1);
     }
 
+    // 固定死亡事件 — 队友阵亡（不可逆）
+    if (evt.companionDeath) {
+      const comp = gameState.companions.find(c => c.id === evt.companionDeath);
+      if (comp) {
+        comp.alive = false;
+        renderer.shake(8, 600);
+        renderer.addFloatText(`${comp.name} 阵亡`, gameState.player.x, gameState.player.y - 1, 'rgb(255, 0, 0)');
+      }
+      // 也从地图实体移除队友图标
+      const compEntIdx = entities.findIndex(e => e.id === evt.companionDeath);
+      if (compEntIdx >= 0) entities.splice(compEntIdx, 1);
+      gameState.markEntityRemoved(currentFloorIndex, evt.companionDeath);
+    }
+
     // 生成新敌人
     if (evt.spawnEnemies) {
       for (const spawn of evt.spawnEnemies) {
@@ -1528,7 +1544,7 @@ function showChapterComplete() {
   const p = gameState.player;
   const chapterNum = gameState.chapter;
   const chapterNames = { 1: '名为生化', 2: '异形杀戮', 3: '咒怨阴影' };
-  const nextChapterNames = { 1: '异形一', 2: '咒怨', 3: '神鬼秘宝' };
+  const nextChapterNames = { 1: '异形一', 2: '咒怨', 3: '神鬼秘宝', 4: '死神绝境' };
   const chapterName = chapterNames[chapterNum] || `第${chapterNum}章`;
   const nextWorld = nextChapterNames[chapterNum];
 
@@ -1613,7 +1629,7 @@ function showChapterComplete() {
         `;
         document.getElementById('btn-next-chapter').addEventListener('click', () => {
           // 播放下一章过场动画
-          const cutscenes = { 2: showChapter2Cutscene };
+          const cutscenes = { 2: showChapter2Cutscene, 3: showChapter3Cutscene };
           const cutsceneFn = cutscenes[nextChapter];
           const doStart = () => {
           gameState.chapter = nextChapter;
@@ -1635,6 +1651,19 @@ function showChapterComplete() {
               if (!existingIds.includes(c.id)) gameState.addCompanion(c);
             }
             // 按原著：牟钢在Ch1已死，Ch2李萧毅仍存活到异形世界
+          }
+
+          if (nextChapter === 3) {
+            // Ch3新人：赵樱空、齐腾一、铭烟薇
+            const existingIds = gameState.companions.map(c => c.id);
+            const ch3Companions = [
+              { id: 'zhao_yingkong', name: '赵樱空', role: '精神感应', alive: true },
+              { id: 'qi_tengyi', name: '齐腾一', role: '远程射手', alive: true },
+              { id: 'ming_yanwei', name: '铭烟薇', role: '新人', alive: true },
+            ];
+            for (const c of ch3Companions) {
+              if (!existingIds.includes(c.id)) gameState.addCompanion(c);
+            }
           }
 
           chapter = gen();

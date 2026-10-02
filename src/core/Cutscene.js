@@ -234,3 +234,121 @@ export function showChapter2Cutscene(onFinish) {
 
   renderScene();
 }
+
+// ═══ 第三章 过场：主神空间→咒怨世界 ═══
+const SCENES_CH3 = [
+  {
+    bg: '/assets/scenes/lord_god_space.jpg',
+    text: '又是十天。\n主神空间里的时光平静得像暴风雨前的海面。',
+    duration: 3500,
+  },
+  {
+    bg: '/assets/scenes/lord_god_space.jpg',
+    text: '队伍变得更大了。\n赵樱空、齐腾一、铭烟薇……还有一些不太愿意自我介绍的新人。',
+    duration: 4000,
+  },
+  {
+    bg: '/assets/scenes/lord_god_space.jpg',
+    speaker: '楚轩',
+    text: '"根据我的分析，下一个世界的威胁等级将大幅提升。\n物理手段可能不再有效。请做好准备。"',
+    duration: 4500,
+  },
+  {
+    bg: '/assets/scenes/lord_god_space.jpg',
+    speaker: '主神',
+    text: '"下一个世界——\n《咒怨》。"',
+    duration: 3000,
+  },
+  {
+    bg: '/assets/scenes/lord_god_space.jpg',
+    text: '白光消散时，你站在一条阴暗的日本住宅街上。\n空气中弥漫着潮湿、陈旧的气息。\n远处，一栋老旧的日式宅邸静静矗立着。',
+    duration: 4500,
+  },
+  {
+    bg: '/assets/scenes/lord_god_space.jpg',
+    speaker: '主神',
+    text: '任务目标：在伽椰子的诅咒中存活七天。\n找到破解诅咒的方法。\n封印或压制伽椰子的怨念。',
+    duration: 4500,
+  },
+  {
+    bg: '/assets/scenes/lord_god_space.jpg',
+    text: '第三章',
+    type: 'title',
+    duration: 2000,
+  },
+  {
+    bg: '/assets/scenes/lord_god_space.jpg',
+    text: '咒 怨 阴 影',
+    type: 'subtitle',
+    duration: 2500,
+  },
+];
+
+export function showChapter3Cutscene(onFinish) {
+  const overlay = document.getElementById('ui-overlay');
+  let sceneIdx = 0;
+
+  const skipHandler = (e) => {
+    if (e.key === 'Escape') {
+      document.removeEventListener('keydown', skipHandler);
+      overlay.innerHTML = '';
+      onFinish();
+    }
+  };
+  document.addEventListener('keydown', skipHandler);
+
+  function renderScene() {
+    if (sceneIdx >= SCENES_CH3.length) {
+      document.removeEventListener('keydown', skipHandler);
+      overlay.innerHTML = '';
+      onFinish();
+      return;
+    }
+
+    const s = SCENES_CH3[sceneIdx];
+    const isTitle = s.type === 'title';
+    const isSubtitle = s.type === 'subtitle';
+    const bgOverlay = (isTitle || isSubtitle)
+      ? 'radial-gradient(ellipse at center, rgba(0,0,0,0.5) 0%, rgba(0,0,0,0.9) 100%)'
+      : 'linear-gradient(180deg, rgba(0,0,0,0.3) 0%, rgba(0,0,0,0.7) 40%, rgba(0,0,0,0.95) 100%)';
+
+    overlay.innerHTML = `
+      <div style="
+        width: 100%; height: 100%;
+        background-image: ${bgOverlay};
+        background-size: cover;
+        display: flex; align-items: ${isTitle || isSubtitle ? 'center' : 'flex-end'};
+        justify-content: center;
+        animation: fadeIn 0.8s ease;
+      ">
+        <div style="
+          ${isTitle ? 'font-size: 56px; letter-spacing: 12px; color: #e0d8f0; text-shadow: 0 0 30px rgba(128, 80, 200, 0.6);' : ''}
+          ${isSubtitle ? 'font-size: 36px; letter-spacing: 20px; color: #ccaaee; text-shadow: 0 0 20px rgba(128, 80, 200, 0.4);' : ''}
+          ${!isTitle && !isSubtitle ? `
+            max-width: 700px; padding: 30px 40px; margin-bottom: 60px;
+            background: rgba(0, 0, 0, 0.6); border-radius: 12px;
+            border-left: 3px solid rgba(128, 80, 200, 0.5);
+          ` : ''}
+          font-family: "Microsoft YaHei", sans-serif;
+        ">
+          ${s.speaker ? `<p style="color: #ccaaee; font-size: 14px; margin-bottom: 8px; letter-spacing: 2px;">${s.speaker}</p>` : ''}
+          ${!isTitle && !isSubtitle ? `<p style="color: #e8e8f0; font-size: 18px; line-height: 1.8; white-space: pre-line;">${s.text}</p>` : s.text}
+        </div>
+      </div>
+      <style>@keyframes fadeIn { from { opacity: 0 } to { opacity: 1 } }</style>
+    `;
+  }
+
+  function advance() {
+    sceneIdx++;
+    renderScene();
+    if (sceneIdx < SCENES_CH3.length) {
+      setTimeout(() => advance(), SCENES_CH3[sceneIdx]?.duration || 3000);
+    }
+  }
+
+  renderScene();
+  if (SCENES_CH3.length > 0) {
+    setTimeout(() => advance(), SCENES_CH3[0].duration);
+  }
+}
