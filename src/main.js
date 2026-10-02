@@ -51,6 +51,8 @@ import { MiniMap } from './core/MiniMap.js';
 import { openCodex } from './core/Codex.js';
 import { recordChapterSnapshot, recordMilestone, serializeGrowth, deserializeGrowth } from './core/GrowthTracker.js';
 import { recordVictory as ddRecordVictory, recordDeath as ddRecordDeath, getDynamicFactor, applyDynamicScaling, serializeDynamicDifficulty, deserializeDynamicDifficulty, getDynamicDifficultyInfo } from './core/DynamicDifficulty.js';
+import { generateAbyssFloor, startAbyss, nextAbyssFloor, getAbyssState, isAbyssActive, endAbyss, serializeAbyss, deserializeAbyss } from './core/AbyssMode.js';
+import { generateDailyChallenge, isDailyCompleted, completeDailyChallenge, getDailyRecord, serializeDaily, deserializeDaily } from './core/DailyChallenge.js';
 import { addEffect, tickEffects, getActiveEffects, getEffectModifiers, renderEffectHUD, serializeEffects, deserializeEffects, clearAllEffects } from './core/StatusEffectTracker.js';
 import { recordBattle, showBattleReplay, showBattleHistoryPanel, serializeBattleHistory, deserializeBattleHistory } from './core/BattleReplay.js';
 import { tryUpgradeToElite, getEliteDescription, recordEliteKill, getEliteStats, resetEliteStats, serializeEliteStats, deserializeEliteStats } from './core/EliteMonsterSystem.js';
@@ -571,6 +573,25 @@ function showMainMenu() {
         制作信息
       </button>
 
+      <div style="display:flex; gap:10px; margin-top: 16px;">
+        <button id="btn-daily-challenge" style="
+          background: transparent; border: 1px solid #ffaa00; color: #ffaa0088;
+          font-size: 12px; padding: 6px 20px; cursor: pointer; letter-spacing: 2px;
+          transition: all 0.3s; font-family: inherit; border-radius: 6px;
+        " onmouseover="this.style.color='#ffaa00';this.style.borderColor='#ffcc44'"
+           onmouseout="this.style.color='#ffaa0088';this.style.borderColor='#ffaa00'">
+          🎯 每日挑战
+        </button>
+        <button id="btn-abyss-mode" style="
+          background: transparent; border: 1px solid #8844ff; color: #8844ff88;
+          font-size: 12px; padding: 6px 20px; cursor: pointer; letter-spacing: 2px;
+          transition: all 0.3s; font-family: inherit; border-radius: 6px;
+        " onmouseover="this.style.color='#8844ff';this.style.borderColor='#aa66ff'"
+           onmouseout="this.style.color='#8844ff88';this.style.borderColor='#8844ff'">
+          🕳 无尽深渊
+        </button>
+      </div>
+
       <div id="menu-difficulty" style="margin-top: 24px; display: flex; gap: 8px;"></div>
 
     </div>
@@ -591,6 +612,16 @@ function showMainMenu() {
   });
   // 制作信息
   document.getElementById('btn-credits')?.addEventListener('click', _showCredits);
+  
+  // 每日挑战
+  document.getElementById('btn-daily-challenge')?.addEventListener('click', () => {
+    _showDailyChallengeMenu();
+  });
+  
+  // 无尽深渊
+  document.getElementById('btn-abyss-mode')?.addEventListener('click', () => {
+    _showAbyssMenu();
+  });
   // Check if save exists and update continue button
   const saveKey = 'infinite_horror_save_0';
   const saveData = localStorage.getItem(saveKey);
@@ -1425,6 +1456,142 @@ case 'h': case '?':
     }
   }
 });
+
+
+// ── 每日挑战菜单 ──
+function _showDailyChallengeMenu() {
+  const overlay = document.getElementById('ui-overlay');
+  const today = new Date().toISOString().split('T')[0];
+  const challenge = generateDailyChallenge(today);
+  const completed = isDailyCompleted(today);
+  const record = getDailyRecord(today);
+  
+  overlay.innerHTML = `
+    <div style="
+      position:absolute;top:0;left:0;right:0;bottom:0;
+      display:flex;align-items:center;justify-content:center;
+      background:rgba(0,0,0,0.85);
+    " id="daily-backdrop">
+      <div style="
+        background:rgba(15,12,5,0.97);border:1px solid #ffaa00;border-radius:16px;
+        padding:30px;max-width:450px;width:90%;
+      ">
+        <h2 style="color:#ffcc44;text-align:center;letter-spacing:4px;margin-bottom:20px;">
+          🎯 每日挑战
+        </h2>
+        <p style="color:#888;text-align:center;font-size:12px;margin-bottom:16px;">
+          ${today} · 种子: ${challenge.seed}
+        </p>
+        
+        <div style="background:rgba(255,170,0,0.05);border:1px solid #ffaa0030;border-radius:8px;padding:12px;margin-bottom:16px;">
+          <p style="color:#ffaa00;font-size:14px;font-weight:bold;margin-bottom:8px;">
+            ${challenge.name || '今日试炼'}
+          </p>
+          <p style="color:#999;font-size:12px;">章节: 第${challenge.chapter || 1}章</p>
+          <p style="color:#999;font-size:12px;">难度: ${challenge.difficulty || '普通'}</p>
+          ${challenge.modifiers ? '<p style="color:#cc8800;font-size:11px;margin-top:6px;">特殊规则: ' + (challenge.modifiers.map(m => m.name || m).join('、')) + '</p>' : ''}
+        </div>
+        
+        ${completed ? '<p style="color:#44ff88;text-align:center;font-size:14px;margin-bottom:16px;">✅ 今日已完成！' + (record ? ' 用时: ' + record.time + 's 得分: ' + record.score : '') + '</p>' : ''}
+        
+        <div style="text-align:center;display:flex;gap:10px;justify-content:center;">
+          ${!completed ? '<button id="btn-start-daily" style="background:rgba(255,170,0,0.15);border:1px solid #ffaa00;color:#ffcc44;padding:10px 30px;cursor:pointer;font-size:14px;font-family:inherit;border-radius:8px;">开始挑战</button>' : ''}
+          <button id="btn-close-daily" style="background:transparent;border:1px solid #444;color:#888;padding:8px 24px;cursor:pointer;font-size:13px;font-family:inherit;border-radius:6px;">返回</button>
+        </div>
+      </div>
+    </div>
+  `;
+  
+  document.getElementById('btn-start-daily')?.addEventListener('click', () => {
+    overlay.innerHTML = '';
+    // Start a special daily challenge game
+    const ch = challenge.chapter || 1;
+    startNewGame(ch);
+    // Mark daily challenge active
+    gameState._dailyChallengeActive = true;
+    gameState._dailyChallengeStart = Date.now();
+  });
+  
+  const closeFn = () => { overlay.innerHTML = ''; showMainMenu(); };
+  document.getElementById('btn-close-daily')?.addEventListener('click', closeFn);
+  document.getElementById('daily-backdrop')?.addEventListener('click', (e) => {
+    if (e.target.id === 'daily-backdrop') closeFn();
+  });
+}
+
+
+// ── 无尽深渊菜单 ──
+function _showAbyssMenu() {
+  const overlay = document.getElementById('ui-overlay');
+  const state = getAbyssState();
+  
+  overlay.innerHTML = `
+    <div style="
+      position:absolute;top:0;left:0;right:0;bottom:0;
+      display:flex;align-items:center;justify-content:center;
+      background:rgba(0,0,0,0.85);
+    " id="abyss-backdrop">
+      <div style="
+        background:rgba(5,5,15,0.97);border:1px solid #8844ff;border-radius:16px;
+        padding:30px;max-width:450px;width:90%;
+      ">
+        <h2 style="color:#aa66ff;text-align:center;letter-spacing:4px;margin-bottom:20px;">
+          🕳 无尽深渊
+        </h2>
+        <p style="color:#666;text-align:center;font-size:12px;margin-bottom:16px;">
+          通关后解锁的无限挑战模式 — 层层递增的敌人强度
+        </p>
+        
+        <div style="background:rgba(136,68,255,0.05);border:1px solid #8844ff30;border-radius:8px;padding:12px;margin-bottom:16px;">
+          <p style="color:#888;font-size:12px;">最深层数: <span style="color:#aa66ff;">${state.bestFloor || 0}</span></p>
+          <p style="color:#888;font-size:12px;">总击杀: <span style="color:#aa66ff;">${state.totalKills || 0}</span></p>
+          <p style="color:#888;font-size:12px;">总金币: <span style="color:#ffcc44;">${state.totalGold || 0}</span></p>
+        </div>
+        
+        <p style="color:#555;font-size:11px;text-align:center;margin-bottom:16px;">
+          ⚠ 深渊模式使用当前存档角色，死亡不影响主线存档
+        </p>
+        
+        <div style="text-align:center;display:flex;gap:10px;justify-content:center;">
+          <button id="btn-start-abyss" style="background:rgba(136,68,255,0.15);border:1px solid #8844ff;color:#aa66ff;padding:10px 30px;cursor:pointer;font-size:14px;font-family:inherit;border-radius:8px;">深入深渊</button>
+          <button id="btn-close-abyss" style="background:transparent;border:1px solid #444;color:#888;padding:8px 24px;cursor:pointer;font-size:13px;font-family:inherit;border-radius:6px;">返回</button>
+        </div>
+      </div>
+    </div>
+  `;
+  
+  document.getElementById('btn-start-abyss')?.addEventListener('click', () => {
+    overlay.innerHTML = '';
+    // Check if player has a save
+    const saveKey = 'infinite_horror_save_0';
+    const saveData = localStorage.getItem(saveKey);
+    if (!saveData) {
+      overlay.innerHTML = '<div style="position:absolute;top:0;left:0;right:0;bottom:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.8);"><p style="color:#ff4444;font-size:16px;">需要先完成至少一章主线才能进入深渊</p></div>';
+      setTimeout(() => { overlay.innerHTML = ''; showMainMenu(); }, 2000);
+      return;
+    }
+    try {
+      loadGame(0);
+      startAbyss();
+      const floor = generateAbyssFloor(1);
+      // Load the abyss floor as a special chapter
+      gameState._abyssActive = true;
+      gameState._abyssFloor = 1;
+      overlay.innerHTML = '';
+      gameState.setState(GAME_STATE.EXPLORING);
+    } catch (err) {
+      console.error('Abyss start error:', err);
+      overlay.innerHTML = '';
+      showMainMenu();
+    }
+  });
+  
+  const closeFn = () => { overlay.innerHTML = ''; showMainMenu(); };
+  document.getElementById('btn-close-abyss')?.addEventListener('click', closeFn);
+  document.getElementById('abyss-backdrop')?.addEventListener('click', (e) => {
+    if (e.target.id === 'abyss-backdrop') closeFn();
+  });
+}
 
 // Shift 释放
 document.addEventListener('keyup', (e) => {

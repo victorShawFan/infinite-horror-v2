@@ -7,12 +7,12 @@
 import { GAME_STATE } from './constants.js';
 import { gameState } from './GameState.js';
 import { getEffectiveAtk, getEffectiveDef, getEffectiveSpd, getEffectiveCrt } from './CombatSystem.js';
-import { getDifficultyConfig, getDifficulty } from './DifficultySystem.js';
+import { getDifficultyConfig, getDifficulty, setDifficulty, formatBestiaryPanel, DIFFICULTY } from './DifficultySystem.js';
 import { getRelationshipLevel, COMPANION_PROFILES } from './RelationshipSystem.js';
 import { formatCycleInfo } from './NewGamePlus.js';
 import { LORE_ENTRIES } from './LoreSystem.js';
 import { getTalentEffects } from './TalentTree.js';
-import { formatBestiaryPanel } from './DifficultySystem.js';
+import { getDynamicDifficultyInfo, setDynamicDifficultyEnabled } from './DynamicDifficulty.js';
 import { checkElementalResonance, getPlayerActiveElements } from './ElementalSystem.js';
 import { getAvailableSkills } from './SkillSystem.js';
 import { getEquipmentDisplayName } from './EquipmentSystem.js';
@@ -956,7 +956,6 @@ export function showCombatLog() {
 // ── 设置面板 ──
 import { audioEngine } from './AudioEngine.js';
 import { fogOfWar } from './FogOfWar.js';
-import { setDifficulty, DIFFICULTY } from './DifficultySystem.js';
 
 export function showSettingsPanel() {
   if (gameState.state !== GAME_STATE.EXPLORING) return;
@@ -1026,6 +1025,21 @@ export function showSettingsPanel() {
             </div>
           </div>
           
+          <!-- 动态难度 -->
+          <div style="margin-bottom: 20px; display:flex; justify-content:space-between; align-items:center;">
+            <div>
+              <span style="color:#aaa;font-size:13px;">📊 动态难度调整</span>
+              <p style="color:#555;font-size:10px;margin:2px 0 0 0;">根据表现自动微调敌人强度</p>
+            </div>
+            <button id="dd-toggle" style="
+              background:${(() => { try { return getDynamicDifficultyInfo().enabled ? 'rgba(68,255,136,0.15)' : 'rgba(255,68,68,0.15)'; } catch { return 'rgba(100,100,100,0.15)'; } })()};
+              border:1px solid ${(() => { try { return getDynamicDifficultyInfo().enabled ? '#44ff88' : '#ff4444'; } catch { return '#666'; } })()};
+              color:${(() => { try { return getDynamicDifficultyInfo().enabled ? '#44ff88' : '#ff4444'; } catch { return '#666'; } })()};
+              padding:6px 16px; cursor:pointer; font-size:12px;
+              font-family:inherit; border-radius:6px;
+            ">${(() => { try { return getDynamicDifficultyInfo().enabled ? '✓ 开启' : '✗ 关闭'; } catch { return '---'; } })()}</button>
+          </div>
+          
           <!-- 快捷键提示 -->
           <div style="background:rgba(255,255,255,0.03);border:1px solid #222;border-radius:8px;padding:10px;margin-bottom:16px;">
             <p style="color:#555;font-size:11px;text-align:center;">
@@ -1050,6 +1064,15 @@ export function showSettingsPanel() {
       try { if (audioEngine.masterGain) audioEngine.masterGain.gain.value = v / 2; } catch {}
       const display = document.getElementById('vol-display');
       if (display) display.textContent = e.target.value + '%';
+    });
+    
+    // Dynamic Difficulty toggle
+    document.getElementById('dd-toggle')?.addEventListener('click', () => {
+      try {
+        const info = getDynamicDifficultyInfo();
+        setDynamicDifficultyEnabled(!info.enabled);
+      } catch {}
+      _render();
     });
     
     // Fog toggle
