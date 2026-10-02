@@ -358,7 +358,7 @@ function startGame() {
     window._levelupListenerRegistered = true;
     eventBus.on('player:levelup', () => {
       audioEngine.playLevelUp();
-      try { checkGrowthMilestones(milestoneTracker, gameState.player); } catch {}
+      tutorialManager.trigger('first_level_up');
       try { checkGrowthMilestones(milestoneTracker, gameState.player); } catch {}
       const p = gameState.player;
       renderer.addFloatText('LEVEL UP!', p.x, p.y - 1.5, 'rgb(255, 215, 0)');
@@ -873,6 +873,7 @@ function movePlayer(dx, dy) {
         }
       }
       startDialogue([{ text: floor.onClear.message, speaker: '旁白' }], null, () => {
+        tutorialManager.trigger('first_stairs');
         loadFloor(currentFloorIndex + 1);
       });
       p.x = nx;
@@ -1028,7 +1029,7 @@ function showCombatConfirm(enemy) {
   document.getElementById('btn-fight').addEventListener('click', () => {
     overlay.innerHTML = '';
     gameState.setState(GAME_STATE.EXPLORING);
-    startCombat(enemy);
+    startCombat(enemy, scaledEnemy);
   });
   
   document.getElementById('btn-retreat').addEventListener('click', () => {
@@ -1041,7 +1042,7 @@ function showCombatConfirm(enemy) {
     if (e.key === ' ' || e.key === 'Enter' || e.key === 'f') {
       overlay.innerHTML = '';
       gameState.setState(GAME_STATE.EXPLORING);
-      startCombat(enemy);
+      startCombat(enemy, scaledEnemy);
       document.removeEventListener('keydown', kh);
     } else if (e.key === 'Escape' || e.key === 'r') {
       overlay.innerHTML = '';
@@ -1053,14 +1054,15 @@ function showCombatConfirm(enemy) {
 }
 
 // ── 战斗 ──
-function startCombat(enemy) {
+function startCombat(enemy, preScaledEnemy) {
   // 战斗发起闪光
   renderer.flash('rgba(255, 50, 50)', 150);
   renderer.shake(3, 150);
   audioEngine.playDamage();
   
-  // 难度缩放
-  const scaledEnemy = scaleEnemy(enemy, gameState.chapter);
+  // 使用预缩放敌人（从战前确认传入），避免二次随机缩放导致数值不一致
+  const scaledEnemy = preScaledEnemy || scaleEnemy(enemy, gameState.chapter);
+  const hpBeforeCombat = gameState.player.hp;
   const result = executeBattle(scaledEnemy);
 
   if (result.victory) {
@@ -1070,7 +1072,7 @@ function startCombat(enemy) {
     gameState.markEntityRemoved(currentFloorIndex, enemy.id);
     
         // 记录怪物图鉴
-    try { bestiary.record(scaledEnemy, { victory: true, damageDealt: scaledEnemy.hp, damageTaken: 0 }); } catch {}
+    try { const actualDamageTaken = Math.max(0, hpBeforeCombat - gameState.player.hp); bestiary.record(scaledEnemy, { victory: true, damageDealt: scaledEnemy.hp, damageTaken: actualDamageTaken }); } catch {}
     try { localStorage.setItem('ih_bestiary', JSON.stringify(bestiary.toJSON())); } catch {}
 
 // 并肩作战 → 存活同伴关系+3
@@ -1127,6 +1129,7 @@ function startCombat(enemy) {
 function pickupItem(item) {
   const p = gameState.player;
   audioEngine.playPickup();
+  if (item.itemType !== 'key') tutorialManager.trigger('first_item');
 
   switch (item.itemType) {
     case 'lore':
@@ -1197,6 +1200,7 @@ function pickupItem(item) {
     case 'key':
       p.keys[item.keyColor] = (p.keys[item.keyColor] || 0) + 1;
       renderer.addFloatText(`+1 ${item.keyColor === 'yellow' ? '黄色' : item.keyColor === 'blue' ? '蓝色' : '红色'}钥匙`, item.x, item.y, 'rgb(255, 204, 68)');
+      tutorialManager.trigger('first_key');
       break;
 
     case 'ammo':
@@ -1343,6 +1347,7 @@ function triggerEvent(entity) {
         // 新队友加入 → 初始好感
         changeRelationship(evt.addCompanion.id, 'honest_talk', gameState.relationships);
         renderer.addFloatText(`${evt.addCompanion.name} 加入！`, gameState.player.x, gameState.player.y - 1, 'rgb(68, 255, 200)');
+        tutorialManager.trigger('first_companion');
       }
     }
 
@@ -2487,64 +2492,109 @@ function showChapterComplete() {
       } else {
         // 无更多章节 — 游戏通关
         const isGameComplete = chapterNum >= 12;
-        overlay.innerHTML = isGameComplete ? `
-          <div style="
-            position: absolute; top: 0; left: 0; right: 0; bottom: 0;
-            display: flex; flex-direction: column; align-items: center; justify-content: center;
-            background: linear-gradient(180deg, rgba(0,0,0,0.98) 0%, rgba(10,5,15,0.95) 50%, rgba(0,0,0,0.98) 100%);
-            animation: fadeIn 2s ease;
-          ">
-            <p style="color: #666; font-size: 14px; letter-spacing: 6px; margin-bottom: 20px;">THE END</p>
-            <h1 style="
-              color: #ff4444; font-size: 48px; letter-spacing: 10px;
-              text-shadow: 0 0 30px rgba(255,68,68,0.3);
-              margin-bottom: 8px;
-            ">无限恐怖</h1>
-            <p style="color: #888; letter-spacing: 6px; margin-bottom: 40px;">中 洲 轮 回 · 完</p>
-            <div style="color: #666; max-width: 500px; text-align: center; line-height: 2; margin-bottom: 40px;">
-              <p>最终幸存者：<span style="color: #e0c080;">郑吒、刘郁、林俊天</span></p>
-              <br>
-              <p style="font-size: 13px;">十二个世界。无数次生死。</p>
-              <p style="font-size: 13px;">他们用生命换来了——活着的权利。</p>
-              <br>
-              <p style="color: #555; font-size: 12px; font-style: italic;">
-                "只要活着，就有希望。" —— 郑吒
+        if (isGameComplete) {
+          // ── Ch12 通关结算 ──
+          overlay.innerHTML = `
+            <div style="
+              position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+              display: flex; flex-direction: column; align-items: center; justify-content: center;
+              background: linear-gradient(180deg, rgba(0,0,0,0.98) 0%, rgba(10,5,15,0.95) 50%, rgba(0,0,0,0.98) 100%);
+              animation: fadeIn 2s ease;
+            ">
+              <p style="color: #666; font-size: 14px; letter-spacing: 6px; margin-bottom: 20px;">THE END</p>
+              <h1 style="
+                color: #ff4444; font-size: 48px; letter-spacing: 10px;
+                text-shadow: 0 0 30px rgba(255,68,68,0.3);
+                margin-bottom: 8px;
+              ">无限恐怖</h1>
+              <p style="color: #888; letter-spacing: 6px; margin-bottom: 40px;">中 洲 轮 回 · 完</p>
+              <div style="color: #666; max-width: 500px; text-align: center; line-height: 2; margin-bottom: 40px;">
+                <p>最终幸存者：<span style="color: #e0c080;">郑吒、刘郁、林俊天</span></p>
+                <br>
+                <p style="font-size: 13px;">十二个世界。无数次生死。</p>
+                <p style="font-size: 13px;">他们用生命换来了——活着的权利。</p>
+                <br>
+                <p style="color: #555; font-size: 12px; font-style: italic;">
+                  "只要活着，就有希望。" —— 郑吒
+                </p>
+              </div>
+              <div style="color: #444; font-size: 11px; letter-spacing: 2px; margin-bottom: 30px;">
+                <p>通关等级: Lv.${p.level} · 总奖励点: ${p.rewardPoints}</p>
+                <p>存活同伴: ${gameState.companions.filter(c=>c.alive).length} / ${gameState.companions.length}</p>
+              </div>
+              <div style="display:flex;gap:16px;flex-wrap:wrap;justify-content:center;">
+                <button id="btn-ng-plus" style="
+                  background: transparent; border: 2px solid #ffcc44; color: #ffcc44;
+                  padding: 14px 40px; cursor: pointer; font-size: 16px;
+                  letter-spacing: 4px; font-family: inherit; border-radius: 8px;
+                  transition: all 0.3s;
+                " onmouseover="this.style.background='rgba(255,204,68,0.1)'"
+                   onmouseout="this.style.background='transparent'">🔄 开始下一周目</button>
+                <button onclick="location.reload()" style="
+                  background: transparent; border: 1px solid #555; color: #888;
+                  padding: 14px 40px; cursor: pointer; font-size: 14px;
+                  letter-spacing: 4px; font-family: inherit; border-radius: 8px;
+                  transition: all 0.3s;
+                " onmouseover="this.style.background='rgba(100,100,100,0.1)'"
+                   onmouseout="this.style.background='transparent'">返回标题</button>
+              </div>
+            </div>
+            <style>@keyframes fadeIn{from{opacity:0}to{opacity:1}}</style>
+          `;
+          // ── NG+ 结算逻辑 ──
+          setTimeout(() => {
+            const ngBtn = document.getElementById('btn-ng-plus');
+            if (ngBtn) {
+              ngBtn.addEventListener('click', () => {
+                const ngData = ngPlusState.completeClear(gameState.player, gameState.stats);
+                try { localStorage.setItem('ih_ngplus', JSON.stringify(ngPlusState.toJSON())); } catch {}
+                try { localStorage.setItem('ih_bestiary', JSON.stringify(bestiary.toJSON())); } catch {}
+                const clearHtml = formatClearScreen(ngData, gameState.stats);
+                overlay.innerHTML = `
+                  <div style="
+                    position:absolute;top:0;left:0;right:0;bottom:0;
+                    display:flex;flex-direction:column;align-items:center;justify-content:center;
+                    background:rgba(0,0,0,0.98);overflow-y:auto;padding:40px 20px;
+                  ">
+                    ${clearHtml}
+                    <div style="margin-top:30px;color:#666;font-size:12px;">
+                      <p>继承数据已保存。下一周目敌人将更加强大……</p>
+                    </div>
+                    <button onclick="location.reload()" style="
+                      margin-top:20px;background:transparent;border:2px solid #ffcc44;color:#ffcc44;
+                      padding:14px 50px;cursor:pointer;font-size:16px;letter-spacing:6px;
+                      font-family:inherit;border-radius:8px;transition:all 0.3s;
+                    " onmouseover="this.style.background='rgba(255,204,68,0.1)'"
+                       onmouseout="this.style.background='transparent'">进入下一周目</button>
+                  </div>
+                `;
+              });
+            }
+          }, 100);
+        } else {
+          // 非终章 — 章节结算
+          overlay.innerHTML = `
+            <div style="
+              position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+              display: flex; flex-direction: column; align-items: center; justify-content: center;
+              background: rgba(0,0,0,0.95);
+            ">
+              <h2 style="color: #e0e0e0; letter-spacing: 6px; margin-bottom: 16px;">
+                第${chapterNum}章 · 完
+              </h2>
+              <p style="color: #888; max-width: 500px; text-align: center; line-height: 1.8; margin-bottom: 30px;">
+                郑吒用十天时间整备完毕。但前方的世界——<br>
+                <strong style="color: #ff8844;">${nextWorld || '更多恐怖'}</strong><br><br>
+                <em style="color: #555;">即将到来...</em>
               </p>
+              <button onclick="location.reload()" style="
+                background: transparent; border: 1px solid #444; color: #888;
+                padding: 12px 40px; cursor: pointer; font-size: 16px;
+                letter-spacing: 4px; font-family: inherit; border-radius: 8px;
+              ">返回主菜单</button>
             </div>
-            <div style="color: #444; font-size: 11px; letter-spacing: 2px; margin-bottom: 30px;">
-              <p>通关等级: Lv.${p.level} · 总奖励点: ${p.rewardPoints}</p>
-              <p>存活同伴: ${gameState.companions.filter(c=>c.alive).length} / ${gameState.companions.length}</p>
-            </div>
-            <button onclick="location.reload()" style="
-              background: transparent; border: 1px solid #ff4444; color: #ff4444;
-              padding: 14px 50px; cursor: pointer; font-size: 16px;
-              letter-spacing: 6px; font-family: inherit; border-radius: 8px;
-              transition: all 0.3s;
-            " onmouseover="this.style.background='rgba(255,68,68,0.1)'"
-               onmouseout="this.style.background='transparent'">重新轮回</button>
-          </div>
-          <style>@keyframes fadeIn{from{opacity:0}to{opacity:1}}</style>
-        ` : `
-          <div style="
-            position: absolute; top: 0; left: 0; right: 0; bottom: 0;
-            display: flex; flex-direction: column; align-items: center; justify-content: center;
-            background: rgba(0,0,0,0.95);
-          ">
-            <h2 style="color: #e0e0e0; letter-spacing: 6px; margin-bottom: 16px;">
-              第${chapterNum}章 · 完
-            </h2>
-            <p style="color: #888; max-width: 500px; text-align: center; line-height: 1.8; margin-bottom: 30px;">
-              郑吒用十天时间整备完毕。但前方的世界——<br>
-              <strong style="color: #ff8844;">${nextWorld || '更多恐怖'}</strong><br><br>
-              <em style="color: #555;">即将到来...</em>
-            </p>
-            <button onclick="location.reload()" style="
-              background: transparent; border: 1px solid #444; color: #888;
-              padding: 12px 40px; cursor: pointer; font-size: 16px;
-              letter-spacing: 4px; font-family: inherit; border-radius: 8px;
-            ">返回主菜单</button>
-          </div>
-        `;
+          `;
+        }
       }
     });
   });
