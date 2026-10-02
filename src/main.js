@@ -88,6 +88,7 @@ window.addEventListener('load', async () => {
       get currentFloorIndex() { return currentFloorIndex; },
       get entities() { return entities; },
       loreTracker,
+      milestoneTracker,
     });
     showMainMenu();
   }, 500);
@@ -319,14 +320,58 @@ function menuLoop() {
 }
 
 function startNewGame() {
+  gameState._chapterClearCounted = false;
   // 重置状态
   gameState.reset();
-  // 重置图鉴和难度
-  bestiary.fromJSON({});
-  try { localStorage.removeItem('ih_bestiary'); } catch {}
-  // 重置线索收集
-  loreTracker.fromJSON({ discovered: [] });
-  try { localStorage.removeItem("ih_lore"); } catch {}
+
+  // ── NG+ 继承：将上一周目数据应用到新角色 ──
+  let ngCarry = null;
+  try { const raw = localStorage.getItem('ih_ngplus_carry'); if (raw) ngCarry = JSON.parse(raw); } catch {}
+  if (ngCarry && ngCarry.cycle > 0) {
+    const p = gameState.player;
+    // 等级继承 — 加经验让角色升到继承等级
+    if (ngCarry.level > 1) {
+      p.level = ngCarry.level;
+      p.exp = ngCarry.exp || 0;
+      p.expToNext = ngCarry.expToNext || (20 + (ngCarry.level - 1) * 15);
+      // 使用 calculateNewGamePlus 预算的属性
+      if (ngCarry.maxHp) { p.maxHp = ngCarry.maxHp; p.hp = ngCarry.hp || ngCarry.maxHp; }
+      if (ngCarry.atk) p.atk = ngCarry.atk;
+      if (ngCarry.def) p.def = ngCarry.def;
+    }
+    // 金币继承
+    if (ngCarry.gold > 0) p.gold = ngCarry.gold;
+    // 血统继承
+    if (ngCarry.bloodline) p.bloodline = ngCarry.bloodline;
+    // 基因锁继承
+    if (ngCarry.geneLock > 0) p.geneLock = ngCarry.geneLock;
+    // 天赋点继承（重置分配，保留点数）
+    if (ngCarry.talentPoints > 0) {
+      if (!gameState.talents) gameState.talents = {};
+      gameState.talents.points = ngCarry.talentPoints;
+    }
+    // 武器继承
+    if (ngCarry.weapon) p.weapon = ngCarry.weapon;
+    // 清除继承数据（只用一次）
+    try { localStorage.removeItem('ih_ngplus_carry'); } catch {}
+  }
+
+  // 恢复图鉴（NG+保留）
+  if (ngCarry && ngCarry.keepBestiary) {
+    // bestiary already loaded from localStorage during init, don't reset
+  } else {
+    // 重置图鉴和难度
+    bestiary.fromJSON({});
+    try { localStorage.removeItem('ih_bestiary'); } catch {}
+  }
+  // 恢复线索（NG+保留）
+  if (ngCarry && ngCarry.keepLore) {
+    // loreTracker already loaded, don't reset
+  } else {
+    // 重置线索收集
+    loreTracker.fromJSON({ discovered: [] });
+    try { localStorage.removeItem("ih_lore"); } catch {}
+  }
 
   // 初始化音频
   audioEngine.init();
@@ -424,8 +469,8 @@ function startGame() {
   }
 }
 
-function loadFloor(index) {
-  if (index > 0) gameState.stats.floorsCleared++;
+function loadFloor(index, isAdvancing) {
+  if (isAdvancing && index > 0) gameState.stats.floorsCleared++;
   if (index >= chapter.floors.length) {
     // 所有层完成 — 进入主神空间
     showChapterComplete();
@@ -886,7 +931,7 @@ function movePlayer(dx, dy) {
       }
       startDialogue([{ text: floor.onClear.message, speaker: '旁白' }], null, () => {
         tutorialManager.trigger('first_stairs');
-        loadFloor(currentFloorIndex + 1);
+        loadFloor(currentFloorIndex + 1, true);
       });
       p.x = nx;
       p.y = ny;
@@ -1130,9 +1175,9 @@ function startCombat(enemy, preScaledEnemy) {
 
     if (result.victory) {
       try { victoryFlash(document.getElementById('ui-overlay')); } catch {}
-      renderer.addFloatText(`+${enemy.rewards?.exp || 0} EXP`, enemy.x, enemy.y - 1, 'rgb(170, 136, 255)');
-      if (enemy.rewards?.gold) renderer.addFloatText(`+${enemy.rewards.gold}G`, enemy.x, enemy.y - 0.4, 'rgb(255, 204, 68)');
-      if (enemy.rewards?.rewardPoints) renderer.addFloatText(`+${enemy.rewards.rewardPoints}RP`, enemy.x + 0.5, enemy.y - 1.5, 'rgb(255, 170, 0)');
+      renderer.addFloatText(`+${scaledEnemy.rewards?.exp || 0} EXP`, enemy.x, enemy.y - 1, 'rgb(170, 136, 255)');
+      if (scaledEnemy.rewards?.gold) renderer.addFloatText(`+${scaledEnemy.rewards.gold}G`, enemy.x, enemy.y - 0.4, 'rgb(255, 204, 68)');
+      if (scaledEnemy.rewards?.rewardPoints) renderer.addFloatText(`+${scaledEnemy.rewards.rewardPoints}RP`, enemy.x + 0.5, enemy.y - 1.5, 'rgb(255, 170, 0)');
 
       // 里程碑：战斗成就
       try { checkCombatMilestones(milestoneTracker, gameState.stats, enemy, result); } catch {}
@@ -1654,7 +1699,7 @@ function toggleGeneLock() {
 // ── 章节完成 ──
 function showChapterComplete() {
   gameStarted = false;
-  gameState.stats.chaptersCleared++;
+  if (!gameState._chapterClearCounted) { gameState.stats.chaptersCleared++; gameState._chapterClearCounted = true; }
   const p = gameState.player;
   const chapterNum = gameState.chapter;
   const chapterNames = { 1: '名为生化', 2: '异形杀戮', 3: '咒怨阴影', 4: '神鬼秘宝', 5: '死神绝境', 6: '异形再临', 7: '恶魔初临', 8: '重建中洲', 9: '星河远征', 10: '五队大战', 11: '心魔与终战前奏', 12: '生化终战' };
@@ -1764,6 +1809,7 @@ function showChapterComplete() {
           const cutsceneFn = cutscenes[nextChapter];
           const doStart = () => {
           gameState.chapter = nextChapter;
+          gameState._chapterClearCounted = false;
           gameState.nodeIndex = 0;
           // 清除已移除实体（新章节新地图）
           gameState.removedEntityIds = {};
@@ -1897,6 +1943,7 @@ function showChapterComplete() {
               ngBtn.addEventListener('click', () => {
                 const ngData = ngPlusState.completeClear(gameState.player, gameState.stats);
                 try { localStorage.setItem('ih_ngplus', JSON.stringify(ngPlusState.toJSON())); } catch {}
+                try { localStorage.setItem('ih_ngplus_carry', JSON.stringify(ngData)); } catch {}
                 try { localStorage.setItem('ih_bestiary', JSON.stringify(bestiary.toJSON())); } catch {}
                 const clearHtml = formatClearScreen(ngData, gameState.stats);
                 overlay.innerHTML = `

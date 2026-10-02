@@ -154,6 +154,9 @@ class NewGamePlusState {
       weapon: rules.keepWeapon ? playerState.weapon : null,
       // 新解锁奖励
       rewards: rules.newRewards || [],
+      // 保留图鉴/线索标记
+      keepBestiary: !!rules.keepBestiary,
+      keepLore: !!rules.keepLore,
       // 敌人增强倍率
       enemyScaleBonus: this.getEnemyScaleBonus() + rules.enemyScaleBonus,
     };

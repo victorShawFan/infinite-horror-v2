@@ -11,6 +11,12 @@ import { getDifficultyConfig, getDifficulty } from './DifficultySystem.js';
 import { getRelationshipLevel, COMPANION_PROFILES } from './RelationshipSystem.js';
 import { formatCycleInfo } from './NewGamePlus.js';
 import { LORE_ENTRIES } from './LoreSystem.js';
+import { getTalentEffects } from './TalentTree.js';
+import { formatBestiaryPanel } from './DifficultySystem.js';
+import { checkElementalResonance, getPlayerActiveElements } from './ElementalSystem.js';
+import { getAvailableSkills } from './SkillSystem.js';
+import { getEquipmentDisplayName } from './EquipmentSystem.js';
+import { getGeneLockDescription, getGeneLockProgress } from './GeneLockSystem.js';
 
 // 需要从 main.js 注入的共享状态
 let _ctx = {};
@@ -25,10 +31,10 @@ export function initPanelContext(context) {
 
 function _renderer() { return _ctx.renderer; }
 function _bestiary() { return _ctx.bestiary; }
-function _combatHistory() { return _ctx._ctx.combatHistory || []; }
+function _combatHistory() { return _ctx.combatHistory || []; }
 function _chapter() { return typeof _ctx.getChapter === 'function' ? _ctx.getChapter() : _ctx.chapter; }
-function _floorIndex() { return typeof _ctx.getFloorIndex === 'function' ? _ctx.getFloorIndex() : _ctx._ctx.currentFloorIndex; }
-function _entities() { return typeof _ctx.getEntities === 'function' ? _ctx.getEntities() : _ctx._ctx.entities || []; }
+function _floorIndex() { return typeof _ctx.getFloorIndex === 'function' ? _ctx.getFloorIndex() : _ctx.currentFloorIndex; }
+function _entities() { return typeof _ctx.getEntities === 'function' ? _ctx.getEntities() : _ctx.entities || []; }
 function _loreTracker() { return _ctx.loreTracker; }
 
 // ── 背包/状态面板 ──
@@ -201,10 +207,10 @@ export function showInventoryPanel() {
         </div>
 
         <div style="margin-top: 16px; border-top: 1px solid #333; padding-top: 12px;">
-          <h3 style="color: #ffaa00; margin-bottom: 10px;">🏆 成就 (${milestoneTracker.getUnlockedCount()}/${milestoneTracker.getTotalCount()})</h3>
+          <h3 style="color: #ffaa00; margin-bottom: 10px;">🏆 成就 (${_ctx.milestoneTracker.getUnlockedCount()}/${_ctx.milestoneTracker.getTotalCount()})</h3>
           <div style="display: flex; flex-wrap: wrap; gap: 4px;">
             ${Object.entries(MILESTONES).map(([id, ms]) => {
-              const unlocked = milestoneTracker.unlocked.has(id);
+              const unlocked = _ctx.milestoneTracker.unlocked.has(id);
               return '<div style="padding:3px 8px;border-radius:4px;font-size:10px;' +
                 (unlocked 
                   ? 'background:rgba(255,170,0,0.1);border:1px solid ' + ms.color + '33;color:' + ms.color 
@@ -721,7 +727,7 @@ export function showCombatLog() {
   if (gameState.state !== GAME_STATE.EXPLORING) return;
   const overlay = document.getElementById('ui-overlay');
   
-  const logs = _ctx.combatHistory.slice().reverse();
+  const logs = _combatHistory().slice().reverse();
   const logHtml = logs.length === 0 
     ? '<p style="color: #666; text-align: center; margin: 20px;">尚无战斗记录</p>'
     : logs.map((entry, i) => `

@@ -44,6 +44,9 @@ assert(easy.hp === Math.ceil(100 * 0.7), `EASY HP: ${easy.hp}=${Math.ceil(100*0.
 assert(easy.atk === Math.ceil(20 * 0.7), `EASY ATK: ${easy.atk}=${Math.ceil(20*0.7)}`);
 
 setDifficulty(DIFFICULTY.NIGHTMARE);
+// Seed Math.random to avoid flaky affix rolls
+const _origRandom = Math.random;
+Math.random = () => 0.99; // always > affixChance, so no affix
 const nightmare = applyDifficultyScaling(testEnemy);
 assert(nightmare.hp === Math.ceil(100 * 1.8), `NIGHTMARE HP: ${nightmare.hp}=${Math.ceil(100*1.8)}`);
 assert(nightmare.rewards.exp === Math.ceil(50 * 1.6), `NIGHTMARE EXP: ${nightmare.rewards.exp}=${Math.ceil(50*1.6)}`);
@@ -52,6 +55,7 @@ assert(nightmare.rewards.exp === Math.ceil(50 * 1.6), `NIGHTMARE EXP: ${nightmar
 const testBoss = { ...testEnemy, bossId: 'boss_test' };
 const nightmareBoss = applyDifficultyScaling(testBoss);
 assert(nightmareBoss.hp === Math.ceil(100 * 2.0), `Boss NIGHTMARE HP: ${nightmareBoss.hp}=${Math.ceil(100*2.0)}`);
+Math.random = _origRandom; // restore
 
 // ── 精英词缀 ──
 console.log('\n[ 精英词缀 ]');

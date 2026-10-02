@@ -561,6 +561,11 @@ if (chipFx.hasIceChip && enemy.atk !== enemyEffAtk) {
         { ...enemy, def: bossPhases ? effectiveEnemyDef : armorPenDef },
         p.weapon?.damageType || DAMAGE_TYPE.PHYSICAL
       );
+      // ── 敌人特性: 幻影闪避（evasive trait）──
+      if ((enemy.traits || []).includes('evasive') && Math.random() < 0.15) {
+        if (round <= 6 || i === 0) log.push({ text: `💨 ${enemy.name} 幻影闪避！躲开了攻击`, type: 'dodge' });
+        continue; // skip this hit entirely
+      }
       // ── 精英词缀: 暗影闪避 ──
       if (affix && affix.dodgeChance && Math.random() < affix.dodgeChance) {
         if (round <= 6 || i === 0) log.push({ text: `🌑 【${affix.name}】闪避了攻击！`, type: 'affix_dodge' });
@@ -708,12 +713,7 @@ if (chipFx.hasIceChip && enemy.atk !== enemyEffAtk) {
         log.push({ text: `💨 天赋闪避！躲开了 ${enemy.name} 的攻击`, type: 'dodge' });
       } else {
 
-      // ── 敌人特性：幻影闪避 ──
-      // ── 敌人特性: 幻影闪避（evasive trait） ──
-      const enemyDodged = (enemy.traits || []).includes('evasive') && Math.random() < 0.15;
-      if (enemyDodged) {
-        log.push({ text: `💨 ${enemy.name} 幻影闪避！避开了反击`, type: 'dodge' });
-      }
+
 
       // ── 敌人攻击（含狂怒加成） ──
       const eHit = calcDamage(
@@ -871,7 +871,14 @@ if (chipFx.hasIceChip && enemy.atk !== enemyEffAtk) {
 
     const rewards = enemy.rewards || {};
     if (rewards.exp) gameState.addExp(rewards.exp);
-    if (rewards.gold) p.gold += rewards.gold;
+    if (rewards.gold) {
+      // NG+ 变异器: 诅咒黄金 — 拾取战斗金币双倍但扣1HP
+      if (getActiveMutators().some(m => m.id === 'cursed_gold')) {
+        rewards.gold = Math.floor(rewards.gold * 2);
+        p.hp = Math.max(1, p.hp - 1);
+      }
+      p.gold += rewards.gold; gameState.stats.goldEarned += rewards.gold;
+    }
     if (rewards.rewardPoints) p.rewardPoints += rewards.rewardPoints;
 
     // ── 战利品掉落系统 ──
@@ -988,7 +995,13 @@ if (chipFx.hasIceChip && enemy.atk !== enemyEffAtk) {
             gameState.stats.enemiesKilled++;
             const rewards = enemy.rewards || {};
             if (rewards.exp) gameState.addExp(rewards.exp);
-            if (rewards.gold) p.gold += rewards.gold;
+            if (rewards.gold) {
+              if (getActiveMutators().some(m => m.id === 'cursed_gold')) {
+                rewards.gold = Math.floor(rewards.gold * 2);
+                p.hp = Math.max(1, p.hp - 1);
+              }
+              p.gold += rewards.gold; gameState.stats.goldEarned += rewards.gold;
+            }
             log.push({ text: `✦ 在${name}的支援下击败了 ${enemy.name}！`, type: 'victory' });
             eventBus.emit('combat:victory', { enemy, rewards, log });
             return { victory: true, log, rounds: round, companionRescue: true };
