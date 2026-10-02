@@ -25,6 +25,8 @@ export class Renderer {
     this._shakeY = 0;
     this._floatTexts = []; // { text, x, y, color, life }
     this._particles = [];
+    this._ambientParticles = [];
+    this._ambientTimer = 0;
     this._flashColor = null;
     this._flashDuration = 0;
     this._flashStart = 0;
@@ -139,6 +141,7 @@ export class Renderer {
 
     // ── 粒子 ──
     this._drawParticles(ctx);
+    this._updateAmbientParticles(ctx, floor);
 
     ctx.restore();
 
@@ -782,6 +785,47 @@ export class Renderer {
       ctx.textAlign = 'center';
       ctx.fillText(ft.text, ft.x * TILE_SIZE + TILE_SIZE / 2, ft.y * TILE_SIZE);
       return ft.life > 0;
+    });
+  }
+
+  _updateAmbientParticles(ctx, floor) {
+    this._ambientTimer++;
+    // Spawn ambient particles occasionally
+    if (this._ambientTimer % 8 === 0 && this._ambientParticles.length < 30) {
+      const theme = floor?.theme || 'default';
+      let color, size;
+      if (theme.startsWith('alien_hive')) {
+        color = `rgba(${80 + Math.random()*40}, ${30 + Math.random()*20}, ${10 + Math.random()*10},`;
+        size = 1.5 + Math.random() * 2;
+      } else if (theme.startsWith('alien')) {
+        color = `rgba(${30 + Math.random()*20}, ${40 + Math.random()*30}, ${80 + Math.random()*40},`;
+        size = 1 + Math.random() * 1.5;
+      } else {
+        color = `rgba(${150 + Math.random()*50}, ${150 + Math.random()*50}, ${160 + Math.random()*50},`;
+        size = 0.8 + Math.random() * 1.2;
+      }
+      this._ambientParticles.push({
+        x: Math.random() * CANVAS_W,
+        y: Math.random() * CANVAS_H,
+        vx: (Math.random() - 0.5) * 0.3,
+        vy: -0.1 - Math.random() * 0.2,
+        size,
+        color,
+        life: 120 + Math.random() * 120,
+        maxLife: 120 + Math.random() * 120,
+      });
+    }
+    // Draw ambient particles
+    this._ambientParticles = this._ambientParticles.filter(p => {
+      p.x += p.vx;
+      p.y += p.vy;
+      p.life--;
+      const alpha = Math.min(0.3, (p.life / p.maxLife) * 0.3);
+      ctx.fillStyle = p.color + alpha + ')';
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+      ctx.fill();
+      return p.life > 0;
     });
   }
 
