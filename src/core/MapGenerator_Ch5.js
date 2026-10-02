@@ -351,6 +351,12 @@ function generateFloor_5_5() {
         x: 2, y: 11, sprite: '♥', color: '#ff4488',
         itemType: 'consumable', effect: { heal: 70 },
       },
+      // 张杰遗书线索
+      { type: ENTITY_TYPE.ITEM, id: 'lore_death', name: '张杰的遗书',
+        x: 11, y: 10, sprite: '✉', color: '#ffdd44',
+        itemType: 'lore', loreId: 'lore_5_death',
+        description: '一封写给郑吒的遗书，墨迹尚未干透。',
+      },
     ],
   };
 }

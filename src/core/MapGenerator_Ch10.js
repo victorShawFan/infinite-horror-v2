@@ -25,7 +25,7 @@ function f10_3(){const g=makeGrid();carveRoom(g,1,1,5,5);carveCorridor(g,5,3,9,3
 {type:ENTITY_TYPE.ENEMY,id:'orc_scout',name:'兽人斥候',x:4,y:10,sprite:'👹',color:'#886644',hp:100,atk:34,def:12,spd:12,rewards:{exp:80,gold:52}},
 {type:ENTITY_TYPE.ENEMY,id:'orc_warrior',name:'兽人战士',x:17,y:12,sprite:'👹',color:'#886644',hp:115,atk:36,def:14,spd:10,rewards:{exp:88,gold:58}},
 {type:ENTITY_TYPE.ITEM,id:'def_ch10',name:'秘银护甲片',x:2,y:9,sprite:'◆',color:'#6688ff',itemType:'stat_boost',effect:{def:7}},
-{type:ENTITY_TYPE.ITEM,id:'medkit_10_3',name:'精灵草药',x:18,y:12,sprite:'♥',color:'#44ff88',itemType:'consumable',effect:{heal:120}}]};}
+{type:ENTITY_TYPE.ITEM,id:'medkit_10_3',name:'精灵草药',x:18,y:12,sprite:'♥',color:'#44ff88',itemType:'consumable',effect:{heal:120}},{type:'item',id:'lore_teams',name:'轮回者观察报告',x:3,y:10,sprite:'📋',color:'#ffdd44',itemType:'lore',loreId:'lore_10_teams',description:'一份关于五支队伍的观察报告。'}]};}
 
 // ═══ 10-4 五队接触 ═══
 function f10_4(){const g=makeGrid();carveRoom(g,1,6,6,11);carveCorridor(g,6,8,10,8);carveRoom(g,10,4,15,12);carveCorridor(g,15,8,18,8);carveRoom(g,16,5,19,11);carveRoom(g,5,1,10,3);carveCorridor(g,8,3,8,4);carveRoom(g,8,13,14,16);carveCorridor(g,11,12,11,13);g[15][13]=TILE.STAIRS;return{id:'10-4',name:'五队接触',subtitle:'战场上出现了其他轮回者队伍。有人试图联盟，有人选择背叛。',bgColor:'#0a0c10',theme:'fantasy',tiles:g,width:W,height:H,playerStart:{x:3,y:8},entities:[

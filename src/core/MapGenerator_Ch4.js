@@ -253,6 +253,12 @@ function generateFloor_4_3() {
         x: 17, y: 15, sprite: '◆', color: '#44ff88',
         itemType: 'stat_boost', effect: { maxHp: 30 },
       },
+      // 复活真经残页线索
+      { type: ENTITY_TYPE.ITEM, id: 'lore_scripture', name: '复活真经残页',
+        x: 9, y: 9, sprite: '📜', color: '#ffdd44',
+        itemType: 'lore', loreId: 'lore_4_scripture',
+        description: '一页残破的经文，记载着复活的代价。',
+      },
     ],
   };
 }

@@ -310,6 +310,12 @@ function generateFloor_3_3() {
         x: 5, y: 4, sprite: '◆', color: '#44ffaa',
         itemType: 'stat_boost', effect: { spd: 3 },
       },
+      // 除灵师日记线索
+      { type: ENTITY_TYPE.ITEM, id: 'lore_curse', name: '除灵师的日记',
+        x: 19, y: 9, sprite: '📖', color: '#ffdd44',
+        itemType: 'lore', loreId: 'lore_3_curse',
+        description: '一本泛黄的日记，记录着对付诅咒的方法。',
+      },
     ],
   };
 }
