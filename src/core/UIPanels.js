@@ -19,6 +19,7 @@ import { getEquipmentDisplayName } from './EquipmentSystem.js';
 import { getGeneLockDescription, getGeneLockProgress } from './GeneLockSystem.js';
 import { getInventoryList, useConsumable, CONSUMABLE_DEFS } from './ConsumableSystem.js';
 import { getAvailableRecipes, forgeRecipe, disassembleEquipment, reforgeAffixes, fuseEquipment, getDisassemblePreview, getFusionCost, QUALITY } from './ForgeSystem.js';
+import { achievementTracker, ACHIEVEMENTS } from './AchievementSystem.js';
 
 // 需要从 main.js 注入的共享状态
 let _ctx = {};
@@ -1282,8 +1283,109 @@ export function showForgePanel() {
   _render();
 }
 
-// ── 成就面板占位 ──
+
+// ═══════════════════════════════════════════════════════════════
+// 成就面板 — J键打开
+// ═══════════════════════════════════════════════════════════════
 export function showAchievementPanel() {
-  // TODO: 成就系统面板
-  console.log("Achievement panel not yet implemented");
+  if (gameState.state !== GAME_STATE.EXPLORING) return;
+  gameState.setState(GAME_STATE.INVENTORY);
+  const overlay = document.getElementById('ui-overlay');
+  
+  let activeCat = 'combat';
+  const categories = [
+    { key: 'combat',  name: '⚔ 战斗', color: '#ff4444' },
+    { key: 'explore', name: '🗺 探索', color: '#44ff88' },
+    { key: 'growth',  name: '📈 成长', color: '#ffcc44' },
+    { key: 'story',   name: '📖 剧情', color: '#aa88ff' },
+    { key: 'collect',  name: '📦 收集', color: '#ff8844' },
+  ];
+  
+  function _render() {
+    const { unlocked, total } = achievementTracker.getUnlockRate();
+    const items = achievementTracker.getByCategory(activeCat);
+    
+    const tabHTML = categories.map(c => `
+      <button class="ach-tab" data-cat="${c.key}" style="
+        background:${activeCat === c.key ? c.color + '22' : 'transparent'};
+        border:1px solid ${activeCat === c.key ? c.color : '#333'};
+        color:${activeCat === c.key ? c.color : '#666'};
+        padding:6px 14px;cursor:pointer;font-size:12px;font-family:inherit;
+        border-radius:6px;
+      ">${c.name}</button>
+    `).join('');
+    
+    const listHTML = items.map(a => {
+      if (!a.visible) return `
+        <div style="background:rgba(255,255,255,0.02);border:1px solid #222;border-radius:8px;
+                    padding:12px;margin-bottom:6px;opacity:0.4;">
+          <span style="color:#555;font-size:14px;">❓ 隐藏成就</span>
+        </div>`;
+      return `
+        <div style="background:${a.unlocked ? 'rgba(255,204,68,0.05)' : 'rgba(255,255,255,0.02)'};
+                    border:1px solid ${a.unlocked ? '#ffcc4433' : '#222'};
+                    border-radius:8px;padding:12px;margin-bottom:6px;
+                    display:flex;align-items:center;gap:12px;">
+          <span style="font-size:24px;${a.unlocked ? '' : 'filter:grayscale(1);opacity:0.4;'}">${a.icon}</span>
+          <div style="flex:1;">
+            <div style="display:flex;justify-content:space-between;align-items:center;">
+              <span style="color:${a.unlocked ? '#e8d8c0' : '#666'};font-size:14px;font-weight:bold;">
+                ${a.name}
+              </span>
+              ${a.unlocked ? '<span style="color:#44ff88;font-size:11px;">✓ 已解锁</span>' : ''}
+            </div>
+            <p style="color:${a.unlocked ? '#aaa' : '#555'};font-size:12px;margin-top:4px;">${a.desc}</p>
+          </div>
+        </div>`;
+    }).join('');
+    
+    overlay.innerHTML = `
+      <div style="position:absolute;top:0;left:0;right:0;bottom:0;
+                  display:flex;align-items:center;justify-content:center;
+                  background:rgba(0,0,0,0.85);" id="ach-backdrop">
+        <div style="background:rgba(10,10,20,0.97);border:1px solid #444;border-radius:16px;
+                    padding:24px;max-width:520px;width:95%;max-height:80vh;overflow-y:auto;">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+            <h2 style="color:#ffcc44;letter-spacing:4px;font-size:18px;">🏆 成就</h2>
+            <span style="color:#888;font-size:13px;">${unlocked}/${total} 已解锁</span>
+          </div>
+          
+          <!-- 进度条 -->
+          <div style="background:#222;border-radius:8px;height:8px;margin-bottom:16px;overflow:hidden;">
+            <div style="background:linear-gradient(90deg,#ffcc44,#ff8844);height:100%;
+                        width:${Math.round(unlocked/total*100)}%;border-radius:8px;
+                        transition:width 0.3s ease;"></div>
+          </div>
+          
+          <div style="display:flex;gap:6px;margin-bottom:16px;justify-content:center;flex-wrap:wrap;">
+            ${tabHTML}
+          </div>
+          
+          <div style="min-height:100px;">${listHTML}</div>
+          
+          <div style="text-align:center;margin-top:16px;">
+            <button id="btn-close-ach" style="
+              background:transparent;border:1px solid #444;color:#888;
+              padding:8px 30px;cursor:pointer;font-size:14px;font-family:inherit;
+              border-radius:6px;
+            ">关闭 (Esc)</button>
+          </div>
+        </div>
+      </div>
+    `;
+    
+    document.querySelectorAll('.ach-tab').forEach(btn => {
+      btn.addEventListener('click', () => { activeCat = btn.dataset.cat; _render(); });
+    });
+    
+    const close = () => { overlay.innerHTML = ''; gameState.setState(GAME_STATE.EXPLORING); };
+    document.getElementById('btn-close-ach')?.addEventListener('click', close);
+    document.getElementById('ach-backdrop')?.addEventListener('click', e => {
+      if (e.target.id === 'ach-backdrop') close();
+    });
+    const kh = (e) => { if (e.key === 'Escape') { document.removeEventListener('keydown', kh); close(); } };
+    document.addEventListener('keydown', kh);
+  }
+  
+  _render();
 }

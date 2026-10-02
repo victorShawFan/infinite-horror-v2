@@ -56,6 +56,7 @@ import { generateSecretEntities, tryBreakSecret, restoreBrokenSecrets, SECRET_TY
 import { randomEncounterManager } from './core/RandomEncounterSystem.js';
 import { getCurrentStance, setStance, getAvailableStances, getStanceId, restoreStance } from './core/CombatStance.js';
 import { challengeState, CHALLENGE_TYPES } from './core/ChallengeDungeon.js';
+import { achievementTracker } from './core/AchievementSystem.js';
 import { getQualityColor, getQualityName, formatEquipmentTooltip, getAllAffixEffects } from './core/EquipmentAffixes.js';
 import { killStreak } from './core/KillStreak.js';
 import { rateBattle, recordRating, formatRatingHTML, getRatingStats } from './core/BattleRating.js';
@@ -103,6 +104,10 @@ function autoSave(reason = '') {
     // 随机遭遇持久化
     try {
       localStorage.setItem('ih_encounters', JSON.stringify(randomEncounterManager.toJSON()));
+    // 成就持久化
+    try {
+      localStorage.setItem('ih_achievements', JSON.stringify(achievementTracker.toJSON()));
+    } catch {}
     } catch {}
     try { renderer.showSaveIndicator(); } catch {}
     if (reason) console.log('[AutoSave]', reason);
@@ -551,6 +556,11 @@ function showMainMenu() {
       try {
         const enc = localStorage.getItem('ih_encounters');
         if (enc) randomEncounterManager.fromJSON(JSON.parse(enc));
+      // 成就恢复
+      try {
+        const ach = localStorage.getItem('ih_achievements');
+        if (ach) achievementTracker.fromJSON(JSON.parse(ach));
+      } catch {}
       } catch {}
       const chapterGens = { 1: generateChapter1, 2: generateChapter2, 3: generateChapter3, 4: generateChapter4, 5: generateChapter5, 6: generateChapter6, 7: generateChapter7, 8: generateChapter8, 9: generateChapter9, 10: generateChapter10, 11: generateChapter11, 12: generateChapter12 };
       const gen = chapterGens[gameState.chapter] || generateChapter1;
@@ -1235,6 +1245,10 @@ case 'h': case '?':
       case 'q':
         // 快捷道具面板
         _showExplorationItemPanel();
+        return;
+      case 'j':
+        // 成就面板
+        showAchievementPanel();
         return;
       case 'p':
         // 设置面板
