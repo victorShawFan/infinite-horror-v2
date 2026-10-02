@@ -151,6 +151,8 @@ function showMainMenu() {
         继续轮回
       </button>
 
+      <div id="menu-difficulty" style="margin-top: 24px; display: flex; gap: 8px;"></div>
+
     </div>
       <p style="
         position: absolute; bottom: 30px; font-size: 12px; color: #444;
@@ -165,6 +167,31 @@ function showMainMenu() {
   // Check if save exists and update continue button
   const saveKey = 'infinite_horror_save_0';
   const saveData = localStorage.getItem(saveKey);
+  
+  // 难度选择按钮 — 渲染+绑定
+  const diffContainer = document.getElementById('menu-difficulty');
+  if (diffContainer) {
+    function renderDiffButtons() {
+      diffContainer.innerHTML = Object.entries(DIFFICULTY_CONFIG).map(([id, cfg]) => {
+        const active = getDifficulty() === id;
+        return '<button class="diff-btn" data-diff="' + id + '" style="' +
+          'background:' + (active ? 'rgba(255,255,255,0.1)' : 'transparent') + ';' +
+          'border:1px solid ' + (active ? cfg.color : '#333') + ';' +
+          'color:' + (active ? cfg.color : '#555') + ';' +
+          'font-size:12px;padding:6px 14px;cursor:pointer;' +
+          'border-radius:4px;font-family:inherit;transition:all 0.2s;' +
+          '">' + cfg.icon + ' ' + cfg.name + '</button>';
+      }).join('');
+      diffContainer.querySelectorAll('.diff-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          setDifficulty(btn.dataset.diff);
+          renderDiffButtons();
+        });
+      });
+    }
+    renderDiffButtons();
+  }
+
   const btnCont = document.getElementById('btn-continue');
   if (saveData) {
     try {

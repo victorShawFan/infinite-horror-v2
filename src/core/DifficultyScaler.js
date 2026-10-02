@@ -5,6 +5,10 @@
 // 解决问题：后期章节敌人太弱，玩家零伤通关
 // 方案：按章节倍率缩放敌人属性，保持前期手感，加强后期挑战
 
+import { getDifficultyConfig } from './DifficultySystem.js';
+import { ENEMY_AFFIXES } from './DifficultySystem.js';
+function await_sync_affixes() { return { ENEMY_AFFIXES }; }
+
 /** 各章节敌人属性倍率 */
 const CHAPTER_SCALING = {
   1: 1.0,    // 基准
@@ -45,26 +49,57 @@ const BOSS_EXTRA_SCALING = {
  */
 export function scaleEnemy(enemy, chapter) {
   const scale = CHAPTER_SCALING[chapter] || 1.0;
-  const isBoss = enemy.type === 'boss';
+  const isBoss = !!enemy.bossId || enemy.type === 'boss';
   const bossExtra = isBoss ? (BOSS_EXTRA_SCALING[chapter] || 1.0) : 1.0;
-  const totalScale = scale * bossExtra;
+  const chapterScale = scale * bossExtra;
 
-  return {
+  // 叠加玩家选择的难度倍率
+  const diff = getDifficultyConfig();
+  const hpMult = isBoss ? diff.bossHpMult : diff.enemyHpMult;
+  const atkMult = isBoss ? diff.bossAtkMult : diff.enemyAtkMult;
+  const defMult = diff.enemyDefMult;
+  const expMult = diff.expMult;
+  const goldMult = diff.goldMult;
+
+  const scaled = {
     ...enemy,
-    hp: Math.floor(enemy.hp * totalScale),
-    atk: Math.floor(enemy.atk * totalScale),
-    def: Math.floor(enemy.def * totalScale),
+    hp: Math.floor(enemy.hp * chapterScale * hpMult),
+    atk: Math.floor(enemy.atk * chapterScale * atkMult),
+    def: Math.floor(enemy.def * chapterScale * defMult),
     spd: enemy.spd || 5,
     rewards: enemy.rewards ? {
       ...enemy.rewards,
-      exp: Math.floor((enemy.rewards.exp || 0) * Math.sqrt(totalScale)),
-      gold: Math.floor((enemy.rewards.gold || 0) * Math.sqrt(totalScale)),
+      exp: Math.floor((enemy.rewards.exp || 0) * Math.sqrt(chapterScale) * expMult),
+      gold: Math.floor((enemy.rewards.gold || 0) * Math.sqrt(chapterScale) * goldMult),
       rewardPoints: enemy.rewards.rewardPoints
-        ? Math.floor(enemy.rewards.rewardPoints * Math.sqrt(totalScale))
+        ? Math.floor(enemy.rewards.rewardPoints * Math.sqrt(chapterScale))
         : undefined,
     } : enemy.rewards,
-    geneLockCharge: Math.floor((enemy.geneLockCharge || 5) * Math.sqrt(totalScale)),
+    geneLockCharge: Math.floor((enemy.geneLockCharge || 5) * Math.sqrt(chapterScale)),
   };
+
+  // 精英词缀(非Boss时按难度概率触发)
+  if (!isBoss && diff.affixChance > 0 && Math.random() < diff.affixChance) {
+    const { ENEMY_AFFIXES } = await_sync_affixes();
+    if (ENEMY_AFFIXES) {
+      const keys = Object.keys(ENEMY_AFFIXES);
+      const affixId = keys[Math.floor(Math.random() * keys.length)];
+      const affix = ENEMY_AFFIXES[affixId];
+      scaled.affix = { id: affixId, ...affix };
+      scaled.name = affix.icon + scaled.name;
+      if (affix.spdMult) scaled.spd = Math.ceil(scaled.spd * affix.spdMult);
+      if (affix.defMult) scaled.def = Math.ceil(scaled.def * affix.defMult);
+      if (affix.atkMult) scaled.atk = Math.ceil(scaled.atk * affix.atkMult);
+      if (affix.hpMult) scaled.hp = Math.ceil(scaled.hp * affix.hpMult);
+      if (affix.allStatMult) {
+        scaled.hp = Math.ceil(scaled.hp * affix.allStatMult);
+        scaled.atk = Math.ceil(scaled.atk * affix.allStatMult);
+        scaled.def = Math.ceil(scaled.def * affix.allStatMult);
+      }
+    }
+  }
+
+  return scaled;
 }
 
 /**
