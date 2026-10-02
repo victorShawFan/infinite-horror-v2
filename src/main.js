@@ -255,6 +255,8 @@ function showFloorTitle(floor) {
     '1-4': '/assets/scenes/1-4_激光走廊_背景.jpg',
     '1-5': '/assets/scenes/1-5_终端控制室_背景.jpg',
     '1-6': '/assets/scenes/1-6_六小时回归_背景.jpg',
+    // Ch2 placeholder backgrounds (uses default dark bg if not found)
+    '2-1': '', '2-2': '', '2-3': '', '2-4': '', '2-5': '', '2-6': '',
   };
   const bgUrl = sceneBgMap[floor.id] || '';
   const overlay = document.getElementById('ui-overlay');
@@ -272,7 +274,7 @@ function showFloorTitle(floor) {
       <div style="position: relative; z-index: 1; text-align: center;">
         <p style="font-size: 14px; color: #ff4444; letter-spacing: 6px; margin-bottom: 8px;
           text-shadow: 0 0 20px rgba(255,68,68,0.5);">
-          第一章 · 名为生化
+          ${chapter.name || '第' + gameState.chapter + '章'}
         </p>
         <h2 style="font-size: 42px; color: #e0e0e0; letter-spacing: 8px; margin-bottom: 16px;
           text-shadow: 0 0 30px rgba(255,255,255,0.2);">

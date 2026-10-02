@@ -43,7 +43,7 @@ function generateFloor_2_1() {
   carveCorridor(grid, 8, 10, 8, 8);
 
   return {
-    id: '2-1', name: '飞船封锁', bgColor: '#080812', theme: 'alien_ship',
+    id: '2-1', name: '飞船封锁', subtitle: '苏拉科号的走廊一片死寂。唯一的声音是头顶日光灯管的嗡嗡声。', bgColor: '#080812', theme: 'alien_ship',
     grid, playerStart: { x: 2, y: 8 },
     entities: [
       // 开场对话
@@ -143,7 +143,7 @@ function generateFloor_2_2() {
   carveCorridor(grid, 19, 5, 19, 11);
 
   return {
-    id: '2-2', name: '新人分队', bgColor: '#080812', theme: 'alien_ship',
+    id: '2-2', name: '新人分队', subtitle: '走廊在这里分叉。每条路线都有它的代价和收获。', bgColor: '#080812', theme: 'alien_ship',
     grid, playerStart: { x: 2, y: 8 },
     entities: [
       // 分路选择事件
@@ -235,7 +235,7 @@ function generateFloor_2_3() {
   carveCorridor(grid, 6, 10, 6, 12);
 
   return {
-    id: '2-3', name: '通风管潜行', bgColor: '#060610', theme: 'alien_vent',
+    id: '2-3', name: '通风管潜行', subtitle: '通风管道内伸手不见五指。金属管壁上传来异形爬行的刮擦声。', bgColor: '#060610', theme: 'alien_vent',
     grid, playerStart: { x: 2, y: 2 },
     entities: [
       { type: ENTITY_TYPE.EVENT, id: 'stealth_tutorial', name: '潜行提示',
@@ -317,7 +317,7 @@ function generateFloor_2_4() {
   carveRoom(grid, 15, 11, 19, 15); // 出口区
 
   return {
-    id: '2-4', name: '抱脸虫隔离', bgColor: '#0a0810', theme: 'alien_lab',
+    id: '2-4', name: '抱脸虫隔离', subtitle: '隔离实验室充满了未知的恐惧。那些卵囊……似乎在呼吸。', bgColor: '#0a0810', theme: 'alien_lab',
     grid, playerStart: { x: 3, y: 8 },
     entities: [
       // 卵囊群
@@ -396,7 +396,7 @@ function generateFloor_2_5() {
   carveCorridor(grid, 16, 5, 16, 11);
 
   return {
-    id: '2-5', name: '巢穴救援', bgColor: '#0c0808', theme: 'alien_hive',
+    id: '2-5', name: '巢穴救援', subtitle: '有机质覆盖了一切。这里是异形的王国。人类的残骸散落在粘液之间。', bgColor: '#0c0808', theme: 'alien_hive',
     grid, playerStart: { x: 2, y: 8 },
     entities: [
       // 异形战士群
@@ -483,7 +483,7 @@ function generateFloor_2_6() {
   grid[12][10] = TILE.WALL; grid[12][14] = TILE.WALL;
 
   return {
-    id: '2-6', name: '皇后与撤离', bgColor: '#100808', theme: 'alien_hive',
+    id: '2-6', name: '皇后与撤离', subtitle: '巢穴的中心。皇后的嘶鸣在整个舱室回荡。这是最后的战斗。', bgColor: '#100808', theme: 'alien_hive',
     grid, playerStart: { x: 3, y: 8 },
     entities: [
       // 异形守卫
