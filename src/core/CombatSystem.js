@@ -289,7 +289,14 @@ export function executeBattle(enemy) {
     ? Math.floor(enemy.atk * (1 - chipFx.slowPct / 100))
     : enemy.atk;
 
-  if (chipFx.hasIceChip && enemy.atk !== enemyEffAtk) {
+  
+  // ── 精英词缀战斗效果 ──
+  const affix = enemy.affix || null;
+  if (affix) {
+    log.push({ text: `⚠ 精英敌人【${affix.name}】${affix.desc}`, type: 'affix_warning' });
+  }
+
+if (chipFx.hasIceChip && enemy.atk !== enemyEffAtk) {
     log.push({ text: `❄ 冰芯片生效：${enemy.name}攻击力 ${enemy.atk}→${enemyEffAtk}`, type: 'buff' });
   }
   if (isDouble) {
@@ -387,6 +394,23 @@ export function executeBattle(enemy) {
 
   while (enemyHp > 0 && playerHp > 0) {
     round++;
+    // ── 精英词缀: 每回合效果 ──
+    if (affix) {
+      // 剧毒: 每回合毒伤
+      if (affix.poisonDmg && playerHp > 0) {
+        const toxicDmg = Math.max(1, Math.floor(p.maxHp * affix.poisonDmg));
+        playerHp -= toxicDmg;
+        if (round <= 6) log.push({ text: `☠ 【${affix.name}】毒素 -${toxicDmg} HP`, type: 'affix_damage' });
+        if (playerHp <= 0) break;
+      }
+      // 吸血: 每回合恢复
+      if (affix.lifeSteal && enemyHp > 0) {
+        const healAmt = Math.max(1, Math.floor(effectiveEnemyAtk * affix.lifeSteal));
+        enemyHp = Math.min(enemyMaxHp, enemyHp + healAmt);
+        if (round <= 6) log.push({ text: `🩸 【${affix.name}】吸血 +${healAmt} HP`, type: 'affix_heal' });
+      }
+    }
+
     combatState.turn = round;
 
     // ── 天赋：每回合生命恢复 ──
