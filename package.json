@@ -1,15 +1,12 @@
 {
   "name": "infinite-horror",
   "version": "0.1.0",
-  "description": "《无限恐怖：中洲轮回》— 3D沉浸式恐怖探索与叙事选择游戏",
+  "description": "《无限恐怖：中洲轮回》— 2D俯视角魔塔式RPG + 叙事选择",
   "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview"
-  },
-  "dependencies": {
-    "three": "^0.170.0"
   },
   "devDependencies": {
     "vite": "^6.0.0"
