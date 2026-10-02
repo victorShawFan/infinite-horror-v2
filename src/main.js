@@ -44,6 +44,7 @@ import { changeRelationship, getRelationshipLevel, getRelationshipSummary, COMPA
 import { loreTracker, LORE_ENTRIES, formatLorePopup } from './core/LoreSystem.js';
 import { bestiary, getDifficulty, setDifficulty, getDifficultyConfig, applyDifficultyScaling, formatBestiaryPanel, formatDifficultySelector, DIFFICULTY, DIFFICULTY_CONFIG } from './core/DifficultySystem.js';
 import { ngPlusState, formatClearScreen, formatCycleInfo, TITLES } from './core/NewGamePlus.js';
+import { fadeBlackTransition, chapterIntroTransition, floorTransition, victoryFlash } from './core/TransitionSystem.js';
 
 // ── 全局状态 ──
 let renderer;
@@ -405,6 +406,13 @@ function loadFloor(index) {
 
   // 屏幕过渡
   if (renderer) renderer.fadeOut(0.08);
+  try {
+    const floorInfo = chapter.floors[index];
+    if (floorInfo) floorTransition(document.getElementById("ui-overlay"), {
+      floorName: floorInfo.name || (""),
+      duration: 1000,
+    });
+  } catch {}
 
   currentFloorIndex = index;
   gameState.nodeIndex = index;
@@ -1057,6 +1065,7 @@ function startCombat(enemy) {
     if (combatHistory.length > 20) combatHistory.shift(); // 保留最近20场
 
     if (result.victory) {
+      try { victoryFlash(document.getElementById('ui-overlay')); } catch {}
       renderer.addFloatText(`+${enemy.rewards?.exp || 0} EXP`, enemy.x, enemy.y - 1, 'rgb(170, 136, 255)');
 
       // 里程碑：战斗成就
