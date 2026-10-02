@@ -896,6 +896,7 @@ function movePlayer(dx, dy) {
           if (floor.tiles) floor.tiles[ny][nx] = 0;
           renderer.shake(6, 300);
           renderer.flash('rgba(255, 200, 100)', 200);
+          renderer.addParticle(nx * 48 + 24, ny * 48 + 24, 'rgba(255, 220, 150, 0.9)', 15);
           audioEngine.playDamage();
           // 添加密室奖励消耗品（通过事件）
           if (result.reward?.type === 'consumable') {
@@ -1710,6 +1711,7 @@ function triggerEvent(entity) {
     const p = gameState.player;
     if (result.dodged) {
       renderer.addFloatText('💨 闪避!', p.x, p.y - 1, 'rgb(100, 255, 200)');
+      renderer.addParticle(p.x * 48 + 24, p.y * 48 + 24, 'rgba(100,255,200,0.6)', 6);
       audioEngine.playPickup();
     } else {
       renderer.addFloatText(`-${result.damage}`, p.x, p.y - 1, 'rgb(255, 80, 80)');
