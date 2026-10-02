@@ -95,6 +95,9 @@ class GameState {
 
     // 宝石背包
     this.gemInventory = [];
+
+    // 同伴关系值
+    this.relationships = {};
   }
 
 
@@ -127,6 +130,7 @@ class GameState {
     this.removedEntityIds = {};
     this.talents = initTalentState();
     this.gemInventory = [];
+    this.relationships = {};
   }
 
   setState(newState) {
@@ -266,6 +270,7 @@ class GameState {
       shopPurchased: [...(this._shopPurchased || [])],
       talents: { points: this.talents.points, allocated: { ...this.talents.allocated } },
       gemInventory: [...this.gemInventory],
+      relationships: { ...this.relationships },
     };
   }
 
@@ -305,6 +310,7 @@ class GameState {
         this.talents._cache = null;
       }
       this.gemInventory = parsed.gemInventory || [];
+      this.relationships = parsed.relationships || {};
       eventBus.emit('game:loaded', { slot });
       return true;
     } catch (e) {

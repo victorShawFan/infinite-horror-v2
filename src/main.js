@@ -40,6 +40,7 @@ import { milestoneTracker, checkCombatMilestones, checkGrowthMilestones, checkCh
 import { getTalentEffects, TALENT_PATHS } from './core/TalentTree.js';
 import { getEquipmentDisplayName, getEquipmentTotalStats } from './core/EquipmentSystem.js';
 import { getPlayerActiveElements, ELEMENT_INFO, checkElementalResonance } from './core/ElementalSystem.js';
+import { changeRelationship, getRelationshipLevel, getRelationshipSummary, COMPANION_PROFILES } from './core/RelationshipSystem.js';
 
 // ── 全局状态 ──
 let renderer;
@@ -269,11 +270,17 @@ function startNewGame() {
   audioEngine.resume();
   audioEngine.startAmbience();
 
-  // 添加初始队友
+  // 添加初始队友并建立初始关系
   gameState.addCompanion({ id: 'zhang_jie', name: '张杰', role: '战术领队', alive: true });
   gameState.addCompanion({ id: 'zhan_lan', name: '詹岚', role: '情报分析', alive: true });
   gameState.addCompanion({ id: 'li_xiaoyi', name: '李萧毅', role: '机动支援', alive: true });
   gameState.addCompanion({ id: 'mou_gang', name: '牟钢', role: '防线坚守', alive: true });
+  // 初始关系：张杰作为队长+15，其余同伴+5
+  changeRelationship('zhang_jie', 'good_decision', gameState.relationships);
+  changeRelationship('zhang_jie', 'share_item', gameState.relationships);
+  changeRelationship('zhan_lan', 'share_item', gameState.relationships);
+  changeRelationship('li_xiaoyi', 'share_item', gameState.relationships);
+  changeRelationship('mou_gang', 'share_item', gameState.relationships);
 
   startGame();
 }
@@ -937,6 +944,11 @@ function startCombat(enemy) {
     const idx = entities.indexOf(enemy);
     if (idx >= 0) entities.splice(idx, 1);
     gameState.markEntityRemoved(currentFloorIndex, enemy.id);
+    
+    // 并肩作战 → 存活同伴关系+3
+    for (const c of gameState.companions.filter(c => c.alive)) {
+      changeRelationship(c.id, 'fight_together', gameState.relationships);
+    }
   }
 
   // 暴露玩家位置给战斗动画
@@ -1110,6 +1122,8 @@ function triggerEvent(entity) {
       const comp = gameState.companions.find(c => c.id === evt.companionDeath);
       if (comp) {
         comp.alive = false;
+        // 队友牺牲 → 关系大幅提升（铭记）
+        changeRelationship(evt.companionDeath, 'sacrifice', gameState.relationships);
         renderer.shake(8, 600);
         renderer.addFloatText(`${comp.name} 阵亡`, gameState.player.x, gameState.player.y - 1, 'rgb(255, 0, 0)');
       }
@@ -1147,6 +1161,8 @@ function triggerEvent(entity) {
       const comp = gameState.companions.find(c => c.id === evt.reviveCompanion);
       if (comp) {
         comp.alive = true;
+        // 复活队友 → 救命之恩
+        changeRelationship(evt.reviveCompanion, 'save_life', gameState.relationships);
         renderer.addFloatText(`${comp.name} 复活！`, gameState.player.x, gameState.player.y - 1, 'rgb(68, 255, 136)');
       }
     }
@@ -1165,6 +1181,8 @@ function triggerEvent(entity) {
       const existing = gameState.companions.find(c => c.id === evt.addCompanion.id);
       if (!existing) {
         gameState.addCompanion(evt.addCompanion);
+        // 新队友加入 → 初始好感
+        changeRelationship(evt.addCompanion.id, 'honest_talk', gameState.relationships);
         renderer.addFloatText(`${evt.addCompanion.name} 加入！`, gameState.player.x, gameState.player.y - 1, 'rgb(68, 255, 200)');
       }
     }
@@ -1429,11 +1447,23 @@ function showInventoryPanel() {
               </div>
             ` : ''}
 
-            <h3 style="color: #44ff88; margin-top: 16px; margin-bottom: 8px;">队友 <span style="color:#666;font-size:11px;">(存活队友提供被动加成)</span></h3>
+            <h3 style="color: #44ff88; margin-top: 16px; margin-bottom: 8px;">队友与羁绊</h3>
             ${gameState.companions.map(c => {
               const bonusMap = { zhang_jie:'ATK+2', zhan_lan:'CRT+3', li_xiaoyi:'ATK+1 DEF+1', mou_gang:'DEF+3', chuxuan:'SPD+3', lingdian:'ATK+3 CRT+5', bawang:'ATK+2 DEF+2', lishuaixi:'ATK+1' };
               const bonus = bonusMap[c.id] || '';
-              return '<p style="color:' + (c.alive ? '#aaa' : '#664444') + ';font-size:13px;">' + (c.alive ? '●' : '✝') + ' ' + c.name + ' · ' + c.role + (c.alive && bonus ? ' <span style="color:#44ff88;font-size:11px;">(' + bonus + ')</span>' : '') + (c.alive ? '' : ' <span style="color:#664444">（阵亡）</span>') + '</p>';
+              const relVal = gameState.relationships[c.id] || 0;
+              const relLevel = typeof getRelationshipLevel === 'function' ? getRelationshipLevel(relVal) : { name: '中立', color: '#888' };
+              const profile = typeof COMPANION_PROFILES !== 'undefined' ? COMPANION_PROFILES[c.id] : null;
+              const quote = profile?.quote || '';
+              return '<div style="margin-bottom:6px;padding:6px 8px;background:rgba(255,255,255,0.02);border-left:2px solid ' + (c.alive ? relLevel.color : '#333') + ';border-radius:0 4px 4px 0;">' +
+                '<div style="display:flex;justify-content:space-between;align-items:center;">' +
+                '<span style="color:' + (c.alive ? '#ccc' : '#664444') + ';font-size:13px;">' + (c.alive ? '●' : '✝') + ' ' + c.name + ' · ' + c.role + '</span>' +
+                '<span style="color:' + relLevel.color + ';font-size:11px;">' + relLevel.name + ' (' + relVal + ')</span>' +
+                '</div>' +
+                (c.alive && bonus ? '<span style="color:#44ff88;font-size:10px;">' + bonus + '</span>' : '') +
+                (c.alive ? '' : ' <span style="color:#664444;font-size:10px;">（阵亡）</span>') +
+                (quote ? '<p style="color:#555;font-size:10px;font-style:italic;margin-top:2px;">' + quote + '</p>' : '') +
+              '</div>';
             }).join('')}
           </div>
         </div>

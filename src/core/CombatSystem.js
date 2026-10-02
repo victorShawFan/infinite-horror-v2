@@ -20,6 +20,7 @@ import {
 } from './EnemyAbilitySystem.js';
 import { calcElementalModifier, getPlayerActiveElements, getEnemyElement, checkElementalResonance, ELEMENT_INFO } from './ElementalSystem.js';
 import { generateLoot, formatLootLog, applyLoot } from './LootSystem.js';
+import { getCompanionCombatBonus } from './RelationshipSystem.js';
 
 // ── 伤害计算 ──
 export function calcDamage(attacker, defender, damageType = DAMAGE_TYPE.PHYSICAL, minDmg = 1) {
@@ -835,6 +836,18 @@ function getCompanionBonuses(stat) {
   } catch { return 0; }
 }
 
+// ── 关系加成：存活同伴的关系等级平均加成 ──
+function getRelationshipMultiplier() {
+  try {
+    const gs = gameState;
+    if (!gs?.companions || !gs.relationships) return 0;
+    const alive = gs.companions.filter(c => c.alive);
+    if (alive.length === 0) return 0;
+    const totalBonus = alive.reduce((sum, c) => sum + getCompanionCombatBonus(c.id, gs.relationships), 0);
+    return totalBonus / alive.length;
+  } catch { return 0; }
+}
+
 export function getEffectiveAtk(player) {
   let atk = player.atk;
   if (player.weapon) {
@@ -865,6 +878,9 @@ export function getEffectiveAtk(player) {
   for (const chip of player.chips || []) {
     if (chip.stat === 'atk') atk += chip.value;
   }
+  // 关系加成（百分比）
+  const relMul = getRelationshipMultiplier();
+  if (relMul !== 0) atk = Math.max(1, Math.floor(atk * (1 + relMul)));
   return atk;
 }
 
@@ -893,6 +909,9 @@ export function getEffectiveDef(player) {
   for (const chip of player.chips || []) {
     if (chip.stat === 'def') def += chip.value;
   }
+  // 关系加成（百分比）
+  const relMulDef = getRelationshipMultiplier();
+  if (relMulDef !== 0) def = Math.max(1, Math.floor(def * (1 + relMulDef)));
   return def;
 }
 
