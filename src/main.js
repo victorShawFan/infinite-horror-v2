@@ -129,7 +129,8 @@ function autoSave(reason = '') {
     localStorage.setItem('ih_status_effects', JSON.stringify(serializeEffects()));
     localStorage.setItem('ih_dynamic_diff', JSON.stringify(serializeDynamicDifficulty()));
     localStorage.setItem('ih_growth', JSON.stringify(serializeGrowth()));
-    // 设置持久化：难度 + 音量 + 迷雾
+    localStorage.setItem('ih_abyss', JSON.stringify(serializeAbyss()));
+    localStorage.setItem('ih_daily', JSON.stringify(serializeDaily()));    // 设置持久化：难度 + 音量 + 迷雾
     try {
       const settingsData = {
         difficulty: getDifficulty(),
@@ -714,6 +715,13 @@ function showMainMenu() {
       const stashData = localStorage.getItem('ih_equip_stash');
       if (stashData) deserializeStash(JSON.parse(stashData));
     } catch {}
+    try { const _eliteData = localStorage.getItem('ih_elite'); if (_eliteData) deserializeEliteStats(JSON.parse(_eliteData)); } catch {}
+    try { const _bhData = localStorage.getItem('ih_battle_history'); if (_bhData) deserializeBattleHistory(JSON.parse(_bhData)); } catch {}
+    try { const _seData = localStorage.getItem('ih_status_effects'); if (_seData) deserializeEffects(JSON.parse(_seData)); } catch {}
+    try { const _ddData = localStorage.getItem('ih_dynamic_diff'); if (_ddData) deserializeDynamicDifficulty(JSON.parse(_ddData)); } catch {}
+    try { const _grData = localStorage.getItem('ih_growth'); if (_grData) deserializeGrowth(JSON.parse(_grData)); } catch {}
+    try { const _abData = localStorage.getItem('ih_abyss'); if (_abData) deserializeAbyss(JSON.parse(_abData)); } catch {}
+    try { const _dlData = localStorage.getItem('ih_daily'); if (_dlData) deserializeDaily(JSON.parse(_dlData));    } catch {}
       } catch {}
       const chapterGens = { 1: generateChapter1, 2: generateChapter2, 3: generateChapter3, 4: generateChapter4, 5: generateChapter5, 6: generateChapter6, 7: generateChapter7, 8: generateChapter8, 9: generateChapter9, 10: generateChapter10, 11: generateChapter11, 12: generateChapter12 };
       const gen = chapterGens[gameState.chapter] || generateChapter1;
@@ -953,7 +961,8 @@ function startGame() {
     localStorage.setItem('ih_dynamic_diff', JSON.stringify(serializeDynamicDifficulty()));
     localStorage.setItem('ih_growth', JSON.stringify(serializeGrowth())); } catch {}
     try { localStorage.setItem('ih_streak', JSON.stringify(killStreak.toJSON())); } catch {}
-    try { localStorage.setItem('ih_fog', JSON.stringify(fogOfWar.toJSON())); } catch {}
+    localStorage.setItem('ih_abyss', JSON.stringify(serializeAbyss()));
+    localStorage.setItem('ih_daily', JSON.stringify(serializeDaily()));    try { localStorage.setItem('ih_fog', JSON.stringify(fogOfWar.toJSON())); } catch {}
   });
 
   eventBus.on('relationship:change', (data) => {
@@ -1350,7 +1359,8 @@ document.addEventListener('keydown', (e) => {
     localStorage.setItem('ih_growth', JSON.stringify(serializeGrowth())); } catch {}
     renderer.notify('💾 手动存档完成', '#44ff88', 90);
     return;
-  }
+    localStorage.setItem('ih_abyss', JSON.stringify(serializeAbyss()));
+    localStorage.setItem('ih_daily', JSON.stringify(serializeDaily()));  }
   if (e.key === 'F9') {
     e.preventDefault();
     if (gameState.load(0)) {
