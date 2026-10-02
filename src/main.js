@@ -30,6 +30,7 @@ import {
 import { audioEngine } from './core/AudioEngine.js';
 import { scaleEnemy } from './core/DifficultyScaler.js';
 import { getGeneLockProgress, getGeneLockDescription } from './core/GeneLockSystem.js';
+import { generateRecapHTML } from './core/RecapSystem.js';
 import { getAvailableSkills, SKILL_DEFINITIONS } from './core/SkillSystem.js';
 import { renderLordGodSpace } from './core/LordGodSpace.js';
 import { CombatAnimator } from './core/CombatAnimation.js';
@@ -155,21 +156,59 @@ function showMainMenu() {
 
   btnCont.addEventListener('click', () => {
     if (gameState.load(0)) {
-      // 根据存档章节加载对应地图
       const chapterGens = { 1: generateChapter1, 2: generateChapter2, 3: generateChapter3, 4: generateChapter4, 5: generateChapter5, 6: generateChapter6, 7: generateChapter7, 8: generateChapter8, 9: generateChapter9, 10: generateChapter10, 11: generateChapter11, 12: generateChapter12 };
       const gen = chapterGens[gameState.chapter] || generateChapter1;
-      audioEngine.init();
-      audioEngine.resume();
-      audioEngine.startAmbience();
-      menuState = 'playing';
-      document.getElementById('ui-overlay').innerHTML = '';
-      combatAnimator = new CombatAnimator(renderer);
-      chapter = gen();
-      currentFloorIndex = gameState.nodeIndex || 0;
-      loadFloor(currentFloorIndex);
-      gameState.setState(GAME_STATE.EXPLORING);
-      gameStarted = true;
-      if (!gameLoopRunning) { gameLoopRunning = true; gameLoop(); }
+
+      // 显示"上回轮回"回顾
+      const recapHTML = generateRecapHTML(gameState.chapter, gameState.choices);
+      if (recapHTML) {
+        const overlay = document.getElementById('ui-overlay');
+        overlay.innerHTML = `
+          <div style="position:absolute;top:0;left:0;right:0;bottom:0;
+            display:flex;flex-direction:column;align-items:center;justify-content:center;
+            background:rgba(0,0,0,0.95);overflow-y:auto;padding:40px 20px;
+            animation:cutsceneFadeIn 0.8s ease;">
+            ${recapHTML}
+            <button id="btn-resume-game" style="
+              margin-top:24px;background:transparent;border:1px solid #ff4444;
+              color:#ff4444;padding:12px 50px;cursor:pointer;font-size:16px;
+              letter-spacing:4px;font-family:inherit;border-radius:8px;
+              transition:all 0.3s;"
+              onmouseover="this.style.background='rgba(255,68,68,0.15)'"
+              onmouseout="this.style.background='transparent'">
+              继续轮回
+            </button>
+          </div>
+          <style>@keyframes cutsceneFadeIn{from{opacity:0}to{opacity:1}}</style>
+        `;
+        document.getElementById('btn-resume-game').addEventListener('click', () => {
+          audioEngine.init();
+          audioEngine.resume();
+          audioEngine.startAmbience();
+          menuState = 'playing';
+          overlay.innerHTML = '';
+          combatAnimator = new CombatAnimator(renderer);
+          chapter = gen();
+          currentFloorIndex = gameState.nodeIndex || 0;
+          loadFloor(currentFloorIndex);
+          gameState.setState(GAME_STATE.EXPLORING);
+          gameStarted = true;
+          if (!gameLoopRunning) { gameLoopRunning = true; gameLoop(); }
+        });
+      } else {
+        audioEngine.init();
+        audioEngine.resume();
+        audioEngine.startAmbience();
+        menuState = 'playing';
+        document.getElementById('ui-overlay').innerHTML = '';
+        combatAnimator = new CombatAnimator(renderer);
+        chapter = gen();
+        currentFloorIndex = gameState.nodeIndex || 0;
+        loadFloor(currentFloorIndex);
+        gameState.setState(GAME_STATE.EXPLORING);
+        gameStarted = true;
+        if (!gameLoopRunning) { gameLoopRunning = true; gameLoop(); }
+      }
     } else {
       showOpeningCutscene(() => startNewGame());
     }
