@@ -62,6 +62,7 @@ import { killStreak } from './core/KillStreak.js';
 import { rateBattle, recordRating, formatRatingHTML, getRatingStats } from './core/BattleRating.js';
 import { fogOfWar } from './core/FogOfWar.js';
 import { openMerchantShop } from './core/FieldMerchant.js';
+import { getStash, addToStash, removeFromStash, isStashFull, openEquipmentStash, serializeStash, deserializeStash } from './core/EquipmentStash.js';
 
 // ── 全局状态 ──
 let renderer;
@@ -128,6 +129,10 @@ function autoSave(reason = '') {
     // 成就持久化
     try {
       localStorage.setItem('ih_achievements', JSON.stringify(achievementTracker.toJSON()));
+    } catch {}
+    // 装备仓库持久化
+    try {
+      localStorage.setItem('ih_equip_stash', JSON.stringify(serializeStash()));
     } catch {}
     } catch {}
     try { renderer.showSaveIndicator(); } catch {}
@@ -206,11 +211,14 @@ function _showEquipCompare(current, newEquip, slot, itemEntity) {
           <button id="btn-equip-new" style="background:rgba(68,255,100,0.15);border:2px solid #44ff88;
             color:#44ff88;padding:10px 24px;cursor:pointer;font-size:14px;font-weight:bold;
             font-family:inherit;border-radius:8px;">✓ 装备新的</button>
+          <button id="btn-stash-old" style="background:rgba(255,204,68,0.12);border:1px solid #ffcc4455;
+            color:#ffcc44;padding:10px 24px;cursor:pointer;font-size:14px;
+            font-family:inherit;border-radius:8px;">📦 存入仓库</button>
           <button id="btn-keep-old" style="background:rgba(100,100,100,0.1);border:1px solid #555;
             color:#888;padding:10px 24px;cursor:pointer;font-size:14px;
-            font-family:inherit;border-radius:8px;">✗ 保留旧的</button>
+            font-family:inherit;border-radius:8px;">✗ 分解旧的</button>
         </div>
-        <p style="color:#444;font-size:10px;text-align:center;margin-top:8px;">1 = 装备新的 · 2 = 保留旧的</p>
+        <p style="color:#444;font-size:10px;text-align:center;margin-top:8px;">1 = 装备新的 · 2 = 存入仓库 · 3 = 分解旧的</p>
       </div>
     </div>
   `;
@@ -221,9 +229,24 @@ function _showEquipCompare(current, newEquip, slot, itemEntity) {
   };
 
   document.getElementById('btn-equip-new').addEventListener('click', () => {
+    // Store old equipment in stash if there's room
+    if (!isStashFull()) {
+      addToStash(p[slot]);
+    }
     p[slot] = newEquip;
     renderer.addFloatText('装备替换: ' + (newEquip.displayName || newEquip.name), 
       itemEntity.x, itemEntity.y, 'rgb(68, 255, 100)');
+    close();
+  });
+
+  document.getElementById('btn-stash-old')?.addEventListener('click', () => {
+    if (isStashFull()) {
+      renderer.addFloatText('仓库已满', itemEntity.x, itemEntity.y, 'rgb(255, 100, 100)');
+      return;
+    }
+    addToStash(p[slot]);
+    p[slot] = newEquip;
+    renderer.addFloatText('旧装备已存入仓库', itemEntity.x, itemEntity.y, 'rgb(255, 204, 68)');
     close();
   });
 
@@ -238,7 +261,8 @@ function _showEquipCompare(current, newEquip, slot, itemEntity) {
 
   const kh = (e) => {
     if (e.key === '1') document.getElementById('btn-equip-new')?.click();
-    if (e.key === '2') document.getElementById('btn-keep-old')?.click();
+    if (e.key === '2') document.getElementById('btn-stash-old')?.click();
+    if (e.key === '3') document.getElementById('btn-keep-old')?.click();
     if (e.key === 'Escape') document.getElementById('btn-keep-old')?.click();
   };
   document.addEventListener('keydown', kh);
@@ -582,6 +606,11 @@ function showMainMenu() {
         const ach = localStorage.getItem('ih_achievements');
         if (ach) achievementTracker.fromJSON(JSON.parse(ach));
       } catch {}
+    // 装备仓库恢复
+    try {
+      const stashData = localStorage.getItem('ih_equip_stash');
+      if (stashData) deserializeStash(JSON.parse(stashData));
+    } catch {}
       } catch {}
       const chapterGens = { 1: generateChapter1, 2: generateChapter2, 3: generateChapter3, 4: generateChapter4, 5: generateChapter5, 6: generateChapter6, 7: generateChapter7, 8: generateChapter8, 9: generateChapter9, 10: generateChapter10, 11: generateChapter11, 12: generateChapter12 };
       const gen = chapterGens[gameState.chapter] || generateChapter1;
@@ -1270,6 +1299,10 @@ case 'h': case '?':
       case 'j':
         // 成就面板
         showAchievementPanel();
+        return;
+      case 'b':
+        // 装备仓库
+        openEquipmentStash();
         return;
       case 'p':
         // 设置面板

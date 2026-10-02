@@ -68,7 +68,11 @@ export function openMerchantShop(merchantName, chapter) {
           </p>
           <div style="display:flex;flex-direction:column;gap:8px;">
             ${stock.map(item => {
-              const canAfford = (p.gold || 0) >= item.price;
+              const isBoosted = item.type === 'stat_boost';
+              const purchased = isBoosted ? (gameState._merchantPurchases?.[item.id] || 0) : 0;
+              const maxBuy = isBoosted ? 3 : Infinity;
+              const soldOut = purchased >= maxBuy;
+              const canAfford = !soldOut && (p.gold || 0) >= item.price;
               return `
                 <div style="display:flex;justify-content:space-between;align-items:center;
                             background:rgba(255,255,255,0.03);border:1px solid #33333366;
@@ -84,7 +88,7 @@ export function openMerchantShop(merchantName, chapter) {
                     padding:5px 14px;cursor:${canAfford ? 'pointer' : 'default'};
                     font-size:12px;font-family:inherit;border-radius:6px;
                     ${canAfford ? '' : 'opacity:0.5;'}
-                  ">${item.price}G</button>
+                  ">${soldOut ? '售罄' : item.price + 'G'}${isBoosted && !soldOut ? ' (' + (maxBuy - purchased) + '/' + maxBuy + ')' : ''}</button>
                 </div>`;
             }).join('')}
           </div>
@@ -104,8 +108,22 @@ export function openMerchantShop(merchantName, chapter) {
       btn.addEventListener('click', () => {
         const itemDef = stock.find(s => s.id === btn.dataset.id);
         if (!itemDef || (p.gold || 0) < itemDef.price) return;
+        if (itemDef.type === 'stat_boost') {
+          const ct = gameState._merchantPurchases?.[itemDef.id] || 0;
+          if (ct >= 3) return;
+        }
         
         p.gold -= itemDef.price;
+        gameState.stats.goldSpent = (gameState.stats.goldSpent || 0) + itemDef.price;
+        
+        // 永久属性卷轴限购
+        if (itemDef.type === 'stat_boost') {
+          if (!gameState._merchantPurchases) gameState._merchantPurchases = {};
+          gameState._merchantPurchases[itemDef.id] = (gameState._merchantPurchases[itemDef.id] || 0) + 1;
+          if (gameState._merchantPurchases[itemDef.id] >= 3) {
+            // 每种卷轴限购3次
+          }
+        }
         
         if (itemDef.type === 'consumable') {
           // Add to inventory
