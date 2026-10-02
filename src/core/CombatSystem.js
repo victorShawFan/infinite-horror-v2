@@ -81,33 +81,65 @@ export function previewBattle(player, enemy) {
     return { canWin: false, totalDamage: Infinity, turnsNeeded: Infinity, rewards: enemy.rewards };
   }
 
-  // 估算每轮有效伤害
-  let effectiveDmgPerRound = playerDmg;
-  if (isDouble) effectiveDmgPerRound = playerDmg * 2;
-  if (chipFx.burnDmg > 0) effectiveDmgPerRound += chipFx.burnDmg;
-  // 道法：如果有蓝，额外法术伤害
+  // ── 精确回合模拟预判 ──
   let spellDmgEst = 0;
   if (isDaoist && hasMana) {
     spellDmgEst = Math.max(1, Math.floor(pAtk * 0.8) + 5 - Math.floor((enemy.res || 0) * 0.3));
-    effectiveDmgPerRound += spellDmgEst;
   }
-
-  const turnsNeeded = Math.ceil(enemy.hp / effectiveDmgPerRound);
-  const enemyHits = Math.max(0, turnsNeeded - 1);
-
-  // 武修反伤减少回合数
   let reflectDmg = 0;
   if (player.activeBloodline === BLOODLINE.MARTIAL && enemyDmg > 0) {
     reflectDmg = Math.max(1, Math.floor(enemyDmg * 0.15));
   }
-
-  // 吸血减少总受伤
   let lifeStealPerHit = 0;
   if (player.activeBloodline === BLOODLINE.VAMPIRE) {
     lifeStealPerHit = Math.max(1, Math.floor(playerDmg * 0.1));
   }
 
-  const totalDamage = Math.max(0, enemyDmg * enemyHits - lifeStealPerHit * enemyHits);
+  // 逐回合模拟（确定性，不含暴击随机）
+  let simEnemyHp = enemy.hp;
+  let simMana = player.mana || 0;
+  let turnsNeeded = 0;
+  let totalPlayerDmgTaken = 0;
+  let totalLifeSteal = 0;
+  const maxTurns = 200; // 安全上限
+
+  while (simEnemyHp > 0 && turnsNeeded < maxTurns) {
+    turnsNeeded++;
+
+    // 玩家物理攻击
+    const hits = isDouble ? 2 : 1;
+    for (let i = 0; i < hits && simEnemyHp > 0; i++) {
+      simEnemyHp -= playerDmg;
+      if (lifeStealPerHit > 0) totalLifeSteal += lifeStealPerHit;
+    }
+
+    // 道法法术（有蓝时才释放）
+    if (isDaoist && simMana >= spellCost && simEnemyHp > 0) {
+      simEnemyHp -= spellDmgEst;
+      simMana -= spellCost;
+    }
+
+    // 火芯片灼烧
+    if (chipFx.burnDmg > 0 && simEnemyHp > 0) {
+      simEnemyHp -= chipFx.burnDmg;
+    }
+
+    if (simEnemyHp <= 0) break;
+
+    // 敌人攻击（从第1回合开始,但首轮玩家先手）
+    totalPlayerDmgTaken += enemyDmg;
+
+    // 武修反伤
+    if (reflectDmg > 0 && simEnemyHp > 0) {
+      simEnemyHp -= reflectDmg;
+    }
+  }
+
+  // 基础伤害per round（用于显示）
+  let effectiveDmgPerRound = playerDmg * (isDouble ? 2 : 1) + chipFx.burnDmg;
+  if (isDaoist && hasMana) effectiveDmgPerRound += spellDmgEst;
+
+  const totalDamage = Math.max(0, totalPlayerDmgTaken - totalLifeSteal);
 
   // 酸血反噬（抗酸芯片减免50%）
   let acidDmg = enemy.acidBlood || 0;
