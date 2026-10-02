@@ -918,6 +918,27 @@ function getRelationshipMultiplier() {
   } catch { return 0; }
 }
 
+// ── 高关系同伴团队士气加成 ──
+// 当3+同伴达到亲密以上时，额外提供团队士气
+export function getTeamMoraleBonus() {
+  try {
+    const gs = gameState;
+    if (!gs?.companions || !gs.relationships) return { atkPct: 0, defPct: 0, crtFlat: 0 };
+    const alive = gs.companions.filter(c => c.alive);
+    const highRel = alive.filter(c => (gs.relationships[c.id] || 0) >= 41); // 亲密+
+    const bondCount = alive.filter(c => (gs.relationships[c.id] || 0) >= 71).length; // 羁绊
+    
+    if (highRel.length >= 3) {
+      return {
+        atkPct: 0.03 * highRel.length,  // 每个亲密+同伴+3% ATK
+        defPct: 0.02 * highRel.length,  // 每个亲密+同伴+2% DEF
+        crtFlat: bondCount * 2,          // 每个羁绊同伴+2% CRT
+      };
+    }
+    return { atkPct: 0, defPct: 0, crtFlat: 0 };
+  } catch { return { atkPct: 0, defPct: 0, crtFlat: 0 }; }
+}
+
 export function getEffectiveAtk(player) {
   let atk = player.atk;
   if (player.weapon) {
@@ -951,6 +972,9 @@ export function getEffectiveAtk(player) {
   // 关系加成（百分比）
   const relMul = getRelationshipMultiplier();
   if (relMul !== 0) atk = Math.max(1, Math.floor(atk * (1 + relMul)));
+  // 团队士气加成
+  const morale = getTeamMoraleBonus();
+  if (morale.atkPct > 0) atk = Math.max(1, Math.floor(atk * (1 + morale.atkPct)));
   return atk;
 }
 
@@ -982,6 +1006,9 @@ export function getEffectiveDef(player) {
   // 关系加成（百分比）
   const relMulDef = getRelationshipMultiplier();
   if (relMulDef !== 0) def = Math.max(1, Math.floor(def * (1 + relMulDef)));
+  // 团队士气加成
+  const moraleDef = getTeamMoraleBonus();
+  if (moraleDef.defPct > 0) def = Math.max(1, Math.floor(def * (1 + moraleDef.defPct)));
   return def;
 }
 
@@ -1001,6 +1028,8 @@ export function getEffectiveCrt(player) {
   for (const chip of player.chips || []) {
     if (chip.stat === 'crt') crt += chip.value;
   }
+  // 团队士气CRT加成
+  try { crt += getTeamMoraleBonus().crtFlat; } catch {}
   return Math.min(crt, 100);
 }
 
