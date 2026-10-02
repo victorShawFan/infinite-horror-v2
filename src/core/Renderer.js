@@ -7,6 +7,8 @@ import { assetLoader } from './AssetLoader.js';
 import { gameState } from './GameState.js';
 import { getNoise, getIsSneaking, getAmmo, getMaxAmmo } from './StealthSystem.js';
 import { getEffectiveAtk, getEffectiveDef, getEffectiveCrt, getEffectiveSpd, previewBattle, getStatsBreakdown } from './CombatSystem.js';
+import { getGeneLockProgress } from './GeneLockSystem.js';
+import { getAvailableSkills } from './SkillSystem.js';
 import { drawWallTile, drawFloorTile, drawLavaTile, drawStairsTile, drawCharacterSprite, drawHealthBar } from './SpriteRenderer.js';
 
 export class Renderer {
@@ -399,10 +401,34 @@ export class Renderer {
     ctx.fillStyle = COLORS.TEXT_WHITE;
     ctx.fillText(`EXP ${p.exp}/${p.expToNext}`, pad + 10, pad + 108 + manaOffset);
 
-    // 基因锁状态
-    if (p.geneLock > 0) {
+    // 基因锁状态 + 充能进度 + 技能
+    {
+      const glProgress = getGeneLockProgress(p);
+      const skills = getAvailableSkills(p);
       ctx.fillStyle = COLORS.GENE_LOCK;
-      ctx.fillText(`基因锁 ${p.geneLock}阶 ${p.geneLockActive ? '●激活' : '○待机'}`, pad + 10, pad + 125 + manaOffset);
+      if (p.geneLock > 0) {
+        ctx.fillText(`基因锁 ${p.geneLock}阶 ${p.geneLockActive ? '●激活' : '○待机'}`, pad + 10, pad + 125 + manaOffset);
+      }
+      // 充能进度条（未满4阶时显示）
+      if (p.geneLock < 4) {
+        const barX = pad + 10;
+        const barY = pad + 130 + manaOffset;
+        const barW = 120;
+        const barH = 4;
+        ctx.fillStyle = '#1a1a2a';
+        ctx.fillRect(barX, barY, barW, barH);
+        ctx.fillStyle = '#ff6600';
+        ctx.fillRect(barX, barY, barW * Math.min(1, glProgress.progressPercent / 100), barH);
+        ctx.fillStyle = '#888';
+        ctx.font = '9px monospace';
+        ctx.fillText(`充能 ${glProgress.charge}/${glProgress.nextThreshold || '∞'}`, barX + barW + 4, barY + 4);
+        ctx.font = '12px monospace';
+      }
+      // 可用技能数
+      if (skills.length > 0) {
+        ctx.fillStyle = '#ff8800';
+        ctx.fillText(`⚔ ${skills.length}个技能`, pad + 10, pad + 145 + manaOffset);
+      }
     }
 
     // ── 右上：战斗属性 ──
@@ -793,6 +819,15 @@ export class Renderer {
         case 'spell': ctx.fillStyle = '#cc88ff'; break;
         case 'burn': ctx.fillStyle = '#ff8833'; break;
         case 'reflect': ctx.fillStyle = '#6699ff'; break;
+        case 'geneLock': ctx.fillStyle = '#ff6600'; break;
+        case 'geneLock_advance': ctx.fillStyle = '#ff8800'; break;
+        case 'skill': ctx.fillStyle = '#ffaa44'; break;
+        case 'control': ctx.fillStyle = '#aa88ff'; break;
+        case 'dodge': ctx.fillStyle = '#44ffcc'; break;
+        case 'debuff': ctx.fillStyle = '#ff6688'; break;
+        case 'poison': ctx.fillStyle = '#88ff44'; break;
+        case 'info': ctx.fillStyle = '#88aacc'; break;
+        case 'separator': ctx.fillStyle = '#333'; break;
         default: ctx.fillStyle = COLORS.TEXT_DIM;
       }
       ctx.fillText(entry.text, x + 16, y + 52 + (i - startIdx) * 22);
