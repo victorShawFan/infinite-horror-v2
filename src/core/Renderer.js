@@ -1059,10 +1059,29 @@ export class Renderer {
     ctx.textAlign = 'center';
     ctx.fillText(result.victory ? '⚔ 战 斗 胜 利 ⚔' : '💀 战 斗 失 败 💀', CANVAS_W / 2, y + 32);
     
-    // 回合数
+    // 战斗摘要 — 回合/评级/伤害
     ctx.font = '12px "Microsoft YaHei"';
     ctx.fillStyle = '#888';
-    ctx.fillText('共 ' + (result.rounds || '?') + ' 回合', CANVAS_W / 2, y + 50);
+    const statsText = [];
+    statsText.push('共 ' + (result.rounds || '?') + ' 回合');
+    if (result.totalDamageDealt > 0) statsText.push('输出 ' + result.totalDamageDealt);
+    if (result.totalDamageTaken > 0) statsText.push('承伤 ' + result.totalDamageTaken);
+    if (result.critCount > 0) statsText.push('暴击 ' + result.critCount + '次');
+    ctx.fillText(statsText.join(' · '), CANVAS_W / 2, y + 50);
+    
+    // 战斗评级（大字显示）
+    if (result.rating) {
+      const ratingColors = {
+        'SS': '#ffdd44', 'S': '#ffaa00', 'A': '#44ff88',
+        'B': '#66ccff', 'C': '#aaaaaa', 'D': '#888888',
+      };
+      ctx.font = 'bold 28px "Noto Serif SC", serif';
+      ctx.fillStyle = ratingColors[result.rating.grade] || '#888';
+      ctx.fillText(result.rating.grade, x + boxW - 45, y + 36);
+      ctx.font = '10px "Microsoft YaHei"';
+      ctx.fillStyle = '#666';
+      ctx.fillText('评级', x + boxW - 45, y + 50);
+    }
 
     ctx.font = '13px "Microsoft YaHei"';
     ctx.textAlign = 'left';
@@ -1110,6 +1129,10 @@ export class Renderer {
         case 'loot': ctx.fillStyle = '#ffcc44'; break;
         case 'loot_equipment': ctx.fillStyle = entry.color || '#aa44ff'; break;
         case 'companion_dialogue': ctx.fillStyle = entry.color || '#aaccff'; break;
+        case 'affix_warning': ctx.fillStyle = '#ffaa00'; break;
+        case 'affix_damage': ctx.fillStyle = '#ff6644'; break;
+        case 'affix_dodge': ctx.fillStyle = '#aacccc'; break;
+        case 'affix_heal': ctx.fillStyle = '#cc44aa'; break;
         default: ctx.fillStyle = COLORS.TEXT_DIM;
       }
       ctx.fillText(entry.text, x + 16, y + 52 + (i - startIdx) * 22);

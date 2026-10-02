@@ -2694,7 +2694,7 @@ function startCombat(enemy, preScaledEnemy) {
     
     // 战斗评级 — 只计算一次
     const battleRating = result.victory ? rateBattle(result, gameState.player) : null;
-    if (battleRating) recordRating(battleRating);
+    if (battleRating) { recordRating(battleRating); result.rating = battleRating; }
       // 成就追踪: 战斗评级
       try { if (battleRating && (battleRating.grade === 'S' || battleRating.grade === 'SS')) achievementTracker.stats.sRatings++; achievementTracker.checkStats(); } catch {}
 
