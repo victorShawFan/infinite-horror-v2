@@ -796,6 +796,10 @@ case 'h': case '?':
         // 全地图视图
         showFullMap();
         return;
+      case 'q':
+        // 快捷道具面板
+        _showExplorationItemPanel();
+        return;
       default: return;
     }
     if (dx !== 0 || dy !== 0) {
@@ -1084,6 +1088,9 @@ function showCombatConfirm(enemy) {
           return tags.length > 0 ? '<div style="display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin-top:8px;">' + tags.join('') + '</div>' : '';
         })()}
         
+        <!-- 待生效增益提示 -->
+        <div id="pending-buffs-preview" style="text-align:center;margin-top:6px;min-height:16px;"></div>
+        
         <!-- 按钮 -->
         <div style="display: flex; gap: 12px; justify-content: center; margin-top: 12px;">
           <button id="btn-fight" style="
@@ -1091,13 +1098,18 @@ function showCombatConfirm(enemy) {
             padding: 10px 30px; cursor: pointer; font-size: 15px; font-weight: bold;
             font-family: inherit; border-radius: 8px; transition: all 0.2s;
           ">⚔ 战斗</button>
+          <button id="btn-use-item" style="
+            background: rgba(68,200,100,0.12); border: 1px solid #44cc66; color: #44cc66;
+            padding: 10px 20px; cursor: pointer; font-size: 13px;
+            font-family: inherit; border-radius: 8px; transition: all 0.2s;
+          ">📦 道具</button>
           <button id="btn-retreat" style="
             background: rgba(100,100,100,0.1); border: 1px solid #555; color: #888;
             padding: 10px 30px; cursor: pointer; font-size: 14px;
             font-family: inherit; border-radius: 8px; transition: all 0.2s;
           ">← 撤退</button>
         </div>
-        <p style="color:#444; font-size:10px; text-align:center; margin-top:8px;">空格/F = 战斗 · Esc/R = 撤退</p>
+        <p style="color:#444; font-size:10px; text-align:center; margin-top:8px;">空格/F = 战斗 · Q = 道具 · Esc/R = 撤退</p>
       </div>
     </div>
   `;
@@ -1113,12 +1125,23 @@ function showCombatConfirm(enemy) {
     gameState.setState(GAME_STATE.EXPLORING);
   });
   
+  // ── 战前道具面板 ──
+  document.getElementById('btn-use-item').addEventListener('click', () => {
+    _showPreBattleItemPanel(overlay, scaledEnemy, enemy);
+  });
+  
+  // 显示已有增益
+  _updatePendingBuffsPreview();
+  
   // Keyboard shortcuts
   const kh = (e) => {
     if (e.key === ' ' || e.key === 'Enter' || e.key === 'f') {
       overlay.innerHTML = '';
       gameState.setState(GAME_STATE.EXPLORING);
       startCombat(enemy, scaledEnemy);
+      document.removeEventListener('keydown', kh);
+    } else if (e.key === 'q') {
+      _showPreBattleItemPanel(overlay, scaledEnemy, enemy);
       document.removeEventListener('keydown', kh);
     } else if (e.key === 'Escape' || e.key === 'r') {
       overlay.innerHTML = '';
@@ -1130,6 +1153,209 @@ function showCombatConfirm(enemy) {
 }
 
 // ── 战斗 ──
+// ── 战前道具子面板 ──
+function _updatePendingBuffsPreview() {
+  const el = document.getElementById('pending-buffs-preview');
+  if (!el) return;
+  const buffs = gameState._pendingBuffs || [];
+  if (buffs.length === 0) { el.innerHTML = ''; return; }
+  el.innerHTML = buffs.map(b => {
+    const def = CONSUMABLE_DEFS[b.source];
+    return '<span style="color:#44cc66;font-size:11px;background:rgba(68,204,102,0.1);padding:2px 8px;border-radius:4px;margin:0 2px;">' +
+      (def?.icon || '⚔') + ' ' + (def?.name || b.stat) + '</span>';
+  }).join('');
+}
+
+// ── 探索中道具面板（Q键） ──
+function _showExplorationItemPanel() {
+  if (gameState.state !== GAME_STATE.EXPLORING) return;
+  gameState.setState(GAME_STATE.INVENTORY);
+  const items = getInventoryList();
+  const overlay = document.getElementById('ui-overlay');
+
+  const itemsHtml = items.length === 0
+    ? '<p style="color:#555;text-align:center;font-size:12px;">无可用道具</p>'
+    : items.map(item => {
+      const canUse = item.category !== 'escape'; // 烟雾弹仅战斗时可用
+      return '<div style="display:flex;justify-content:space-between;align-items:center;' +
+        'background:rgba(255,255,255,0.03);border:1px solid #33333380;' +
+        'border-radius:6px;padding:8px 12px;margin-bottom:4px;">' +
+        '<div style="flex:1;">' +
+        '<span style="font-size:14px;">' + item.icon + '</span> ' +
+        '<span style="color:#ddd;font-size:13px;">' + item.name + '</span>' +
+        '<span style="color:#888;font-size:10px;margin-left:4px;">×' + item.count + '</span>' +
+        '<p style="color:#666;font-size:10px;margin-top:2px;">' + item.desc + '</p>' +
+        '</div>' +
+        (canUse ? '<button class="explore-use-btn" data-cid="' + item.id + '" style="' +
+        'background:rgba(68,204,136,0.12);border:1px solid #44cc88;' +
+        'color:#44cc88;padding:5px 14px;cursor:pointer;font-size:12px;' +
+        'border-radius:4px;font-family:inherit;">使用</button>' : 
+        '<span style="color:#555;font-size:10px;">仅战斗</span>') +
+        '</div>';
+    }).join('');
+
+  overlay.innerHTML = '<div style="' +
+    'position:absolute;top:0;left:0;right:0;bottom:0;' +
+    'display:flex;align-items:center;justify-content:center;' +
+    'background:rgba(0,0,0,0.8);" id="item-backdrop">' +
+    '<div style="' +
+    'background:rgba(10,10,20,0.97);border:1px solid #44cc88;border-radius:14px;' +
+    'padding:24px;max-width:450px;width:90%;max-height:75vh;overflow-y:auto;">' +
+    '<h3 style="color:#44cc88;text-align:center;letter-spacing:4px;margin-bottom:14px;">📦 道具背包</h3>' +
+    itemsHtml +
+    '<div style="text-align:center;margin-top:16px;">' +
+    '<button id="btn-close-items" style="' +
+    'background:transparent;border:1px solid #444;color:#888;' +
+    'padding:8px 30px;cursor:pointer;font-size:13px;font-family:inherit;border-radius:6px;">关闭 (Q)</button>' +
+    '</div></div></div>';
+
+  const closeItems = () => { overlay.innerHTML = ''; gameState.setState(GAME_STATE.EXPLORING); };
+
+  document.getElementById('btn-close-items').addEventListener('click', closeItems);
+  document.getElementById('item-backdrop').addEventListener('click', (e) => {
+    if (e.target.id === 'item-backdrop') closeItems();
+  });
+
+  // 使用按钮
+  overlay.querySelectorAll('.explore-use-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const cid = btn.dataset.cid;
+      const result = useConsumable(cid);
+      if (result.success) {
+        const def = CONSUMABLE_DEFS[cid];
+        renderer.addFloatText(result.effect, gameState.player.x, gameState.player.y - 1, 'rgb(100, 255, 150)');
+        
+        // 特殊效果处理
+        if (def?.effect?.revealTraps) {
+          // 揭示当前层所有陷阱
+          for (const e of entities) {
+            if (e.type === ENTITY_TYPE.TRAP) e.visible = true;
+          }
+          renderer.addFloatText('🔍 陷阱已揭示!', gameState.player.x, gameState.player.y - 2, 'rgb(68, 204, 255)');
+        }
+        
+        // 刷新面板
+        _showExplorationItemPanel();
+      }
+    });
+  });
+
+  const kh = (e) => {
+    if (e.key === 'q' || e.key === 'Escape') { closeItems(); document.removeEventListener('keydown', kh); }
+  };
+  document.addEventListener('keydown', kh);
+}
+
+function _rebindPreBattleButtons(overlay, scaledEnemy, enemy) {
+  const fightBtn = document.getElementById('btn-fight');
+  const retreatBtn = document.getElementById('btn-retreat');
+  const itemBtn = document.getElementById('btn-use-item');
+  
+  if (fightBtn) fightBtn.addEventListener('click', () => {
+    overlay.innerHTML = '';
+    gameState.setState(GAME_STATE.EXPLORING);
+    startCombat(enemy, scaledEnemy);
+  });
+  if (retreatBtn) retreatBtn.addEventListener('click', () => {
+    overlay.innerHTML = '';
+    gameState.setState(GAME_STATE.EXPLORING);
+  });
+  if (itemBtn) itemBtn.addEventListener('click', () => {
+    _showPreBattleItemPanel(overlay, scaledEnemy, enemy);
+  });
+  _updatePendingBuffsPreview();
+  
+  // 键盘快捷键
+  const kh = (e) => {
+    if (e.key === ' ' || e.key === 'Enter' || e.key === 'f') {
+      overlay.innerHTML = '';
+      gameState.setState(GAME_STATE.EXPLORING);
+      startCombat(enemy, scaledEnemy);
+      document.removeEventListener('keydown', kh);
+    } else if (e.key === 'q') {
+      _showPreBattleItemPanel(overlay, scaledEnemy, enemy);
+      document.removeEventListener('keydown', kh);
+    } else if (e.key === 'Escape' || e.key === 'r') {
+      overlay.innerHTML = '';
+      gameState.setState(GAME_STATE.EXPLORING);
+      document.removeEventListener('keydown', kh);
+    }
+  };
+  document.addEventListener('keydown', kh);
+}
+
+function _showPreBattleItemPanel(overlay, scaledEnemy, enemy) {
+  const items = getInventoryList();
+  const usableItems = items.filter(i => i.category === 'heal' || i.category === 'buff' || i.category === 'cure');
+  
+  if (usableItems.length === 0) {
+    // 闪烁提示无可用道具
+    const btn = document.getElementById('btn-use-item');
+    if (btn) { btn.style.borderColor = '#ff4444'; btn.style.color = '#ff4444'; setTimeout(() => { btn.style.borderColor = '#44cc66'; btn.style.color = '#44cc66'; }, 500); }
+    return;
+  }
+
+  const itemsHtml = usableItems.map(item => {
+    const isHeal = item.category === 'heal' || item.category === 'cure';
+    const isBuff = item.category === 'buff';
+    return '<div style="display:flex;justify-content:space-between;align-items:center;' +
+      'background:rgba(255,255,255,0.03);border:1px solid ' + (isBuff ? '#44cc66' : '#44aaff') + '33;' +
+      'border-radius:8px;padding:8px 12px;margin-bottom:4px;">' +
+      '<div style="flex:1;">' +
+      '<span style="font-size:14px;">' + item.icon + '</span> ' +
+      '<span style="color:#ddd;font-size:13px;">' + item.name + '</span>' +
+      '<span style="color:#888;font-size:11px;margin-left:6px;">×' + item.count + '</span>' +
+      '<p style="color:#666;font-size:10px;margin-top:2px;">' + item.desc + '</p>' +
+      '</div>' +
+      '<button class="prebattle-use-btn" data-item-id="' + item.id + '" style="' +
+      'background:' + (isBuff ? 'rgba(68,204,102,0.15)' : 'rgba(68,170,255,0.15)') + ';' +
+      'border:1px solid ' + (isBuff ? '#44cc66' : '#44aaff') + ';' +
+      'color:' + (isBuff ? '#44cc66' : '#44aaff') + ';' +
+      'padding:6px 14px;cursor:pointer;font-size:12px;border-radius:6px;' +
+      'font-family:inherit;white-space:nowrap;transition:all 0.2s;' +
+      '">使用</button>' +
+      '</div>';
+  }).join('');
+
+  // 替换 overlay 内容为道具子面板
+  const savedHtml = overlay.innerHTML;
+  overlay.innerHTML = '<div style="' +
+    'position:absolute;top:0;left:0;right:0;bottom:0;' +
+    'display:flex;align-items:center;justify-content:center;' +
+    'background:rgba(0,0,0,0.85);">' +
+    '<div style="' +
+    'background:rgba(10,10,20,0.97);border:1px solid #44cc66;border-radius:14px;' +
+    'padding:24px;max-width:450px;width:90%;max-height:70vh;overflow-y:auto;">' +
+    '<h3 style="color:#44cc66;text-align:center;letter-spacing:4px;margin-bottom:14px;">📦 战前备战</h3>' +
+    '<p style="color:#666;text-align:center;font-size:11px;margin-bottom:12px;">使用恢复/增益道具，效果立即或下场战斗生效</p>' +
+    itemsHtml +
+    '<div style="text-align:center;margin-top:14px;">' +
+    '<button id="btn-back-battle" style="' +
+    'background:transparent;border:1px solid #555;color:#888;' +
+    'padding:8px 30px;cursor:pointer;font-size:13px;font-family:inherit;border-radius:6px;">返回战斗确认</button>' +
+    '</div></div></div>';
+
+  // 使用按钮事件
+  overlay.querySelectorAll('.prebattle-use-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const itemId = btn.dataset.itemId;
+      const result = useConsumable(itemId);
+      if (result.success) {
+        renderer.addFloatText(result.effect, gameState.player.x, gameState.player.y - 1, 'rgb(100, 255, 150)');
+        // 刷新面板
+        _showPreBattleItemPanel(overlay, scaledEnemy, enemy);
+      }
+    });
+  });
+
+  // 返回按钮 — 恢复战前确认面板
+  document.getElementById('btn-back-battle').addEventListener('click', () => {
+    overlay.innerHTML = savedHtml;
+    // 重新绑定战前面板事件
+    _rebindPreBattleButtons(overlay, scaledEnemy, enemy);
+  });
+}
+
 function startCombat(enemy, preScaledEnemy) {
   // 战斗发起闪光
   renderer.flash('rgba(255, 50, 50)', 150);

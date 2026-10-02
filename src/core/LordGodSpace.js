@@ -6,6 +6,7 @@ import { BLOODLINE, GENE_LOCK } from './constants.js';
 import { eventBus } from './EventBus.js';
 import { gameState } from './GameState.js';
 import { audioEngine } from './AudioEngine.js';
+import { addConsumable } from './ConsumableSystem.js';
 import { checkGeneLockAdvancement, advanceGeneLock, getGeneLockProgress, getGeneLockDescription } from './GeneLockSystem.js';
 import { getAvailableSkills, SKILL_DEFINITIONS } from './SkillSystem.js';
 import { enhanceEquipment, socketGem, unsocketGem, getEnhanceCost, 
@@ -50,6 +51,27 @@ export const SHOP_ITEMS = {
       lore: '道家法术传承。开启法力值并可使用法术攻击。' },
   ],
   // ── 技能芯片 ──
+  // ── 消耗品 ──
+  consumables: [
+    { id: 'buy_potion_small', name: '小型回复药', desc: '恢复30HP', cost: 30,
+      consumable: { id: 'potion_small', count: 1 } },
+    { id: 'buy_potion_medium', name: '中型回复药', desc: '恢复80HP', cost: 80,
+      consumable: { id: 'potion_medium', count: 1 } },
+    { id: 'buy_potion_large', name: '大型回复药', desc: '恢复200HP', cost: 200,
+      consumable: { id: 'potion_large', count: 1 } },
+    { id: 'buy_antidote', name: '解毒剂', desc: '清除毒/诅咒', cost: 40,
+      consumable: { id: 'antidote', count: 1 } },
+    { id: 'buy_atk_tonic', name: '力量药剂', desc: '下场战斗ATK+30%', cost: 60,
+      consumable: { id: 'atk_tonic', count: 1 } },
+    { id: 'buy_def_tonic', name: '铁壁药剂', desc: '下场战斗DEF+50%', cost: 60,
+      consumable: { id: 'def_tonic', count: 1 } },
+    { id: 'buy_crit_oil', name: '暴击之油', desc: '下场战斗CRT+25%', cost: 80,
+      consumable: { id: 'crit_oil', count: 1 } },
+    { id: 'buy_trap_detector', name: '陷阱探测器', desc: '揭示本层陷阱', cost: 50,
+      consumable: { id: 'trap_detector', count: 1 } },
+    { id: 'buy_smoke_bomb', name: '烟雾弹', desc: '逃离当前战斗', cost: 50,
+      consumable: { id: 'smoke_bomb', count: 1 } },
+  ],
   chips: [
     { id: 'chip_fire', name: '炎属性芯片', desc: '攻击附加火焰伤害', cost: 300,
       chip: { id: 'fire', name: '炎', stat: 'atk', value: 3, damageType: 'fire' } },

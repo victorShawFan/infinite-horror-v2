@@ -17,6 +17,7 @@ import { checkElementalResonance, getPlayerActiveElements } from './ElementalSys
 import { getAvailableSkills } from './SkillSystem.js';
 import { getEquipmentDisplayName } from './EquipmentSystem.js';
 import { getGeneLockDescription, getGeneLockProgress } from './GeneLockSystem.js';
+import { getInventoryList, useConsumable, CONSUMABLE_DEFS } from './ConsumableSystem.js';
 
 // 需要从 main.js 注入的共享状态
 let _ctx = {};
@@ -252,6 +253,33 @@ export function showInventoryPanel() {
           })()}
         </div>
 
+        <!-- 消耗品背包 -->
+        <div style="margin-top: 20px;">
+          <h3 style="color: #44cc88; margin-bottom: 10px;">📦 消耗品</h3>
+          <div id="consumables-list" style="max-height:180px;overflow-y:auto;">
+            ${(() => {
+              const items = getInventoryList();
+              if (items.length === 0) return '<p style="color:#555;text-align:center;font-size:12px;">无可用道具</p>';
+              return items.map(item => 
+                '<div style="display:flex;justify-content:space-between;align-items:center;' +
+                'background:rgba(255,255,255,0.03);border:1px solid #33333380;' +
+                'border-radius:6px;padding:6px 10px;margin-bottom:3px;">' +
+                '<div>' +
+                '<span style="font-size:13px;">' + item.icon + '</span> ' +
+                '<span style="color:#ddd;font-size:12px;">' + item.name + '</span>' +
+                '<span style="color:#888;font-size:10px;margin-left:4px;">×' + item.count + '</span>' +
+                '<span style="color:#555;font-size:10px;margin-left:6px;">' + item.desc + '</span>' +
+                '</div>' +
+                '<button class="inv-use-consumable" data-cid="' + item.id + '" style="' +
+                'background:rgba(68,204,136,0.12);border:1px solid #44cc88;' +
+                'color:#44cc88;padding:3px 10px;cursor:pointer;font-size:11px;' +
+                'border-radius:4px;font-family:inherit;">使用</button>' +
+                '</div>'
+              ).join('');
+            })()}
+          </div>
+        </div>
+
         <div style="text-align: center; margin-top: 24px;">
           <button id="btn-close-inv" style="
             background: transparent; border: 1px solid #444; color: #888;
@@ -343,6 +371,44 @@ export function showInventoryPanel() {
   document.getElementById('btn-close-inv').addEventListener('click', close);
   document.getElementById('inv-backdrop').addEventListener('click', (e) => {
     if (e.target.id === 'inv-backdrop') close();
+  });
+  
+  // 消耗品使用按钮
+  document.querySelectorAll('.inv-use-consumable').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const cid = btn.dataset.cid;
+      const result = useConsumable(cid);
+      if (result.success) {
+        // 刷新消耗品列表
+        const listEl = document.getElementById('consumables-list');
+        if (listEl) {
+          const items = getInventoryList();
+          if (items.length === 0) {
+            listEl.innerHTML = '<p style="color:#555;text-align:center;font-size:12px;">无可用道具</p>';
+          } else {
+            listEl.innerHTML = items.map(item => 
+              '<div style="display:flex;justify-content:space-between;align-items:center;' +
+              'background:rgba(255,255,255,0.03);border:1px solid #33333380;' +
+              'border-radius:6px;padding:6px 10px;margin-bottom:3px;">' +
+              '<div>' +
+              '<span style="font-size:13px;">' + item.icon + '</span> ' +
+              '<span style="color:#ddd;font-size:12px;">' + item.name + '</span>' +
+              '<span style="color:#888;font-size:10px;margin-left:4px;">×' + item.count + '</span>' +
+              '</div>' +
+              '<button class="inv-use-consumable" data-cid="' + item.id + '" style="' +
+              'background:rgba(68,204,136,0.12);border:1px solid #44cc88;' +
+              'color:#44cc88;padding:3px 10px;cursor:pointer;font-size:11px;' +
+              'border-radius:4px;font-family:inherit;">使用</button>' +
+              '</div>'
+            ).join('');
+            // 重新绑定事件
+            listEl.querySelectorAll('.inv-use-consumable').forEach(b2 => {
+              b2.addEventListener('click', () => btn.click()); // Delegate up
+            });
+          }
+        }
+      }
+    });
   });
   // 也可以按 I 或 ESC 关闭
   const keyHandler = (e) => {
@@ -588,6 +654,7 @@ export function showHelpPanel() {
           <tr><td style="color: #44ff88;">鼠标悬停</td><td>查看敌人/物品详情</td></tr>
           <tr><td style="color: #ff8866;">L</td><td>战斗日志回顾</td></tr>
           <tr><td style="color: #44ffff;">M</td><td>全地图视图</td></tr>
+          <tr><td style="color: #44cc88;">Q</td><td>道具背包</td></tr>
           <tr><td style="color: #44ff88;">F5</td><td>快速存档</td></tr>
           <tr><td style="color: #44aaff;">F9</td><td>快速读档</td></tr>
         </table>
@@ -597,6 +664,7 @@ export function showHelpPanel() {
           <li>碰怪前<strong style="color: #eee">先用鼠标悬停</strong>查看能否打赢</li>
           <li>显示 <span style="color: #44ff88">✓</span> 表示可以击败，<span style="color: #ff4444">✗</span> 表示打不过</li>
           <li>收集<strong style="color: #ff8866">力量晶石</strong>和<strong style="color: #6688ff">坚韧晶石</strong>提升属性</li>
+          <li>战前按<strong style="color: #44cc88">Q</strong>使用增益药剂，战斗中自动生效</li>
           <li>合理使用<strong style="color: #ff4488">急救物品</strong>补充HP</li>
           <li>基因锁激活后攻防大幅提升，关键战斗前记得开启</li>
           <li>按 <strong style="color: #ff8866">L</strong> 查看战斗日志</li>
