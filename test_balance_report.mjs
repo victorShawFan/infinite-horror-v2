@@ -20,6 +20,7 @@ import { executeBattle, previewBattle, getEffectiveAtk, getEffectiveDef } from '
 import { ENTITY_TYPE } from './src/core/constants.js';
 import { getGeneLockProgress, checkGeneLockAdvancement, advanceGeneLock } from './src/core/GeneLockSystem.js';
 import { getAvailableSkills } from './src/core/SkillSystem.js';
+import { scaleEnemy } from './src/core/DifficultyScaler.js';
 
 gameState.reset();
 const p = gameState.player;
@@ -71,7 +72,8 @@ for (let ci = 0; ci < chapters.length; ci++) {
     // 战斗
     for (const e of f.entities.filter(e => e.type === ENTITY_TYPE.ENEMY || e.type === ENTITY_TYPE.BOSS)) {
       chEnemies++;
-      const preview = previewBattle(p, e);
+      const scaled = scaleEnemy(e, chNum);
+      const preview = previewBattle(p, scaled);
       if (!preview.canWin) {
         chDefeats++;
         totalDefeats++;
@@ -79,7 +81,7 @@ for (let ci = 0; ci < chapters.length; ci++) {
       }
 
       const hpBefore = p.hp;
-      executeBattle({...e});
+      executeBattle({...scaled});
       const hpAfter = p.hp;
       const margin = hpAfter;
 

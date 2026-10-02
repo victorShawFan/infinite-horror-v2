@@ -8,6 +8,7 @@ import { gameState } from './GameState.js';
 import { getNoise, getIsSneaking, getAmmo, getMaxAmmo } from './StealthSystem.js';
 import { getEffectiveAtk, getEffectiveDef, getEffectiveCrt, getEffectiveSpd, previewBattle, getStatsBreakdown } from './CombatSystem.js';
 import { getGeneLockProgress } from './GeneLockSystem.js';
+import { scaleEnemy } from './DifficultyScaler.js';
 import { getAvailableSkills } from './SkillSystem.js';
 import { drawWallTile, drawFloorTile, drawLavaTile, drawStairsTile, drawCharacterSprite, drawHealthBar } from './SpriteRenderer.js';
 
@@ -542,7 +543,8 @@ export class Renderer {
     let lines = [e.name];
 
     if (e.type === ENTITY_TYPE.ENEMY || e.type === ENTITY_TYPE.BOSS) {
-      const preview = previewBattle(p, e);
+      const scaledE = scaleEnemy(e, (gameState.chapter || 1));
+      const preview = previewBattle(p, scaledE);
       lines.push(`HP: ${e.hp}  ATK: ${e.atk}  DEF: ${e.def}`);
       if (e.weaknesses?.length) {
         const wMap = { fire: '🔥火', ice: '❄冰', poison: '☠毒', psychic: '🧠念', dark: '🌑暗', holy: '✦圣' };

@@ -28,6 +28,7 @@ import {
   updateAmmoForWeapon,
 } from './core/StealthSystem.js';
 import { audioEngine } from './core/AudioEngine.js';
+import { scaleEnemy } from './core/DifficultyScaler.js';
 import { renderLordGodSpace } from './core/LordGodSpace.js';
 import { CombatAnimator } from './core/CombatAnimation.js';
 import { showOpeningCutscene, showChapter2Cutscene, showChapter3Cutscene, showChapter4Cutscene, showChapter5Cutscene, showChapter6Cutscene, showChapter7Cutscene, showChapter8Cutscene, showChapter9Cutscene, showChapter10Cutscene, showChapter11Cutscene, showChapter12Cutscene } from './core/Cutscene.js';
@@ -703,7 +704,9 @@ function movePlayer(dx, dy) {
 // ── 战前确认 ──
 function showCombatConfirm(enemy) {
   const p = gameState.player;
-  const preview = previewBattle(p, enemy);
+  // 难度缩放：根据章节动态调整敌人属性
+  const scaledEnemy = scaleEnemy(enemy, gameState.chapter);
+  const preview = previewBattle(p, scaledEnemy);
   
   gameState.setState(GAME_STATE.DIALOGUE);
   const overlay = document.getElementById('ui-overlay');
@@ -847,7 +850,9 @@ function startCombat(enemy) {
   renderer.shake(3, 150);
   audioEngine.playDamage();
   
-  const result = executeBattle(enemy);
+  // 难度缩放
+  const scaledEnemy = scaleEnemy(enemy, gameState.chapter);
+  const result = executeBattle(scaledEnemy);
 
   if (result.victory) {
     // 移除被击败的敌人并记录
