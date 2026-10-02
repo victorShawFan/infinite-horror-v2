@@ -87,7 +87,7 @@ export function executeBattle(enemy) {
 
     // 玩家攻击
     const pHit = calcDamage(
-      { atk: getEffectiveAtk(p), crt: p.crt, geneLock: p.geneLock },
+      { atk: getEffectiveAtk(p), crt: getEffectiveCrt(p), geneLock: p.geneLock },
       enemy,
       p.weapon?.damageType || DAMAGE_TYPE.PHYSICAL
     );
@@ -212,6 +212,32 @@ export function getEffectiveDef(player) {
   }
 
   return def;
+}
+
+/**
+ * 获取有效暴击率（含装备、芯片加成）
+ */
+export function getEffectiveCrt(player) {
+  let crt = player.crt || 0;
+  if (player.accessory?.crt) crt += player.accessory.crt;
+  for (const chip of player.chips || []) {
+    if (chip.stat === 'crt') crt += chip.value;
+  }
+  return Math.min(crt, 100); // 上限100%
+}
+
+/**
+ * 获取有效速度
+ */
+export function getEffectiveSpd(player) {
+  let spd = player.spd || 0;
+  if (player.weapon?.spd) spd += player.weapon.spd;
+  if (player.armor?.spd) spd += player.armor.spd;
+  if (player.accessory?.spd) spd += player.accessory.spd;
+  for (const chip of player.chips || []) {
+    if (chip.stat === 'spd') spd += chip.value;
+  }
+  return spd;
 }
 
 /**

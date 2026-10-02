@@ -746,6 +746,29 @@ function pickupItem(item) {
       renderer.addParticle(item.x * TILE_SIZE + TILE_SIZE/2, item.y * TILE_SIZE + TILE_SIZE/2, 'rgb(255, 170, 0)', 8);
       break;
 
+    case 'armor':
+      p.armor = item.armor;
+      renderer.addFloatText(`装备: ${item.armor.name}`, item.x, item.y, 'rgb(100, 136, 255)');
+      renderer.addParticle(item.x * TILE_SIZE + TILE_SIZE/2, item.y * TILE_SIZE + TILE_SIZE/2, 'rgb(100, 136, 255)', 8);
+      break;
+
+    case 'accessory':
+      p.accessory = item.accessory;
+      renderer.addFloatText(`装备: ${item.accessory.name}`, item.x, item.y, 'rgb(170, 136, 255)');
+      renderer.addParticle(item.x * TILE_SIZE + TILE_SIZE/2, item.y * TILE_SIZE + TILE_SIZE/2, 'rgb(170, 136, 255)', 8);
+      break;
+
+    case 'chip':
+      if (p.chips.length < p.maxChips) {
+        p.chips.push(item.chip);
+        renderer.addFloatText(`芯片: ${item.chip.name}`, item.x, item.y, 'rgb(170, 68, 255)');
+        renderer.addParticle(item.x * TILE_SIZE + TILE_SIZE/2, item.y * TILE_SIZE + TILE_SIZE/2, 'rgb(170, 68, 255)', 8);
+      } else {
+        renderer.addFloatText('芯片槽已满', item.x, item.y, 'rgb(150, 100, 100)');
+        return false;
+      }
+      break;
+
     case 'key':
       p.keys[item.keyColor] = (p.keys[item.keyColor] || 0) + 1;
       renderer.addFloatText(`+1 ${item.keyColor === 'yellow' ? '黄色' : item.keyColor === 'blue' ? '蓝色' : '红色'}钥匙`, item.x, item.y, 'rgb(255, 204, 68)');
