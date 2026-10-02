@@ -69,8 +69,7 @@ function generateFloor_1_1() {
           { text: '活下来的人会得到奖励——可以强化身体，甚至获得超越人类的力量。', speaker: '张杰' },
           { text: '但别逞英雄。看到怪物先观察，确定打得过再上。打不过？绕路。活着比面子重要。', speaker: '张杰' },
           { text: '还有……不要离剧情角色太远，主神会扣你的命。跟紧队伍。', speaker: '张杰' },
-          { text: '前方有感染者，让我开路。你跟在后面，拿到什么补给都别犹豫。我们只有彼此了。', speaker: '张杰' },
-        ],
+          { text: '前方有感染者，让我开路。你跟在后面，拿到什么补给都别犹豫。我们只有彼此了。', speaker: '张杰' }],
       },
       // 詹岚
       { type: ENTITY_TYPE.COMPANION, id: 'zhan_lan', name: '詹岚',
@@ -81,8 +80,7 @@ function generateFloor_1_1() {
           { text: '说来奇怪……到了这里之后，我的大脑变得异常清楚。可能是主神给的什么"增强"吧。', speaker: '詹岚' },
           { text: '我能分析敌人的弱点和路线。你悬停看到的情报，有一部分是我帮你整理的。', speaker: '詹岚' },
           { text: '注意那些上了锁的门——钥匙通常在死人身上或者终端机里。这里没有什么东西是白放的。', speaker: '詹岚' },
-          { text: '……说实话，我很害怕。但张杰说只要活着回去就好。我信他。', speaker: '詹岚' },
-        ],
+          { text: '……说实话，我很害怕。但张杰说只要活着回去就好。我信他。', speaker: '詹岚' }],
       },
       // 李萧毅
       { type: ENTITY_TYPE.COMPANION, id: 'li_xiaoyi', name: '李萧毅',
@@ -91,8 +89,7 @@ function generateFloor_1_1() {
         dialogue: [
           { text: '嘿兄弟，别怕。我叫李萧毅，以前是个快递员。没想到送到"主神"这儿来了。', speaker: '李萧毅' },
           { text: '我跑得快，能帮你侦查前方的路。但别指望我替你打架——我这小身板扛不住。', speaker: '李萧毅' },
-          { text: '对了，如果前面有激光什么的，看准节奏再走。红色的东西，一般都不是好东西。', speaker: '李萧毅' },
-        ],
+          { text: '对了，如果前面有激光什么的，看准节奏再走。红色的东西，一般都不是好东西。', speaker: '李萧毅' }],
       },
       // 牟钢
       { type: ENTITY_TYPE.COMPANION, id: 'mou_gang', name: '牟钢',
@@ -102,8 +99,7 @@ function generateFloor_1_1() {
           { text: '牟钢。退伍兵。别的不行，挨打还行。', speaker: '牟钢' },
           { text: '你长得跟我弟弟差不多大。放心，有我在前面顶着，你不会有事。', speaker: '牟钢' },
           { text: '……说起来，我弟弟还在等我回去呢。', speaker: '牟钢' },
-          { text: '不管了。先把眼前的关过了再说。走！', speaker: '牟钢' },
-        ],
+          { text: '不管了。先把眼前的关过了再说。走！', speaker: '牟钢' }],
       },
       // 教学丧尸（弱）
       { type: ENTITY_TYPE.ENEMY, id: 'zombie_1', name: '僵化感染者',
@@ -134,8 +130,7 @@ function generateFloor_1_1() {
           lines: [
             { text: '你在座椅缝隙中发现了一张折叠的纸条。', speaker: '旁白' },
             { text: '"第三次了。每次醒来都是这趟列车。记住——红后的激光有规律，注意时机。" ——上一个我', speaker: '纸条' },
-            { text: '这是...前一个轮回的自己留下的？', speaker: '郑吒' },
-          ],
+            { text: '这是...前一个轮回的自己留下的？', speaker: '郑吒' }],
           flag: 'hidden_note_found',
           rewards: { exp: 10 },
         },
@@ -145,8 +140,7 @@ function generateFloor_1_1() {
         x: 8, y: 10, sprite: '人', color: '#888888',
         dialogue: [
           { text: '这、这是怎么回事？我明明在家里睡觉...', speaker: '新人' },
-          { text: '你冷静点。先听那边那个人说什么。', speaker: '郑吒' },
-        ],
+          { text: '你冷静点。先听那边那个人说什么。', speaker: '郑吒' }],
       },
       // 开场剧情事件
       { type: ENTITY_TYPE.EVENT, id: 'ch1_intro', name: '主神宣言',
@@ -158,12 +152,10 @@ function generateFloor_1_1() {
             { text: '你们已被选中参加这场生存游戏。', speaker: '主神' },
             { text: '任务：在生化危机的世界中存活。', speaker: '主神' },
             { text: '不要偏离剧情人物太远，否则后果自负。', speaker: '主神' },
-            { text: '杀死敌人会获得力量。活着回来的人，将得到奖励。', speaker: '主神' },
-          ],
+            { text: '杀死敌人会获得力量。活着回来的人，将得到奖励。', speaker: '主神' }],
           flag: 'ch1_intro_seen',
         },
-      },
-    ],
+      }],
     onClear: { nextFloor: 1, message: '你们离开列车，进入了蜂巢地下实验室的入口...' },
   };
 }
@@ -201,8 +193,7 @@ function generateFloor_1_2() {
           type: 'investigate',
           lines: [
             { text: '一具穿着安保制服的遗体。胸口有明显的抓痕。', speaker: '旁白' },
-            { text: '这里发生了什么...', speaker: '郑吒' },
-          ],
+            { text: '这里发生了什么...', speaker: '郑吒' }],
           rewards: { exp: 10 },
           flag: 'body_1_investigated',
         },
@@ -213,8 +204,7 @@ function generateFloor_1_2() {
           type: 'investigate',
           lines: [
             { text: '一具白大褂的遗体，手里紧握着一张门卡。', speaker: '旁白' },
-            { text: '看来这个门卡有用。', speaker: '詹岚' },
-          ],
+            { text: '看来这个门卡有用。', speaker: '詹岚' }],
           rewards: { keys: { yellow: 1 } },
           flag: 'body_2_investigated',
         },
@@ -272,8 +262,7 @@ function generateFloor_1_2() {
             { text: '一台仍在运行的安保终端。屏幕上显示着设施地图。', speaker: '旁白' },
             { text: '这里标注了一条通向机房的路线...还有一个"红后防御系统"的警告。', speaker: '詹岚' },
             { text: '红后...电影里那个AI？这是真的？', speaker: '郑吒' },
-            { text: '在这个世界里，一切都是真的。小心。', speaker: '张杰' },
-          ],
+            { text: '在这个世界里，一切都是真的。小心。', speaker: '张杰' }],
           flag: 'hive_terminal_read',
           rewards: { exp: 15 },
         },
@@ -285,11 +274,10 @@ function generateFloor_1_2() {
       },
       // 环境线索
       { type: ENTITY_TYPE.ITEM, id: 'lore_research', name: '实验日志',
-        x: 15, y: 1, sprite: '📋', color: '#ffcc44',
+        x: 4, y: 3, sprite: '📋', color: '#ffcc44',
         itemType: 'lore', loreId: 'lore_1_research',
         description: '一本散落在地上的实验日志，封面沾满了血迹。',
-      },
-    ],
+      }],
     onClear: { nextFloor: 2, message: '你们深入蜂巢，来到了红后的防御区域...' },
   };
 }
@@ -333,8 +321,7 @@ function generateFloor_1_3() {
             { text: '墙壁上嵌着一个布满灰尘的终端面板，上面有「蜂巢应急照明系统」的标识。', speaker: '旁白' },
             { text: '让我看看……这是应急照明的控制端口。只要接通它，就能恢复走廊的灯光。', speaker: '詹岚' },
             { text: '嗡——走廊上方的灯管开始一盏接一盏地亮起，惨白的荧光照亮了墙壁上的抓痕和血迹。', speaker: '旁白' },
-            { text: '照明恢复了……但说实话，有些东西还是看不见比较好。', speaker: '詹岚' },
-          ],
+            { text: '照明恢复了……但说实话，有些东西还是看不见比较好。', speaker: '詹岚' }],
           flag: 'terminal_light_done',
           rewards: { exp: 20 },
         },
@@ -348,8 +335,7 @@ function generateFloor_1_3() {
             { text: '「蜂巢安保门控 - B级权限」的终端。屏幕上还残留着上一个操作者的登录信息。', speaker: '旁白' },
             { text: '照明接通后我才能读取数据。好，开始解锁……', speaker: '詹岚' },
             { text: '门控序列重启。不过主电源还没恢复——只有核心电力接通，所有安全门才能打开。', speaker: '系统' },
-            { text: '还差一步。继续找主电源终端。', speaker: '詹岚' },
-          ],
+            { text: '还差一步。继续找主电源终端。', speaker: '詹岚' }],
           flag: 'terminal_door_done',
           rewards: { exp: 20 },
         },
@@ -362,14 +348,12 @@ function generateFloor_1_3() {
           lines: [
             { text: '主电源终端。这是最后一步了。', speaker: '詹岚' },
             { text: '我来操作。你掩护我。', speaker: '詹岚' },
-            { text: '⚠ 警告：操作终端会引来敌人！', speaker: '系统' },
-          ],
+            { text: '⚠ 警告：操作终端会引来敌人！', speaker: '系统' }],
           flag: 'terminal_main_done',
           rewards: { exp: 30 },
           spawnEnemies: [
             { name: '警报触发者', x: 8, y: 6, hp: 35, atk: 11, def: 4, sprite: '尸', color: '#556655', rewards: { exp: 30, gold: 12 } },
-            { name: '警报触发者', x: 6, y: 8, hp: 35, atk: 11, def: 4, sprite: '尸', color: '#556655', rewards: { exp: 30, gold: 12 } },
-          ],
+            { name: '警报触发者', x: 6, y: 8, hp: 35, atk: 11, def: 4, sprite: '尸', color: '#556655', rewards: { exp: 30, gold: 12 } }],
         },
       },
       // 敌人
@@ -410,7 +394,13 @@ function generateFloor_1_3() {
         chip: { id: 'overload', name: '过载', stat: 'atk', value: 4 },
         description: '从红后的处理器阵列中提取的实验芯片。植入后可强化攻击输出。',
       },
-    ],
+    
+      // 环境线索
+      { type: ENTITY_TYPE.ITEM, id: 'lore_survivor', name: '幸存者涂鸦',
+        x: 9, y: 8, sprite: '🩸', color: '#cc3333',
+        itemType: 'lore', loreId: 'lore_1_survivor',
+        description: '墙上用鲜血写着模糊的字迹，令人不寒而栗。',
+      }],
     onClear: { nextFloor: 3, message: '电力恢复了。通道打开了——但前方传来了奇怪的机械声...' },
   };
 }
@@ -452,8 +442,7 @@ function generateFloor_1_4() {
           lines: [
             { text: '前方是红后的激光防御系统！', speaker: '张杰' },
             { text: '红色方块是激光柱——碰到会受到大量伤害。', speaker: '张杰' },
-            { text: '找到安全的路线穿过去！', speaker: '张杰' },
-          ],
+            { text: '找到安全的路线穿过去！', speaker: '张杰' }],
           flag: 'laser_warned',
         },
       },
@@ -481,8 +470,7 @@ function generateFloor_1_4() {
         x: 17, y: 6, sprite: '◆', color: '#44ffaa',
         itemType: 'stat_boost', effect: { spd: 3, crt: 5 },
         description: '永久提升3点速度和5%暴击率。',
-      },
-    ],
+      }],
     onClear: { nextFloor: 4, message: '你穿过了激光走廊。前方传来了不属于人类的嘶吼声...' },
   };
 }
@@ -531,8 +519,7 @@ function generateFloor_1_5() {
             { text: '他转身冲向了爬行者群。你听到了钢管砸在肉体上的声音，然后是嘶吼，然后是沉默。', speaker: '旁白' },
             { text: '——牟钢 · 阵亡——', speaker: '系统' },
             { text: '你没有回头。不是因为不想，而是因为他说过"不要回头"。', speaker: '旁白' },
-            { text: '这是你在这个世界失去的第一个人。不会是最后一个。', speaker: '旁白' },
-          ],
+            { text: '这是你在这个世界失去的第一个人。不会是最后一个。', speaker: '旁白' }],
           flag: 'mou_gang_dead',
           removeCompanion: 'mou_gang',
         },
@@ -571,8 +558,7 @@ function generateFloor_1_5() {
             { text: '【基因锁 · 一阶觉醒】', speaker: '系统' },
             { text: '人类在死亡边缘时，隐藏在基因中的最后防线会被强行打开。', speaker: '旁白' },
             { text: '你的感知、反应和肌肉控制获得了超凡增强。按 G 键在战斗前激活。', speaker: '系统' },
-            { text: '……牟钢，我记住了。', speaker: '郑吒' },
-          ],
+            { text: '……牟钢，我记住了。', speaker: '郑吒' }],
           flag: 'gene_lock_1',
           effect: { geneLock: 1 },
         },
@@ -600,11 +586,10 @@ function generateFloor_1_5() {
       },
       // 主神碎片线索
       { type: ENTITY_TYPE.ITEM, id: 'lore_zhushen', name: '主神碎片',
-        x: 14, y: 2, sprite: '✦', color: '#ffdd44',
+        x: 4, y: 5, sprite: '✦', color: '#ffdd44',
         itemType: 'lore', loreId: 'lore_1_zhushen',
         description: '一块发出微光的碎片，上面刻着古老的文字。',
-      },
-    ],
+      }],
     onClear: { nextFloor: 5, message: '你们从蜂巢深处逃出。现在，必须在六小时内赶到撤离点...' },
   };
 }
@@ -644,13 +629,11 @@ function generateFloor_1_6() {
           lines: [
             { text: '走廊尽头有一个被砸开的军械柜。里面残留着三样东西。', speaker: '旁白' },
             { text: '只能拿一样。郑吒，你来决定。', speaker: '张杰' },
-            { text: '（这个选择可能决定后面的战斗走向。）', speaker: '系统' },
-          ],
+            { text: '（这个选择可能决定后面的战斗走向。）', speaker: '系统' }],
           choices: [
             { text: '医疗包（恢复全部HP）', effect: { healFull: true }, id: 'supply_medical' },
             { text: '弹药箱（攻击力+6）', effect: { atk: 6 }, id: 'supply_ammo' },
-            { text: '防弹衣（防御力+5）', effect: { def: 5 }, id: 'supply_armor' },
-          ],
+            { text: '防弹衣（防御力+5）', effect: { def: 5 }, id: 'supply_armor' }],
           flag: 'supply_chosen',
         },
       },
@@ -683,8 +666,7 @@ function generateFloor_1_6() {
             { text: '暴君庞大的身躯轰然倒地。地面传来的震动让天花板上的碎片纷纷掉落。', speaker: '旁白' },
             { text: '它……它真的倒了？', speaker: '郑吒' },
             { text: '别愣着！这东西不一定死透了。快走！列车就在前面！', speaker: '张杰' },
-            { text: '跑！全速！', speaker: '张杰' },
-          ],
+            { text: '跑！全速！', speaker: '张杰' }],
           flag: 'boss_tyrant_defeated',
         },
       },
@@ -706,8 +688,7 @@ function generateFloor_1_6() {
             { text: '"任务完成。幸存者四人。基础奖励：1000奖励点。"', speaker: '主神' },
             { text: '"下一轮试炼将在十日后开始。请利用这段时间整备。"', speaker: '主神' },
             { text: '你闭上了眼睛。列车渐渐停下。当你再次睁眼，你身处一个纯白色的空间。', speaker: '旁白' },
-            { text: '——第一章 · 名为生化 · 完——', speaker: '系统' },
-          ],
+            { text: '——第一章 · 名为生化 · 完——', speaker: '系统' }],
           flag: 'chapter_1_complete',
           rewards: { rewardPoints: 1000, exp: 500 },
         },
@@ -717,8 +698,7 @@ function generateFloor_1_6() {
         x: 4, y: 12, sprite: '♥', color: '#ff0044',
         itemType: 'consumable', effect: { heal: 120 },
         description: '恢复120点生命值。',
-      },
-    ],
+      }],
     onClear: null, // 最后一层
   };
 }

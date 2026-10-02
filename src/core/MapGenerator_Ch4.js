@@ -57,8 +57,7 @@ function generateFloor_4_1() {
             { text: '萧宏律，请多关照！我虽然看着不像，但其实很有用的！', speaker: '萧宏律' },
             { text: '这个世界……是《木乃伊》。目标是取得复活真经。但——', speaker: '赵樱空' },
             { text: '我感应到了。另一支队伍也在这里。印洲队。', speaker: '赵樱空' },
-            { text: '（主神提示：双阵营模式激活。印洲队将争夺同一目标。团战不可避免。）', speaker: '主神' },
-          ],
+            { text: '（主神提示：双阵营模式激活。印洲队将争夺同一目标。团战不可避免。）', speaker: '主神' }],
         },
       },
       // 新队友
@@ -66,16 +65,14 @@ function generateFloor_4_1() {
         x: 2, y: 8, sprite: '恒', color: '#88aa44',
         dialogue: [
           { text: '张恒加入了队伍！', speaker: '系统' },
-          { text: '（被动效果：古武强化 — ATK+3）', speaker: '系统' },
-        ],
+          { text: '（被动效果：古武强化 — ATK+3）', speaker: '系统' }],
         companionData: { id: 'zhang_heng', name: '张恒', passive: { atk: 3 }, alive: true },
       },
       { type: ENTITY_TYPE.COMPANION, id: 'xiao_honglv', name: '萧宏律',
         x: 4, y: 9, sprite: '萧', color: '#ddaa44',
         dialogue: [
           { text: '萧宏律加入了队伍！', speaker: '系统' },
-          { text: '（被动效果：话匣子鼓舞 — SPD+2）', speaker: '系统' },
-        ],
+          { text: '（被动效果：话匣子鼓舞 — SPD+2）', speaker: '系统' }],
         companionData: { id: 'xiao_honglv', name: '萧宏律', passive: { spd: 2 }, alive: true },
       },
       // 沙漠敌人
@@ -104,8 +101,7 @@ function generateFloor_4_1() {
       { type: ENTITY_TYPE.ITEM, id: 'atk_crystal_ch4_1', name: '力量结晶',
         x: 17, y: 2, sprite: '◆', color: '#ff8844',
         itemType: 'stat_boost', effect: { atk: 3 },
-      },
-    ],
+      }],
   };
 }
 
@@ -142,8 +138,7 @@ function generateFloor_4_2() {
             { text: '情报商递过来一份文件。上面标注了哈姆纳塔的位置——以及印洲队的行动路线。', speaker: '旁白' },
             { text: '印洲队的队长叫"达帕拉"。他们比我们更了解这个世界的规则。', speaker: '赵樱空' },
             { text: '一定要在他们之前找到复活真经。这是我们此行最重要的目标。', speaker: '郑吒' },
-            { text: '（获得情报：印洲队动向已标记。陵墓入口情报已解锁。）', speaker: '主神' },
-          ],
+            { text: '（获得情报：印洲队动向已标记。陵墓入口情报已解锁。）', speaker: '主神' }],
           flag: 'cairo_intel_done',
         },
       },
@@ -177,8 +172,7 @@ function generateFloor_4_2() {
       { type: ENTITY_TYPE.ITEM, id: 'def_crystal_ch4_2', name: '防御结晶',
         x: 18, y: 14, sprite: '◆', color: '#6688ff',
         itemType: 'stat_boost', effect: { def: 3 },
-      },
-    ],
+      }],
   };
 }
 
@@ -214,8 +208,7 @@ function generateFloor_4_3() {
           lines: [
             { text: '中央大厅的墙上有四组象形文字。按照正确顺序触碰才能打开内殿。', speaker: '旁白' },
             { text: '让我看看……太阳、鹰、蛇、甲虫。这是亡灵之书的开启序列。', speaker: '赵樱空' },
-            { text: '（古文机关已解密。内殿通道开启。）', speaker: '主神' },
-          ],
+            { text: '（古文机关已解密。内殿通道开启。）', speaker: '主神' }],
           flag: 'tomb_puzzle_solved',
         },
       },
@@ -258,8 +251,7 @@ function generateFloor_4_3() {
         x: 9, y: 9, sprite: '📜', color: '#ffdd44',
         itemType: 'lore', loreId: 'lore_4_scripture',
         description: '一页残破的经文，记载着复活的代价。',
-      },
-    ],
+      }],
   };
 }
 
@@ -293,8 +285,7 @@ function generateFloor_4_4() {
           type: 'choice',
           lines: [
             { text: '印洲队的使者出现了。他们提出暂时停战，共同对付伊莫顿。', speaker: '旁白' },
-            { text: '合作可以减少伤亡，但他们不可信。', speaker: '楚轩' },
-          ],
+            { text: '合作可以减少伤亡，但他们不可信。', speaker: '楚轩' }],
           choices: [
             { id: 'ally', text: '暂时合作，但保持警惕',
               effect: { def: 3, description: '合作让双方都减少了损失',
@@ -304,8 +295,7 @@ function generateFloor_4_4() {
                 relationship: { mou_gang: 'good_decision', bawang: 'good_decision' } } },
             { id: 'trap', text: '假装合作，设下陷阱',
               effect: { spd: 3, crt: 2, description: '楚轩式的策略',
-                relationship: { chuxuan: 'good_decision' } } },
-          ],
+                relationship: { chuxuan: 'good_decision' } } }],
           flag: 'india_response_done',
         },
       },
@@ -318,8 +308,7 @@ function generateFloor_4_4() {
             { text: '欢迎来到哈姆纳塔，中洲队。', speaker: '达帕拉（印洲队长）' },
             { text: '你们太慢了。但不要紧——我们可以让你们在这里永眠。', speaker: '达帕拉' },
             { text: '所有人进入战斗状态！保护好自己！', speaker: '郑吒' },
-            { text: '（团队战：击败印洲队成员可获得额外积分和奖励。）', speaker: '主神' },
-          ],
+            { text: '（团队战：击败印洲队成员可获得额外积分和奖励。）', speaker: '主神' }],
           flag: 'india_ambush_done',
         },
       },
@@ -350,8 +339,7 @@ function generateFloor_4_4() {
             { text: '齐腾一！', speaker: '郑吒' },
             { text: '没关系……队长，帮我看住他们的侧翼……', speaker: '齐腾一' },
             { text: '齐腾一倒下了。但他临终前的射击为队伍争取了宝贵的时间。', speaker: '旁白' },
-            { text: '（齐腾一阵亡。这是不可改变的命运。）', speaker: '主神' },
-          ],
+            { text: '（齐腾一阵亡。这是不可改变的命运。）', speaker: '主神' }],
           flag: 'qi_tengyi_dead',
           companionDeath: 'qi_tengyi',
         },
@@ -365,7 +353,13 @@ function generateFloor_4_4() {
         x: 18, y: 6, sprite: '◆', color: '#ffcc44',
         itemType: 'stat_boost', effect: { crt: 4 },
       },
-    ],
+    
+      // 环境线索
+      { type: ENTITY_TYPE.ITEM, id: 'lore_ch4_f4', name: '伊莫顿石刻',
+        x: 13, y: 8, sprite: '🏛', color: '#aa8866',
+        itemType: 'lore', loreId: 'lore_4_imhotep',
+        description: '一块从神殿壁画上脱落的石板碎片。',
+      }],
   };
 }
 
@@ -400,8 +394,7 @@ function generateFloor_4_5() {
             { text: '祭坛上，一本古老的经书泛着金色的光芒——复活真经。', speaker: '旁白' },
             { text: '这就是……复活真经。有了它，就能复活死去的队友。', speaker: '赵樱空' },
             { text: '取到了！但印洲队也在逼近——快撤！', speaker: '郑吒' },
-            { text: '（获得关键道具「复活真经」— 可用于后续章节复活已故队友。）', speaker: '主神' },
-          ],
+            { text: '（获得关键道具「复活真经」— 可用于后续章节复活已故队友。）', speaker: '主神' }],
           flag: 'scripture_obtained',
           rewards: { rewardPoints: 200 },
         },
@@ -417,8 +410,7 @@ function generateFloor_4_5() {
             { text: '零点——！', speaker: '郑吒' },
             { text: '零点用最后的力气开了一枪——正中达帕拉的肩膀。', speaker: '旁白' },
             { text: '队长……真经要保住。剩下的……拜托了。', speaker: '零点' },
-            { text: '（零点阵亡。他的牺牲为取得复活真经争取了最后的时间。）', speaker: '主神' },
-          ],
+            { text: '（零点阵亡。他的牺牲为取得复活真经争取了最后的时间。）', speaker: '主神' }],
           flag: 'lingdian_dead',
           companionDeath: 'lingdian',
         },
@@ -444,8 +436,7 @@ function generateFloor_4_5() {
       { type: ENTITY_TYPE.ITEM, id: 'spd_crystal_ch4_5', name: '速度结晶',
         x: 19, y: 10, sprite: '◆', color: '#44ffaa',
         itemType: 'stat_boost', effect: { spd: 3 },
-      },
-    ],
+      }],
   };
 }
 
@@ -481,8 +472,7 @@ function generateFloor_4_6() {
             { text: '伊莫顿！他正在恢复力量！', speaker: '赵樱空' },
             { text: '印洲队也在这里——他们也想利用伊莫顿的力量！', speaker: '张恒' },
             { text: '我们两线作战。郑吒对付伊莫顿，张恒盯住印洲队残部。', speaker: '詹岚' },
-            { text: '为了零点和齐腾一……这一战，我们不能输！', speaker: '郑吒' },
-          ],
+            { text: '为了零点和齐腾一……这一战，我们不能输！', speaker: '郑吒' }],
           flag: 'imhotep_intro_done',
         },
       },
@@ -524,13 +514,11 @@ function generateFloor_4_6() {
             { text: '快走！带着真经！', speaker: '张恒' },
             { text: '我们失去了零点和齐腾一……但复活真经，也许有一天能让他们回来。', speaker: '郑吒' },
             { text: '在沙漠的夕阳下，郑吒紧握着复活真经，向着远方走去。', speaker: '旁白' },
-            { text: '第四关「神鬼秘宝」通关。获得基础奖励1000点。', speaker: '主神' },
-          ],
+            { text: '第四关「神鬼秘宝」通关。获得基础奖励1000点。', speaker: '主神' }],
           flag: 'ch4_complete',
           rewards: { rewardPoints: 1000 },
         },
-      },
-    ],
+      }],
   };
 }
 
@@ -545,7 +533,6 @@ export function generateChapter4() {
       generateFloor_4_3(),
       generateFloor_4_4(),
       generateFloor_4_5(),
-      generateFloor_4_6(),
-    ],
+      generateFloor_4_6()],
   };
 }

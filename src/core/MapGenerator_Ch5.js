@@ -48,16 +48,14 @@ function generateFloor_5_1() {
           { text: '新加入的王侠沉默不语——但她的存在似乎有些不同寻常。', speaker: '旁白' },
           { text: '这个世界……没有怪物。', speaker: '赵樱空' },
           { text: '因为"死神"就是这个世界本身。因果连锁——环境会自动杀死目标。', speaker: '张杰' },
-          { text: '（主神提示：因果连锁已启动。观察环境征兆，提前预判和规避致命事件。）', speaker: '主神' },
-        ] },
+          { text: '（主神提示：因果连锁已启动。观察环境征兆，提前预判和规避致命事件。）', speaker: '主神' }] },
       },
       // 王侠临时入队
       { type: ENTITY_TYPE.COMPANION, id: 'wang_xia', name: '王侠',
         x: 2, y: 8, sprite: '侠', color: '#aabb88',
         dialogue: [
           { text: '王侠加入了队伍。', speaker: '系统' },
-          { text: '（被动效果：国家计划 — DEF+2）', speaker: '系统' },
-        ],
+          { text: '（被动效果：国家计划 — DEF+2）', speaker: '系统' }],
         companionData: { id: 'wang_xia', name: '王侠', passive: { def: 2 }, alive: true },
       },
       // 环境危险（以特殊敌人形式呈现）
@@ -84,8 +82,7 @@ function generateFloor_5_1() {
       { type: ENTITY_TYPE.ITEM, id: 'spd_crystal_ch5_1', name: '速度结晶',
         x: 17, y: 9, sprite: '◆', color: '#44ffaa',
         itemType: 'stat_boost', effect: { spd: 3 },
-      },
-    ],
+      }],
   };
 }
 
@@ -114,8 +111,7 @@ function generateFloor_5_2() {
         event: { type: 'dialogue', lines: [
           { text: '加油站起火了！连锁爆炸正在扩散！', speaker: '旁白' },
           { text: '所有人散开！按照我说的路线撤离！', speaker: '张杰' },
-          { text: '（张杰的指挥让队伍勉强避开了最危险的爆炸区域。）', speaker: '旁白' },
-        ], flag: 'rescue_done' },
+          { text: '（张杰的指挥让队伍勉强避开了最危险的爆炸区域。）', speaker: '旁白' }], flag: 'rescue_done' },
       },
       { type: ENTITY_TYPE.ENEMY, id: 'gas_explosion', name: '汽油爆炸',
         x: 13, y: 11, sprite: '💥', color: '#ff8844',
@@ -134,8 +130,7 @@ function generateFloor_5_2() {
           { text: '王侠冲进了坍塌的建筑——她说里面还有幸存者。', speaker: '旁白' },
           { text: '不——王侠！建筑要塌了！', speaker: '詹岚' },
           { text: '来不及了。整栋建筑轰然倒塌。', speaker: '旁白' },
-          { text: '（王侠阵亡。国家计划的新人，最终也逃不过主神的规则。）', speaker: '主神' },
-        ], flag: 'wang_xia_dead', companionDeath: 'wang_xia' },
+          { text: '（王侠阵亡。国家计划的新人，最终也逃不过主神的规则。）', speaker: '主神' }], flag: 'wang_xia_dead', companionDeath: 'wang_xia' },
       },
       { type: ENTITY_TYPE.ITEM, id: 'medkit_ch5_2', name: '急救包',
         x: 3, y: 1, sprite: '♥', color: '#ff4488',
@@ -150,10 +145,8 @@ function generateFloor_5_2() {
       { type: ENTITY_TYPE.NPC, id: 'merchant_ch5', name: '幽灵商贩',
         x: 6, y: 5, sprite: '🏪', color: '#ffcc44', merchant: true,
         dialogue: [
-          { text: '"死神的世界里……只有实力才是硬通货。来看看吧。"', speaker: '幽灵商贩' },
-        ],
-      },
-    ],
+          { text: '"死神的世界里……只有实力才是硬通货。来看看吧。"', speaker: '幽灵商贩' }],
+      }],
   };
 }
 
@@ -184,8 +177,7 @@ function generateFloor_5_3() {
           { text: '死神的因果链有一个规律——它总是从最不起眼的细节开始。', speaker: '张杰' },
           { text: '水管漏水→地面打滑→玻璃碎裂→碎片飞射。这就是一条完整的死亡链。', speaker: '张杰' },
           { text: '打断链条中的任何一环，就能阻止最终的死亡。', speaker: '张杰' },
-          { text: '（获得技能"征兆分析"— 可提前预判环境危险。）', speaker: '主神' },
-        ], flag: 'omen_tutorial_done' },
+          { text: '（获得技能"征兆分析"— 可提前预判环境危险。）', speaker: '主神' }], flag: 'omen_tutorial_done' },
       },
       { type: ENTITY_TYPE.ENEMY, id: 'water_trap', name: '水管破裂陷阱',
         x: 4, y: 10, sprite: '💧', color: '#4488cc',
@@ -209,8 +201,7 @@ function generateFloor_5_3() {
       { type: ENTITY_TYPE.ITEM, id: 'atk_crystal_ch5_3', name: '力量结晶',
         x: 14, y: 1, sprite: '◆', color: '#ff8844',
         itemType: 'stat_boost', effect: { atk: 4 },
-      },
-    ],
+      }],
   };
 }
 
@@ -240,8 +231,7 @@ function generateFloor_5_4() {
           { text: '队长？你怎么了？', speaker: '郑吒' },
           { text: '……杀了他们。全部杀了。', speaker: '张杰（被控）' },
           { text: '张杰被精神控制了！但我们不能伤害他——必须找到解除控制的方法！', speaker: '赵樱空' },
-          { text: '（警告：张杰被精神控制。击败控制源可解除。不可杀死张杰。）', speaker: '主神' },
-        ], flag: 'mind_control_done' },
+          { text: '（警告：张杰被精神控制。击败控制源可解除。不可杀死张杰。）', speaker: '主神' }], flag: 'mind_control_done' },
       },
       // 精神控制源
       { type: ENTITY_TYPE.ENEMY, id: 'control_source_1', name: '精神控制节点',
@@ -272,8 +262,7 @@ function generateFloor_5_4() {
       },
       {type:ENTITY_TYPE.ITEM,id:'set_alien_armor',name:'异形甲壳护甲',x:5,y:3,sprite:'🛡',color:'#44aaff',
        itemType:'armor',armor:{name:'异形甲壳护甲',def:12,maxHp:30,spd:1,setId:'xenomorph_carapace',slot:'armor',
-       description:'从异形身上剥下的甲壳，轻便却坚韧无比。'}},
-    ],
+       description:'从异形身上剥下的甲壳，轻便却坚韧无比。'}}],
   };
 }
 
@@ -305,8 +294,7 @@ function generateFloor_5_5() {
           lines: [
             { text: '张杰把你拉到一边。他的表情异常凝重。', speaker: '旁白' },
             { text: '郑吒……如果我出了什么事，你能替我照顾好他们吗？', speaker: '张杰' },
-            { text: '（张杰的眼神里有一种你从未见过的东西——是释然。）', speaker: '旁白' },
-          ],
+            { text: '（张杰的眼神里有一种你从未见过的东西——是释然。）', speaker: '旁白' }],
           choices: [
             { id: 'promise', text: '我答应你。不管发生什么。',
               effect: { def: 3, hp: 20, description: '你许下了承诺，心中多了一份力量',
@@ -316,8 +304,7 @@ function generateFloor_5_5() {
                 relationship: { zhang_jie: 'honest_talk' } } },
             { id: 'question', text: '你是不是知道了什么？',
               effect: { crt: 3, description: '你洞察到了张杰隐藏的秘密',
-                relationship: { zhang_jie: 'good_decision', chuxuan: 'good_decision' } } },
-          ],
+                relationship: { zhang_jie: 'good_decision', chuxuan: 'good_decision' } } }],
           flag: 'zhangjie_request_chosen',
         },
       },
@@ -327,8 +314,7 @@ function generateFloor_5_5() {
           { text: '张杰的念力场将所有人困住。这不是精神控制——这是考验。', speaker: '旁白' },
           { text: '郑吒。如果你想带领这支队伍，就用你的方式证明。', speaker: '张杰' },
           { text: '我不需要你的许可。我要保护每一个人——这就是我的答案。', speaker: '郑吒' },
-          { text: '（队长考验开始：击败精神试炼体即为通过。）', speaker: '主神' },
-        ], flag: 'captain_test_start' },
+          { text: '（队长考验开始：击败精神试炼体即为通过。）', speaker: '主神' }], flag: 'captain_test_start' },
       },
       // 精神试炼体
       { type: ENTITY_TYPE.ENEMY, id: 'trial_fear', name: '恐惧之影',
@@ -355,8 +341,7 @@ function generateFloor_5_5() {
         event: { type: 'dialogue', lines: [
           { text: '打倒了三道心魔后，郑吒感到体内涌起前所未有的力量。', speaker: '旁白' },
           { text: '基因锁……第三阶！', speaker: '郑吒' },
-          { text: '（基因锁提升至三阶。ATK/DEF大幅强化。）', speaker: '主神' },
-        ], flag: 'genelock_3', effect: { geneLock: 3 } },
+          { text: '（基因锁提升至三阶。ATK/DEF大幅强化。）', speaker: '主神' }], flag: 'genelock_3', effect: { geneLock: 3 } },
       },
       { type: ENTITY_TYPE.ITEM, id: 'medkit_ch5_5', name: '急救包',
         x: 2, y: 11, sprite: '♥', color: '#ff4488',
@@ -368,7 +353,13 @@ function generateFloor_5_5() {
         itemType: 'lore', loreId: 'lore_5_death',
         description: '一封写给郑吒的遗书，墨迹尚未干透。',
       },
-    ],
+    
+      // 环境线索
+      { type: ENTITY_TYPE.ITEM, id: 'lore_ch5_f5', name: '命运偏差记录',
+        x: 5, y: 5, sprite: '⚖', color: '#4488ff',
+        itemType: 'lore', loreId: 'lore_5_fate',
+        description: '主神系统输出的异常报告打印件。',
+      }],
   };
 }
 
@@ -421,8 +412,7 @@ function generateFloor_5_6() {
           { text: '队长——！', speaker: '郑吒' },
           { text: '别哭。带着大家活下去。这是……我最后的命令。', speaker: '张杰' },
           { text: '张杰闭上了眼睛。作为半引导者，他完成了自己的使命。', speaker: '旁白' },
-          { text: '（张杰牺牲。郑吒正式成为中洲队队长。）', speaker: '主神' },
-        ], flag: 'zhangjie_dead', companionDeath: 'zhangjie' },
+          { text: '（张杰牺牲。郑吒正式成为中洲队队长。）', speaker: '主神' }], flag: 'zhangjie_dead', companionDeath: 'zhangjie' },
       },
       // 补给
       { type: ENTITY_TYPE.ITEM, id: 'medkit_ch5_6', name: '高级急救包',
@@ -436,10 +426,8 @@ function generateFloor_5_6() {
           { text: '光芒笼罩了所有人。回到主神空间时，郑吒发现自己站在了队长的位置上。', speaker: '旁白' },
           { text: '张杰不在了。但他的精神永远留在了这支队伍里。', speaker: '旁白' },
           { text: '我会保护好每一个人。这是我对你的承诺，队长。', speaker: '郑吒' },
-          { text: '第五关「死神绝境」通关。获得基础奖励1000点。', speaker: '主神' },
-        ], flag: 'ch5_complete', rewards: { rewardPoints: 1000 } },
-      },
-    ],
+          { text: '第五关「死神绝境」通关。获得基础奖励1000点。', speaker: '主神' }], flag: 'ch5_complete', rewards: { rewardPoints: 1000 } },
+      }],
   };
 }
 
@@ -449,7 +437,6 @@ export function generateChapter5() {
     world: '死神来了二',
     floors: [
       generateFloor_5_1(), generateFloor_5_2(), generateFloor_5_3(),
-      generateFloor_5_4(), generateFloor_5_5(), generateFloor_5_6(),
-    ],
+      generateFloor_5_4(), generateFloor_5_5(), generateFloor_5_6()],
   };
 }

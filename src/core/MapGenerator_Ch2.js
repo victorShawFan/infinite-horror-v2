@@ -56,8 +56,7 @@ function generateFloor_2_1() {
             { text: '……这是LV-426轨道上的"苏拉科"号。', speaker: '楚轩' },
             { text: '你注意到队伍中多了几个陌生面孔——楚轩、零点、霸王、李帅西，还有几个新人。', speaker: '旁白' },
             { text: '所有人注意，不要发出不必要的声响。这个世界的敌人……靠声音定位猎物。', speaker: '郑吒' },
-            { text: '（主神提示：声源潜行机制已激活。移动时按Shift减速，降低被发现概率。）', speaker: '主神' },
-          ],
+            { text: '（主神提示：声源潜行机制已激活。移动时按Shift减速，降低被发现概率。）', speaker: '主神' }],
           flag: 'ch2_intro_done',
         },
       },
@@ -67,15 +66,13 @@ function generateFloor_2_1() {
         role: '军师',
         dialogue: [
           { text: '这艘飞船的结构……我已经记住了。有问题可以来找我。', speaker: '楚轩' },
-          { text: '酸血是异形最大的陷阱。近战击杀会溅射酸液，造成反噬伤害。保持距离。', speaker: '楚轩' },
-        ],
+          { text: '酸血是异形最大的陷阱。近战击杀会溅射酸液，造成反噬伤害。保持距离。', speaker: '楚轩' }],
       },
       { type: ENTITY_TYPE.COMPANION, id: 'lingdian', name: '零点',
         x: 4, y: 9, sprite: '零', color: '#88aaff',
         role: '狙击手',
         dialogue: [
-          { text: '给我一个好的射击位置就行。我的子弹不会浪费。', speaker: '零点' },
-        ],
+          { text: '给我一个好的射击位置就行。我的子弹不会浪费。', speaker: '零点' }],
       },
       // 教学敌人 — 幼年异形
       { type: ENTITY_TYPE.ENEMY, id: 'facehugger_1', name: '抱脸虫',
@@ -118,8 +115,7 @@ function generateFloor_2_1() {
       { type: ENTITY_TYPE.ITEM, id: 'stairs_2_1', name: '通往新人分队区',
         x: 19, y: 8, sprite: '▼', color: '#44ffff',
         itemType: 'stairs',
-      },
-    ],
+      }],
   };
 }
 
@@ -153,16 +149,14 @@ function generateFloor_2_2() {
           type: 'choice',
           lines: [
             { text: '走廊在这里分叉。通风管道传来异形的声音——它们正在逼近。', speaker: '旁白' },
-            { text: '必须分队行动。上面的控制室可以封锁舱门，下面的动力舱可以断开这一层的电力。', speaker: '楚轩' },
-          ],
+            { text: '必须分队行动。上面的控制室可以封锁舱门，下面的动力舱可以断开这一层的电力。', speaker: '楚轩' }],
           choices: [
             { id: 'upper', text: '上路 — 跟随楚轩前往控制室', 
               effect: { flag: 'chose_upper_route', spd: 2, description: '楚轩的路线规划让你获得了战术优势',
                 relationship: { chuxuan: 'good_decision' } } },
             { id: 'lower', text: '下路 — 率队前往动力舱', 
               effect: { flag: 'chose_lower_route', atk: 3, description: '在动力舱的危险环境中，你的战斗本能得到了磨炼',
-                relationship: { mou_gang: 'good_decision', zhan_lan: 'good_decision' } } },
-          ],
+                relationship: { mou_gang: 'good_decision', zhan_lan: 'good_decision' } } }],
         },
       },
       // 上路线敌人
@@ -193,8 +187,7 @@ function generateFloor_2_2() {
             { text: '李帅西！', speaker: '郑吒' },
             { text: '你赶到时，一只异形已经将他拖入通风管道。鲜血在金属地板上拖出长长的痕迹。', speaker: '旁白' },
             { text: '（李帅西 阵亡）', speaker: '旁白' },
-            { text: '……继续前进。我们不能停下来。', speaker: '郑吒' },
-          ],
+            { text: '……继续前进。我们不能停下来。', speaker: '郑吒' }],
           flag: 'lishuaixi_dead',
           removeCompanion: 'lishuaixi',
         },
@@ -218,8 +211,7 @@ function generateFloor_2_2() {
         x: 19, y: 1, sprite: '📋', color: '#ffcc44',
         itemType: 'lore', loreId: 'lore_2_weyland',
         description: '一份韦兰集团的内部备忘录。',
-      },
-    ],
+      }],
   };
 }
 
@@ -251,8 +243,7 @@ function generateFloor_2_3() {
           type: 'dialogue',
           lines: [
             { text: '通风管道内空间狭窄。异形在管壁上爬行，任何声响都会招来杀身之祸。', speaker: '旁白' },
-            { text: '（提示：按Shift键减速潜行。被标记为"巡逻"的异形在察觉声源前不会主动攻击。）', speaker: '主神' },
-          ],
+            { text: '（提示：按Shift键减速潜行。被标记为"巡逻"的异形在察觉声源前不会主动攻击。）', speaker: '主神' }],
           flag: 'stealth_tutorial_done',
         },
       },
@@ -304,8 +295,7 @@ function generateFloor_2_3() {
       { type: ENTITY_TYPE.ITEM, id: 'stairs_2_3', name: '通往隔离区',
         x: 18, y: 15, sprite: '▼', color: '#44ffff',
         itemType: 'stairs',
-      },
-    ],
+      }],
   };
 }
 
@@ -361,8 +351,7 @@ function generateFloor_2_4() {
             { text: '不要靠近那个——！', speaker: '郑吒' },
             { text: '卵囊骤然炸开。抱脸虫以惊人的速度扑向霸王的面部。一切发生在零点几秒之间。', speaker: '旁白' },
             { text: '（霸王 阵亡）', speaker: '旁白' },
-            { text: '……', speaker: '郑吒' },
-          ],
+            { text: '……', speaker: '郑吒' }],
           flag: 'bawang_dead',
           removeCompanion: 'bawang',
         },
@@ -383,7 +372,13 @@ function generateFloor_2_4() {
         x: 18, y: 13, sprite: '▼', color: '#44ffff',
         itemType: 'stairs',
       },
-    ],
+    
+      // 环境线索
+      { type: ENTITY_TYPE.ITEM, id: 'lore_ch2_f4', name: '楚轩的笔记',
+        x: 11, y: 4, sprite: '🔬', color: '#44cc88',
+        itemType: 'lore', loreId: 'lore_2_chuxuan_note',
+        description: '精密的手写分析，字迹冷静得不像出自险境之中。',
+      }],
   };
 }
 
@@ -439,8 +434,7 @@ function generateFloor_2_5() {
             { text: '蜂巢核心散落着人类的残骸。你认出了其中几个新人的装备。', speaker: '旁白' },
             { text: '……他们已经被异形带回来了。作为"宿主"。', speaker: '楚轩' },
             { text: '（多名新人 阵亡）', speaker: '旁白' },
-            { text: '我们必须找到出路。继续深入只会送命。', speaker: '零点' },
-          ],
+            { text: '我们必须找到出路。继续深入只会送命。', speaker: '零点' }],
           flag: 'newbie_deaths_seen',
         },
       },
@@ -462,8 +456,7 @@ function generateFloor_2_5() {
           lines: [
             { text: '面对成群的异形，你体内的基因锁再次共鸣。', speaker: '旁白' },
             { text: '你能感受到肌肉纤维在分子层面重组——第二阶，肌肉控制。', speaker: '旁白' },
-            { text: '（基因锁提升至二阶。ATK/DEF进一步强化。）', speaker: '主神' },
-          ],
+            { text: '（基因锁提升至二阶。ATK/DEF进一步强化。）', speaker: '主神' }],
           flag: 'gene_lock_stage2',
           effect: { geneLock: 2 },
         },
@@ -473,7 +466,13 @@ function generateFloor_2_5() {
         x: 17, y: 14, sprite: '▼', color: '#44ffff',
         itemType: 'stairs',
       },
-    ],
+    
+      // 环境线索
+      { type: ENTITY_TYPE.ITEM, id: 'lore_ch2_f5', name: '寄生体笔记',
+        x: 13, y: 11, sprite: '🔬', color: '#88cc44',
+        itemType: 'lore', loreId: 'lore_2_facehugger',
+        description: '一份关于面抱虫的详细观察记录。',
+      }],
   };
 }
 
@@ -522,8 +521,7 @@ function generateFloor_2_6() {
           lines: [
             { text: '异形皇后发出震耳欲聋的嘶鸣，庞大的身躯轰然倒下。酸血从伤口喷涌而出，在金属地板上灼烧出巨大的坑洞。', speaker: '旁白' },
             { text: '……快走。飞船的自毁程序已经启动了。', speaker: '楚轩' },
-            { text: '零点，掩护！', speaker: '郑吒' },
-          ],
+            { text: '零点，掩护！', speaker: '郑吒' }],
           flag: 'boss_queen_defeated',
         },
       },
@@ -538,8 +536,7 @@ function generateFloor_2_6() {
             { text: '……我要带走异形的样本。这是我们唯一的机会。', speaker: '楚轩' },
             { text: '那东西会杀死所有人！', speaker: '郑吒' },
             { text: '所有人迟早都会死。但有了这个样本……', speaker: '楚轩' },
-            { text: '（楚轩与郑吒产生了分歧。这将影响未来的队伍走向。）', speaker: '旁白' },
-          ],
+            { text: '（楚轩与郑吒产生了分歧。这将影响未来的队伍走向。）', speaker: '旁白' }],
           flag: 'chuxuan_split',
         },
       },
@@ -553,8 +550,7 @@ function generateFloor_2_6() {
             { text: '逃生舱弹射出去的瞬间，身后的飞船化为一团巨大的火球。', speaker: '旁白' },
             { text: '存活者：郑吒、张杰、詹岚、楚轩、零点', speaker: '旁白' },
             { text: '阵亡者：李萧毅、李帅西、霸王、其他新人', speaker: '旁白' },
-            { text: '……白色的光柱将你们带回了主神空间。', speaker: '旁白' },
-          ],
+            { text: '……白色的光柱将你们带回了主神空间。', speaker: '旁白' }],
           flag: 'ch2_complete',
         },
       },
@@ -566,8 +562,7 @@ function generateFloor_2_6() {
       { type: ENTITY_TYPE.ITEM, id: 'crystal_ch2_4', name: '暴击结晶',
         x: 12, y: 3, sprite: '◆', color: '#ffcc44',
         itemType: 'stat_boost', effect: { crt: 5 },
-      },
-    ],
+      }],
   };
 }
 

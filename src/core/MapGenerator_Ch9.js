@@ -33,7 +33,13 @@ function f9_3(){const g=makeGrid();carveRoom(g,1,1,5,5);carveCorridor(g,5,3,9,3)
       {type:ENTITY_TYPE.ITEM,id:'set_gene_gauntlet',name:'基因拳套',x:12,y:4,sprite:'⚔',color:'#ff6600',
        itemType:'weapon',weapon:{name:'基因拳套',atk:28,spd:4,setId:'gene_gauntlet',slot:'weapon',
        description:'能增幅基因锁输出的特制拳套。'}},
-    ]};}
+    
+      // 环境线索
+      { type: ENTITY_TYPE.ITEM, id: 'lore_ch9_f3', name: '虫族通讯截获',
+        x: 5, y: 5, sprite: '🛸', color: '#66ff66',
+        itemType: 'lore', loreId: 'lore_9_bug',
+        description: '翻译后的虫族精神波动记录。',
+      }]};}
 
 // ═══ 9-4 虫潮守线 ═══
 function f9_4(){const g=makeGrid();carveRoom(g,1,6,6,11);carveCorridor(g,6,8,10,8);carveRoom(g,10,4,15,12);carveCorridor(g,15,8,18,8);carveRoom(g,16,5,19,11);carveRoom(g,5,1,10,3);carveCorridor(g,8,3,8,4);carveRoom(g,8,13,14,16);carveCorridor(g,11,12,11,13);g[15][13]=TILE.STAIRS;return{id:'9-4',name:'虫潮守线',subtitle:'第一波虫潮来了。王侠和霸王负责布雷和火力压制。',bgColor:'#080810',theme:'scifi_base',tiles:g,width:W,height:H,playerStart:{x:3,y:8},entities:[
@@ -49,7 +55,9 @@ function f9_5(){const g=makeGrid();carveRoom(g,6,5,14,12);carveRoom(g,1,7,5,10);
 {type:ENTITY_TYPE.ENEMY,id:'plasma_bug',name:'浆虫',x:3,y:8,sprite:'💥',color:'#aa6622',hp:80,atk:40,def:8,spd:7,damageType:'fire',rewards:{exp:70,gold:50}},
 {type:ENTITY_TYPE.ENEMY,id:'warrior_bug_3',name:'精锐战士虫',x:17,y:8,sprite:'🪲',color:'#993322',hp:110,atk:38,def:14,spd:14,rewards:{exp:80,gold:55}},
 {type:ENTITY_TYPE.ITEM,id:'medkit_ch9_5',name:'高级急救包',x:8,y:2,sprite:'♥',color:'#ff4488',itemType:'consumable',effect:{heal:130}},
-{type:ENTITY_TYPE.ITEM,id:'hp_ch9',name:'生命结晶',x:10,y:8,sprite:'◆',color:'#44ff44',itemType:'stat_boost',effect:{maxHp:30}}]};}
+{type:ENTITY_TYPE.ITEM,id:'hp_ch9',name:'生命结晶',x:10,y:8,sprite:'◆',color:'#44ff44',itemType:'stat_boost',effect:{maxHp:30}},
+{type:ENTITY_TYPE.ITEM,id:'lore_ch9_f5',name:'轨道轰炸申请',x:19,y:8,sprite:'💥',color:'#ff8800',itemType:'lore',loreId:'lore_9_orbital',description:'一份沾满咖啡渍的军事文书。'}
+]};}
 
 // ═══ 9-6 脑虫捕获撤离 ═══
 function f9_6(){const g=makeGrid();carveRoom(g,1,1,6,5);carveCorridor(g,6,3,10,3);carveRoom(g,10,1,16,6);carveCorridor(g,13,6,13,10);carveRoom(g,9,10,16,14);carveRoom(g,1,8,7,13);carveCorridor(g,4,5,4,8);carveCorridor(g,7,12,9,12);carveRoom(g,16,11,19,15);carveCorridor(g,16,13,16,13);g[14][18]=TILE.STAIRS;return{id:'9-6',name:'脑虫捕获撤离',subtitle:'脑虫的巢穴就在前方。零点已经就位。',bgColor:'#0a0810',theme:'scifi_base',tiles:g,width:W,height:H,playerStart:{x:3,y:3},entities:[

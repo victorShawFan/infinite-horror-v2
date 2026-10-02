@@ -32,8 +32,7 @@ function f10_3(){const g=makeGrid();carveRoom(g,1,1,5,5);carveCorridor(g,5,3,9,3
 {type:ENTITY_TYPE.ITEM,id:'trap_ch10_curse',name:'💀 远古诅咒',x:5,y:3,sprite:'💀',color:'#aa44ff',itemType:'trap',trapType:'curse'},{type:ENTITY_TYPE.ITEM,id:'chest_ch10',name:'精灵宝箱',x:16,y:13,sprite:'📦',color:'#44ffaa',itemType:'chest',chestType:'gold'},{type:ENTITY_TYPE.ITEM,id:'medkit_10_3',name:'精灵草药',x:18,y:12,sprite:'♥',color:'#44ff88',itemType:'consumable',effect:{heal:120}},{type:'item',id:'lore_teams_detail',name:'轮回者观察报告',x:3,y:10,sprite:'📋',color:'#ffdd44',itemType:'lore',loreId:'lore_10_teams',description:'一份关于五支队伍的观察报告。'},
       {type:ENTITY_TYPE.ITEM,id:'set_zhongzhou_plate',name:'中洲铁甲',x:14,y:5,sprite:'🛡',color:'#ffcc44',
        itemType:'armor',armor:{name:'中洲铁甲',def:16,maxHp:40,setId:'zhongzhou_plate',slot:'armor',
-       description:'中洲精锐部队的制式护甲，防护优秀。'}},
-    ]};}
+       description:'中洲精锐部队的制式护甲，防护优秀。'}}]};}
 
 // ═══ 10-4 五队接触 ═══
 function f10_4(){const g=makeGrid();carveRoom(g,1,6,6,11);carveCorridor(g,6,8,10,8);carveRoom(g,10,4,15,12);carveCorridor(g,15,8,18,8);carveRoom(g,16,5,19,11);carveRoom(g,5,1,10,3);carveCorridor(g,8,3,8,4);carveRoom(g,8,13,14,16);carveCorridor(g,11,12,11,13);g[15][13]=TILE.STAIRS;return{id:'10-4',name:'五队接触',subtitle:'战场上出现了其他轮回者队伍。有人试图联盟，有人选择背叛。',bgColor:'#0a0c10',theme:'fantasy',tiles:g,width:W,height:H,playerStart:{x:3,y:8},entities:[
@@ -46,10 +45,15 @@ function f10_4(){const g=makeGrid();carveRoom(g,1,6,6,11);carveCorridor(g,6,8,10
       { type: ENTITY_TYPE.NPC, id: 'merchant_ch10', name: '跨界旅行商',
         x: 5, y: 8, sprite: '🏪', color: '#ffcc44', merchant: true,
         dialogue: [
-          { text: '"五支队伍混战之际，正是补给的好时机。"', speaker: '跨界旅行商' },
-        ],
+          { text: '"五支队伍混战之际，正是补给的好时机。"', speaker: '跨界旅行商' }],
       },
-    ]};}
+    
+      // 环境线索
+      { type: ENTITY_TYPE.ITEM, id: 'lore_ch10_f4', name: '同盟协议',
+        x: 16, y: 8, sprite: '📜', color: '#44cccc',
+        itemType: 'lore', loreId: 'lore_10_alliance',
+        description: '一份已经被撕掉一角的临时协议。',
+      }]};}
 
 // ═══ 10-5 魔多战场 ═══
 function f10_5(){const g=makeGrid();carveRoom(g,6,5,14,12);carveRoom(g,1,7,5,10);carveCorridor(g,5,8,6,8);carveRoom(g,15,7,19,10);carveCorridor(g,14,8,15,8);carveRoom(g,8,1,12,4);carveCorridor(g,10,4,10,5);carveRoom(g,8,13,12,16);carveCorridor(g,10,12,10,13);g[1][11]=TILE.STAIRS;return{id:'10-5',name:'魔多战场',subtitle:'黑暗之门打开。魔多军势如潮水般涌来。',bgColor:'#0c0808',theme:'fantasy',tiles:g,width:W,height:H,playerStart:{x:10,y:15},entities:[

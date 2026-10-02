@@ -9,15 +9,13 @@ function f7_1(){const g=makeGrid();carveRoom(g,1,7,6,10);carveCorridor(g,6,8,10,
 {type:ENTITY_TYPE.ENEMY,id:'zombie_v2_1',name:'T病毒变异体',x:13,y:8,sprite:'🧟',color:'#446644',hp:60,atk:20,def:6,spd:8,rewards:{exp:45,gold:30}},
 {type:ENTITY_TYPE.ENEMY,id:'zombie_v2_2',name:'T病毒猎手',x:6,y:3,sprite:'🧟',color:'#557744',hp:70,atk:22,def:8,spd:7,rewards:{exp:50,gold:35}},
 {type:ENTITY_TYPE.ITEM,id:'medkit_ch7_1',name:'急救包',x:14,y:14,sprite:'♥',color:'#ff4488',itemType:'consumable',effect:{heal:70}},
-{type:ENTITY_TYPE.ITEM,id:'atk_ch7',name:'力量结晶',x:18,y:7,sprite:'◆',color:'#ff8844',itemType:'stat_boost',effect:{atk:4}},
-]};}
+{type:ENTITY_TYPE.ITEM,id:'atk_ch7',name:'力量结晶',x:18,y:7,sprite:'◆',color:'#ff8844',itemType:'stat_boost',effect:{atk:4}}]};}
 
 function f7_2(){const g=makeGrid();carveRoom(g,1,1,7,6);carveCorridor(g,7,3,10,3);carveRoom(g,10,1,16,6);carveCorridor(g,13,6,13,9);carveRoom(g,10,9,16,13);carveRoom(g,1,9,7,13);carveCorridor(g,4,6,4,9);carveCorridor(g,7,11,10,11);carveRoom(g,16,10,19,15);carveCorridor(g,16,12,16,12);g[14][18]=TILE.STAIRS;return{id:'7-2',name:'保护剧情人物',subtitle:'在生化世界中，必须按照电影剧情保护关键角色。',bgColor:'#0e0806',theme:'biolab',tiles:g,width:W,height:H,playerStart:{x:4,y:3},entities:[
 {type:ENTITY_TYPE.ENEMY,id:'licker_1',name:'舔食者',x:13,y:3,sprite:'👅',color:'#884444',hp:65,atk:24,def:5,spd:14,rewards:{exp:50,gold:35}},
 {type:ENTITY_TYPE.ENEMY,id:'licker_2',name:'舔食者',x:13,y:11,sprite:'👅',color:'#884444',hp:65,atk:24,def:5,spd:14,rewards:{exp:50,gold:35}},
 {type:ENTITY_TYPE.ITEM,id:'medkit_ch7_2',name:'急救包',x:18,y:12,sprite:'♥',color:'#ff4488',itemType:'consumable',effect:{heal:70}},
-{type:ENTITY_TYPE.ITEM,id:'def_ch7',name:'防御结晶',x:4,y:11,sprite:'◆',color:'#6688ff',itemType:'stat_boost',effect:{def:4}},
-]};}
+{type:ENTITY_TYPE.ITEM,id:'def_ch7',name:'防御结晶',x:4,y:11,sprite:'◆',color:'#6688ff',itemType:'stat_boost',effect:{def:4}}]};}
 
 function f7_3(){const g=makeGrid();carveRoom(g,1,1,5,5);carveCorridor(g,5,3,9,3);carveRoom(g,9,1,14,5);carveCorridor(g,11,5,11,9);carveRoom(g,8,9,14,13);carveRoom(g,1,8,6,12);carveCorridor(g,4,5,4,8);carveCorridor(g,6,10,8,10);carveRoom(g,15,9,19,14);carveCorridor(g,14,11,15,11);g[13][18]=TILE.STAIRS;return{id:'7-3',name:'恶魔队信号',subtitle:'通讯频道上突然出现了一个熟悉又陌生的声音——那是"复制体郑吒"。',bgColor:'#0c0a08',theme:'biolab',tiles:g,width:W,height:H,playerStart:{x:3,y:3},entities:[
 {type:ENTITY_TYPE.EVENT,id:'demon_signal',name:'恶魔队信号',x:11,y:3,sprite:'📡',color:'#ff4444',event:{type:'dialogue',lines:[{text:'"你好啊，原版的我。"通讯器里传来与郑吒一模一样的声音。',speaker:'复制体郑吒'},{text:'他们已经锁定了我们的位置！',speaker:'赵樱空'},{text:'所有人准备战斗！不要分散！',speaker:'郑吒'}],flag:'demon_signal_heard'}},
@@ -33,8 +31,7 @@ function f7_4(){const g=makeGrid();carveRoom(g,1,6,6,11);carveCorridor(g,6,8,10,
 {type:ENTITY_TYPE.ITEM,id:'medkit_ch7_4',name:'大型急救包',x:11,y:14,sprite:'♥',color:'#ff4488',itemType:'consumable',effect:{heal:100}},
       {type:ENTITY_TYPE.ITEM,id:'set_holy_blade',name:'圣光之刃',x:6,y:7,sprite:'⚔',color:'#ffdd44',
        itemType:'weapon',weapon:{name:'圣光之刃',atk:22,damageType:'spirit',crt:4,setId:'holy_blade',slot:'weapon',
-       description:'被圣光祝福的利刃，对恶魔类敌人有额外伤害。'}},
-    ]};}
+       description:'被圣光祝福的利刃，对恶魔类敌人有额外伤害。'}}]};}
 
 function f7_5(){const g=makeGrid();carveRoom(g,6,5,14,12);carveRoom(g,1,7,5,10);carveCorridor(g,5,8,6,8);carveRoom(g,15,7,19,10);carveCorridor(g,14,8,15,8);carveRoom(g,8,1,12,4);carveCorridor(g,10,4,10,5);carveRoom(g,8,13,12,16);carveCorridor(g,10,12,10,13);g[1][11]=TILE.STAIRS;return{id:'7-5',name:'团灭危机',subtitle:'恶魔队发动了总攻。一个接一个，队友们倒下了。',bgColor:'#120606',theme:'biolab',tiles:g,width:W,height:H,playerStart:{x:10,y:15},entities:[
 {type:ENTITY_TYPE.EVENT,id:'team_wipe',name:'中洲队团灭',x:10,y:14,sprite:'†',color:'#ff0000',event:{type:'dialogue',lines:[{text:'恶魔队的包围圈越来越紧。队友们一个接一个地倒下。',speaker:'旁白'},{text:'赵樱空被复制体赵樱空击败——张恒被复制体张恒压制——',speaker:'旁白'},{text:'萧宏律、程啸、新人——全部阵亡。',speaker:'旁白'},{text:'只剩下詹岚和郑吒。',speaker:'旁白'}],flag:'team_wiped',killAllCompanions:true}},
@@ -42,13 +39,13 @@ function f7_5(){const g=makeGrid();carveRoom(g,6,5,14,12);carveRoom(g,1,7,5,10);
 {type:ENTITY_TYPE.ENEMY,id:'demon_elite',name:'恶魔队精锐',x:3,y:8,sprite:'⚔',color:'#cc1111',hp:100,atk:30,def:12,spd:12,rewards:{exp:70,gold:55}},
 {type:ENTITY_TYPE.ENEMY,id:'demon_elite_2',name:'恶魔队精锐',x:17,y:8,sprite:'⚔',color:'#cc1111',hp:100,atk:30,def:12,spd:12,rewards:{exp:70,gold:55}},
 {type:ENTITY_TYPE.ITEM,id:'medkit_ch7_5',name:'高级急救包',x:8,y:5,sprite:'♥',color:'#ff4488',itemType:'consumable',effect:{heal:120}},
+{type:ENTITY_TYPE.ITEM,id:'lore_ch7_f5',name:'恶魔队档案',x:16,y:8,sprite:'👤',color:'#cc44cc',itemType:'lore',loreId:'lore_7_demon',description:'主神数据库泄露的一份绝密档案。'}
 ]};}
 
 function f7_6(){const g=makeGrid();carveRoom(g,1,1,6,5);carveCorridor(g,6,3,10,3);carveRoom(g,10,1,16,6);carveCorridor(g,13,6,13,10);carveRoom(g,9,10,16,14);carveRoom(g,1,8,7,13);carveCorridor(g,4,5,4,8);carveCorridor(g,7,12,9,12);carveRoom(g,16,11,19,15);carveCorridor(g,16,13,16,13);g[14][18]=TILE.STAIRS;return{id:'7-6',name:'郑吒复活与誓言',subtitle:'黑暗中，一道金光闪过。重生十字勋章启动了。',bgColor:'#0a0a14',theme:'biolab',tiles:g,width:W,height:H,playerStart:{x:3,y:3},entities:[
 {type:ENTITY_TYPE.BOSS,id:'boss_copy_zhengzha',bossId:'clone_zhengzha',traits:['swift','enrage'],name:'复制体郑吒',x:13,y:3,sprite:'郑',color:'#cc2222',hp:250,atk:30,def:14,spd:13,rewards:{exp:250,gold:150,rewardPoints:400},lore:'你的复制体。拥有与你相同的能力，但更加冷酷无情。'},
 {type:ENTITY_TYPE.EVENT,id:'resurrection_oath',name:'复活与誓言',x:18,y:13,sprite:'✦',color:'#ffdd44',event:{type:'dialogue',lines:[{text:'郑吒从死亡中苏醒。重生十字勋章碎裂后化为金色光芒。',speaker:'旁白'},{text:'队友们全部阵亡了。但复活真经还在。',speaker:'旁白'},{text:'我发誓——我会把你们全部带回来。每一个人。',speaker:'郑吒'},{text:'（郑吒由重生十字勋章复活。立下了复活所有队友的誓言。）',speaker:'主神'}],flag:'resurrection_oath'}},
 {type:ENTITY_TYPE.EVENT,id:'ch7_ending',name:'第七章结算',x:13,y:12,sprite:'✦',color:'#ffdd88',event:{type:'chapter_end',lines:[{text:'复制体郑吒退走了。但战争远未结束。',speaker:'旁白'},{text:'郑吒独自一人站在废墟中。但他的眼中燃烧着前所未有的决意。',speaker:'旁白'},{text:'第七关「恶魔初临」通关。获得基础奖励1000点。',speaker:'主神'}],flag:'ch7_complete',rewards:{rewardPoints:1000}}},
-{type:ENTITY_TYPE.ITEM,id:'medkit_ch7_6',name:'高级急救包',x:4,y:11,sprite:'♥',color:'#ff4488',itemType:'consumable',effect:{heal:120}},
-]};}
+{type:ENTITY_TYPE.ITEM,id:'medkit_ch7_6',name:'高级急救包',x:4,y:11,sprite:'♥',color:'#ff4488',itemType:'consumable',effect:{heal:120}}]};}
 
 export function generateChapter7(){return{name:'第七章 · 恶魔初临',world:'生化危机二',floors:[f7_1(),f7_2(),f7_3(),f7_4(),f7_5(),f7_6()]};}

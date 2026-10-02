@@ -64,8 +64,7 @@ function generateFloor_3_1() {
             { text: '齐腾一。远程射手。别把我跟新人混在一起。', speaker: '齐腾一' },
             { text: '铭烟薇，我……我会尽量不拖后腿的。', speaker: '铭烟薇' },
             { text: '所有人注意——这个世界的敌人是灵体。物理攻击效果极差，需要灵类弹药或特殊手段。', speaker: '楚轩' },
-            { text: '（主神提示：诅咒计数已启动。每经过一定回合，诅咒等级提升，灵体力量增强。）', speaker: '主神' },
-          ],
+            { text: '（主神提示：诅咒计数已启动。每经过一定回合，诅咒等级提升，灵体力量增强。）', speaker: '主神' }],
         },
       },
       // 赵樱空入队
@@ -73,8 +72,7 @@ function generateFloor_3_1() {
         x: 4, y: 14, sprite: '赵', color: '#ff88cc',
         dialogue: [
           { text: '赵樱空加入了队伍！', speaker: '系统' },
-          { text: '（被动效果：精神感应 — CRT+3，可感知隐藏灵体）', speaker: '系统' },
-        ],
+          { text: '（被动效果：精神感应 — CRT+3，可感知隐藏灵体）', speaker: '系统' }],
         companionData: { id: 'zhao_yingkong', name: '赵樱空', passive: { crt: 3 }, alive: true },
       },
       // 齐腾一入队
@@ -82,8 +80,7 @@ function generateFloor_3_1() {
         x: 2, y: 14, sprite: '齐', color: '#88ccff',
         dialogue: [
           { text: '齐腾一加入了队伍！', speaker: '系统' },
-          { text: '（被动效果：精确射击 — ATK+2，远程伤害加成）', speaker: '系统' },
-        ],
+          { text: '（被动效果：精确射击 — ATK+2，远程伤害加成）', speaker: '系统' }],
         companionData: { id: 'qi_tengyi', name: '齐腾一', passive: { atk: 2 }, alive: true },
       },
       // 灵体敌人 — 物理减伤
@@ -120,8 +117,7 @@ function generateFloor_3_1() {
             { text: '你触碰了壁柜上的录像带。一股阴寒刺入脑海。', speaker: '旁白' },
             { text: '「——不要进来。」', speaker: '???' },
             { text: '所有人的手腕上出现了淡淡的黑色纹路。诅咒已经开始了。', speaker: '旁白' },
-            { text: '（诅咒等级 +1。灵体敌人攻击力将随诅咒等级提升。）', speaker: '主神' },
-          ],
+            { text: '（诅咒等级 +1。灵体敌人攻击力将随诅咒等级提升。）', speaker: '主神' }],
           flag: 'curse_level_1',
           rewards: { curseLevelUp: true },
         },
@@ -130,8 +126,7 @@ function generateFloor_3_1() {
       { type: ENTITY_TYPE.ITEM, id: 'atk_crystal_ch3_1', name: '力量结晶',
         x: 14, y: 2, sprite: '◆', color: '#ff8844',
         itemType: 'stat_boost', effect: { atk: 3 },
-      },
-    ],
+      }],
   };
 }
 
@@ -170,8 +165,7 @@ function generateFloor_3_2() {
             { text: '走廊尽头的灯突然全灭了。黑暗中传来嘎吱嘎吱的声音。', speaker: '旁白' },
             { text: '所有人注意！不要分散！', speaker: '郑吒' },
             { text: '但已经太迟了。新人们慌乱中各自跑向了不同的房间。', speaker: '旁白' },
-            { text: '……分队救援机制已激活。你需要逐个房间搜索失散的队友。', speaker: '主神' },
-          ],
+            { text: '……分队救援机制已激活。你需要逐个房间搜索失散的队友。', speaker: '主神' }],
           flag: 'night_scatter_done',
         },
       },
@@ -181,8 +175,7 @@ function generateFloor_3_2() {
         dialogue: [
           { text: '铭烟薇暂时加入队伍！', speaker: '系统' },
           { text: '她在发抖，但还是紧紧跟在你身后。', speaker: '旁白' },
-          { text: '（被动效果：鼓舞 — 全队MaxHP+10）', speaker: '系统' },
-        ],
+          { text: '（被动效果：鼓舞 — 全队MaxHP+10）', speaker: '系统' }],
         companionData: { id: 'ming_yanwei', name: '铭烟薇', passive: { maxHp: 10 }, alive: true },
       },
       // 灵体
@@ -222,8 +215,7 @@ function generateFloor_3_2() {
       { type: ENTITY_TYPE.ITEM, id: 'def_crystal_ch3_2', name: '防御结晶',
         x: 17, y: 9, sprite: '◆', color: '#6688ff',
         itemType: 'stat_boost', effect: { def: 3 },
-      },
-    ],
+      }],
   };
 }
 
@@ -261,8 +253,7 @@ function generateFloor_3_3() {
             { text: '这是……上一批被诅咒的人留下的。他们找到了对抗诅咒的方法。', speaker: '楚轩' },
             { text: '「伽椰子的诅咒源于极端的怨念。唯有以同等的精神力正面压制，方能暂时封印。」', speaker: '佛经笔记' },
             { text: '七波诅咒……终战时的关键情报已记录。', speaker: '楚轩' },
-            { text: '（获得「佛经笔记」— 终战时可依此找到真正的出口。）', speaker: '主神' },
-          ],
+            { text: '（获得「佛经笔记」— 终战时可依此找到真正的出口。）', speaker: '主神' }],
           flag: 'sutra_found',
         },
       },
@@ -289,8 +280,7 @@ function generateFloor_3_3() {
           lines: [
             { text: '祭坛上的蜡烛突然自燃。空气中弥漫着不祥的气息。', speaker: '旁白' },
             { text: '手腕上的黑色纹路更深了。诅咒在加速。', speaker: '旁白' },
-            { text: '（诅咒等级 +1。灵体力量再次增强。）', speaker: '主神' },
-          ],
+            { text: '（诅咒等级 +1。灵体力量再次增强。）', speaker: '主神' }],
           flag: 'curse_level_2',
         },
       },
@@ -321,10 +311,8 @@ function generateFloor_3_3() {
       { type: ENTITY_TYPE.NPC, id: 'merchant_ch3', name: '神秘行商人',
         x: 2, y: 3, sprite: '🏪', color: '#ffcc44', merchant: true,
         dialogue: [
-          { text: '"这宅子里什么都有……要买点什么保命吗？"', speaker: '神秘行商人' },
-        ],
-      },
-    ],
+          { text: '"这宅子里什么都有……要买点什么保命吗？"', speaker: '神秘行商人' }],
+      }],
   };
 }
 
@@ -358,8 +346,7 @@ function generateFloor_3_4() {
           type: 'choice',
           lines: [
             { text: '新来的队员情绪崩溃，抱怨张杰不该把大家带进这个鬼地方。', speaker: '旁白' },
-            { text: '郑吒。你怎么看？', speaker: '张杰' },
-          ],
+            { text: '郑吒。你怎么看？', speaker: '张杰' }],
           choices: [
             { id: 'comfort', text: '安慰新人，分享物资',
               effect: { hp: 15, description: '你的善意稳定了队伍的士气',
@@ -370,8 +357,7 @@ function generateFloor_3_4() {
                 relationship: { chuxuan: 'good_decision' } } },
             { id: 'ignore', text: '沉默不语，转身继续探索',
               effect: { spd: 2, description: '你选择了独行',
-                allRelationship: 'ignore' } },
-          ],
+                allRelationship: 'ignore' } }],
           flag: 'newbie_attitude_chosen',
         },
       },
@@ -383,8 +369,7 @@ function generateFloor_3_4() {
             { text: '新人们在争吵。恐惧和疲惫让他们的情绪到达了极限。', speaker: '旁白' },
             { text: '都怪你！是你非要进那个房间！现在诅咒加深了！', speaker: '新人甲' },
             { text: '够了！吵架解决不了任何问题！', speaker: '郑吒' },
-            { text: '（选择：安抚新人还是严厉训斥？这将影响后续事件。）', speaker: '主神' },
-          ],
+            { text: '（选择：安抚新人还是严厉训斥？这将影响后续事件。）', speaker: '主神' }],
           flag: 'newbie_conflict_done',
         },
       },
@@ -399,8 +384,7 @@ function generateFloor_3_4() {
             { text: '赶到时已经太迟了。新人中有人在混乱中推了她——直接撞进了伽椰子的诅咒领域。', speaker: '旁白' },
             { text: '铭烟薇……她的眼神还留在那个求救的姿势上。', speaker: '赵樱空' },
             { text: '（铭烟薇离队。这是不可改变的命运。）', speaker: '主神' },
-            { text: '郑吒紧握拳头。「我发誓，不再让任何一个队友这样死去。」', speaker: '旁白' },
-          ],
+            { text: '郑吒紧握拳头。「我发誓，不再让任何一个队友这样死去。」', speaker: '旁白' }],
           flag: 'mingyanwei_dead',
           companionDeath: 'ming_yanwei',
         },
@@ -429,8 +413,7 @@ function generateFloor_3_4() {
             { text: '嘎……吱……嘎……吱……', speaker: '???' },
             { text: '从楼梯方向传来缓慢而沉重的爬行声。', speaker: '旁白' },
             { text: '不要回头。快走。', speaker: '楚轩' },
-            { text: '（警告：伽椰子正在接近。她无法被击杀，只能逃离。）', speaker: '主神' },
-          ],
+            { text: '（警告：伽椰子正在接近。她无法被击杀，只能逃离。）', speaker: '主神' }],
           flag: 'stalker_warned',
         },
       },
@@ -443,8 +426,7 @@ function generateFloor_3_4() {
       { type: ENTITY_TYPE.ITEM, id: 'crt_crystal_ch3_4', name: '暴击结晶',
         x: 5, y: 1, sprite: '◆', color: '#ffcc44',
         itemType: 'stat_boost', effect: { crt: 4 },
-      },
-    ],
+      }],
   };
 }
 
@@ -482,8 +464,7 @@ function generateFloor_3_5() {
             { text: '伽椰子的弱点在于——她的怨念有极限。七波诅咒之后，她会显出真身。那是唯一的攻击窗口。', speaker: '楚轩（录像）' },
             { text: '郑吒，你的精神力足以压制她。零点的灵类狙击可以造成致命伤害。记住这两点。', speaker: '楚轩（录像）' },
             { text: '至于我选择死亡的原因……是为了积攒足够的主神奖励点。用我的死换取你们的装备升级。', speaker: '楚轩（录像）' },
-            { text: '不要为我难过。这是最优解。', speaker: '楚轩（录像）' },
-          ],
+            { text: '不要为我难过。这是最优解。', speaker: '楚轩（录像）' }],
           flag: 'chuxuan_video_watched',
           rewards: { rewardPoints: 500 },
         },
@@ -498,8 +479,7 @@ function generateFloor_3_5() {
             { text: '楚轩——！', speaker: '郑吒' },
             { text: '记住我说的话。不要浪费。', speaker: '楚轩' },
             { text: '黑潮吞没了他。楚轩的表情直到最后都没有变过。', speaker: '旁白' },
-            { text: '（楚轩选择死亡。这是他计算出的最优策略。获得500奖励点。）', speaker: '主神' },
-          ],
+            { text: '（楚轩选择死亡。这是他计算出的最优策略。获得500奖励点。）', speaker: '主神' }],
           flag: 'chuxuan_dead',
           companionDeath: 'chuxuan',
         },
@@ -530,7 +510,13 @@ function generateFloor_3_5() {
         x: 18, y: 10, sprite: '♥', color: '#ff4488',
         itemType: 'consumable', effect: { heal: 60 },
       },
-    ],
+    
+      // 环境线索
+      { type: ENTITY_TYPE.ITEM, id: 'lore_ch3_f5', name: '心理评估报告',
+        x: 5, y: 5, sprite: '🧠', color: '#cc8844',
+        itemType: 'lore', loreId: 'lore_3_zhengzha',
+        description: '一份被折叠多次的心理评估文件。',
+      }],
   };
 }
 
@@ -566,8 +552,7 @@ function generateFloor_3_6() {
             { text: '楚轩的分析是对的。七波之后，她会显出真身。那时就是我们的机会。', speaker: '郑吒' },
             { text: '我会用精神力压制她的诅咒。你专注攻击。', speaker: '赵樱空' },
             { text: '……准备好了。', speaker: '零点' },
-            { text: '郑吒确立了一个原则：不抛弃任何一个队友。', speaker: '旁白' },
-          ],
+            { text: '郑吒确立了一个原则：不抛弃任何一个队友。', speaker: '旁白' }],
           flag: 'final_prep_done',
         },
       },
@@ -615,13 +600,11 @@ function generateFloor_3_6() {
             { text: '伽椰子的怨念终于消散了。宅邸恢复了宁静。', speaker: '旁白' },
             { text: '我们失去了楚轩和铭烟薇……但活下来的人必须继续前进。', speaker: '郑吒' },
             { text: '从今天起，不再有人被抛弃。这是我的承诺。', speaker: '郑吒' },
-            { text: '第三关「咒怨阴影」通关。获得基础奖励1000点。', speaker: '主神' },
-          ],
+            { text: '第三关「咒怨阴影」通关。获得基础奖励1000点。', speaker: '主神' }],
           flag: 'ch3_complete',
           rewards: { rewardPoints: 1000 },
         },
-      },
-    ],
+      }],
   };
 }
 
