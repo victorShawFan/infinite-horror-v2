@@ -1,3 +1,25 @@
+
+// ── 全局错误恢复 ──
+window.onerror = (msg, src, line, col, err) => {
+  console.error('Game error:', msg, src, line, col, err);
+  try {
+    const overlay = document.getElementById('ui-overlay');
+    if (overlay) {
+      overlay.innerHTML = '<div style="position:fixed;top:0;left:0;right:0;bottom:0;display:flex;flex-direction:column;align-items:center;justify-content:center;background:rgba(0,0,0,0.9);z-index:9999;">' +
+        '<p style="color:#ff4444;font-size:18px;margin-bottom:12px;">⚠ 遇到了一个问题</p>' +
+        '<p style="color:#888;font-size:12px;max-width:400px;text-align:center;word-break:break-all;">' + msg + '</p>' +
+        '<div style="display:flex;gap:12px;margin-top:20px;">' +
+        '<button onclick="location.reload()" style="background:rgba(255,68,68,0.15);border:1px solid #ff4444;color:#ff4444;padding:10px 24px;cursor:pointer;font-size:14px;border-radius:8px;">刷新页面</button>' +
+        '<button onclick="this.parentElement.parentElement.parentElement.innerHTML=\'\'" style="background:transparent;border:1px solid #444;color:#888;padding:8px 20px;cursor:pointer;font-size:12px;border-radius:6px;">忽略</button>' +
+        '</div></div>';
+    }
+  } catch {}
+  return true; // Prevent default error handling
+};
+window.addEventListener('unhandledrejection', (e) => {
+  console.error('Unhandled promise rejection:', e.reason);
+});
+
 // ═══════════════════════════════════════════════════════════════
 // 无限恐怖：中洲轮回 — 主入口
 // 2D俯视角 Roguelike + 魔塔式数值战斗 + 叙事选择
