@@ -536,6 +536,12 @@ if (chipFx.hasIceChip && enemy.atk !== enemyEffAtk) {
         { ...enemy, def: bossPhases ? effectiveEnemyDef : armorPenDef },
         p.weapon?.damageType || DAMAGE_TYPE.PHYSICAL
       );
+      // ── 精英词缀: 暗影闪避 ──
+      if (affix && affix.dodgeChance && Math.random() < affix.dodgeChance) {
+        if (round <= 6 || i === 0) log.push({ text: `🌑 【${affix.name}】闪避了攻击！`, type: 'affix_dodge' });
+        continue; // skip this hit entirely
+      }
+      
       enemyHp -= pHit.damage;
 
       const hitLabel = isDouble ? `[${i + 1}击] ` : '';
@@ -578,6 +584,12 @@ if (chipFx.hasIceChip && enemy.atk !== enemyEffAtk) {
         const thornDmg = Math.max(1, Math.floor(pHit.damage * 0.15));
         playerHp -= thornDmg;
         if (round <= 6 || i === 0) log.push({ text: `🌿 荆棘反弹 ${thornDmg}！`, type: 'reflect' });
+      }
+      // ── 精英词缀: 荆棘反伤 ──
+      if (affix && affix.reflectPct && pHit.damage > 0) {
+        const affixThornDmg = Math.max(1, Math.floor(pHit.damage * affix.reflectPct));
+        playerHp -= affixThornDmg;
+        if (round <= 6 || i === 0) log.push({ text: `🌿 【${affix.name}】反刺 ${affixThornDmg}！`, type: 'affix_damage' });
       }
 
       // ── 敌人特性：护盾（前2回合减伤50%） ──
@@ -672,8 +684,11 @@ if (chipFx.hasIceChip && enemy.atk !== enemyEffAtk) {
       } else {
 
       // ── 敌人特性：幻影闪避 ──
+      // ── 敌人特性: 幻影闪避（evasive trait） ──
       const enemyDodged = (enemy.traits || []).includes('evasive') && Math.random() < 0.15;
-      // (闪避在上方天赋闪避之外，这里仅标记用于日志)
+      if (enemyDodged) {
+        log.push({ text: `💨 ${enemy.name} 幻影闪避！避开了反击`, type: 'dodge' });
+      }
 
       // ── 敌人攻击（含狂怒加成） ──
       const eHit = calcDamage(
