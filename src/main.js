@@ -1759,6 +1759,107 @@ function _showAbyssMenu() {
   });
 }
 
+
+// ════════════════════════════════════════════════════════════════
+// 触摸控制 — 滑动移动 + 点击互动
+// ════════════════════════════════════════════════════════════════
+(() => {
+  let touchStartX = 0, touchStartY = 0, touchStartTime = 0;
+  const MIN_SWIPE = 30;   // 最小滑动距离
+  const TAP_MAX = 200;     // 点击最大时间 ms
+  const TAP_DIST = 15;     // 点击最大位移
+
+  document.addEventListener('touchstart', (e) => {
+    const t = e.touches[0];
+    touchStartX = t.clientX;
+    touchStartY = t.clientY;
+    touchStartTime = Date.now();
+  }, { passive: true });
+
+  document.addEventListener('touchend', (e) => {
+    const t = e.changedTouches[0];
+    const dx = t.clientX - touchStartX;
+    const dy = t.clientY - touchStartY;
+    const dist = Math.sqrt(dx * dx + dy * dy);
+    const elapsed = Date.now() - touchStartTime;
+
+    // 短按 = 点击/互动/确认
+    if (dist < TAP_DIST && elapsed < TAP_MAX) {
+      // 模拟空格键（互动/对话推进/关闭结果）
+      document.dispatchEvent(new KeyboardEvent('keydown', { key: ' ', code: 'Space' }));
+      return;
+    }
+
+    // 滑动 = 移动
+    if (dist >= MIN_SWIPE) {
+      let key;
+      if (Math.abs(dx) > Math.abs(dy)) {
+        key = dx > 0 ? 'd' : 'a';
+      } else {
+        key = dy > 0 ? 's' : 'w';
+      }
+      document.dispatchEvent(new KeyboardEvent('keydown', { key, code: key.toUpperCase() }));
+    }
+  }, { passive: true });
+
+  // 双指捏合 = 缩放迷你地图
+  document.addEventListener('touchmove', (e) => {
+    if (e.touches.length >= 2) {
+      e.preventDefault(); // 防止浏览器缩放
+    }
+  }, { passive: false });
+})();
+
+// 移动端虚拟摇杆（触摸屏设备可见）
+(() => {
+  const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+  if (!isTouchDevice) return;
+  
+  const pad = document.createElement('div');
+  pad.id = 'touch-dpad';
+  pad.style.cssText = 'position:fixed;bottom:20px;left:20px;z-index:9999;opacity:0.5;user-select:none;-webkit-user-select:none;';
+  pad.innerHTML = `
+    <div style="display:grid;grid-template-columns:50px 50px 50px;grid-template-rows:50px 50px 50px;gap:4px;">
+      <div></div>
+      <button data-key="w" style="background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.2);border-radius:8px;color:#aaa;font-size:18px;cursor:pointer;">▲</button>
+      <div></div>
+      <button data-key="a" style="background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.2);border-radius:8px;color:#aaa;font-size:18px;cursor:pointer;">◀</button>
+      <button data-key=" " style="background:rgba(255,200,68,0.2);border:1px solid rgba(255,200,68,0.3);border-radius:8px;color:#ffcc44;font-size:12px;cursor:pointer;">互动</button>
+      <button data-key="d" style="background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.2);border-radius:8px;color:#aaa;font-size:18px;cursor:pointer;">▶</button>
+      <div></div>
+      <button data-key="s" style="background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.2);border-radius:8px;color:#aaa;font-size:18px;cursor:pointer;">▼</button>
+      <div></div>
+    </div>
+  `;
+  document.body.appendChild(pad);
+  
+  // 快捷按钮
+  const quickBtns = document.createElement('div');
+  quickBtns.style.cssText = 'position:fixed;bottom:20px;right:20px;z-index:9999;opacity:0.5;display:flex;flex-direction:column;gap:6px;';
+  quickBtns.innerHTML = `
+    <button data-key="i" style="background:rgba(100,150,255,0.2);border:1px solid rgba(100,150,255,0.3);border-radius:8px;color:#6699ff;padding:8px 16px;font-size:12px;cursor:pointer;">背包</button>
+    <button data-key="m" style="background:rgba(100,255,150,0.2);border:1px solid rgba(100,255,150,0.3);border-radius:8px;color:#66ff99;padding:8px 16px;font-size:12px;cursor:pointer;">地图</button>
+    <button data-key="h" style="background:rgba(255,200,68,0.2);border:1px solid rgba(255,200,68,0.3);border-radius:8px;color:#ffcc44;padding:8px 16px;font-size:12px;cursor:pointer;">帮助</button>
+  `;
+  document.body.appendChild(quickBtns);
+  
+  // 绑定所有触摸按钮
+  for (const btn of [...pad.querySelectorAll('button'), ...quickBtns.querySelectorAll('button')]) {
+    btn.addEventListener('touchstart', (e) => {
+      e.preventDefault();
+      const key = btn.dataset.key;
+      if (key) document.dispatchEvent(new KeyboardEvent('keydown', { key, code: key.toUpperCase() }));
+      btn.style.opacity = '0.8';
+      btn.style.transform = 'scale(0.95)';
+    }, { passive: false });
+    btn.addEventListener('touchend', (e) => {
+      e.preventDefault();
+      btn.style.opacity = '1';
+      btn.style.transform = 'scale(1)';
+    }, { passive: false });
+  }
+})();
+
 // Shift 释放
 document.addEventListener('keyup', (e) => {
   if (e.key === 'Shift') setShiftHeld(false);

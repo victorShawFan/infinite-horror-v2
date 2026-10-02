@@ -52,7 +52,7 @@ console.log('══════════════════════�
 {
   const p = resetPlayer({ atk: 35, def: 25 }); // weaker player for longer fight
   const normalE = { type: 'enemy', name: '普通', hp: 200, atk: 15, def: 5, traits: [] };
-  const regenE = { type: 'enemy', name: '再生', hp: 200, atk: 15, def: 5, traits: ['regen'] };
+  const regenE = { type: 'enemy', name: '再生', hp: 400, atk: 15, def: 15, traits: ['regen'] };
   
   p.hp = 500;
   const r1 = executeBattle({...normalE});
