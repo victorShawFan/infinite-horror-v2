@@ -1100,9 +1100,9 @@ function triggerEvent(entity) {
 
     // 章节结束
     if (evt.type === 'chapter_end') {
-      // 基础通关奖励1000点（设计稿要求）
-      gameState.player.rewardPoints += 1000;
-      renderer.addFloatText('+1000 奖励点 (通关)', gameState.player.x, gameState.player.y - 1, 'rgb(255, 170, 0)');
+      // 通关奖励由 evt.rewards.rewardPoints 统一处理（在上方 evt.rewards 块）
+      const rp = evt.rewards?.rewardPoints || 1000;
+      renderer.addFloatText(`+${rp} 奖励点 (通关)`, gameState.player.x, gameState.player.y - 1, 'rgb(255, 170, 0)');
       setTimeout(() => showChapterComplete(), 800);
     }
 
