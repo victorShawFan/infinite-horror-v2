@@ -1534,7 +1534,20 @@ function _rebindPreBattleButtons(overlay, scaledEnemy, enemy) {
     _showPreBattleItemPanel(overlay, scaledEnemy, enemy);
   });
   _updatePendingBuffsPreview();
-  
+  // 重新绑定姿态按钮
+  document.querySelectorAll('.stance-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const sid = btn.dataset.stance;
+      setStance(sid);
+      document.querySelectorAll('.stance-btn').forEach(b => {
+        const s = getAvailableStances().find(st => st.id === b.dataset.stance);
+        const isActive = b.dataset.stance === sid;
+        b.style.borderColor = isActive ? (s?.color || '#888') : '#333';
+        b.style.background = isActive ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.03)';
+      });
+    });
+  });
+
   // 键盘快捷键
   const kh = (e) => {
     if (e.key === ' ' || e.key === 'Enter' || e.key === 'f') {

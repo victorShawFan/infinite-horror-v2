@@ -9,6 +9,7 @@
 import { DAMAGE_TYPE } from './constants.js';
 import { GEM_TYPES } from './EquipmentSystem.js';
 import { eventBus } from './EventBus.js';
+import { rollQuality, applyQualityToEquipment, QUALITY_CONFIG } from './EquipmentAffixes.js';
 
 // ── 稀有度 ──
 export const RARITY = {
@@ -186,6 +187,15 @@ function generateEquipment(chapter, rarity) {
     // 特殊词缀存储
     if (affix.stat === 'lifeSteal') equipment.lifeStealPct = affix.value;
     if (affix.stat === 'armorPen') equipment.armorPenPct = affix.value;
+  }
+  
+  // 应用品质系统（叠加在现有词缀之上）
+  const quality = rollQuality(chapter, rarity.id === 'legendary' ? 15 : rarity.id === 'epic' ? 8 : 0);
+  equipment.quality = quality;
+  const qc = QUALITY_CONFIG[quality];
+  if (qc) {
+    equipment.qualityName = qc.name;
+    equipment.qualityColor = qc.color;
   }
   
   return equipment;
