@@ -1356,6 +1356,10 @@ case 'h': case '?':
         // 设置面板
         showSettingsPanel();
         return;
+      case 'escape':
+        // 暂停菜单
+        _showPauseMenu();
+        return;
       default: return;
     }
     if (dx !== 0 || dy !== 0) {
@@ -1924,6 +1928,83 @@ function _updatePendingBuffsPreview() {
 }
 
 // ── 探索中道具面板（Q键） ──
+
+
+// ── 暂停菜单 (Esc) ──
+function _showPauseMenu() {
+  if (gameState.state !== GAME_STATE.EXPLORING) return;
+  const overlay = document.getElementById('ui-overlay');
+  const p = gameState.player;
+  
+  overlay.innerHTML = `
+    <div style="position:absolute;top:0;left:0;right:0;bottom:0;
+      display:flex;align-items:center;justify-content:center;
+      background:rgba(0,0,0,0.75);" id="pause-backdrop">
+      <div style="background:rgba(8,8,18,0.98);border:1px solid #444;border-radius:16px;
+        padding:30px;max-width:400px;width:90%;text-align:center;">
+        <h2 style="color:#888;letter-spacing:6px;font-size:20px;margin-bottom:24px;">
+          ⏸ 暂 停
+        </h2>
+        <p style="color:#555;font-size:12px;margin-bottom:20px;">
+          第${gameState.chapter}章 · Lv.${p.level} · HP ${p.hp}/${p.maxHp}
+        </p>
+        <div style="display:flex;flex-direction:column;gap:10px;max-width:240px;margin:0 auto;">
+          <button class="pause-btn" id="pause-resume" style="
+            background:rgba(68,255,136,0.1);border:1px solid #44ff8844;color:#44ff88;
+            padding:12px;cursor:pointer;font-size:15px;font-family:inherit;
+            border-radius:8px;letter-spacing:2px;">▶ 继续游戏</button>
+          <button class="pause-btn" id="pause-save" style="
+            background:rgba(68,136,255,0.08);border:1px solid #4488ff33;color:#4488ff;
+            padding:10px;cursor:pointer;font-size:13px;font-family:inherit;
+            border-radius:8px;letter-spacing:2px;">💾 手动存档</button>
+          <button class="pause-btn" id="pause-settings" style="
+            background:rgba(255,204,68,0.08);border:1px solid #ffcc4433;color:#ffcc44;
+            padding:10px;cursor:pointer;font-size:13px;font-family:inherit;
+            border-radius:8px;letter-spacing:2px;">⚙ 设置</button>
+          <button class="pause-btn" id="pause-help" style="
+            background:rgba(100,100,100,0.08);border:1px solid #55555533;color:#888;
+            padding:10px;cursor:pointer;font-size:13px;font-family:inherit;
+            border-radius:8px;letter-spacing:2px;">❓ 操作帮助</button>
+          <button class="pause-btn" id="pause-quit" style="
+            background:rgba(255,68,68,0.06);border:1px solid #ff444422;color:#ff6666;
+            padding:10px;cursor:pointer;font-size:13px;font-family:inherit;
+            border-radius:8px;letter-spacing:2px;">🏠 回到主菜单</button>
+        </div>
+        <p style="color:#333;font-size:10px;margin-top:16px;">Esc 继续</p>
+      </div>
+    </div>
+  `;
+  
+  const close = () => { overlay.innerHTML = ''; };
+  
+  document.getElementById('pause-resume')?.addEventListener('click', close);
+  document.getElementById('pause-save')?.addEventListener('click', () => {
+    autoSave('手动存档');
+    renderer.notify('💾 已手动存档', '#44aaff', 90);
+    close();
+  });
+  document.getElementById('pause-settings')?.addEventListener('click', () => {
+    close();
+    showSettingsPanel();
+  });
+  document.getElementById('pause-help')?.addEventListener('click', () => {
+    close();
+    showHelpPanel();
+  });
+  document.getElementById('pause-quit')?.addEventListener('click', () => {
+    autoSave('退出前存档');
+    close();
+    showTitleScreen();
+  });
+  document.getElementById('pause-backdrop')?.addEventListener('click', (e) => {
+    if (e.target.id === 'pause-backdrop') close();
+  });
+  
+  const kh = (e) => {
+    if (e.key === 'Escape') { close(); document.removeEventListener('keydown', kh); }
+  };
+  document.addEventListener('keydown', kh);
+}
 
 // ── 战斗统计面板 (T键) ──
 function _showCombatStatsPanel() {
