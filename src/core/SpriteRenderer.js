@@ -371,6 +371,41 @@ export function drawFloorTile(ctx, x, y, time, theme) {
   ctx.fillStyle = 'rgba(30, 30, 45, 0.3)';
   ctx.fillRect(x + TILE_SIZE/2 - 0.5, y + 2, 1, TILE_SIZE - 4);
   ctx.fillRect(x + 2, y + TILE_SIZE/2 - 0.5, TILE_SIZE - 4, 1);
+  
+  // 地面装饰 — 基于坐标的伪随机细节
+  const seed = (x * 73 + y * 137) & 0xFF;
+  if (seed < 20) {
+    // 裂纹
+    ctx.strokeStyle = `rgba(0,0,0,${0.08 + (seed % 5) * 0.02})`;
+    ctx.lineWidth = 0.5;
+    ctx.beginPath();
+    ctx.moveTo(x + 8 + (seed % 12), y + 6 + (seed % 8));
+    ctx.lineTo(x + 20 + (seed % 16), y + 24 + (seed % 10));
+    ctx.lineTo(x + 30 + (seed % 10), y + 36 + (seed % 6));
+    ctx.stroke();
+  } else if (seed < 35 && (theme?.includes('bio') || theme?.includes('alien'))) {
+    // 绿色/蓝色液体飞溅
+    const splashColor = theme?.includes('alien') ? 'rgba(40,80,120,0.12)' : 'rgba(80,120,40,0.10)';
+    ctx.fillStyle = splashColor;
+    ctx.beginPath();
+    ctx.arc(x + 14 + (seed % 20), y + 14 + (seed % 20), 3 + (seed % 4), 0, Math.PI * 2);
+    ctx.fill();
+  } else if (seed < 40 && (theme?.includes('juon') || theme?.includes('nightmare'))) {
+    // 暗色污渍
+    ctx.fillStyle = 'rgba(60,20,20,0.08)';
+    ctx.beginPath();
+    ctx.arc(x + 10 + (seed % 28), y + 10 + (seed % 28), 4 + (seed % 5), 0, Math.PI * 2);
+    ctx.fill();
+  } else if (seed < 30 && (theme?.includes('desert') || theme?.includes('tomb'))) {
+    // 沙子纹路
+    ctx.strokeStyle = 'rgba(120,100,60,0.06)';
+    ctx.lineWidth = 0.5;
+    ctx.beginPath();
+    const sx = x + (seed % 40);
+    ctx.moveTo(sx, y + 10 + (seed % 20));
+    ctx.quadraticCurveTo(sx + 15, y + 8 + (seed % 24), sx + 30, y + 14 + (seed % 18));
+    ctx.stroke();
+  }
 }
 
 export function drawLavaTile(ctx, x, y, time) {
