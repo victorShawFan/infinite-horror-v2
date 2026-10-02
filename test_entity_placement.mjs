@@ -54,6 +54,10 @@ import { generateChapter4 } from './src/core/MapGenerator_Ch4.js';
 import { generateChapter5 } from './src/core/MapGenerator_Ch5.js';
 import { generateChapter7 } from './src/core/MapGenerator_Ch7.js';
 import { generateChapter8 } from './src/core/MapGenerator_Ch8.js';
+import { generateChapter9 } from './src/core/MapGenerator_Ch9.js';
+import { generateChapter10 } from './src/core/MapGenerator_Ch10.js';
+import { generateChapter11 } from './src/core/MapGenerator_Ch11.js';
+import { generateChapter12 } from './src/core/MapGenerator_Ch12.js';
 
 console.log('\n═══ 第二章实体位置验证 ═══\n');
 const ch2 = generateChapter2();
@@ -117,7 +121,7 @@ for (const f of ch4.floors) {
 // ── Renderer 契约测试 ──
 console.log('\n═══ Renderer 数据契约验证 ═══\n');
 let contractOk = true;
-for (const [label, chapter] of [['Ch1', ch1], ['Ch2', ch2], ['Ch3', ch3], ['Ch4', ch4], ['Ch5', generateChapter5()], ['Ch7', generateChapter7()], ['Ch8', generateChapter8()]]) {
+for (const [label, chapter] of [['Ch1', ch1], ['Ch2', ch2], ['Ch3', ch3], ['Ch4', ch4], ['Ch5', generateChapter5()], ['Ch7', generateChapter7()], ['Ch8', generateChapter8()], ['Ch9', generateChapter9()], ['Ch10', generateChapter10()], ['Ch11', generateChapter11()], ['Ch12', generateChapter12()]]) {
   for (const f of chapter.floors) {
     const missing = [];
     if (!f.tiles) missing.push('tiles');

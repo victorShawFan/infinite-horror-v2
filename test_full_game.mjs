@@ -9,6 +9,10 @@ import { generateChapter5 } from './src/core/MapGenerator_Ch5.js';
 import { generateChapter6 } from './src/core/MapGenerator_Ch6.js';
 import { generateChapter7 } from './src/core/MapGenerator_Ch7.js';
 import { generateChapter8 } from './src/core/MapGenerator_Ch8.js';
+import { generateChapter9 } from './src/core/MapGenerator_Ch9.js';
+import { generateChapter10 } from './src/core/MapGenerator_Ch10.js';
+import { generateChapter11 } from './src/core/MapGenerator_Ch11.js';
+import { generateChapter12 } from './src/core/MapGenerator_Ch12.js';
 import { gameState } from './src/core/GameState.js';
 import { executeBattle, previewBattle, getEffectiveAtk, getEffectiveDef } from './src/core/CombatSystem.js';
 import { ENTITY_TYPE } from './src/core/constants.js';
@@ -210,6 +214,102 @@ for (const f of ch8.floors) {
   }
 }
 assert(ch8Defeats === 0, 'Ch8 zero undefeatable');
+
+// Ch9 全通
+const ch9 = generateChapter9();
+assert(ch9.floors.length === 6, 'Ch9 6 floors');
+p.rewardPoints += 1000;
+let ch9Defeats = 0;
+for (const f of ch9.floors) {
+  for (const e of f.entities.filter(e => e.type === ENTITY_TYPE.ENEMY || e.type === ENTITY_TYPE.BOSS)) {
+    if (!previewBattle(p, e).canWin) { ch9Defeats++; continue; }
+    executeBattle({...e});
+  }
+  for (const e of f.entities.filter(e => e.type === ENTITY_TYPE.ITEM)) {
+    if (e.effect?.heal) p.hp = Math.min(p.maxHp, p.hp + e.effect.heal);
+    if (e.effect?.atk) p.atk += e.effect.atk;
+    if (e.effect?.def) p.def += e.effect.def;
+    if (e.effect?.spd) p.spd += e.effect.spd;
+    if (e.effect?.maxHp) { p.maxHp += e.effect.maxHp; p.hp += e.effect.maxHp; }
+    if (e.effect?.crt) p.crt += e.effect.crt;
+    if (e.itemType === 'weapon' && e.weapon) p.weapon = e.weapon;
+    if (e.itemType === 'armor' && e.armor) p.armor = e.armor;
+    if (e.itemType === 'chip' && e.chip && p.chips.length < p.maxChips) p.chips.push(e.chip);
+  }
+}
+assert(ch9Defeats === 0, 'Ch9 zero undefeatable');
+
+// Ch10 全通
+const ch10 = generateChapter10();
+assert(ch10.floors.length === 6, 'Ch10 6 floors');
+p.rewardPoints += 1000;
+let ch10Defeats = 0;
+for (const f of ch10.floors) {
+  for (const e of f.entities.filter(e => e.type === ENTITY_TYPE.ENEMY || e.type === ENTITY_TYPE.BOSS)) {
+    if (!previewBattle(p, e).canWin) { ch10Defeats++; continue; }
+    executeBattle({...e});
+  }
+  for (const e of f.entities.filter(e => e.type === ENTITY_TYPE.ITEM)) {
+    if (e.effect?.heal) p.hp = Math.min(p.maxHp, p.hp + e.effect.heal);
+    if (e.effect?.atk) p.atk += e.effect.atk;
+    if (e.effect?.def) p.def += e.effect.def;
+    if (e.effect?.spd) p.spd += e.effect.spd;
+    if (e.effect?.maxHp) { p.maxHp += e.effect.maxHp; p.hp += e.effect.maxHp; }
+    if (e.effect?.crt) p.crt += e.effect.crt;
+    if (e.itemType === 'weapon' && e.weapon) p.weapon = e.weapon;
+    if (e.itemType === 'armor' && e.armor) p.armor = e.armor;
+    if (e.itemType === 'chip' && e.chip && p.chips.length < p.maxChips) p.chips.push(e.chip);
+  }
+}
+assert(ch10Defeats === 0, 'Ch10 zero undefeatable');
+
+// Ch11 全通
+const ch11 = generateChapter11();
+assert(ch11.floors.length === 6, 'Ch11 6 floors');
+p.rewardPoints += 1000;
+let ch11Defeats = 0;
+for (const f of ch11.floors) {
+  for (const e of f.entities.filter(e => e.type === ENTITY_TYPE.ENEMY || e.type === ENTITY_TYPE.BOSS)) {
+    if (!previewBattle(p, e).canWin) { ch11Defeats++; continue; }
+    executeBattle({...e});
+  }
+  for (const e of f.entities.filter(e => e.type === ENTITY_TYPE.ITEM)) {
+    if (e.effect?.heal) p.hp = Math.min(p.maxHp, p.hp + e.effect.heal);
+    if (e.effect?.atk) p.atk += e.effect.atk;
+    if (e.effect?.def) p.def += e.effect.def;
+    if (e.effect?.spd) p.spd += e.effect.spd;
+    if (e.effect?.maxHp) { p.maxHp += e.effect.maxHp; p.hp += e.effect.maxHp; }
+    if (e.effect?.crt) p.crt += e.effect.crt;
+    if (e.itemType === 'weapon' && e.weapon) p.weapon = e.weapon;
+    if (e.itemType === 'armor' && e.armor) p.armor = e.armor;
+    if (e.itemType === 'chip' && e.chip && p.chips.length < p.maxChips) p.chips.push(e.chip);
+  }
+}
+assert(ch11Defeats === 0, 'Ch11 zero undefeatable');
+
+// Ch12 全通
+const ch12 = generateChapter12();
+assert(ch12.floors.length === 6, 'Ch12 6 floors');
+p.rewardPoints += 1000;
+let ch12Defeats = 0;
+for (const f of ch12.floors) {
+  for (const e of f.entities.filter(e => e.type === ENTITY_TYPE.ENEMY || e.type === ENTITY_TYPE.BOSS)) {
+    if (!previewBattle(p, e).canWin) { ch12Defeats++; continue; }
+    executeBattle({...e});
+  }
+  for (const e of f.entities.filter(e => e.type === ENTITY_TYPE.ITEM)) {
+    if (e.effect?.heal) p.hp = Math.min(p.maxHp, p.hp + e.effect.heal);
+    if (e.effect?.atk) p.atk += e.effect.atk;
+    if (e.effect?.def) p.def += e.effect.def;
+    if (e.effect?.spd) p.spd += e.effect.spd;
+    if (e.effect?.maxHp) { p.maxHp += e.effect.maxHp; p.hp += e.effect.maxHp; }
+    if (e.effect?.crt) p.crt += e.effect.crt;
+    if (e.itemType === 'weapon' && e.weapon) p.weapon = e.weapon;
+    if (e.itemType === 'armor' && e.armor) p.armor = e.armor;
+    if (e.itemType === 'chip' && e.chip && p.chips.length < p.maxChips) p.chips.push(e.chip);
+  }
+}
+assert(ch12Defeats === 0, 'Ch12 zero undefeatable');
 // 存档往返
 gameState.save(0);
 const lvBefore = p.level;
@@ -221,6 +321,6 @@ assert(gameState.player.level === lvBefore, 'Level preserved');
 assert(Object.values(SHOP_ITEMS).flat().length >= 30, '30+ shop items');
 
 console.log(`${pass + fail} checks: ${pass} pass, ${fail} fail`);
-console.log(`Ch1-8: Lv${p.level}`);
+console.log(`Ch1-12: Lv${p.level}`);
 if (fail === 0) console.log('✅ 全游戏模拟通过');
 else { console.log('❌ 有失败'); process.exit(1); }

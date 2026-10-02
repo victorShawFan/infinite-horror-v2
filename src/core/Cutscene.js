@@ -547,3 +547,76 @@ export function showChapter8Cutscene(onFinish) {
   }
   show();
 }
+
+export function showChapter9Cutscene(onFinish) {
+  const overlay = document.getElementById('ui-overlay');
+  const scenes = [
+    { bg: 'rgba(5,5,15,0.95)', text: '郑吒再次踏入陵墓。复活零点、詹岚和罗甘道——队伍即将恢复完整编制。' },
+    { bg: 'rgba(5,5,15,0.95)', text: '楚轩的计划已经制定完毕。下一个世界——星河战队。' },
+    { bg: 'rgba(8,8,20,0.95)', text: '虫族。无穷无尽的虫潮。而目标只有一个——脑虫。' },
+    { bg: 'rgba(8,8,20,0.95)', text: '第九关「星河远征」' },
+  ];
+  let idx = 0;
+  function show() {
+    if (idx >= scenes.length) { overlay.innerHTML = ''; onFinish(); return; }
+    const s = scenes[idx];
+    overlay.innerHTML = `<div style="position:absolute;top:0;left:0;right:0;bottom:0;display:flex;align-items:center;justify-content:center;background:${s.bg};cursor:pointer;animation:fadeIn 0.8s ease"><p style="color:#e0e0e0;font-size:22px;max-width:600px;text-align:center;line-height:1.8;letter-spacing:2px">${s.text}</p></div><style>@keyframes fadeIn{from{opacity:0}to{opacity:1}}</style>`;
+    overlay.querySelector('div').addEventListener('click', () => { idx++; show(); });
+  }
+  show();
+}
+
+export function showChapter10Cutscene(onFinish) {
+  const overlay = document.getElementById('ui-overlay');
+  const scenes = [
+    { bg: 'rgba(10,8,8,0.95)', text: '接下来的任务更加紧迫——复活赵樱空、张恒和程啸。' },
+    { bg: 'rgba(10,10,15,0.95)', text: '然后，是五支队伍同场的魔戒世界。联盟与背叛交织的战场。' },
+    { bg: 'rgba(10,10,15,0.95)', text: '天神队——传说中最强的轮回者队伍。他们是最终的对手。' },
+    { bg: 'rgba(10,10,15,0.95)', text: '第十关「五队大战」' },
+  ];
+  let idx = 0;
+  function show() {
+    if (idx >= scenes.length) { overlay.innerHTML = ''; onFinish(); return; }
+    const s = scenes[idx];
+    overlay.innerHTML = `<div style="position:absolute;top:0;left:0;right:0;bottom:0;display:flex;align-items:center;justify-content:center;background:${s.bg};cursor:pointer;animation:fadeIn 0.8s ease"><p style="color:#e0e0e0;font-size:22px;max-width:600px;text-align:center;line-height:1.8;letter-spacing:2px">${s.text}</p></div><style>@keyframes fadeIn{from{opacity:0}to{opacity:1}}</style>`;
+    overlay.querySelector('div').addEventListener('click', () => { idx++; show(); });
+  }
+  show();
+}
+
+export function showChapter11Cutscene(onFinish) {
+  const overlay = document.getElementById('ui-overlay');
+  const scenes = [
+    { bg: 'rgba(15,5,10,0.95)', text: '变形金刚的世界。猛鬼街的梦境。天煞的考验。龙骑士的血战。' },
+    { bg: 'rgba(15,5,10,0.95)', text: '在这一连串的世界中，郑吒将面对他最深的恐惧——自己的心魔。' },
+    { bg: 'rgba(20,5,10,0.95)', text: '只有跨过心魔的人，才有资格带领中洲队走向最终一战。' },
+    { bg: 'rgba(15,5,10,0.95)', text: '第十一关「心魔与终战前奏」' },
+  ];
+  let idx = 0;
+  function show() {
+    if (idx >= scenes.length) { overlay.innerHTML = ''; onFinish(); return; }
+    const s = scenes[idx];
+    overlay.innerHTML = `<div style="position:absolute;top:0;left:0;right:0;bottom:0;display:flex;align-items:center;justify-content:center;background:${s.bg};cursor:pointer;animation:fadeIn 0.8s ease"><p style="color:#e0e0e0;font-size:22px;max-width:600px;text-align:center;line-height:1.8;letter-spacing:2px">${s.text}</p></div><style>@keyframes fadeIn{from{opacity:0}to{opacity:1}}</style>`;
+    overlay.querySelector('div').addEventListener('click', () => { idx++; show(); });
+  }
+  show();
+}
+
+export function showChapter12Cutscene(onFinish) {
+  const overlay = document.getElementById('ui-overlay');
+  const scenes = [
+    { bg: 'rgba(20,5,5,0.95)', text: '最终一战。生化危机的世界。所有的恩怨，在这里了结。' },
+    { bg: 'rgba(20,5,5,0.95)', text: '中洲队 vs 恶魔队。复制体 vs 原版。' },
+    { bg: 'rgba(25,5,5,0.95)', text: '楚轩的最后一个计划。赵樱空的心灵之光。郑吒的洪荒之力。' },
+    { bg: 'rgba(30,5,5,0.95)', text: '不是所有人都能活着走出去。但这就是——无限恐怖。' },
+    { bg: 'rgba(20,0,0,0.95)', text: '最终关「生化终战」' },
+  ];
+  let idx = 0;
+  function show() {
+    if (idx >= scenes.length) { overlay.innerHTML = ''; onFinish(); return; }
+    const s = scenes[idx];
+    overlay.innerHTML = `<div style="position:absolute;top:0;left:0;right:0;bottom:0;display:flex;align-items:center;justify-content:center;background:${s.bg};cursor:pointer;animation:fadeIn 0.8s ease"><p style="color:#e0e0e0;font-size:22px;max-width:600px;text-align:center;line-height:1.8;letter-spacing:2px">${s.text}</p></div><style>@keyframes fadeIn{from{opacity:0}to{opacity:1}}</style>`;
+    overlay.querySelector('div').addEventListener('click', () => { idx++; show(); });
+  }
+  show();
+}
