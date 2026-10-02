@@ -45,6 +45,7 @@ import { loreTracker, LORE_ENTRIES, formatLorePopup } from './core/LoreSystem.js
 import { bestiary, getDifficulty, setDifficulty, getDifficultyConfig, applyDifficultyScaling, formatBestiaryPanel, formatDifficultySelector, DIFFICULTY, DIFFICULTY_CONFIG } from './core/DifficultySystem.js';
 import { ngPlusState, formatClearScreen, formatCycleInfo, TITLES } from './core/NewGamePlus.js';
 import { fadeBlackTransition, chapterIntroTransition, floorTransition, victoryFlash } from './core/TransitionSystem.js';
+import { MiniMap } from './core/MiniMap.js';
 
 // ── 全局状态 ──
 let renderer;
@@ -225,6 +226,7 @@ function showMainMenu() {
     if (gameState.load(0)) {
       try { const ms = localStorage.getItem('ih_milestones'); if (ms) milestoneTracker.fromJSON(JSON.parse(ms)); } catch {}
       try { const lr = localStorage.getItem('ih_lore'); if (lr) loreTracker.fromJSON(JSON.parse(lr)); } catch {}
+      try { if (window._miniMap) { const mm = localStorage.getItem('ih_minimap'); if (mm) window._miniMap.fromJSON(JSON.parse(mm)); } } catch {}
       try { const br = localStorage.getItem('ih_bestiary'); if (br) bestiary.fromJSON(JSON.parse(br)); } catch {}
       try { const ng = localStorage.getItem('ih_ngplus'); if (ng) ngPlusState.fromJSON(JSON.parse(ng)); } catch {}
       const chapterGens = { 1: generateChapter1, 2: generateChapter2, 3: generateChapter3, 4: generateChapter4, 5: generateChapter5, 6: generateChapter6, 7: generateChapter7, 8: generateChapter8, 9: generateChapter9, 10: generateChapter10, 11: generateChapter11, 12: generateChapter12 };
@@ -259,6 +261,13 @@ function showMainMenu() {
           menuState = 'playing';
           overlay.innerHTML = '';
           combatAnimator = new CombatAnimator(renderer);
+
+  // 迷你地图
+  if (!window._miniMap) {
+    window._miniMap = new MiniMap();
+    window._miniMap.init(document.getElementById('game-container') || document.body);
+  }
+  window._miniMap.reset();
           chapter = gen();
           currentFloorIndex = gameState.nodeIndex || 0;
           loadFloor(currentFloorIndex);
@@ -598,6 +607,11 @@ function gameLoop() {
   const floor = chapter.floors[currentFloorIndex];
   renderer.render(floor, entities, hoveredEntity, dialogueState, combatResult);
 
+  // 迷你地图
+  if (window._miniMap && window._miniMap.visible) {
+    try { window._miniMap.draw(floor, gameState.player, entities); } catch {}
+  }
+
   requestAnimationFrame(gameLoop);
 }
 
@@ -641,6 +655,7 @@ document.addEventListener('keydown', (e) => {
     gameState.save(0);
     try { localStorage.setItem('ih_milestones', JSON.stringify(milestoneTracker.toJSON())); } catch {}
     try { localStorage.setItem('ih_lore', JSON.stringify(loreTracker.toJSON())); } catch {}
+    try { if (window._miniMap) localStorage.setItem('ih_minimap', JSON.stringify(window._miniMap.toJSON())); } catch {}
     try { localStorage.setItem('ih_ngplus', JSON.stringify(ngPlusState.toJSON())); } catch {}
     renderer.notify('💾 手动存档完成', '#44ff88', 90);
     return;
@@ -689,7 +704,12 @@ document.addEventListener('keydown', (e) => {
         // 同伴关系面板
         showRelationshipPanel();
         return;
-      case 'h': case '?':
+            case 'Tab':
+        // 迷你地图开关
+        e.preventDefault();
+        if (window._miniMap) window._miniMap.toggle();
+        return;
+case 'h': case '?':
         // 帮助面板
         showHelpPanel();
         return;
@@ -1528,6 +1548,7 @@ function showInventoryPanel() {
             <h3 style="color: #ff8866; margin-bottom: 10px;">战斗属性</h3>
             <table style="width: 100%; color: #ccc; font-size: 14px; line-height: 2;">
               <tr><td>等级</td><td style="text-align: right; color: #ffcc44;">Lv.${p.level} <span style="color:#888;font-size:11px;">(${p.exp}/${p.expToNext} EXP)</span></td></tr>
+          <tr><td style="color: #44cccc;">Tab</td><td>迷你地图</td></tr>
               <tr><td>❤ 生命</td><td style="text-align: right; color: #44cc44;">${p.hp} / ${p.maxHp}</td></tr>
               <tr><td>⚔ 攻击</td><td style="text-align: right; color: #ff8866;">
                 <span style="color:#ffcc44;font-weight:bold;">${getEffectiveAtk(p)}</span>
