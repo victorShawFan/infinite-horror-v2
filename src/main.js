@@ -29,6 +29,8 @@ import {
 } from './core/StealthSystem.js';
 import { audioEngine } from './core/AudioEngine.js';
 import { scaleEnemy } from './core/DifficultyScaler.js';
+import { getGeneLockProgress, getGeneLockDescription } from './core/GeneLockSystem.js';
+import { getAvailableSkills, SKILL_DEFINITIONS } from './core/SkillSystem.js';
 import { renderLordGodSpace } from './core/LordGodSpace.js';
 import { CombatAnimator } from './core/CombatAnimation.js';
 import { showOpeningCutscene, showChapter2Cutscene, showChapter3Cutscene, showChapter4Cutscene, showChapter5Cutscene, showChapter6Cutscene, showChapter7Cutscene, showChapter8Cutscene, showChapter9Cutscene, showChapter10Cutscene, showChapter11Cutscene, showChapter12Cutscene } from './core/Cutscene.js';
@@ -1323,6 +1325,20 @@ function showInventoryPanel() {
                 return bm[p.activeBloodline] || '未觉醒';
               })()}</span><br>
               🧬 基因锁: <span style="color: #ff6600">${p.geneLock > 0 ? p.geneLock + '阶' + (p.geneLockActive ? ' ●激活' : ' ○待机') : '未开启'}</span>
+            </p>
+
+            ${(() => {
+              const glProg = getGeneLockProgress(p);
+              const glDesc = getGeneLockDescription(glProg.currentStage);
+              const skills = getAvailableSkills(p);
+              return '<div style="margin-top: 12px;">' +
+                (glProg.nextThreshold ? '<div style="margin-bottom: 8px;"><div style="display:flex;justify-content:space-between;color:#888;font-size:11px;margin-bottom:3px;"><span>基因锁充能</span><span>' + glProg.charge + '/' + glProg.nextThreshold + ' (' + glProg.progressPercent + '%)</span></div><div style="background:#1a1a2a;border-radius:3px;height:6px;overflow:hidden;"><div style="background:linear-gradient(90deg,#ff6600,#ff8800);width:' + Math.min(100,glProg.progressPercent) + '%;height:100%;border-radius:3px;"></div></div></div>' : '') +
+                '<p style="color:#888;font-size:12px;font-style:italic;margin-bottom:8px;">' + glDesc + '</p>' +
+                (skills.length > 0 ? '<h4 style="color:#ff8800;margin-bottom:6px;font-size:13px;">⚔ 已解锁技能</h4>' +
+                  skills.map(s => '<p style="color:#ccc;font-size:12px;margin-bottom:3px;">• <span style="color:#ffaa44;">' + s.name + '</span> <span style="color:#666;">— ' + (s.description || s.desc || '') + (s.manaCost ? ' [' + s.manaCost + '法力]' : '') + ' CD' + s.cooldown + '回合</span></p>').join('') : '<p style="color:#555;font-size:12px;">开启基因锁或觉醒血统后将解锁技能</p>') +
+              '</div>';
+            })()}
+            <p style="display:none">
             </p>
 
             ${p.chips.length > 0 ? `

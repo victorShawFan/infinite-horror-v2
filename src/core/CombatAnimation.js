@@ -85,12 +85,61 @@ export class CombatAnimator {
         this._queue.push({ type: 'shake', intensity: 1, duration: 80, delay });
         delay += 150;
       } else if (entry.type === 'buff') {
-        // Buff提示 — 蓝色浮字
         const shortText = entry.text.length > 16 ? entry.text.slice(0, 16) + '…' : entry.text;
         const px = window._gamePlayerX || 0;
         const py = window._gamePlayerY || 0;
         this._queue.push({ type: 'text', text: shortText, x: px, y: py - 0.8, color: 'rgb(100, 200, 255)', delay });
         delay += 200;
+      } else if (entry.type === 'geneLock') {
+        // 基因锁充能 — 橙色浮字
+        const px = window._gamePlayerX || 0;
+        const py = window._gamePlayerY || 0;
+        this._queue.push({ type: 'text', text: '⚡基因锁充能', x: px, y: py - 0.6, color: 'rgb(255, 102, 0)', delay });
+        delay += 150;
+      } else if (entry.type === 'geneLock_advance') {
+        // 基因锁突破！— 强烈特效
+        const px = window._gamePlayerX || 0;
+        const py = window._gamePlayerY || 0;
+        this._queue.push({ type: 'text', text: '🧬 基因锁突破！', x: px, y: py - 1, color: 'rgb(255, 136, 0)', delay });
+        this._queue.push({ type: 'flash', color: 'rgba(255, 136, 0, 0.3)', duration: 400, delay });
+        this._queue.push({ type: 'shake', intensity: 8, duration: 400, delay });
+        this._queue.push({ type: 'particles', x: px * TILE_SIZE + TILE_SIZE/2, y: py * TILE_SIZE + TILE_SIZE/2, color: 'rgb(255, 136, 0)', count: 20, delay });
+        delay += 500;
+      } else if (entry.type === 'skill') {
+        // 技能释放 — 黄色浮字
+        const shortText = entry.text.length > 20 ? entry.text.slice(0, 20) + '…' : entry.text;
+        const px = window._gamePlayerX || 0;
+        const py = window._gamePlayerY || 0;
+        this._queue.push({ type: 'text', text: shortText, x: px, y: py - 0.7, color: 'rgb(255, 170, 68)', delay });
+        this._queue.push({ type: 'flash', color: 'rgba(255, 170, 68, 0.1)', duration: 150, delay });
+        delay += 250;
+      } else if (entry.type === 'control') {
+        // 控制效果 — 紫色浮字
+        this._queue.push({ type: 'text', text: '💫 控制！', x: enemy.x, y: enemy.y - 0.5, color: 'rgb(170, 136, 255)', delay });
+        delay += 200;
+      } else if (entry.type === 'dodge') {
+        // 闪避 — 青色浮字
+        const px = window._gamePlayerX || 0;
+        const py = window._gamePlayerY || 0;
+        this._queue.push({ type: 'text', text: '🌀 闪避！', x: px, y: py - 0.5, color: 'rgb(68, 255, 204)', delay });
+        delay += 200;
+      } else if (entry.type === 'debuff') {
+        // 减益 — 红紫色浮字
+        const shortText = entry.text.length > 16 ? entry.text.slice(0, 16) + '…' : entry.text;
+        this._queue.push({ type: 'text', text: shortText, x: enemy.x, y: enemy.y - 0.6, color: 'rgb(255, 102, 136)', delay });
+        delay += 180;
+      } else if (entry.type === 'poison') {
+        // 中毒 — 绿色浮字
+        const dmgMatch2 = entry.text.match(/(\d+)/);
+        this._queue.push({ type: 'text', text: '☠ -' + (dmgMatch2 ? dmgMatch2[1] : '?'), x: enemy.x, y: enemy.y - 0.3, color: 'rgb(136, 255, 68)', delay });
+        this._queue.push({ type: 'particles', x: enemy.x * TILE_SIZE + TILE_SIZE/2, y: enemy.y * TILE_SIZE + TILE_SIZE/2, color: 'rgb(100, 200, 50)', count: 3, delay });
+        delay += 180;
+      } else if (entry.type === 'info') {
+        // 信息 — 灰蓝色简短
+        const px = window._gamePlayerX || 0;
+        const py = window._gamePlayerY || 0;
+        this._queue.push({ type: 'text', text: entry.text.slice(0, 20), x: px, y: py - 0.9, color: 'rgb(136, 170, 204)', delay });
+        delay += 150;
       }
 
       // 限制最多显示的回合数，避免太长
