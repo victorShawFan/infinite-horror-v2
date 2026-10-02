@@ -5,7 +5,7 @@
 import { TILE_SIZE, TILE, COLORS, CANVAS_W, CANVAS_H, ENTITY_TYPE } from './constants.js';
 import { assetLoader } from './AssetLoader.js';
 import { gameState } from './GameState.js';
-import { getEffectiveAtk, getEffectiveDef, previewBattle, getStatsBreakdown } from './CombatSystem.js';
+import { getEffectiveAtk, getEffectiveDef, getEffectiveCrt, previewBattle, getStatsBreakdown } from './CombatSystem.js';
 import { drawWallTile, drawFloorTile, drawLavaTile, drawStairsTile, drawCharacterSprite, drawHealthBar } from './SpriteRenderer.js';
 
 export class Renderer {
@@ -408,7 +408,7 @@ export class Renderer {
     ctx.fillStyle = '#44ffaa';
     ctx.fillText(`💨 速度 ${p.spd}`, rx, pad + 56);
     ctx.fillStyle = '#ffcc44';
-    ctx.fillText(`✦ 暴击 ${p.crt}%`, rx, pad + 74);
+    ctx.fillText(`✦ 暴击 ${getEffectiveCrt(p)}%`, rx, pad + 74);
     ctx.fillStyle = '#ffaa44';
     ctx.fillText(`💰 ${p.gold}G  ⬡${p.rewardPoints}`, rx, pad + 92);
     ctx.fillStyle = '#666';
