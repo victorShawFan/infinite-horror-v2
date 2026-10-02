@@ -7,7 +7,7 @@ import { TILE, TILE_SIZE, ENTITY_TYPE, GAME_STATE, GENE_LOCK, COLORS, CANVAS_W, 
 import { eventBus } from './core/EventBus.js';
 import { gameState } from './core/GameState.js';
 import { Renderer } from './core/Renderer.js';
-import { executeBattle, previewBattle } from './core/CombatSystem.js';
+import { executeBattle, previewBattle, getEffectiveAtk, getEffectiveDef, getEffectiveCrt } from './core/CombatSystem.js';
 import { generateChapter1 } from './core/MapGenerator.js';
 import { audioEngine } from './core/AudioEngine.js';
 import { renderLordGodSpace } from './core/LordGodSpace.js';
@@ -583,44 +583,83 @@ function showCombatConfirm(enemy) {
   const p = gameState.player;
   const preview = previewBattle(p, enemy);
   
-  gameState.setState(GAME_STATE.DIALOGUE); // Block movement
+  gameState.setState(GAME_STATE.DIALOGUE);
   const overlay = document.getElementById('ui-overlay');
   
   const canWinColor = preview.canWin ? '#44ff88' : '#ff4444';
+  const canWinIcon = preview.canWin ? '✓' : '✗';
   const canWinText = preview.canWin 
-    ? `✓ 可击败 (${preview.turnsNeeded}回合, 受伤${preview.totalDamage})` 
-    : '✗ 无法击败！建议撤退';
-  const hpAfterText = preview.canWin ? `战后HP: ${preview.hpAfter}/${p.maxHp}` : '';
+    ? `${preview.turnsNeeded}回合击败 · 受伤${preview.totalDamage}` 
+    : '无法击败 — 建议撤退';
+  const hpAfterText = preview.canWin ? `战后HP: ${preview.hpAfter}/${p.maxHp}` : `预计受伤: ${preview.totalDamage}+`;
+  const effectiveAtk = getEffectiveAtk(p);
+  const effectiveDef = getEffectiveDef(p);
+  const yourDmg = preview.playerDmgPerHit;
+  const theirDmg = preview.enemyDmgPerHit;
+  const descText = enemy.description ? `<p style="color:#666;font-size:11px;line-height:1.4;margin-top:8px;max-height:48px;overflow:hidden;">${enemy.description}</p>` : '';
   
   overlay.innerHTML = `
     <div style="
       position: absolute; top: 0; left: 0; right: 0; bottom: 0;
       display: flex; align-items: center; justify-content: center;
-      background: rgba(0,0,0,0.6);
+      background: rgba(0,0,0,0.65);
+      animation: fadeIn 0.15s ease;
     " id="combat-confirm">
       <div style="
-        background: rgba(10,10,20,0.97); border: 2px solid #ff444488;
-        border-radius: 14px; padding: 24px 30px; max-width: 420px; width: 90%;
-        text-align: center;
+        background: rgba(10,10,20,0.97); border: 2px solid #ff444466;
+        border-radius: 14px; padding: 20px 24px; max-width: 460px; width: 92%;
+        box-shadow: 0 0 40px rgba(255,68,68,0.1);
       ">
-        <p style="color: #ff4444; font-size: 12px; letter-spacing: 4px; margin-bottom: 8px;">遭遇敌人</p>
-        <h3 style="color: ${enemy.color || '#ff4444'}; font-size: 22px; margin-bottom: 4px;">
-          ${enemy.name}
-        </h3>
-        <p style="color: #888; font-size: 13px; margin-bottom: 16px;">
-          HP ${enemy.hp} | ATK ${enemy.atk} | DEF ${enemy.def}
-        </p>
+        <p style="color: #ff4444; font-size: 11px; letter-spacing: 6px; text-align:center; margin-bottom: 10px;">⚔ 遭 遇 敌 人 ⚔</p>
         
-        <div style="
-          background: rgba(${preview.canWin ? '40,80,40' : '80,30,30'},0.3);
-          border: 1px solid ${canWinColor}33; border-radius: 8px;
-          padding: 12px; margin-bottom: 16px;
-        ">
-          <p style="color: ${canWinColor}; font-size: 15px; font-weight: bold;">${canWinText}</p>
-          ${hpAfterText ? `<p style="color: #aaa; font-size: 12px; margin-top: 4px;">${hpAfterText}</p>` : ''}
+        <!-- 双栏对比 -->
+        <div style="display:flex; gap:12px; margin-bottom: 12px;">
+          <!-- 左：玩家 -->
+          <div style="flex:1; background:rgba(68,136,255,0.06); border:1px solid rgba(68,136,255,0.15); border-radius:8px; padding:10px; text-align:center;">
+            <p style="color:#6699ff; font-size:11px; letter-spacing:2px; margin-bottom:4px;">郑吒 Lv.${p.level}</p>
+            <p style="color:#eee; font-size:13px;">HP <span style="color:#44ff88">${p.hp}</span>/${p.maxHp}</p>
+            <p style="color:#ff8866; font-size:12px;">ATK ${effectiveAtk}${p.weapon ? ' <span style="color:#665533;font-size:10px;">(+' + (p.weapon.atk||0) + ')</span>' : ''}</p>
+            <p style="color:#6688ff; font-size:12px;">DEF ${effectiveDef}${p.armor ? ' <span style="color:#334466;font-size:10px;">(+' + (p.armor.def||0) + ')</span>' : ''}</p>
+          </div>
+          <!-- 中：VS -->
+          <div style="display:flex; align-items:center; justify-content:center;">
+            <span style="color:#555; font-size:16px; font-weight:bold;">VS</span>
+          </div>
+          <!-- 右：敌人 -->
+          <div style="flex:1; background:rgba(255,68,68,0.06); border:1px solid rgba(255,68,68,0.15); border-radius:8px; padding:10px; text-align:center;">
+            <p style="color:${enemy.color || '#ff4444'}; font-size:11px; letter-spacing:2px; margin-bottom:4px;">${enemy.name}</p>
+            <p style="color:#eee; font-size:13px;">HP <span style="color:#ff6666">${enemy.hp}</span></p>
+            <p style="color:#ff8866; font-size:12px;">ATK ${enemy.atk}</p>
+            <p style="color:#6688ff; font-size:12px;">DEF ${enemy.def}</p>
+          </div>
         </div>
         
-        <div style="display: flex; gap: 12px; justify-content: center;">
+        <!-- 伤害预测 -->
+        <div style="display:flex; gap:8px; margin-bottom: 10px; text-align:center;">
+          <div style="flex:1; background:rgba(255,170,0,0.08); border-radius:6px; padding:6px;">
+            <p style="color:#ffaa44; font-size:10px;">你的伤害/回合</p>
+            <p style="color:#ffcc44; font-size:16px; font-weight:bold;">${yourDmg}</p>
+          </div>
+          <div style="flex:1; background:rgba(255,68,68,0.08); border-radius:6px; padding:6px;">
+            <p style="color:#ff6666; font-size:10px;">受到伤害/回合</p>
+            <p style="color:${theirDmg > 0 ? '#ff4444' : '#44ff88'}; font-size:16px; font-weight:bold;">${theirDmg}</p>
+          </div>
+        </div>
+        
+        <!-- 结果预判 -->
+        <div style="
+          background: rgba(${preview.canWin ? '40,80,40' : '80,30,30'},0.25);
+          border: 1px solid ${canWinColor}22; border-radius: 8px;
+          padding: 10px; margin-bottom: 12px; text-align:center;
+        ">
+          <p style="color: ${canWinColor}; font-size: 14px; font-weight: bold;">${canWinIcon} ${canWinText}</p>
+          <p style="color: #999; font-size: 11px; margin-top: 3px;">${hpAfterText}</p>
+        </div>
+        
+        ${descText}
+        
+        <!-- 按钮 -->
+        <div style="display: flex; gap: 12px; justify-content: center; margin-top: 12px;">
           <button id="btn-fight" style="
             background: rgba(255,68,68,0.15); border: 2px solid #ff4444; color: #ff4444;
             padding: 10px 30px; cursor: pointer; font-size: 15px; font-weight: bold;
@@ -632,6 +671,7 @@ function showCombatConfirm(enemy) {
             font-family: inherit; border-radius: 8px; transition: all 0.2s;
           ">← 撤退</button>
         </div>
+        <p style="color:#444; font-size:10px; text-align:center; margin-top:8px;">空格/F = 战斗 · Esc/R = 撤退</p>
       </div>
     </div>
   `;
