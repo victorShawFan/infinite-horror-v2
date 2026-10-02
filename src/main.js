@@ -58,6 +58,7 @@ import { challengeState, CHALLENGE_TYPES } from './core/ChallengeDungeon.js';
 import { getQualityColor, getQualityName, formatEquipmentTooltip, getAllAffixEffects } from './core/EquipmentAffixes.js';
 import { killStreak } from './core/KillStreak.js';
 import { rateBattle, recordRating, formatRatingHTML } from './core/BattleRating.js';
+import { fogOfWar } from './core/FogOfWar.js';
 
 // ── 全局状态 ──
 let renderer;
@@ -496,6 +497,7 @@ function showMainMenu() {
       try { const st = localStorage.getItem('ih_stance'); if (st) restoreStance(st); } catch {}
       try { const cs = localStorage.getItem('ih_challenge'); if (cs) challengeState.fromJSON(JSON.parse(cs)); } catch {}
       try { const ks = localStorage.getItem('ih_streak'); if (ks) killStreak.fromJSON(JSON.parse(ks)); } catch {}
+      try { const fg = localStorage.getItem('ih_fog'); if (fg) fogOfWar.fromJSON(JSON.parse(fg)); } catch {}
       const chapterGens = { 1: generateChapter1, 2: generateChapter2, 3: generateChapter3, 4: generateChapter4, 5: generateChapter5, 6: generateChapter6, 7: generateChapter7, 8: generateChapter8, 9: generateChapter9, 10: generateChapter10, 11: generateChapter11, 12: generateChapter12 };
       const gen = chapterGens[gameState.chapter] || generateChapter1;
 
@@ -728,6 +730,7 @@ function startGame() {
 
     try { localStorage.setItem('ih_challenge', JSON.stringify(challengeState.toJSON())); } catch {}
     try { localStorage.setItem('ih_streak', JSON.stringify(killStreak.toJSON())); } catch {}
+    try { localStorage.setItem('ih_fog', JSON.stringify(fogOfWar.toJSON())); } catch {}
   });
 
   eventBus.on('relationship:change', (data) => {
@@ -822,6 +825,8 @@ function loadFloor(index, isAdvancing) {
       return clone;
     });
 
+  // 更新迷雾视野
+  fogOfWar.updateVision(index, floor.playerStart.x, floor.playerStart.y);
   // 延迟淡入
   setTimeout(() => { if (renderer) renderer.fadeIn(0.04); }, 500);
 
@@ -989,7 +994,7 @@ function gameLoop() {
   if (!gameStarted) { gameLoopRunning = false; return; }
 
   const floor = chapter.floors[currentFloorIndex];
-  renderer.render(floor, entities, hoveredEntity, dialogueState, combatResult);
+  renderer.render(floor, entities, hoveredEntity, dialogueState, combatResult, currentFloorIndex);
 
   // 迷你地图
   if (window._miniMap && window._miniMap.visible) {
@@ -1302,6 +1307,7 @@ function movePlayer(dx, dy) {
   p.y = ny;
   gameState.turn++;
   gameState.stats.turnsPlayed++;
+  fogOfWar.updateVision(currentFloorIndex, gameState.player.x, gameState.player.y);
   gameState.stats.stepsWalked = (gameState.stats.stepsWalked || 0) + 1;
   if (gameState.stats.stepsWalked === 1) tutorialManager.trigger("first_move");
 

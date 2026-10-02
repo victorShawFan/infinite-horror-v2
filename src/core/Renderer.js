@@ -141,7 +141,9 @@ export class Renderer {
     ctx.translate(-camX, -camY);
 
     // ── 绘制地图 ──
+    this._floorIndex = floorIndex || 0;
     this._drawMap(ctx, floor);
+    this._drawFog(ctx, floor, p);
 
     // ── 环境粒子（灰尘/光点） ──
     this._drawAmbientParticles(ctx, floor, p);
@@ -298,8 +300,38 @@ export class Renderer {
     }
   }
 
+
+  _drawFog(ctx, floor, p) {
+    if (!fogOfWar.enabled) return;
+    const { width, height } = floor;
+    const fi = this._floorIndex || 0;
+    
+    for (let y = 0; y < height; y++) {
+      for (let x = 0; x < width; x++) {
+        const state = fogOfWar.getTileState(fi, x, y, p.x, p.y);
+        if (state === 'visible') continue;
+        
+        const px = x * TILE_SIZE;
+        const py = y * TILE_SIZE;
+        
+        if (state === 'hidden') {
+          ctx.fillStyle = '#050508';
+          ctx.fillRect(px, py, TILE_SIZE, TILE_SIZE);
+        } else {
+          // explored - dim overlay
+          ctx.fillStyle = 'rgba(5, 5, 8, ' + EXPLORED_ALPHA + ')';
+          ctx.fillRect(px, py, TILE_SIZE, TILE_SIZE);
+        }
+      }
+    }
+  }
+
   _drawEntities(ctx, entities, hoveredEntity) {
+    const p = gameState.player;
+    const fi = this._floorIndex || 0;
     for (const e of entities) {
+      // 迷雾中的实体不显示
+      if (fogOfWar.enabled && !fogOfWar.isVisible(fi, e.x, e.y, p.x, p.y)) continue;
       const px = e.x * TILE_SIZE;
       const py = e.y * TILE_SIZE;
 
