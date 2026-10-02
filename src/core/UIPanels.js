@@ -685,6 +685,7 @@ export function showHelpPanel() {
           <tr><td style="color: #ff8866;">L</td><td>战斗日志回顾</td></tr>
           <tr><td style="color: #ffcc44;">J</td><td>成就面板</td></tr>
           <tr><td style="color: #ddaa44;">C</td><td>知识典籍</td></tr>
+          <tr><td style="color: #ff8866;">F</td><td>战斗回放</td></tr>
           <tr><td style="color: #44ccaa;">V</td><td>迷雾开关</td></tr>
           <tr><td style="color: #44ffff;">M</td><td>全地图视图</td></tr>
           <tr><td style="color: #44cc88;">Q</td><td>道具背包</td></tr>

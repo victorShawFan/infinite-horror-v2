@@ -49,6 +49,7 @@ import { ngPlusState, formatClearScreen, formatCycleInfo, TITLES, getActiveMutat
 import { fadeBlackTransition, chapterIntroTransition, floorTransition, victoryFlash } from './core/TransitionSystem.js';
 import { MiniMap } from './core/MiniMap.js';
 import { openCodex } from './core/Codex.js';
+import { recordBattle, showBattleReplay, showBattleHistoryPanel, serializeBattleHistory, deserializeBattleHistory } from './core/BattleReplay.js';
 import { tryUpgradeToElite, getEliteDescription, recordEliteKill, getEliteStats, resetEliteStats, serializeEliteStats, deserializeEliteStats } from './core/EliteMonsterSystem.js';
 import { atmosphereRenderer } from './core/AtmosphereSystem.js';
 import { tutorialManager } from './core/TutorialSystem.js';
@@ -119,6 +120,7 @@ function autoSave(reason = '') {
     localStorage.setItem('ih_bestiary', JSON.stringify(bestiary.toJSON()));
     localStorage.setItem('ih_challenge', JSON.stringify(challengeState.toJSON()));
     localStorage.setItem('ih_elite', JSON.stringify(serializeEliteStats()));
+    localStorage.setItem('ih_battle_history', JSON.stringify(serializeBattleHistory()));
     // 设置持久化：难度 + 音量 + 迷雾
     try {
       const settingsData = {
@@ -897,7 +899,8 @@ function startGame() {
     }
 
     try { localStorage.setItem('ih_challenge', JSON.stringify(challengeState.toJSON()));
-    localStorage.setItem('ih_elite', JSON.stringify(serializeEliteStats())); } catch {}
+    localStorage.setItem('ih_elite', JSON.stringify(serializeEliteStats()));
+    localStorage.setItem('ih_battle_history', JSON.stringify(serializeBattleHistory())); } catch {}
     try { localStorage.setItem('ih_streak', JSON.stringify(killStreak.toJSON())); } catch {}
     try { localStorage.setItem('ih_fog', JSON.stringify(fogOfWar.toJSON())); } catch {}
   });
@@ -1288,7 +1291,8 @@ document.addEventListener('keydown', (e) => {
     try { localStorage.setItem('ih_ngplus', JSON.stringify(ngPlusState.toJSON())); } catch {}
     try { localStorage.setItem('ih_stance', getStanceId()); } catch {}
     try { localStorage.setItem('ih_challenge', JSON.stringify(challengeState.toJSON()));
-    localStorage.setItem('ih_elite', JSON.stringify(serializeEliteStats())); } catch {}
+    localStorage.setItem('ih_elite', JSON.stringify(serializeEliteStats()));
+    localStorage.setItem('ih_battle_history', JSON.stringify(serializeBattleHistory())); } catch {}
     renderer.notify('💾 手动存档完成', '#44ff88', 90);
     return;
   }
@@ -1376,6 +1380,10 @@ case 'h': case '?':
       case 'c':
         // 知识典籍
         openCodex();
+        return;
+      case 'f':
+        // 战斗回放历史
+        showBattleHistoryPanel();
         return;
       case 'p':
         // 设置面板
@@ -2486,6 +2494,8 @@ function startCombat(enemy, preScaledEnemy) {
       rating: battleRating,
     });
     if (combatHistory.length > 20) combatHistory.shift(); // 保留最近20场
+    // 记录到战斗回放系统
+    try { recordBattle({ enemy, victory: result.victory, rounds: result.rounds, rating: battleRating, log: result.log, playerHpBefore: hpBeforeCombat, playerHpAfter: p.hp, playerMaxHp: p.maxHp, playerAtk: p.atk, playerDef: p.def, enemyMaxHp: enemy._maxHp || enemy.hp, enemyAtk: enemy.atk, enemyDef: enemy.def, totalDamageDealt: result.totalDamageDealt || 0, totalDamageTaken: result.totalDamageTaken || 0, critCount: result.critCount || 0 }); } catch(err) {}
 
     if (result.victory) {
       try { victoryFlash(document.getElementById('ui-overlay')); } catch {}
