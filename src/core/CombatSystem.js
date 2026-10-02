@@ -21,6 +21,7 @@ import {
 import { calcElementalModifier, getPlayerActiveElements, getEnemyElement, checkElementalResonance, ELEMENT_INFO } from './ElementalSystem.js';
 import { generateLoot, formatLootLog, applyLoot } from './LootSystem.js';
 import { getCompanionCombatBonus } from './RelationshipSystem.js';
+import { generateCombatDialogue, getVictoryComment } from './CompanionDialogue.js';
 
 // ── 伤害计算 ──
 export function calcDamage(attacker, defender, damageType = DAMAGE_TYPE.PHYSICAL, minDmg = 1) {
@@ -313,6 +314,14 @@ export function executeBattle(enemy) {
   if (availSkills.length > 0) {
     log.push({ text: `🎯 可用技能：${availSkills.map(s => s.name).join('、')}`, type: 'info' });
   }
+
+  // ── 同伴战斗对话 ──
+  try {
+    const combatDialogues = generateCombatDialogue(
+      gameState.companions || [], gameState.relationships || {}, 'start'
+    );
+    for (const d of combatDialogues) log.push(d);
+  } catch {}
 
   // ── 装备词缀：吸血和破甲 ──
   let equipLifeStealPct = 0;
@@ -851,6 +860,13 @@ export function executeBattle(enemy) {
     }
 
     log.push({ text: `击败了 ${enemy.name}！`, type: 'victory' });
+    // 同伴胜利评语
+    try {
+      const closeCall = playerHp < p.maxHp * 0.3;
+      const isBoss = !!enemy.bossId;
+      const comment = getVictoryComment(isBoss, closeCall);
+      log.push({ text: `💬 ${comment}`, type: 'companion_dialogue' });
+    } catch {}
     if (rewards.exp) log.push({ text: `+${rewards.exp} 经验`, type: 'reward' });
     if (rewards.gold) log.push({ text: `+${rewards.gold} 金币`, type: 'reward' });
     if (rewards.rewardPoints) log.push({ text: `+${rewards.rewardPoints} 奖励点`, type: 'reward' });

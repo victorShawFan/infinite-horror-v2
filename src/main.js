@@ -1964,9 +1964,26 @@ function showChapterComplete() {
         </p>
         <hr style="border-color: #333; margin: 16px 0;">
         <p style="color: #888; font-size: 14px; line-height: 1.6;">
-          存活者：张杰、郑吒、詹岚、李萧毅<br>
-          阵亡者：牟钢、其他新人<br><br>
-          <em>"欢迎回到主神空间。十天后，你们将前往下一个世界。"</em>
+          存活: ${gameState.companions.filter(c=>c.alive).map(c=>c.name).join('、') || '无'}
+          ${gameState.companions.filter(c=>!c.alive).length > 0 ? '<br>阵亡: ' + gameState.companions.filter(c=>!c.alive).map(c=>c.name).join('、') : ''}
+        </p>
+        ${(() => {
+          try {
+            const relSummary = getRelationshipSummary(gameState.relationships);
+            if (relSummary.length === 0) return '';
+            const bondCount = relSummary.filter(r => r.value >= 71).length;
+            const friendCount = relSummary.filter(r => r.value >= 11 && r.value < 71).length;
+            return '<div style="margin-top:8px;padding:8px;background:rgba(255,170,0,0.05);border:1px solid rgba(255,170,0,0.15);border-radius:6px;">' +
+              '<p style="color:#ffaa00;font-size:11px;margin-bottom:4px;">同伴羁绊</p>' +
+              relSummary.slice(0,6).map(r =>
+                '<span style="color:' + r.color + ';font-size:11px;margin-right:8px;">' + r.name + ' ' + r.level + '(' + r.value + ')</span>'
+              ).join('') +
+              (bondCount > 0 ? '<p style="color:#ffaa00;font-size:10px;margin-top:4px;">✦ ' + bondCount + '个羁绊已达成</p>' : '') +
+            '</div>';
+          } catch { return ''; }
+        })()}
+        <p style="color:#555;font-size:12px;margin-top:8px;font-style:italic;">
+          ${chapterNum >= 12 ? '"这不是结束。只要记忆还在，我们就不会真正消亡。"' : '"欢迎回到主神空间。十天后，你们将前往下一个世界。"'}
         </p>
       </div>
       <button id="btn-enter-hub" style="
