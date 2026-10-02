@@ -177,9 +177,33 @@ export function previewBattle(player, enemy) {
   if (traits.includes('poisonous')) adjustedDmg = Math.floor(adjustedDmg * 1.10);
   if (traits.includes('shield')) adjustedDmg = Math.floor(adjustedDmg * 1.10);
 
+  // 精英词缀预判调整
+  const affix = enemy.affix || null;
+  if (affix) {
+    // 暗影闪避：部分攻击会miss，实际击杀更慢
+    if (affix.dodgeChance) {
+      const effectiveHits = 1 - affix.dodgeChance;
+      adjustedDmg = Math.floor(adjustedDmg / effectiveHits); // 更多回合 = 更多受伤
+    }
+    // 敌方吸血：敌人回血延长战斗
+    if (affix.lifeSteal) {
+      adjustedDmg = Math.floor(adjustedDmg * (1 + affix.lifeSteal * 0.5));
+    }
+    // 剧毒：每回合毒伤
+    if (affix.poisonDmg) {
+      const toxicPerRound = Math.max(1, Math.floor(player.maxHp * affix.poisonDmg));
+      adjustedDmg += toxicPerRound * turnsNeeded;
+    }
+    // 荆棘反伤
+    if (affix.reflectPct) {
+      adjustedDmg += Math.floor(enemy.hp * affix.reflectPct * 0.3);
+    }
+  }
+
   // 预判标签
   const warnings = [];
   if (enemy.bossId) warnings.push('Boss多相位');
+  if (affix) warnings.push(affix.icon + affix.name);
   for (const t of traits) {
     const names = { thorns:'荆棘', regen:'再生', undying:'不死', swift:'迅捷', 
                     enrage:'狂怒', evasive:'闪避', shield:'护盾', poisonous:'剧毒',

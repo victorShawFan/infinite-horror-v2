@@ -933,6 +933,10 @@ function showCombatConfirm(enemy) {
   const yourDmg = preview.playerDmgPerHit;
   const theirDmg = preview.enemyDmgPerHit;
   const descText = enemy.description ? `<p style="color:#666;font-size:11px;line-height:1.4;margin-top:8px;max-height:48px;overflow:hidden;">${enemy.description}</p>` : '';
+  const traitNames = { thorns:'🌿荆棘', regen:'💚再生', undying:'💀不死', swift:'⚡迅捷', enrage:'🔥狂怒', evasive:'💨闪避', shield:'🛡护盾', poisonous:'☠剧毒', armored:'🛡重甲', vampiric:'🩸吸血' };
+  const traitsHtml = (scaledEnemy.traits || []).length > 0 
+    ? '<div style="display:flex;gap:4px;justify-content:center;flex-wrap:wrap;margin-bottom:6px;">' + scaledEnemy.traits.map(t => '<span style="color:#ff8844;background:rgba(255,136,68,0.1);padding:1px 6px;border-radius:3px;font-size:10px;">' + (traitNames[t]||t) + '</span>').join('') + '</div>' 
+    : '';
   
   overlay.innerHTML = `
     <div style="
@@ -961,14 +965,15 @@ function showCombatConfirm(enemy) {
           <div style="display:flex; align-items:center; justify-content:center;">
             <span style="color:#555; font-size:16px; font-weight:bold;">VS</span>
           </div>
-          <!-- 右：敌人 -->
-          <div style="flex:1; background:rgba(255,68,68,0.06); border:1px solid rgba(255,68,68,0.15); border-radius:8px; padding:10px; text-align:center;">
-            <p style="color:${enemy.color || '#ff4444'}; font-size:11px; letter-spacing:2px; margin-bottom:4px;">${enemy.name}</p>
-            <p style="color:#eee; font-size:13px;">HP <span style="color:#ff6666">${enemy.hp}</span></p>
-            <p style="color:#ff8866; font-size:12px;">ATK ${enemy.atk}</p>
-            <p style="color:#6688ff; font-size:12px;">DEF ${enemy.def}</p>
-            ${enemy.weaknesses?.length ? '<p style="color:#ff8833;font-size:10px;">弱点: ' + enemy.weaknesses.map(w => ({fire:'🔥火',ice:'❄冰',poison:'☠毒',psychic:'🧠念',dark:'🌑暗',holy:'✦圣'}[w]||w)).join(' ') + '</p>' : ''}
-            ${enemy.res ? '<p style="color:#8888aa;font-size:10px;">法抗: ' + enemy.res + '%</p>' : ''}
+          <!-- 右：敌人（显示缩放后数值） -->
+          <div style="flex:1; background:rgba(255,68,68,0.06); border:1px solid ${scaledEnemy.affix ? scaledEnemy.affix.color || '#ff4444' : 'rgba(255,68,68,0.15)'}; border-radius:8px; padding:10px; text-align:center;">
+            <p style="color:${scaledEnemy.affix?.color || enemy.color || '#ff4444'}; font-size:11px; letter-spacing:2px; margin-bottom:4px;">${scaledEnemy.name}</p>
+            <p style="color:#eee; font-size:13px;">HP <span style="color:#ff6666">${scaledEnemy.hp}</span></p>
+            <p style="color:#ff8866; font-size:12px;">ATK ${scaledEnemy.atk}</p>
+            <p style="color:#6688ff; font-size:12px;">DEF ${scaledEnemy.def}</p>
+            ${scaledEnemy.affix ? '<p style="color:' + (scaledEnemy.affix.color || '#ffaa00') + ';font-size:10px;font-weight:bold;">⚠ ' + scaledEnemy.affix.icon + ' ' + scaledEnemy.affix.name + ' — ' + scaledEnemy.affix.desc + '</p>' : ''}
+            ${scaledEnemy.weaknesses?.length ? '<p style="color:#ff8833;font-size:10px;">弱点: ' + scaledEnemy.weaknesses.map(w => ({fire:'🔥火',ice:'❄冰',poison:'☠毒',psychic:'🧠念',dark:'🌑暗',holy:'✦圣'}[w]||w)).join(' ') + '</p>' : ''}
+            ${scaledEnemy.res ? '<p style="color:#8888aa;font-size:10px;">法抗: ' + scaledEnemy.res + '%</p>' : ''}
           </div>
         </div>
         
@@ -994,11 +999,20 @@ function showCombatConfirm(enemy) {
           <p style="color: #999; font-size: 11px; margin-top: 3px;">${hpAfterText}</p>
         </div>
         
+        ${traitsHtml}
         ${descText}
         
-        <!-- Build特效提示 -->
+        <!-- Build特效提示 + 精英词缀警告 -->
         ${(() => {
           const tags = [];
+          // 精英词缀警告标签
+          if (scaledEnemy.affix) {
+            const af = scaledEnemy.affix;
+            if (af.dodgeChance) tags.push('<span style="color:#8844aa;background:rgba(136,68,170,0.15);padding:2px 8px;border-radius:4px;font-size:11px;">🌑 闪避' + Math.round(af.dodgeChance*100) + '%</span>');
+            if (af.reflectPct) tags.push('<span style="color:#44ff44;background:rgba(68,255,68,0.1);padding:2px 8px;border-radius:4px;font-size:11px;">🌿 反刺' + Math.round(af.reflectPct*100) + '%</span>');
+            if (af.lifeSteal) tags.push('<span style="color:#ff4488;background:rgba(255,68,136,0.1);padding:2px 8px;border-radius:4px;font-size:11px;">🩸 敌方吸血' + Math.round(af.lifeSteal*100) + '%</span>');
+            if (af.poisonDmg) tags.push('<span style="color:#88ff00;background:rgba(136,255,0,0.1);padding:2px 8px;border-radius:4px;font-size:11px;">☠ 毒伤' + Math.round(af.poisonDmg*100) + '%HP/回合</span>');
+          }
           if (preview.isDouble) tags.push('<span style="color:#ffcc44;background:rgba(255,204,68,0.1);padding:2px 8px;border-radius:4px;font-size:11px;">⚡ 二连击</span>');
           if (preview.burnDmg > 0) tags.push('<span style="color:#ff6633;background:rgba(255,102,51,0.1);padding:2px 8px;border-radius:4px;font-size:11px;">🔥 灼烧+' + preview.burnDmg + '/回合</span>');
           if (preview.reflectDmg > 0) tags.push('<span style="color:#6699ff;background:rgba(102,153,255,0.1);padding:2px 8px;border-radius:4px;font-size:11px;">🛡 反伤' + preview.reflectDmg + '</span>');
