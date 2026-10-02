@@ -492,3 +492,20 @@ export function showChapter5Cutscene(onFinish) {
   renderScene();
   if (SCENES_CH5.length > 0) setTimeout(() => advance(), SCENES_CH5[0].duration);
 }
+
+const SCENES_CH6 = [
+  { bg:'/assets/scenes/lord_god_space.jpg', text:'第三次回到异形世界。\n但这一次，郑吒以队长身份站在队伍最前方。', duration:3500 },
+  { bg:'/assets/scenes/lord_god_space.jpg', text:'新人程啸——自称武器专家——\n用一种奇怪的自信感染着周围的人。', duration:3500 },
+  { bg:'/assets/scenes/lord_god_space.jpg', speaker:'主神', text:'"下一个世界——\n《异形4：浴火重生》。\n实验船上的异形已经进化。\n获取重生十字勋章。"', duration:4500 },
+  { bg:'/assets/scenes/lord_god_space.jpg', text:'第六章', type:'title', duration:2000 },
+  { bg:'/assets/scenes/lord_god_space.jpg', text:'异 形 再 临', type:'subtitle', duration:2500 },
+];
+export function showChapter6Cutscene(onFinish) {
+  const overlay = document.getElementById('ui-overlay');
+  let si = 0;
+  const sk = (e) => { if(e.key==='Escape'){document.removeEventListener('keydown',sk);overlay.innerHTML='';onFinish();} };
+  document.addEventListener('keydown', sk);
+  function rs() { if(si>=SCENES_CH6.length){document.removeEventListener('keydown',sk);overlay.innerHTML='';onFinish();return;} const s=SCENES_CH6[si]; const t=s.type==='title',st=s.type==='subtitle'; overlay.innerHTML=`<div style="width:100%;height:100%;background:${t||st?'radial-gradient(ellipse at center,rgba(0,0,0,.5),rgba(0,0,0,.9))':'linear-gradient(180deg,rgba(0,0,0,.3),rgba(0,0,0,.7) 40%,rgba(0,0,0,.95))'};display:flex;align-items:${t||st?'center':'flex-end'};justify-content:center;animation:fadeIn .8s ease;"><div style="${t?'font-size:56px;letter-spacing:12px;color:#88bbff;text-shadow:0 0 30px rgba(80,120,200,.6);':''}${st?'font-size:36px;letter-spacing:20px;color:#6699cc;':''}${!t&&!st?'max-width:700px;padding:30px 40px;margin-bottom:60px;background:rgba(0,0,0,.6);border-radius:12px;border-left:3px solid rgba(80,120,200,.5);':''}font-family:'Microsoft YaHei',sans-serif;">${s.speaker?`<p style="color:#6699cc;font-size:14px;margin-bottom:8px;">${s.speaker}</p>`:''}${!t&&!st?`<p style="color:#d0d8e0;font-size:18px;line-height:1.8;white-space:pre-line;">${s.text}</p>`:s.text}</div></div><style>@keyframes fadeIn{from{opacity:0}to{opacity:1}}</style>`; }
+  function adv() { si++; rs(); if(si<SCENES_CH6.length) setTimeout(adv, SCENES_CH6[si]?.duration||3000); }
+  rs(); if(SCENES_CH6.length>0) setTimeout(adv, SCENES_CH6[0].duration);
+}
