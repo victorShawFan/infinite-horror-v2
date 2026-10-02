@@ -9,6 +9,7 @@ import { gameState } from './core/GameState.js';
 import { Renderer } from './core/Renderer.js';
 import { executeBattle, previewBattle, getEffectiveAtk, getEffectiveDef, getEffectiveCrt, getEffectiveSpd } from './core/CombatSystem.js';
 import { generateChapter1 } from './core/MapGenerator.js';
+import { generateChapter2 } from './core/MapGenerator_Ch2.js';
 import { audioEngine } from './core/AudioEngine.js';
 import { renderLordGodSpace } from './core/LordGodSpace.js';
 import { CombatAnimator } from './core/CombatAnimation.js';
@@ -669,6 +670,7 @@ function showCombatConfirm(enemy) {
           if (preview.isDaoist) tags.push('<span style="color:#aa66ff;background:rgba(170,102,255,0.1);padding:2px 8px;border-radius:4px;font-size:11px;">✦ 法术+' + preview.spellDmgEst + '</span>');
           if (preview.lifeStealPerHit > 0) tags.push('<span style="color:#ff4466;background:rgba(255,68,102,0.1);padding:2px 8px;border-radius:4px;font-size:11px;">🩸 吸血+' + preview.lifeStealPerHit + '/击</span>');
           if (preview.hasIceChip) tags.push('<span style="color:#66ccff;background:rgba(102,204,255,0.1);padding:2px 8px;border-radius:4px;font-size:11px;">❄ 冰冻减攻</span>');
+          if (preview.acidDmg > 0) tags.push('<span style="color:#88ff33;background:rgba(136,255,51,0.1);padding:2px 8px;border-radius:4px;font-size:11px;">☠ 酸血反噬-' + preview.acidDmg + '</span>');
           return tags.length > 0 ? '<div style="display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin-top:8px;">' + tags.join('') + '</div>' : '';
         })()}
         
@@ -1405,6 +1407,11 @@ function showCombatLog() {
 function showChapterComplete() {
   gameStarted = false;
   const p = gameState.player;
+  const chapterNum = gameState.chapter;
+  const chapterNames = { 1: '名为生化', 2: '异形杀戮', 3: '咒怨阴影' };
+  const nextChapterNames = { 1: '异形一', 2: '咒怨', 3: '神鬼秘宝' };
+  const chapterName = chapterNames[chapterNum] || `第${chapterNum}章`;
+  const nextWorld = nextChapterNames[chapterNum];
 
   const overlay = document.getElementById('ui-overlay');
   overlay.innerHTML = `
@@ -1414,7 +1421,7 @@ function showChapterComplete() {
       background: rgba(0,0,0,0.9);
     ">
       <p style="font-size: 14px; color: #ff4444; letter-spacing: 6px; margin-bottom: 8px;">
-        第一章 · 名为生化
+        第${chapterNum}章 · ${chapterName}
       </p>
       <h1 style="font-size: 48px; color: #e0e0e0; letter-spacing: 8px; margin-bottom: 30px;">
         — 完 —
@@ -1454,28 +1461,75 @@ function showChapterComplete() {
 
   document.getElementById('btn-enter-hub').addEventListener('click', () => {
     renderLordGodSpace(() => {
-      // 从主神空间离开后回主菜单
-      overlay.innerHTML = `
-        <div style="
-          position: absolute; top: 0; left: 0; right: 0; bottom: 0;
-          display: flex; flex-direction: column; align-items: center; justify-content: center;
-          background: rgba(0,0,0,0.95);
-        ">
-          <h2 style="color: #e0e0e0; letter-spacing: 6px; margin-bottom: 16px;">
-            第一章 · 完
-          </h2>
-          <p style="color: #888; max-width: 500px; text-align: center; line-height: 1.8; margin-bottom: 30px;">
-            郑吒用十天时间整备完毕。白色的光柱将他们送往了下一个世界——<br>
-            <strong style="color: #ff8844;">异形一</strong><br><br>
-            <em style="color: #555;">第二章 · 即将到来...</em>
-          </p>
-          <button onclick="location.reload()" style="
-            background: transparent; border: 1px solid #444; color: #888;
-            padding: 12px 40px; cursor: pointer; font-size: 16px;
-            letter-spacing: 4px; font-family: inherit; border-radius: 8px;
-          ">返回主菜单</button>
-        </div>
-      `;
+      // 从主神空间离开 — 进入下一章或结束
+      const nextChapter = gameState.chapter + 1;
+      const chapterGenerators = { 2: generateChapter2 };
+      const gen = chapterGenerators[nextChapter];
+
+      if (gen) {
+        // 有下一章 — 过渡画面后直接开始
+        overlay.innerHTML = `
+          <div style="
+            position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            background: rgba(0,0,0,0.95);
+          ">
+            <p style="color: #888; font-size: 14px; letter-spacing: 4px; margin-bottom: 16px;">十天后</p>
+            <h2 style="color: #e0e0e0; letter-spacing: 6px; margin-bottom: 16px;">
+              白色光柱将你们送往了下一个世界
+            </h2>
+            <p style="color: #ff8844; font-size: 28px; font-weight: bold; letter-spacing: 8px; margin-bottom: 30px;">
+              ${nextWorld || '未知世界'}
+            </p>
+            <button id="btn-next-chapter" style="
+              background: transparent; border: 2px solid #ff4444; color: #ff4444;
+              padding: 14px 50px; cursor: pointer; font-size: 18px;
+              letter-spacing: 6px; font-family: inherit; border-radius: 8px;
+              transition: all 0.3s;
+            " onmouseover="this.style.background='rgba(255,68,68,0.15)'"
+               onmouseout="this.style.background='transparent'">
+              开始轮回
+            </button>
+          </div>
+        `;
+        document.getElementById('btn-next-chapter').addEventListener('click', () => {
+          gameState.chapter = nextChapter;
+          gameState.nodeIndex = 0;
+          // 清除已移除实体（新章节新地图）
+          gameState.removedEntityIds = {};
+          chapter = gen();
+          gameState.worldName = chapter.world;
+          currentFloorIndex = 0;
+          overlay.innerHTML = '';
+          loadFloor(0);
+          gameStarted = true;
+          if (!gameLoopRunning) { gameLoopRunning = true; gameLoop(); }
+          gameState.save(0);
+        });
+      } else {
+        // 无更多章节
+        overlay.innerHTML = `
+          <div style="
+            position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            background: rgba(0,0,0,0.95);
+          ">
+            <h2 style="color: #e0e0e0; letter-spacing: 6px; margin-bottom: 16px;">
+              第${chapterNum}章 · 完
+            </h2>
+            <p style="color: #888; max-width: 500px; text-align: center; line-height: 1.8; margin-bottom: 30px;">
+              郑吒用十天时间整备完毕。但前方的世界——<br>
+              <strong style="color: #ff8844;">${nextWorld || '更多恐怖'}</strong><br><br>
+              <em style="color: #555;">即将到来...</em>
+            </p>
+            <button onclick="location.reload()" style="
+              background: transparent; border: 1px solid #444; color: #888;
+              padding: 12px 40px; cursor: pointer; font-size: 16px;
+              letter-spacing: 4px; font-family: inherit; border-radius: 8px;
+            ">返回主菜单</button>
+          </div>
+        `;
+      }
     });
   });
 }

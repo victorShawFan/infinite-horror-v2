@@ -109,14 +109,19 @@ export function previewBattle(player, enemy) {
 
   const totalDamage = Math.max(0, enemyDmg * enemyHits - lifeStealPerHit * enemyHits);
 
+  // 酸血反噬
+  const acidDmg = enemy.acidBlood || 0;
+  const totalWithAcid = totalDamage + acidDmg;
+
   return {
-    canWin: player.hp > totalDamage,
-    totalDamage,
+    canWin: player.hp > totalWithAcid,
+    totalDamage: totalWithAcid,
     turnsNeeded,
     playerDmgPerHit: playerDmg,
     enemyDmgPerHit: enemyDmg,
     rewards: enemy.rewards || {},
-    hpAfter: player.hp - totalDamage,
+    hpAfter: player.hp - totalWithAcid,
+    acidDmg,
     // 新增详情
     isDouble,
     burnDmg: chipFx.burnDmg,
@@ -243,6 +248,13 @@ export function executeBattle(enemy) {
   if (victory) {
     p.hp = playerHp;
     p.mana = playerMana;
+
+    // 酸血反噬（异形系敌人）
+    if (enemy.acidBlood && enemy.acidBlood > 0) {
+      const acidDmg = enemy.acidBlood;
+      p.hp = Math.max(1, p.hp - acidDmg);
+      log.push({ text: `☠ 酸血反噬 ${acidDmg}！`, type: 'burn' });
+    }
 
     gameState.stats.enemiesKilled++;
     gameState.stats.damageDealt += enemy.hp;
