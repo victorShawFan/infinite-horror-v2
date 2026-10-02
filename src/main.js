@@ -700,6 +700,10 @@ document.addEventListener('keydown', (e) => {
         // 打开背包/状态面板
         showInventoryPanel();
         return;
+      case 's':
+        // 统计面板
+        showStatsPanel();
+        return;
       case 'b':
         // 怪物图鉴
         showBestiaryPanel();
@@ -1239,6 +1243,7 @@ function triggerEvent(entity) {
         try { checkGrowthMilestones(milestoneTracker, gameState.player); } catch {}
       }
       if (evt.rewards.gold) gameState.player.gold += evt.rewards.gold;
+    gameState.stats.goldEarned += (evt.rewards.gold);
       if (evt.rewards.rewardPoints) gameState.player.rewardPoints += evt.rewards.rewardPoints;
       if (evt.rewards.keys) {
         for (const [color, count] of Object.entries(evt.rewards.keys)) {
@@ -1552,6 +1557,7 @@ function showInventoryPanel() {
             <h3 style="color: #ff8866; margin-bottom: 10px;">战斗属性</h3>
             <table style="width: 100%; color: #ccc; font-size: 14px; line-height: 2;">
               <tr><td>等级</td><td style="text-align: right; color: #ffcc44;">Lv.${p.level} <span style="color:#888;font-size:11px;">(${p.exp}/${p.expToNext} EXP)</span></td></tr>
+          <tr><td style="color: #44ccff;">S</td><td>游戏统计</td></tr>
           <tr><td style="color: #44cccc;">Tab</td><td>迷你地图</td></tr>
               <tr><td>❤ 生命</td><td style="text-align: right; color: #44cc44;">${p.hp} / ${p.maxHp}</td></tr>
               <tr><td>⚔ 攻击</td><td style="text-align: right; color: #ff8866;">
@@ -1839,6 +1845,96 @@ function showInventoryPanel() {
     }
   };
   document.addEventListener('keydown', keyHandler);
+}
+
+// ── 游戏统计面板 ──
+function showStatsPanel() {
+  if (gameState.state !== GAME_STATE.EXPLORING) return;
+  gameState.setState(GAME_STATE.INVENTORY);
+  const overlay = document.getElementById('ui-overlay');
+  const s = gameState.stats;
+  const playMs = (s.totalPlayTime || 0) + (Date.now() - (s.startTime || Date.now()));
+  const playMin = Math.floor(playMs / 60000);
+  const playSec = Math.floor((playMs % 60000) / 1000);
+
+  overlay.innerHTML = `
+    <div style="
+      position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+      display: flex; align-items: center; justify-content: center;
+      background: rgba(0,0,0,0.8);
+    " id="stats-backdrop">
+      <div style="
+        background: rgba(10,10,20,0.97); border: 1px solid #444; border-radius: 16px;
+        padding: 30px; max-width: 700px; width: 90%; max-height: 80vh; overflow-y: auto;
+      ">
+        <h2 style="color: #44ccff; text-align: center; letter-spacing: 4px; margin-bottom: 20px;">
+          📊 轮回统计
+        </h2>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+          <div style="background:rgba(255,255,255,0.03);border:1px solid #333;border-radius:8px;padding:12px;">
+            <h3 style="color:#ff8866;font-size:13px;margin-bottom:8px;">⚔ 战斗</h3>
+            <table style="width:100%;color:#aaa;font-size:12px;line-height:2;">
+              <tr><td>击杀总数</td><td style="text-align:right;color:#ff8866;">${s.enemiesKilled}</td></tr>
+              <tr><td>Boss击杀</td><td style="text-align:right;color:#ff4444;">${s.bossesKilled || 0}</td></tr>
+              <tr><td>总伤害</td><td style="text-align:right;color:#ffaa44;">${s.damageDealt}</td></tr>
+              <tr><td>最高单击</td><td style="text-align:right;color:#ffcc44;">${s.maxSingleHit || 0}</td></tr>
+              <tr><td>暴击次数</td><td style="text-align:right;color:#ff8844;">${s.criticalHits || 0}</td></tr>
+              <tr><td>受到伤害</td><td style="text-align:right;color:#cc4444;">${s.damageTaken}</td></tr>
+              <tr><td>死亡次数</td><td style="text-align:right;color:#ff2222;">${s.deathCount}</td></tr>
+            </table>
+          </div>
+          <div style="background:rgba(255,255,255,0.03);border:1px solid #333;border-radius:8px;padding:12px;">
+            <h3 style="color:#44ff88;font-size:13px;margin-bottom:8px;">🗺 探索</h3>
+            <table style="width:100%;color:#aaa;font-size:12px;line-height:2;">
+              <tr><td>步数</td><td style="text-align:right;color:#44ffaa;">${s.stepsWalked || 0}</td></tr>
+              <tr><td>层数</td><td style="text-align:right;color:#44aaff;">${s.floorsCleared || 0}</td></tr>
+              <tr><td>章数</td><td style="text-align:right;color:#44ccff;">${s.chaptersCleared || 0}</td></tr>
+              <tr><td>线索</td><td style="text-align:right;color:#ffcc44;">${s.loreFound || 0}</td></tr>
+              <tr><td>回合数</td><td style="text-align:right;color:#888;">${s.turnsPlayed}</td></tr>
+              <tr><td>游戏时间</td><td style="text-align:right;color:#888;">${playMin}分${playSec}秒</td></tr>
+            </table>
+          </div>
+          <div style="background:rgba(255,255,255,0.03);border:1px solid #333;border-radius:8px;padding:12px;">
+            <h3 style="color:#ffcc44;font-size:13px;margin-bottom:8px;">💰 经济</h3>
+            <table style="width:100%;color:#aaa;font-size:12px;line-height:2;">
+              <tr><td>金币获得</td><td style="text-align:right;color:#ffcc44;">${s.goldEarned || 0}G</td></tr>
+              <tr><td>金币消费</td><td style="text-align:right;color:#cc8844;">${s.goldSpent || 0}G</td></tr>
+              <tr><td>物品使用</td><td style="text-align:right;color:#aaa;">${s.itemsUsed}</td></tr>
+              <tr><td>技能使用</td><td style="text-align:right;color:#aa88ff;">${s.skillsUsed || 0}</td></tr>
+            </table>
+          </div>
+          <div style="background:rgba(255,255,255,0.03);border:1px solid #333;border-radius:8px;padding:12px;">
+            <h3 style="color:#aa88ff;font-size:13px;margin-bottom:8px;">🏆 效率</h3>
+            <table style="width:100%;color:#aaa;font-size:12px;line-height:2;">
+              <tr><td>每步伤害</td><td style="text-align:right;color:#ffaa44;">${s.stepsWalked > 0 ? (s.damageDealt / s.stepsWalked).toFixed(1) : '0'}</td></tr>
+              <tr><td>击杀/死亡</td><td style="text-align:right;color:#ff8866;">${s.deathCount > 0 ? (s.enemiesKilled / s.deathCount).toFixed(1) : '∞'}</td></tr>
+              <tr><td>伤害效率</td><td style="text-align:right;color:#44ff88;">${s.damageTaken > 0 ? (s.damageDealt / s.damageTaken).toFixed(1) + ':1' : '∞'}</td></tr>
+            </table>
+          </div>
+        </div>
+        <div style="text-align: center; margin-top: 24px;">
+          <button id="btn-close-stats" style="
+            background: transparent; border: 1px solid #444; color: #888;
+            padding: 8px 30px; cursor: pointer; font-size: 14px; font-family: inherit;
+            border-radius: 6px;
+          ">关闭 (S)</button>
+        </div>
+      </div>
+    </div>
+  `;
+
+  const close = () => {
+    overlay.innerHTML = '';
+    gameState.setState(GAME_STATE.EXPLORING);
+  };
+  document.getElementById('btn-close-stats').addEventListener('click', close);
+  document.getElementById('stats-backdrop').addEventListener('click', (e) => {
+    if (e.target.id === 'stats-backdrop') close();
+  });
+  const kh = (e) => {
+    if (e.key === 's' || e.key === 'Escape') { close(); document.removeEventListener('keydown', kh); }
+  };
+  document.addEventListener('keydown', kh);
 }
 
 // ── 怪物图鉴面板 ──

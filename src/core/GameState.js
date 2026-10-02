@@ -80,11 +80,23 @@ class GameState {
     // 统计
     this.stats = {
       enemiesKilled: 0,
+      bossesKilled: 0,
       damageDealt: 0,
       damageTaken: 0,
+      maxSingleHit: 0,
+      criticalHits: 0,
       itemsUsed: 0,
+      goldEarned: 0,
+      goldSpent: 0,
       turnsPlayed: 0,
+      stepsWalked: 0,
+      floorsCleared: 0,
+      chaptersCleared: 0,
       deathCount: 0,
+      skillsUsed: 0,
+      loreFound: 0,
+      startTime: Date.now(),
+      totalPlayTime: 0,
     };
 
     // 已移除的实体ID（按楼层索引存储）
@@ -126,7 +138,7 @@ class GameState {
     this.defeatedBosses = new Set();
     this.combatLog = [];
     this.choices = [];
-    this.stats = { enemiesKilled: 0, damageDealt: 0, damageTaken: 0, itemsUsed: 0, turnsPlayed: 0, deathCount: 0 };
+    this.stats = { enemiesKilled: 0, bossesKilled: 0, damageDealt: 0, damageTaken: 0, maxSingleHit: 0, criticalHits: 0, itemsUsed: 0, goldEarned: 0, goldSpent: 0, turnsPlayed: 0, stepsWalked: 0, floorsCleared: 0, chaptersCleared: 0, deathCount: 0, skillsUsed: 0, loreFound: 0, startTime: Date.now(), totalPlayTime: 0 };
     this.removedEntityIds = {};
     this.talents = initTalentState();
     this.gemInventory = [];
