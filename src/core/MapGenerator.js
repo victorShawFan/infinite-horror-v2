@@ -603,8 +603,9 @@ function generateFloor_1_6() {
         event: {
           type: 'choice',
           lines: [
-            { text: '张杰：前方发现了一批补给。但只能带走一样。', speaker: '张杰' },
-            { text: '你选择带走什么？', speaker: '系统' },
+            { text: '走廊尽头有一个被砸开的军械柜。里面残留着三样东西。', speaker: '旁白' },
+            { text: '只能拿一样。郑吒，你来决定。', speaker: '张杰' },
+            { text: '（这个选择可能决定后面的战斗走向。）', speaker: '系统' },
           ],
           choices: [
             { text: '医疗包（恢复全部HP）', effect: { healFull: true }, id: 'supply_medical' },
