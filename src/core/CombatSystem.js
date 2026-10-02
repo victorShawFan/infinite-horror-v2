@@ -308,9 +308,34 @@ export function executeBattle(enemy) {
 }
 
 // ── 有效属性计算 ──
+// 队友被动加成表
+const COMPANION_BONUSES = {
+  zhang_jie: { atk: 2, def: 0 },    // 张杰：战术领队，攻击支援
+  zhan_lan: { atk: 0, def: 0, crt: 3 }, // 詹岚：情报分析，暴击支援
+  li_xiaoyi: { atk: 1, def: 1 },    // 李萧毅：机动支援
+  mou_gang: { atk: 0, def: 3 },     // 牟钢：防线坚守
+  chuxuan: { atk: 0, def: 0, spd: 3 }, // 楚轩：军师，速度支援
+  lingdian: { atk: 3, def: 0, crt: 5 }, // 零点：狙击手，攻击+暴击
+  bawang: { atk: 2, def: 2 },       // 霸王：近战强手
+  lishuaixi: { atk: 1, def: 0 },    // 李帅西：新人
+};
+
+function getCompanionBonuses(stat) {
+  // Import gameState indirectly to avoid circular dependency
+  try {
+    const gs = gameState;
+    if (!gs?.companions) return 0;
+    return gs.companions
+      .filter(c => c.alive)
+      .reduce((sum, c) => sum + (COMPANION_BONUSES[c.id]?.[stat] || 0), 0);
+  } catch { return 0; }
+}
+
 export function getEffectiveAtk(player) {
   let atk = player.atk;
   if (player.weapon) atk += player.weapon.atk || 0;
+  // 队友被动加成
+  atk += getCompanionBonuses('atk');
 
   if (player.activeBloodline === BLOODLINE.VAMPIRE) atk += Math.floor(atk * 0.15);
   if (player.activeBloodline === BLOODLINE.ANCIENT_WU) atk += Math.floor(atk * 0.2);
@@ -328,6 +353,7 @@ export function getEffectiveAtk(player) {
 export function getEffectiveDef(player) {
   let def = player.def;
   if (player.armor) def += player.armor.def || 0;
+  def += getCompanionBonuses('def');
   if (player.activeBloodline === BLOODLINE.MARTIAL) def += Math.floor(def * 0.2);
 
   if (player.geneLockActive && player.geneLock > 0) {
@@ -343,6 +369,7 @@ export function getEffectiveDef(player) {
 export function getEffectiveCrt(player) {
   let crt = player.crt || 0;
   if (player.accessory?.crt) crt += player.accessory.crt;
+  crt += getCompanionBonuses('crt');
   for (const chip of player.chips || []) {
     if (chip.stat === 'crt') crt += chip.value;
   }
@@ -352,6 +379,7 @@ export function getEffectiveCrt(player) {
 export function getEffectiveSpd(player) {
   let spd = player.spd || 0;
   if (player.weapon?.spd) spd += player.weapon.spd;
+  spd += getCompanionBonuses('spd');
   if (player.armor?.spd) spd += player.armor.spd;
   if (player.accessory?.spd) spd += player.accessory.spd;
   for (const chip of player.chips || []) {

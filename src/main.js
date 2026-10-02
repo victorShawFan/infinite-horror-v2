@@ -1208,12 +1208,12 @@ function showInventoryPanel() {
               </div>
             ` : ''}
 
-            <h3 style="color: #44ff88; margin-top: 16px; margin-bottom: 8px;">队友</h3>
-            ${gameState.companions.map(c => `
-              <p style="color: ${c.alive ? '#aaa' : '#664444'}; font-size: 13px;">
-                ${c.alive ? '●' : '✝'} ${c.name} · ${c.role} ${c.alive ? '' : '（阵亡）'}
-              </p>
-            `).join('')}
+            <h3 style="color: #44ff88; margin-top: 16px; margin-bottom: 8px;">队友 <span style="color:#666;font-size:11px;">(存活队友提供被动加成)</span></h3>
+            ${gameState.companions.map(c => {
+              const bonusMap = { zhang_jie:'ATK+2', zhan_lan:'CRT+3', li_xiaoyi:'ATK+1 DEF+1', mou_gang:'DEF+3', chuxuan:'SPD+3', lingdian:'ATK+3 CRT+5', bawang:'ATK+2 DEF+2', lishuaixi:'ATK+1' };
+              const bonus = bonusMap[c.id] || '';
+              return '<p style="color:' + (c.alive ? '#aaa' : '#664444') + ';font-size:13px;">' + (c.alive ? '●' : '✝') + ' ' + c.name + ' · ' + c.role + (c.alive && bonus ? ' <span style="color:#44ff88;font-size:11px;">(' + bonus + ')</span>' : '') + (c.alive ? '' : ' <span style="color:#664444">（阵亡）</span>') + '</p>';
+            }).join('')}
           </div>
         </div>
 
