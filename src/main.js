@@ -576,6 +576,11 @@ function movePlayer(dx, dy) {
 
 // ── 战斗 ──
 function startCombat(enemy) {
+  // 战斗发起闪光
+  renderer.flash('rgba(255, 50, 50)', 150);
+  renderer.shake(3, 150);
+  audioEngine.playDamage();
+  
   const result = executeBattle(enemy);
 
   if (result.victory) {

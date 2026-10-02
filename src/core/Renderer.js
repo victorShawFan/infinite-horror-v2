@@ -177,6 +177,19 @@ export class Renderer {
     ctx.fillStyle = vignette;
     ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
 
+    // ── 胶片颗粒（恐怖氛围） ──
+    if (this._time % 2 === 0) {  // 每隔一帧更新，减少性能消耗
+      ctx.globalAlpha = 0.03;
+      for (let i = 0; i < 50; i++) {
+        const gx = Math.random() * CANVAS_W;
+        const gy = Math.random() * CANVAS_H;
+        const gs = Math.random() * 2;
+        ctx.fillStyle = Math.random() > 0.5 ? '#ffffff' : '#000000';
+        ctx.fillRect(gx, gy, gs, gs);
+      }
+      ctx.globalAlpha = 1;
+    }
+
     // ── 通知条 ──
     this._drawNotifications(ctx);
 
