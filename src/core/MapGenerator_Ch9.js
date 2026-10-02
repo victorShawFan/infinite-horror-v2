@@ -10,7 +10,7 @@ function f9_1(){const g=makeGrid();carveRoom(g,1,7,6,10);carveCorridor(g,6,8,10,
 {type:ENTITY_TYPE.ENEMY,id:'tomb_sentinel',name:'陵墓哨兵',x:13,y:8,sprite:'💀',color:'#886633',hp:105,atk:32,def:14,spd:8,rewards:{exp:80,gold:55}},
 {type:ENTITY_TYPE.ITEM,id:'medkit_ch9_1',name:'急救包',x:14,y:14,sprite:'♥',color:'#ff4488',itemType:'consumable',effect:{heal:100}},
 {type:ENTITY_TYPE.ITEM,id:'atk_ch9',name:'狙击瞄准器',x:18,y:7,sprite:'◆',color:'#ff8844',itemType:'stat_boost',effect:{atk:6}},
-]};}
+{type:ENTITY_TYPE.ENEMY,id:'tomb_guardian',name:'陵墓看守',x:5,y:3,sprite:'💀',color:'#776633',hp:90,atk:30,def:12,spd:7,rewards:{exp:70,gold:48}}]};}
 
 // ═══ 9-2 主神十日整备 ═══
 function f9_2(){const g=makeGrid();carveRoom(g,1,1,7,6);carveCorridor(g,7,3,10,3);carveRoom(g,10,1,16,6);carveCorridor(g,13,6,13,9);carveRoom(g,10,9,16,13);carveRoom(g,1,9,7,13);carveCorridor(g,4,6,4,9);carveCorridor(g,7,11,10,11);carveRoom(g,16,10,19,15);carveCorridor(g,16,12,16,12);g[14][18]=TILE.STAIRS;return{id:'9-2',name:'主神十日整备',subtitle:'十天的准备期。零点校准狙击镜，楚轩制定战术方案。',bgColor:'#060810',theme:'scifi_base',tiles:g,width:W,height:H,playerStart:{x:4,y:3},entities:[
@@ -18,7 +18,7 @@ function f9_2(){const g=makeGrid();carveRoom(g,1,1,7,6);carveCorridor(g,7,3,10,3
 {type:ENTITY_TYPE.ENEMY,id:'training_drone',name:'训练靶机',x:13,y:11,sprite:'🎯',color:'#668888',hp:80,atk:20,def:8,spd:10,rewards:{exp:60,gold:40}},
 {type:ENTITY_TYPE.ITEM,id:'def_ch9',name:'合金护甲片',x:4,y:11,sprite:'◆',color:'#6688ff',itemType:'stat_boost',effect:{def:6}},
 {type:ENTITY_TYPE.ITEM,id:'medkit_ch9_2',name:'急救包',x:18,y:13,sprite:'♥',color:'#ff4488',itemType:'consumable',effect:{heal:100}},
-]};}
+{type:ENTITY_TYPE.ENEMY,id:'training_bot2',name:'训练靶机β',x:6,y:3,sprite:'🎯',color:'#669988',hp:85,atk:22,def:10,spd:12,rewards:{exp:65,gold:42}}]};}
 
 // ═══ 9-3 军事基地 ═══
 function f9_3(){const g=makeGrid();carveRoom(g,1,1,5,5);carveCorridor(g,5,3,9,3);carveRoom(g,9,1,14,5);carveCorridor(g,11,5,11,9);carveRoom(g,8,9,14,13);carveRoom(g,1,8,6,12);carveCorridor(g,4,5,4,8);carveCorridor(g,6,10,8,10);carveRoom(g,15,9,19,14);carveCorridor(g,14,11,15,11);g[13][18]=TILE.STAIRS;return{id:'9-3',name:'军事基地',subtitle:'星河战队世界。人类军事基地外围已经出现虫族斥候。',bgColor:'#060810',theme:'scifi_base',tiles:g,width:W,height:H,playerStart:{x:3,y:3},entities:[
@@ -26,7 +26,7 @@ function f9_3(){const g=makeGrid();carveRoom(g,1,1,5,5);carveCorridor(g,5,3,9,3)
 {type:ENTITY_TYPE.ENEMY,id:'hopper_bug',name:'飞行虫',x:4,y:10,sprite:'🦗',color:'#886644',hp:65,atk:30,def:4,spd:20,rewards:{exp:60,gold:40}},
 {type:ENTITY_TYPE.ITEM,id:'medkit_ch9_3',name:'军用急救包',x:17,y:12,sprite:'♥',color:'#ff4488',itemType:'consumable',effect:{heal:110}},
 {type:ENTITY_TYPE.ITEM,id:'spd_ch9',name:'速度强化剂',x:2,y:9,sprite:'◆',color:'#44ffaa',itemType:'stat_boost',effect:{spd:5}},
-]};}
+{type:ENTITY_TYPE.ENEMY,id:'bug_scout',name:'虫族斥候',x:17,y:10,sprite:'🦗',color:'#774422',hp:70,atk:28,def:6,spd:18,rewards:{exp:55,gold:38}}]};}
 
 // ═══ 9-4 虫潮守线 ═══
 function f9_4(){const g=makeGrid();carveRoom(g,1,6,6,11);carveCorridor(g,6,8,10,8);carveRoom(g,10,4,15,12);carveCorridor(g,15,8,18,8);carveRoom(g,16,5,19,11);carveRoom(g,5,1,10,3);carveCorridor(g,8,3,8,4);carveRoom(g,8,13,14,16);carveCorridor(g,11,12,11,13);g[15][13]=TILE.STAIRS;return{id:'9-4',name:'虫潮守线',subtitle:'第一波虫潮来了。王侠和霸王负责布雷和火力压制。',bgColor:'#080810',theme:'scifi_base',tiles:g,width:W,height:H,playerStart:{x:3,y:8},entities:[
@@ -34,7 +34,7 @@ function f9_4(){const g=makeGrid();carveRoom(g,1,6,6,11);carveCorridor(g,6,8,10,
 {type:ENTITY_TYPE.ENEMY,id:'tanker_bug',name:'坦克虫',x:8,y:1,sprite:'🐛',color:'#665533',hp:150,atk:30,def:22,spd:5,rewards:{exp:85,gold:60}},
 {type:ENTITY_TYPE.ITEM,id:'medkit_ch9_4',name:'军用急救包',x:11,y:14,sprite:'♥',color:'#ff4488',itemType:'consumable',effect:{heal:110}},
 {type:ENTITY_TYPE.ITEM,id:'crt_ch9',name:'弱点分析芯片',x:18,y:7,sprite:'◆',color:'#ffcc44',itemType:'stat_boost',effect:{crt:5}},
-]};}
+{type:ENTITY_TYPE.ENEMY,id:'fire_bug',name:'喷火虫',x:5,y:8,sprite:'🔥',color:'#aa4400',hp:85,atk:32,def:8,spd:12,damageType:'fire',rewards:{exp:70,gold:50}}]};}
 
 // ═══ 9-5 多队博弈 ═══
 function f9_5(){const g=makeGrid();carveRoom(g,6,5,14,12);carveRoom(g,1,7,5,10);carveCorridor(g,5,8,6,8);carveRoom(g,15,7,19,10);carveCorridor(g,14,8,15,8);carveRoom(g,8,1,12,4);carveCorridor(g,10,4,10,5);carveRoom(g,8,13,12,16);carveCorridor(g,10,12,10,13);g[1][11]=TILE.STAIRS;return{id:'9-5',name:'多队博弈',subtitle:'詹岚发现了其他轮回者队伍的痕迹。不确定是敌是友。',bgColor:'#080810',theme:'scifi_base',tiles:g,width:W,height:H,playerStart:{x:10,y:15},entities:[
@@ -42,7 +42,7 @@ function f9_5(){const g=makeGrid();carveRoom(g,6,5,14,12);carveRoom(g,1,7,5,10);
 {type:ENTITY_TYPE.ENEMY,id:'plasma_bug',name:'浆虫',x:3,y:8,sprite:'💥',color:'#aa6622',hp:80,atk:40,def:8,spd:7,damageType:'fire',rewards:{exp:70,gold:50}},
 {type:ENTITY_TYPE.ENEMY,id:'warrior_bug_3',name:'精锐战士虫',x:17,y:8,sprite:'🪲',color:'#993322',hp:110,atk:38,def:14,spd:14,rewards:{exp:80,gold:55}},
 {type:ENTITY_TYPE.ITEM,id:'medkit_ch9_5',name:'高级急救包',x:8,y:2,sprite:'♥',color:'#ff4488',itemType:'consumable',effect:{heal:130}},
-]};}
+{type:ENTITY_TYPE.ITEM,id:'hp_ch9',name:'生命结晶',x:10,y:8,sprite:'◆',color:'#44ff44',itemType:'stat_boost',effect:{maxHp:30}}]};}
 
 // ═══ 9-6 脑虫捕获撤离 ═══
 function f9_6(){const g=makeGrid();carveRoom(g,1,1,6,5);carveCorridor(g,6,3,10,3);carveRoom(g,10,1,16,6);carveCorridor(g,13,6,13,10);carveRoom(g,9,10,16,14);carveRoom(g,1,8,7,13);carveCorridor(g,4,5,4,8);carveCorridor(g,7,12,9,12);carveRoom(g,16,11,19,15);carveCorridor(g,16,13,16,13);g[14][18]=TILE.STAIRS;return{id:'9-6',name:'脑虫捕获撤离',subtitle:'脑虫的巢穴就在前方。零点已经就位。',bgColor:'#0a0810',theme:'scifi_base',tiles:g,width:W,height:H,playerStart:{x:3,y:3},entities:[
@@ -51,6 +51,6 @@ function f9_6(){const g=makeGrid();carveRoom(g,1,1,6,5);carveCorridor(g,6,3,10,3
 {type:ENTITY_TYPE.ENEMY,id:'guard_bug_2',name:'护卫虫',x:17,y:13,sprite:'🪲',color:'#884422',hp:120,atk:36,def:16,spd:12,rewards:{exp:85,gold:55}},
 {type:ENTITY_TYPE.ITEM,id:'medkit_ch9_6',name:'高级急救包',x:4,y:1,sprite:'♥',color:'#ff4488',itemType:'consumable',effect:{heal:130}},
 {type:ENTITY_TYPE.EVENT,id:'ch9_ending',name:'第九章结算',x:13,y:12,sprite:'✦',color:'#ffdd88',event:{type:'chapter_end',lines:[{text:'脑虫被成功捕获。虫群失去指挥，开始溃散。',speaker:'旁白'},{text:'撤离成功。队伍的配合越来越默契了。',speaker:'郑吒'},{text:'现在，中洲队已经回到了完整编制。是时候面对真正的战争了。',speaker:'楚轩'},{text:'第九关「星河远征」通关。获得基础奖励1000点。',speaker:'主神'}],flag:'ch9_complete',rewards:{rewardPoints:1000}}},
-]};}
+{type:ENTITY_TYPE.ENEMY,id:'guard_elite',name:'精锐护卫虫',x:10,y:12,sprite:'🪲',color:'#993322',hp:135,atk:40,def:18,spd:13,rewards:{exp:95,gold:62}}]};}
 
 export function generateChapter9(){return{name:'第九章 · 星河远征',world:'星河战队',floors:[f9_1(),f9_2(),f9_3(),f9_4(),f9_5(),f9_6()]};}

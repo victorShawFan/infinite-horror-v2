@@ -31,16 +31,16 @@ function f8_4(){const g=makeGrid();carveRoom(g,1,6,6,11);carveCorridor(g,6,8,10,
 ]};}
 
 function f8_5(){const g=makeGrid();carveRoom(g,6,5,14,12);carveRoom(g,1,7,5,10);carveCorridor(g,5,8,6,8);carveRoom(g,15,7,19,10);carveCorridor(g,14,8,15,8);carveRoom(g,8,1,12,4);carveCorridor(g,10,4,10,5);carveRoom(g,8,13,12,16);carveCorridor(g,10,12,10,13);g[1][11]=TILE.STAIRS;return{id:'8-5',name:'暴龙与撤离',subtitle:'复活仪式完成。但暴龙群正在逼近，必须迅速撤离。',bgColor:'#0a0c06',theme:'jungle',tiles:g,width:W,height:H,playerStart:{x:10,y:15},entities:[
-{type:ENTITY_TYPE.EVENT,id:'revive_bawang',name:'复活仪式',x:13,y:3,sprite:'✦',color:'#ffdd44',event:{type:'dialogue',lines:[{text:'又一次复活仪式。霸王和王侠的身影在金光中重现。',speaker:'旁白'},{text:'我……回来了？',speaker:'霸王'},{text:'欢迎回来。我们还有很多人要救。',speaker:'郑吒'},{text:'（霸王、王侠复活成功。）',speaker:'主神'}],flag:'bawang_revived',reviveCompanions:['bawang','wang_xia']}},
+{type:ENTITY_TYPE.EVENT,id:'revive_bawang',name:'复活仪式',x:12,y:3,sprite:'✦',color:'#ffdd44',event:{type:'dialogue',lines:[{text:'又一次复活仪式。霸王和王侠的身影在金光中重现。',speaker:'旁白'},{text:'我……回来了？',speaker:'霸王'},{text:'欢迎回来。我们还有很多人要救。',speaker:'郑吒'},{text:'（霸王、王侠复活成功。）',speaker:'主神'}],flag:'bawang_revived',reviveCompanions:['bawang','wang_xia']}},
 {type:ENTITY_TYPE.ENEMY,id:'raptor_alpha',name:'迅猛龙首领',x:12,y:12,sprite:'🦖',color:'#336633',hp:85,atk:28,def:8,spd:15,rewards:{exp:60,gold:45}},
-{type:ENTITY_TYPE.ITEM,id:'medkit_ch8_5',name:'急救包',x:18,y:13,sprite:'♥',color:'#ff4488',itemType:'consumable',effect:{heal:90}},
+{type:ENTITY_TYPE.ITEM,id:'medkit_ch8_5',name:'急救包',x:9,y:13,sprite:'♥',color:'#ff4488',itemType:'consumable',effect:{heal:90}},
 ]};}
 
 function f8_6(){const g=makeGrid();carveRoom(g,1,1,6,5);carveCorridor(g,6,3,10,3);carveRoom(g,10,1,16,6);carveCorridor(g,13,6,13,10);carveRoom(g,9,10,16,14);carveRoom(g,1,8,7,13);carveCorridor(g,4,5,4,8);carveCorridor(g,7,12,9,12);carveRoom(g,16,11,19,15);carveCorridor(g,16,13,16,13);g[14][18]=TILE.STAIRS;return{id:'8-6',name:'巨龙血战与负点结算',subtitle:'最终Boss——远古巨龙。郑吒融合龙族细胞的关键一战。',bgColor:'#0a0c06',theme:'jungle',tiles:g,width:W,height:H,playerStart:{x:3,y:3},entities:[
-{type:ENTITY_TYPE.BOSS,id:'boss_dragon',name:'远古巨龙',x:10,y:7,sprite:'🐉',color:'#884422',hp:350,atk:35,def:14,spd:8,weaknesses:['ice'],rewards:{exp:300,gold:200,rewardPoints:500},lore:'侏罗纪世界的终极猎食者。击败它可获得龙族细胞。'},
+{type:ENTITY_TYPE.BOSS,id:'boss_dragon',name:'远古巨龙',x:11,y:6,sprite:'🐉',color:'#884422',hp:350,atk:35,def:14,spd:8,weaknesses:['ice'],rewards:{exp:300,gold:200,rewardPoints:500},lore:'侏罗纪世界的终极猎食者。击败它可获得龙族细胞。'},
 {type:ENTITY_TYPE.ENEMY,id:'dragon_guard',name:'龙族护卫',x:3,y:8,sprite:'🦎',color:'#775533',hp:80,atk:24,def:10,spd:7,rewards:{exp:55,gold:40}},
-{type:ENTITY_TYPE.ENEMY,id:'dragon_guard_2',name:'龙族护卫',x:17,y:8,sprite:'🦎',color:'#775533',hp:80,atk:24,def:10,spd:7,rewards:{exp:55,gold:40}},
-{type:ENTITY_TYPE.ITEM,id:'medkit_ch8_6',name:'高级急救包',x:8,y:5,sprite:'♥',color:'#ff4488',itemType:'consumable',effect:{heal:120}},
+{type:ENTITY_TYPE.ENEMY,id:'dragon_guard_2',name:'龙族护卫',x:15,y:5,sprite:'🦎',color:'#775533',hp:80,atk:24,def:10,spd:7,rewards:{exp:55,gold:40}},
+{type:ENTITY_TYPE.ITEM,id:'medkit_ch8_6',name:'高级急救包',x:6,y:3,sprite:'♥',color:'#ff4488',itemType:'consumable',effect:{heal:120}},
 {type:ENTITY_TYPE.EVENT,id:'luogandao_death',name:'罗甘道抹杀',x:13,y:12,sprite:'†',color:'#ff0000',event:{type:'fixed_death',lines:[{text:'结算开始。罗甘道的奖励点为负数。',speaker:'旁白'},{text:'等等……什么意思？负数？我不想——',speaker:'罗甘道'},{text:'罗甘道的身体开始消散。主神的规则不可违抗。',speaker:'旁白'},{text:'（罗甘道因负奖励点被主神抹杀。）',speaker:'主神'}],flag:'luogandao_erased',companionDeath:'luogandao'}},{type:ENTITY_TYPE.EVENT,id:'ch8_ending',name:'第八章结算',x:10,y:2,sprite:'✦',color:'#ffdd88',event:{type:'chapter_end',lines:[{text:'巨龙倒下了。郑吒的身体中融入了龙族细胞——一种前所未有的力量。',speaker:'旁白'},{text:'楚轩、霸王、王侠——三人已经复活。但还有更多人等着我们。',speaker:'郑吒'},{text:'第八关「重建中洲」通关。获得基础奖励1000点。',speaker:'主神'}],flag:'ch8_complete',rewards:{rewardPoints:1000}}},
 ]};}
 
