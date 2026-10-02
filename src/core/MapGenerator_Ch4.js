@@ -280,6 +280,29 @@ function generateFloor_4_4() {
     tiles: grid, width: W, height: H, playerStart: { x: 3, y: 8 },
     entities: [
       // 印洲队伏击事件
+      // ── 剧情选择：印洲队交涉 ──
+      { type: ENTITY_TYPE.EVENT, id: 'india_response', name: '印洲队交涉',
+        x: 8, y: 6, sprite: '?', color: '#ffcc44',
+        event: {
+          type: 'choice',
+          lines: [
+            { text: '印洲队的使者出现了。他们提出暂时停战，共同对付伊莫顿。', speaker: '旁白' },
+            { text: '合作可以减少伤亡，但他们不可信。', speaker: '楚轩' },
+          ],
+          choices: [
+            { id: 'ally', text: '暂时合作，但保持警惕',
+              effect: { def: 3, description: '合作让双方都减少了损失',
+                relationship: { chuxuan: 'good_decision', zhan_lan: 'good_decision' } } },
+            { id: 'refuse', text: '拒绝。不相信任何外队。',
+              effect: { atk: 4, description: '独力作战磨练了你的力量',
+                relationship: { mou_gang: 'good_decision', bawang: 'good_decision' } } },
+            { id: 'trap', text: '假装合作，设下陷阱',
+              effect: { spd: 3, crt: 2, description: '楚轩式的策略',
+                relationship: { chuxuan: 'good_decision' } } },
+          ],
+          flag: 'india_response_done',
+        },
+      },
       { type: ENTITY_TYPE.EVENT, id: 'india_ambush', name: '印洲队伏击',
         x: 4, y: 8, sprite: '⚠', color: '#ff4444',
         event: {

@@ -71,6 +71,14 @@ function generateFloor_6_4() {
 function generateFloor_6_5() {
   const g = makeGrid(); carveRoom(g,1,1,6,5); carveCorridor(g,6,3,10,3); carveRoom(g,10,1,16,6); carveCorridor(g,13,6,13,10); carveRoom(g,9,10,16,14); carveRoom(g,1,8,7,13); carveCorridor(g,4,5,4,8); carveCorridor(g,7,12,9,12); carveRoom(g,16,11,19,15); carveCorridor(g,16,13,16,13); g[14][18]=TILE.STAIRS;
   return { id:'6-5', name:'程啸救援', subtitle:'程啸被困在了异形巢穴深处。作为队长，郑吒必须去救他。', bgColor:'#0a0808', theme:'alien_hive', tiles:g, width:W, height:H, playerStart:{x:3,y:3}, entities:[
+    { type:ENTITY_TYPE.EVENT, id:'ch6_rescue_choice', name:'救援决策', x:6,y:3, sprite:'?', color:'#ffcc44', event:{type:'choice',lines:[
+      {text:'程啸被困在水下通道。时间不多了。',speaker:'旁白'},
+      {text:'分队去救，主力会削弱。不救的话……',speaker:'郑吒'}],
+      choices:[
+        {id:'rescue',text:'全力救援程啸',effect:{hp:20,description:'没有人会被抛下',allRelationship:'save_life'}},
+        {id:'mission',text:'以大局为重，继续推进',effect:{atk:4,description:'理性的选择',relationship:{chuxuan:'good_decision'}}},
+        {id:'volunteer',text:'我一个人去，你们继续',effect:{spd:3,def:2,description:'独自完成不可能的任务',allRelationship:'protect_weak'}}],
+      flag:'ch6_rescue_done'}},
     { type:ENTITY_TYPE.EVENT, id:'rescue_chengxiao', name:'程啸求救', x:4,y:3, sprite:'📡', color:'#cc8844', event:{type:'dialogue',lines:[
       {text:'通讯频道传来程啸断断续续的声音。',speaker:'旁白'},
       {text:'队长……这里到处都是蛋。我……我被黏住了。',speaker:'程啸'},
