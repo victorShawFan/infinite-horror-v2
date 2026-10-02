@@ -57,6 +57,7 @@ import { getCurrentStance, setStance, getAvailableStances, getStanceId, restoreS
 import { challengeState, CHALLENGE_TYPES } from './core/ChallengeDungeon.js';
 import { getQualityColor, getQualityName, formatEquipmentTooltip, getAllAffixEffects } from './core/EquipmentAffixes.js';
 import { killStreak } from './core/KillStreak.js';
+import { rateBattle, recordRating, formatRatingHTML } from './core/BattleRating.js';
 
 // ── 全局状态 ──
 let renderer;
@@ -1838,11 +1839,16 @@ function startCombat(enemy, preScaledEnemy) {
       log: result.log,
       floor: chapter.floors[currentFloorIndex]?.id || '?',
       turn: gameState.turn,
+      rating: result.victory ? rateBattle(result, gameState.player) : null,
     });
     if (combatHistory.length > 20) combatHistory.shift(); // 保留最近20场
 
     if (result.victory) {
       try { victoryFlash(document.getElementById('ui-overlay')); } catch {}
+      // 战斗评级
+      const battleRating = rateBattle(result, gameState.player);
+      recordRating(battleRating);
+      renderer.addFloatText(battleRating.icon + ' ' + battleRating.grade, gameState.player.x, gameState.player.y - 2.5, battleRating.color);
       renderer.addFloatText(`+${scaledEnemy.rewards?.exp || 0} EXP`, enemy.x, enemy.y - 1, 'rgb(170, 136, 255)');
       if (scaledEnemy.rewards?.gold) renderer.addFloatText(`+${scaledEnemy.rewards.gold}G`, enemy.x, enemy.y - 0.4, 'rgb(255, 204, 68)');
       // 词缀金币/经验加成

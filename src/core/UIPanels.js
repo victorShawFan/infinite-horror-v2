@@ -813,7 +813,7 @@ export function showCombatLog() {
           <span style="color: ${entry.victory ? '#44ff88' : '#ff4444'}; font-weight: bold;">
             ${entry.victory ? '✓ 胜利' : '✗ 败北'} vs ${entry.enemy}
           </span>
-          <span style="color: #666; font-size: 12px;">${entry.floor} · ${entry.rounds}回合</span>
+          <span style="color: #666; font-size: 12px;">${entry.floor} · ${entry.rounds}回合${entry.rating ? ' · <span style="color:' + entry.rating.color + '">' + entry.rating.grade + '</span>' : ''}</span>
         </div>
         <div style="color: #aaa; font-size: 12px; line-height: 1.6;">
           ${entry.log.slice(-8).map(l => {
