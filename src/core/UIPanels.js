@@ -18,6 +18,7 @@ import { getAvailableSkills } from './SkillSystem.js';
 import { getEquipmentDisplayName } from './EquipmentSystem.js';
 import { getGeneLockDescription, getGeneLockProgress } from './GeneLockSystem.js';
 import { getInventoryList, useConsumable, CONSUMABLE_DEFS } from './ConsumableSystem.js';
+import { getAvailableRecipes, forgeRecipe, disassembleEquipment, reforgeAffixes, fuseEquipment, getDisassemblePreview, getFusionCost, QUALITY } from './ForgeSystem.js';
 
 // 需要从 main.js 注入的共享状态
 let _ctx = {};
@@ -1055,4 +1056,234 @@ export function showSettingsPanel() {
   };
   
   _render();
+}
+
+// ═══════════════════════════════════════════════════════════════
+// 锻造台面板 — 主神空间可用的装备制造系统
+// ═══════════════════════════════════════════════════════════════
+export function showForgePanel() {
+  if (gameState.state !== GAME_STATE.EXPLORING && gameState.state !== GAME_STATE.LORD_GOD_SPACE) return;
+  const prevState = gameState.state;
+  gameState.setState(GAME_STATE.INVENTORY);
+  const overlay = document.getElementById('ui-overlay');
+  
+  let tab = 'recipes'; // recipes | disassemble | reforge
+  
+  function _render() {
+    const p = gameState.player;
+    const fragments = p.soulFragments || 0;
+    const recipes = getAvailableRecipes(gameState.chapter);
+    
+    const tabStyle = (t) => `
+      background:${tab === t ? 'rgba(255,204,68,0.15)' : 'transparent'};
+      border:1px solid ${tab === t ? '#ffcc44' : '#333'};
+      color:${tab === t ? '#ffcc44' : '#666'};
+      padding:8px 18px;cursor:pointer;font-size:13px;font-family:inherit;
+      border-radius:6px;
+    `;
+    
+    let contentHTML = '';
+    
+    if (tab === 'recipes') {
+      if (recipes.length === 0) {
+        contentHTML = '<p style="color:#666;text-align:center;padding:20px;">暂无可用配方。继续冒险以解锁更多。</p>';
+      } else {
+        contentHTML = recipes.map(r => {
+          const qualityColors = { common:'#999', fine:'#44cc44', rare:'#4488ff', epic:'#aa44ff', legendary:'#ff8800' };
+          const qColor = qualityColors[r.quality] || '#999';
+          const canAfford = fragments >= r.cost;
+          const statsStr = Object.entries(r.baseStats).map(([k,v]) => `${k.toUpperCase()}${v>0?'+':''}${v}`).join(' ');
+          return `
+            <div style="background:rgba(255,255,255,0.03);border:1px solid ${qColor}33;border-radius:10px;
+                        padding:14px;margin-bottom:10px;position:relative;">
+              <div style="display:flex;justify-content:space-between;align-items:center;">
+                <div>
+                  <span style="color:${qColor};font-size:15px;font-weight:bold;">${r.name}</span>
+                  <span style="color:#555;font-size:11px;margin-left:8px;">[${r.type === 'weapon' ? '武器' : r.type === 'armor' ? '护甲' : '饰品'}]</span>
+                </div>
+                <button class="forge-btn" data-recipe="${r.id}" style="
+                  background:${canAfford ? 'rgba(255,204,68,0.15)' : 'rgba(100,100,100,0.1)'};
+                  border:1px solid ${canAfford ? '#ffcc44' : '#333'};
+                  color:${canAfford ? '#ffcc44' : '#555'};
+                  padding:6px 16px;cursor:${canAfford ? 'pointer' : 'default'};
+                  font-size:12px;font-family:inherit;border-radius:6px;
+                  ${canAfford ? '' : 'opacity:0.5;'}
+                ">锻造 (${r.cost}💎)</button>
+              </div>
+              <p style="color:#888;font-size:12px;margin-top:6px;">${r.description}</p>
+              <p style="color:#aaa;font-size:11px;margin-top:4px;">属性: ${statsStr} · 宝石槽: ${r.maxGemSlots || 2}</p>
+            </div>
+          `;
+        }).join('');
+      }
+    } else if (tab === 'disassemble') {
+      const equipList = [
+        p.weapon ? { ...p.weapon, slot: 'weapon', slotName: '武器' } : null,
+        p.armor ? { ...p.armor, slot: 'armor', slotName: '护甲' } : null,
+        p.accessory ? { ...p.accessory, slot: 'accessory', slotName: '饰品' } : null,
+      ].filter(Boolean);
+      
+      if (equipList.length === 0) {
+        contentHTML = '<p style="color:#666;text-align:center;padding:20px;">没有可分解的装备。</p>';
+      } else {
+        contentHTML = equipList.map(eq => {
+          const preview = getDisassemblePreview(eq);
+          return `
+            <div style="background:rgba(255,255,255,0.03);border:1px solid #33333366;border-radius:10px;
+                        padding:14px;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center;">
+              <div>
+                <span style="color:#ddd;font-size:14px;">${getEquipmentDisplayName(eq)}</span>
+                <span style="color:#555;font-size:11px;margin-left:8px;">[${eq.slotName}]</span>
+                <p style="color:#888;font-size:11px;margin-top:4px;">
+                  预计获得: ${preview.fragments}💎 灵魂碎片${preview.returnedGems > 0 ? ` + ${preview.returnedGems}颗宝石` : ''}
+                </p>
+              </div>
+              <button class="disasm-btn" data-slot="${eq.slot}" style="
+                background:rgba(255,68,68,0.1);border:1px solid #ff444466;
+                color:#ff6644;padding:6px 16px;cursor:pointer;
+                font-size:12px;font-family:inherit;border-radius:6px;
+              ">分解</button>
+            </div>
+          `;
+        }).join('');
+      }
+    } else if (tab === 'reforge') {
+      const equipList = [
+        p.weapon ? { ...p.weapon, slot: 'weapon', slotName: '武器' } : null,
+        p.armor ? { ...p.armor, slot: 'armor', slotName: '护甲' } : null,
+        p.accessory ? { ...p.accessory, slot: 'accessory', slotName: '饰品' } : null,
+      ].filter(Boolean);
+      
+      if (equipList.length === 0) {
+        contentHTML = '<p style="color:#666;text-align:center;padding:20px;">没有可重铸的装备。</p>';
+      } else {
+        contentHTML = `
+          <p style="color:#888;font-size:12px;text-align:center;margin-bottom:12px;">
+            重铸将随机替换装备的词缀，保留强化等级和宝石。
+          </p>` + equipList.map(eq => {
+          const cost = 50 + ({'common':0,'fine':1,'rare':2,'epic':3,'legendary':4}[eq.quality||'common']||0) * 30;
+          const canAfford = fragments >= cost;
+          const affixStr = (eq.affixes || []).map(a => a.name || a.id).join(', ') || '无词缀';
+          return `
+            <div style="background:rgba(255,255,255,0.03);border:1px solid #33333366;border-radius:10px;
+                        padding:14px;margin-bottom:10px;">
+              <div style="display:flex;justify-content:space-between;align-items:center;">
+                <div>
+                  <span style="color:#ddd;font-size:14px;">${getEquipmentDisplayName(eq)}</span>
+                  <p style="color:#777;font-size:11px;margin-top:4px;">当前词缀: ${affixStr}</p>
+                </div>
+                <button class="reforge-btn" data-slot="${eq.slot}" style="
+                  background:${canAfford ? 'rgba(170,68,255,0.1)' : 'rgba(100,100,100,0.1)'};
+                  border:1px solid ${canAfford ? '#aa44ff66' : '#333'};
+                  color:${canAfford ? '#bb77ff' : '#555'};
+                  padding:6px 16px;cursor:${canAfford ? 'pointer' : 'default'};
+                  font-size:12px;font-family:inherit;border-radius:6px;
+                  ${canAfford ? '' : 'opacity:0.5;'}
+                ">重铸 (${cost}💎)</button>
+              </div>
+            </div>
+          `;
+        }).join('');
+      }
+    }
+    
+    overlay.innerHTML = `
+      <div style="
+        position:absolute;top:0;left:0;right:0;bottom:0;
+        display:flex;align-items:center;justify-content:center;
+        background:rgba(0,0,0,0.85);
+      " id="forge-backdrop">
+        <div style="
+          background:rgba(10,10,20,0.97);border:1px solid #444;border-radius:16px;
+          padding:24px;max-width:520px;width:95%;max-height:80vh;overflow-y:auto;
+        ">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+            <h2 style="color:#ffcc44;letter-spacing:4px;font-size:18px;">🔨 锻造台</h2>
+            <span style="color:#aa88ff;font-size:13px;">💎 ${fragments} 灵魂碎片</span>
+          </div>
+          
+          <div style="display:flex;gap:8px;margin-bottom:16px;justify-content:center;">
+            <button class="tab-btn" data-tab="recipes" style="${tabStyle('recipes')}">📜 配方锻造</button>
+            <button class="tab-btn" data-tab="disassemble" style="${tabStyle('disassemble')}">💥 分解</button>
+            <button class="tab-btn" data-tab="reforge" style="${tabStyle('reforge')}">🔄 重铸</button>
+          </div>
+          
+          <div style="min-height:120px;">${contentHTML}</div>
+          
+          <div style="text-align:center;margin-top:16px;">
+            <button id="btn-close-forge" style="
+              background:transparent;border:1px solid #444;color:#888;
+              padding:8px 30px;cursor:pointer;font-size:14px;font-family:inherit;
+              border-radius:6px;
+            ">关闭 (Esc)</button>
+          </div>
+        </div>
+      </div>
+    `;
+    
+    // Tab switching
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+      btn.addEventListener('click', () => { tab = btn.dataset.tab; _render(); });
+    });
+    
+    // Forge recipe
+    document.querySelectorAll('.forge-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const result = forgeRecipe(btn.dataset.recipe, gameState.player);
+        if (result.success) {
+          // Auto-equip if slot is empty
+          const eq = result.equipment;
+          if (eq.type === 'weapon' && !gameState.player.weapon) gameState.player.weapon = eq;
+          else if (eq.type === 'armor' && !gameState.player.armor) gameState.player.armor = eq;
+          else if (eq.type === 'accessory' && !gameState.player.accessory) gameState.player.accessory = eq;
+          // Otherwise, show message
+          _render();
+        }
+      });
+    });
+    
+    // Disassemble
+    document.querySelectorAll('.disasm-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const slot = btn.dataset.slot;
+        const eq = gameState.player[slot];
+        if (eq) {
+          const result = disassembleEquipment(eq, gameState.player);
+          if (result.success) {
+            gameState.player[slot] = null;
+            _render();
+          }
+        }
+      });
+    });
+    
+    // Reforge
+    document.querySelectorAll('.reforge-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const slot = btn.dataset.slot;
+        const eq = gameState.player[slot];
+        if (eq) {
+          const result = reforgeAffixes(eq, gameState.player);
+          if (result.success) _render();
+        }
+      });
+    });
+    
+    // Close
+    const close = () => { overlay.innerHTML = ''; gameState.setState(prevState); };
+    document.getElementById('btn-close-forge')?.addEventListener('click', close);
+    document.getElementById('forge-backdrop')?.addEventListener('click', (e) => {
+      if (e.target.id === 'forge-backdrop') close();
+    });
+    const kh = (e) => { if (e.key === 'Escape') { document.removeEventListener('keydown', kh); close(); } };
+    document.addEventListener('keydown', kh);
+  }
+  
+  _render();
+}
+
+// ── 成就面板占位 ──
+export function showAchievementPanel() {
+  // TODO: 成就系统面板
+  console.log("Achievement panel not yet implemented");
 }

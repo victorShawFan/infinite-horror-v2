@@ -287,6 +287,7 @@ class GameState {
       talents: { points: this.talents.points, allocated: { ...this.talents.allocated } },
       gemInventory: [...this.gemInventory],
       relationships: { ...this.relationships },
+      soulFragments: this.player.soulFragments || 0,
     };
   }
 
@@ -335,6 +336,7 @@ class GameState {
       }
       this.gemInventory = parsed.gemInventory || [];
       this.relationships = parsed.relationships || {};
+      this.player.soulFragments = parsed.soulFragments || 0;
       eventBus.emit('game:loaded', { slot });
       return true;
     } catch (e) {

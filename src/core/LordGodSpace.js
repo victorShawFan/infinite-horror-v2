@@ -14,6 +14,7 @@ import { enhanceEquipment, socketGem, unsocketGem, getEnhanceCost,
 import { allocateTalentPoint, resetTalents, getTalentEffects, 
          getTalentPathInfo, TALENT_PATHS } from './TalentTree.js';
 import { getAvailableChallenges, challengeState } from './ChallengeDungeon.js';
+import { getAvailableRecipes, QUALITY } from './ForgeSystem.js';
 
 /** 主神空间商店/强化项目 */
 export const SHOP_ITEMS = {
@@ -310,6 +311,22 @@ export function renderLordGodSpace(onClose) {
         { key: 'accessory', label: '💍 饰品', item: p.accessory },
       ];
       
+      // 高级锻造入口按钮
+      const advForgeBtn = document.createElement('div');
+      advForgeBtn.innerHTML = `<button id="btn-advanced-forge" style="
+        background:linear-gradient(135deg,#ff4400,#ff8800);border:none;color:#fff;
+        padding:10px 20px;cursor:pointer;border-radius:8px;font-size:13px;font-family:inherit;
+        margin-bottom:12px;width:100%;letter-spacing:2px;
+        box-shadow:0 0 15px rgba(255,100,0,0.3);
+      ">🔨 高级锻造台 — 配方制造 · 分解 · 重铸</button>
+      <p style="color:#666;font-size:11px;text-align:center;margin-bottom:12px;">
+        💎 灵魂碎片: ${gameState.player.soulFragments || 0} · 可用配方: ${getAvailableRecipes(gameState.chapter).length}个
+      </p>`;
+      container.appendChild(advForgeBtn);
+      document.getElementById('btn-advanced-forge')?.addEventListener('click', () => {
+        if (typeof window._showForgePanel === 'function') window._showForgePanel();
+      });
+
       container.innerHTML = slots.map(slot => {
         if (!slot.item) return `<div style="background:rgba(255,255,255,0.03);border:1px solid #333;border-radius:10px;padding:16px;opacity:0.5;">
           <strong style="color:#666;">${slot.label}: 无装备</strong></div>`;
