@@ -270,6 +270,9 @@ function generateFloor_5_4() {
         x: 18, y: 6, sprite: '◆', color: '#ffcc44',
         itemType: 'stat_boost', effect: { crt: 4 },
       },
+      {type:ENTITY_TYPE.ITEM,id:'set_alien_armor',name:'异形甲壳护甲',x:5,y:3,sprite:'🛡',color:'#44aaff',
+       itemType:'armor',armor:{name:'异形甲壳护甲',def:12,maxHp:30,spd:1,setId:'xenomorph_carapace',slot:'armor',
+       description:'从异形身上剥下的甲壳，轻便却坚韧无比。'}},
     ],
   };
 }

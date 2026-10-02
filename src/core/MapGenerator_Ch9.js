@@ -29,7 +29,11 @@ function f9_3(){const g=makeGrid();carveRoom(g,1,1,5,5);carveCorridor(g,5,3,9,3)
 {type:ENTITY_TYPE.ENEMY,id:'hopper_bug',name:'飞行虫',x:4,y:10,sprite:'🦗',color:'#886644',hp:65,atk:30,def:4,spd:20,rewards:{exp:60,gold:40}},
 {type:ENTITY_TYPE.ITEM,id:'medkit_ch9_3',name:'军用急救包',x:17,y:12,sprite:'♥',color:'#ff4488',itemType:'consumable',effect:{heal:110}},
 {type:ENTITY_TYPE.ITEM,id:'spd_ch9',name:'速度强化剂',x:2,y:9,sprite:'◆',color:'#44ffaa',itemType:'stat_boost',effect:{spd:5}},
-{type:ENTITY_TYPE.ENEMY,id:'bug_scout',name:'虫族斥候',x:17,y:10,sprite:'🦗',color:'#774422',hp:70,atk:28,def:6,spd:18,rewards:{exp:55,gold:38}}]};}
+{type:ENTITY_TYPE.ENEMY,id:'bug_scout',name:'虫族斥候',x:17,y:10,sprite:'🦗',color:'#774422',hp:70,atk:28,def:6,spd:18,rewards:{exp:55,gold:38}},
+      {type:ENTITY_TYPE.ITEM,id:'set_gene_gauntlet',name:'基因拳套',x:12,y:4,sprite:'⚔',color:'#ff6600',
+       itemType:'weapon',weapon:{name:'基因拳套',atk:28,spd:4,setId:'gene_gauntlet',slot:'weapon',
+       description:'能增幅基因锁输出的特制拳套。'}},
+    ]};}
 
 // ═══ 9-4 虫潮守线 ═══
 function f9_4(){const g=makeGrid();carveRoom(g,1,6,6,11);carveCorridor(g,6,8,10,8);carveRoom(g,10,4,15,12);carveCorridor(g,15,8,18,8);carveRoom(g,16,5,19,11);carveRoom(g,5,1,10,3);carveCorridor(g,8,3,8,4);carveRoom(g,8,13,14,16);carveCorridor(g,11,12,11,13);g[15][13]=TILE.STAIRS;return{id:'9-4',name:'虫潮守线',subtitle:'第一波虫潮来了。王侠和霸王负责布雷和火力压制。',bgColor:'#080810',theme:'scifi_base',tiles:g,width:W,height:H,playerStart:{x:3,y:8},entities:[

@@ -89,7 +89,10 @@ function generateFloor_6_5() {
     { type:ENTITY_TYPE.ENEMY, id:'egg_cluster', name:'异形卵囊群', x:4,y:11, sprite:'🥚', color:'#665544', hp:30, atk:15, def:2, spd:5, rewards:{exp:25,gold:15}},
     { type:ENTITY_TYPE.ITEM, id:'medkit_ch6_5', name:'急救包', x:18,y:13, sprite:'♥', color:'#ff4488', itemType:'consumable', effect:{heal:70}},
     { type:ENTITY_TYPE.ITEM, id:'crt_crystal_ch6_5', name:'暴击结晶', x:2,y:10, sprite:'◆', color:'#ffcc44', itemType:'stat_boost', effect:{crt:4}},
-  ]};
+      {type:ENTITY_TYPE.ITEM,id:'set_motion_tracker',name:'动态追踪器',x:14,y:3,sprite:'💍',color:'#44ddff',
+       itemType:'accessory',accessory:{name:'动态追踪器',spd:3,crt:5,setId:'motion_tracker',slot:'accessory',
+       description:'能感知附近一切生命活动的追踪装置。'}},
+    ]};
 }
 
 function generateFloor_6_6() {

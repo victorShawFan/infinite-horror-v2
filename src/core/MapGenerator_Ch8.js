@@ -42,7 +42,10 @@ function f8_5(){const g=makeGrid();carveRoom(g,6,5,14,12);carveRoom(g,1,7,5,10);
 {type:ENTITY_TYPE.EVENT,id:'revive_bawang',name:'复活仪式',x:12,y:3,sprite:'✦',color:'#ffdd44',event:{type:'dialogue',lines:[{text:'又一次复活仪式。霸王和王侠的身影在金光中重现。',speaker:'旁白'},{text:'我……回来了？',speaker:'霸王'},{text:'欢迎回来。我们还有很多人要救。',speaker:'郑吒'},{text:'（霸王、王侠复活成功。）',speaker:'主神'}],flag:'bawang_revived',reviveCompanions:['bawang','wang_xia']}},
 {type:ENTITY_TYPE.ENEMY,id:'raptor_alpha',name:'迅猛龙首领',x:12,y:12,sprite:'🦖',color:'#336633',hp:85,atk:28,def:8,spd:15,rewards:{exp:60,gold:45}},
 {type:ENTITY_TYPE.ITEM,id:'medkit_ch8_5',name:'急救包',x:9,y:13,sprite:'♥',color:'#ff4488',itemType:'consumable',effect:{heal:90}},
-]};}
+      {type:ENTITY_TYPE.ITEM,id:'set_zhongzhou_sword',name:'中洲宝剑',x:12,y:10,sprite:'⚔',color:'#ffcc44',
+       itemType:'weapon',weapon:{name:'中洲宝剑',atk:26,crt:5,spd:2,setId:'zhongzhou_sword',slot:'weapon',
+       description:'中洲军队锻造的精良武器，兼具威力与速度。'}},
+    ]};}
 
 function f8_6(){const g=makeGrid();carveRoom(g,1,1,6,5);carveCorridor(g,6,3,10,3);carveRoom(g,10,1,16,6);carveCorridor(g,13,6,13,10);carveRoom(g,9,10,16,14);carveRoom(g,1,8,7,13);carveCorridor(g,4,5,4,8);carveCorridor(g,7,12,9,12);carveRoom(g,16,11,19,15);carveCorridor(g,16,13,16,13);g[14][18]=TILE.STAIRS;return{id:'8-6',name:'巨龙血战与负点结算',subtitle:'最终Boss——远古巨龙。郑吒融合龙族细胞的关键一战。',bgColor:'#0a0c06',theme:'jungle',tiles:g,width:W,height:H,playerStart:{x:3,y:3},entities:[
 {type:ENTITY_TYPE.BOSS,id:'boss_dragon',bossId:'ancient_dragon',name:'远古巨龙',x:11,y:6,sprite:'🐉',color:'#884422',hp:350,atk:35,def:14,spd:8,weaknesses:['ice'],rewards:{exp:300,gold:200,rewardPoints:500},lore:'侏罗纪世界的终极猎食者。击败它可获得龙族细胞。'},

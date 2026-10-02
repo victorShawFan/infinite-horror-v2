@@ -31,7 +31,10 @@ function f7_4(){const g=makeGrid();carveRoom(g,1,6,6,11);carveCorridor(g,6,8,10,
 {type:ENTITY_TYPE.ENEMY,id:'demon_warrior',name:'恶魔队战士',x:12,y:8,sprite:'⚔',color:'#aa2222',hp:90,atk:28,def:10,spd:11,rewards:{exp:65,gold:50,rewardPoints:60}},
 {type:ENTITY_TYPE.ENEMY,id:'demon_mage',name:'恶魔队法师',x:8,y:1,sprite:'🔮',color:'#882288',hp:70,atk:30,def:6,spd:13,damageType:'dark',rewards:{exp:60,gold:45,rewardPoints:50}},
 {type:ENTITY_TYPE.ITEM,id:'medkit_ch7_4',name:'大型急救包',x:11,y:14,sprite:'♥',color:'#ff4488',itemType:'consumable',effect:{heal:100}},
-]};}
+      {type:ENTITY_TYPE.ITEM,id:'set_holy_blade',name:'圣光之刃',x:6,y:7,sprite:'⚔',color:'#ffdd44',
+       itemType:'weapon',weapon:{name:'圣光之刃',atk:22,damageType:'spirit',crt:4,setId:'holy_blade',slot:'weapon',
+       description:'被圣光祝福的利刃，对恶魔类敌人有额外伤害。'}},
+    ]};}
 
 function f7_5(){const g=makeGrid();carveRoom(g,6,5,14,12);carveRoom(g,1,7,5,10);carveCorridor(g,5,8,6,8);carveRoom(g,15,7,19,10);carveCorridor(g,14,8,15,8);carveRoom(g,8,1,12,4);carveCorridor(g,10,4,10,5);carveRoom(g,8,13,12,16);carveCorridor(g,10,12,10,13);g[1][11]=TILE.STAIRS;return{id:'7-5',name:'团灭危机',subtitle:'恶魔队发动了总攻。一个接一个，队友们倒下了。',bgColor:'#120606',theme:'biolab',tiles:g,width:W,height:H,playerStart:{x:10,y:15},entities:[
 {type:ENTITY_TYPE.EVENT,id:'team_wipe',name:'中洲队团灭',x:10,y:14,sprite:'†',color:'#ff0000',event:{type:'dialogue',lines:[{text:'恶魔队的包围圈越来越紧。队友们一个接一个地倒下。',speaker:'旁白'},{text:'赵樱空被复制体赵樱空击败——张恒被复制体张恒压制——',speaker:'旁白'},{text:'萧宏律、程啸、新人——全部阵亡。',speaker:'旁白'},{text:'只剩下詹岚和郑吒。',speaker:'旁白'}],flag:'team_wiped',killAllCompanions:true}},

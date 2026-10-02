@@ -42,7 +42,10 @@ function f11_4(){const g=makeGrid();carveRoom(g,1,1,5,5);carveRoom(g,7,1,12,4);c
 {type:ENTITY_TYPE.EVENT,id:'lin_juntian_join',name:'林君天加入',x:18,y:10,sprite:'👤',color:'#44cc88',event:{type:'dialogue',lines:[{text:'又一个身影——林君天，前印洲队成员。',speaker:'旁白'},{text:'我也要加入。我想看看这个故事的结局。',speaker:'林君天'}],flag:'lin_juntian_joined',addCompanion:{id:'lin_juntian',name:'林君天',role:'fighter'}}},
 {type:ENTITY_TYPE.ITEM,id:'medkit_11_4',name:'仙丹',x:8,y:14,sprite:'💊',color:'#ffaa44',itemType:'consumable',effect:{heal:160}},
 {type:ENTITY_TYPE.ITEM,id:'crt_ch11',name:'破绽之眼',x:12,y:14,sprite:'◆',color:'#ffcc44',itemType:'stat_boost',effect:{crt:8}},
-]};}
+      {type:ENTITY_TYPE.ITEM,id:'set_crusader_armor',name:'十字军圣甲',x:4,y:4,sprite:'🛡',color:'#ffdd44',
+       itemType:'armor',armor:{name:'十字军圣甲',def:18,maxHp:50,setId:'crusader_armor',slot:'armor',
+       description:'曾属于十字军精英的圣甲，散发圣洁光辉。'}},
+    ]};}
 
 function f11_5(){const g=makeGrid();carveRoom(g,5,3,15,13);carveRoom(g,1,7,4,10);carveCorridor(g,4,8,5,8);carveRoom(g,16,7,19,10);carveCorridor(g,15,8,16,8);carveRoom(g,8,1,12,2);carveCorridor(g,10,2,10,3);carveRoom(g,8,14,12,16);carveCorridor(g,10,13,10,14);g[15][11]=TILE.STAIRS;return{id:'11-5',name:'心魔对决',subtitle:'弗莱迪找到了郑吒最深的恐惧——那些因他而死的人。',bgColor:'#100510',theme:'nightmare',tiles:g,width:W,height:H,playerStart:{x:10,y:15},entities:[
 {type:ENTITY_TYPE.EVENT,id:'heart_demon_start',name:'心魔降临',x:10,y:12,sprite:'💀',color:'#ff0000',event:{type:'dialogue',lines:[{text:'弗莱迪的笑声在四周回荡。',speaker:'旁白'},{text:'"让我给你看看你最害怕的东西，小英雄。"',speaker:'弗莱迪'},{text:'雾气中走出一个个身影——张杰、齐腾一、铭烟薇——',speaker:'旁白'},{text:'那些已经死去的队友，带着空洞的眼神，缓缓逼近。',speaker:'旁白'}],flag:'heart_demon_start'}},

@@ -39,7 +39,10 @@ function f12_4(){const g=makeGrid();carveRoom(g,1,1,5,5);carveRoom(g,7,1,12,4);c
 {type:ENTITY_TYPE.EVENT,id:'zhangheng_fall',name:'张恒断后',x:10,y:3,sprite:'†',color:'#ff0000',event:{type:'fixed_death',lines:[{text:'张恒激活了所有机械装置为队友断后。',speaker:'旁白'},{text:'去吧，队长。我来挡住他们。',speaker:'张恒'}],flag:'zhangheng_dead',companionDeaths:['zhang_heng']}},
 {type:ENTITY_TYPE.ITEM,id:'medkit_12_4',name:'终极修复剂',x:8,y:15,sprite:'♥',color:'#ff4488',itemType:'consumable',effect:{heal:250}},
 {type:ENTITY_TYPE.ITEM,id:'hp_ch12',name:'生命极限结晶',x:12,y:15,sprite:'◆',color:'#44ff44',itemType:'stat_boost',effect:{maxHp:80}},
-]};}
+      {type:ENTITY_TYPE.ITEM,id:'set_lord_blade',name:'主神之刃',x:7,y:4,sprite:'⚔',color:'#ff4444',
+       itemType:'weapon',weapon:{name:'主神之刃',atk:35,crt:8,spd:3,setId:'lord_blade',slot:'weapon',
+       description:'从主神碎片中凝聚的终极武器。'}},
+    ]};}
 
 function f12_5(){const g=makeGrid();carveRoom(g,3,3,17,13);carveRoom(g,1,7,2,10);carveCorridor(g,2,8,3,8);carveRoom(g,18,7,19,10);carveCorridor(g,17,8,18,8);carveRoom(g,8,1,12,2);carveCorridor(g,10,2,10,3);carveRoom(g,8,14,12,16);carveCorridor(g,10,13,10,14);g[1][11]=TILE.STAIRS;return{id:'12-5',name:'最终对决',subtitle:'复制体楚轩 vs 楚轩。复制体郑吒 vs 郑吒。最终的牺牲。',bgColor:'#180505',theme:'biolab',tiles:g,width:W,height:H,playerStart:{x:10,y:15},entities:[
 {type:ENTITY_TYPE.BOSS,id:'boss_copy_chuxuan',bossId:'clone_chuxuan',traits:['smart'],name:'复制体楚轩',x:6,y:6,sprite:'🧠',color:'#8822cc',hp:280,atk:50,def:18,spd:16,damageType:'psychic',weaknesses:['spirit'],rewards:{exp:350,gold:250,rewardPoints:400},lore:'恶魔队的军师。智力与原版楚轩相当，但没有人性的约束。'},
