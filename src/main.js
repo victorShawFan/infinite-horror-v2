@@ -1126,8 +1126,74 @@ function startCombat(enemy, preScaledEnemy) {
       // 里程碑：成长成就（战斗后可能升级/进阶）
       try { checkGrowthMilestones(milestoneTracker, gameState.player); } catch {}
 
-      // 检查boss特殊事件
-      if (enemy.onDefeat) {
+      // Boss击杀特效 + 战斗总结
+      if (scaledEnemy.bossId || scaledEnemy.type === 'boss') {
+        renderer.shake(8, 600);
+        renderer.flash('rgba(255, 200, 0)', 300);
+        const actualDmg = Math.max(0, hpBeforeCombat - gameState.player.hp);
+        const combatTime = result.rounds || 0;
+        const hpPercent = Math.round((gameState.player.hp / gameState.player.maxHp) * 100);
+        const ratingStars = hpPercent >= 80 ? '★★★' : hpPercent >= 50 ? '★★☆' : hpPercent >= 20 ? '★☆☆' : '☆☆☆';
+        const ratingText = hpPercent >= 80 ? '完美击杀' : hpPercent >= 50 ? '漂亮！' : hpPercent >= 20 ? '险胜' : '惨胜';
+        setTimeout(() => {
+          const overlay = document.getElementById('ui-overlay');
+          overlay.innerHTML = `
+            <div style="
+              position:absolute;top:0;left:0;right:0;bottom:0;
+              display:flex;align-items:center;justify-content:center;
+              background:rgba(0,0,0,0.75);animation:fadeIn 0.3s;
+            ">
+              <div style="
+                background:rgba(10,10,20,0.97);border:2px solid #ffcc44;
+                border-radius:14px;padding:24px;max-width:420px;width:90%;
+                box-shadow:0 0 40px rgba(255,204,68,0.2);text-align:center;
+              ">
+                <p style="color:#ffcc44;font-size:11px;letter-spacing:6px;margin-bottom:4px;">🏆 BOSS DEFEATED 🏆</p>
+                <h2 style="color:#ff4444;font-size:22px;margin-bottom:12px;text-shadow:0 0 10px rgba(255,68,68,0.4);">${scaledEnemy.name}</h2>
+                <div style="color:#ffcc44;font-size:28px;margin-bottom:8px;">${ratingStars}</div>
+                <p style="color:#eee;font-size:16px;margin-bottom:16px;">${ratingText}</p>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px;">
+                  <div style="background:rgba(255,255,255,0.05);border-radius:6px;padding:8px;">
+                    <p style="color:#888;font-size:10px;">战斗回合</p>
+                    <p style="color:#ffcc44;font-size:18px;font-weight:bold;">${combatTime}</p>
+                  </div>
+                  <div style="background:rgba(255,255,255,0.05);border-radius:6px;padding:8px;">
+                    <p style="color:#888;font-size:10px;">受到伤害</p>
+                    <p style="color:#ff4444;font-size:18px;font-weight:bold;">${actualDmg}</p>
+                  </div>
+                  <div style="background:rgba(255,255,255,0.05);border-radius:6px;padding:8px;">
+                    <p style="color:#888;font-size:10px;">剩余HP</p>
+                    <p style="color:#44ff88;font-size:18px;font-weight:bold;">${hpPercent}%</p>
+                  </div>
+                  <div style="background:rgba(255,255,255,0.05);border-radius:6px;padding:8px;">
+                    <p style="color:#888;font-size:10px;">奖励点</p>
+                    <p style="color:#ffaa44;font-size:18px;font-weight:bold;">+${scaledEnemy.rewards?.rewardPoints || scaledEnemy.rewards?.gold || 0}</p>
+                  </div>
+                </div>
+                <button id="btn-boss-ok" style="
+                  background:rgba(255,204,68,0.1);border:1px solid #ffcc44;color:#ffcc44;
+                  padding:10px 40px;cursor:pointer;font-size:14px;letter-spacing:3px;
+                  font-family:inherit;border-radius:8px;transition:all 0.2s;
+                " onmouseover="this.style.background='rgba(255,204,68,0.2)'"
+                   onmouseout="this.style.background='rgba(255,204,68,0.1)'">继续</button>
+              </div>
+            </div>
+            <style>@keyframes fadeIn{from{opacity:0}to{opacity:1}}</style>
+          `;
+          document.getElementById('btn-boss-ok').addEventListener('click', () => {
+            overlay.innerHTML = '';
+            // 触发boss击败事件和对话
+            if (enemy.onDefeat) {
+              if (enemy.onDefeat.flag) gameState.setFlag(enemy.onDefeat.flag);
+              startDialogue(enemy.onDefeat.lines);
+            }
+          });
+          // 也允许空格/回车关闭
+          const bkh = (e) => { if (e.key === ' ' || e.key === 'Enter') { document.getElementById('btn-boss-ok')?.click(); document.removeEventListener('keydown', bkh); } };
+          document.addEventListener('keydown', bkh);
+        }, 800);
+      } else if (enemy.onDefeat) {
+        // 非Boss的特殊击败事件
         setTimeout(() => {
           if (enemy.onDefeat.flag) gameState.setFlag(enemy.onDefeat.flag);
           startDialogue(enemy.onDefeat.lines);
