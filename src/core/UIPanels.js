@@ -463,6 +463,10 @@ export function showStatsPanel() {
               <tr><td>层数</td><td style="text-align:right;color:#44aaff;">${s.floorsCleared || 0}</td></tr>
               <tr><td>章数</td><td style="text-align:right;color:#44ccff;">${s.chaptersCleared || 0}</td></tr>
               <tr><td>线索</td><td style="text-align:right;color:#ffcc44;">${s.loreFound || 0}</td></tr>
+              <tr><td>宝箱开启</td><td style="text-align:right;color:#ffaa44;">${s.chestsOpened || 0}</td></tr>
+              <tr><td>密道发现</td><td style="text-align:right;color:#ffd700;">${s.secretsFound || 0}</td></tr>
+              <tr><td>陷阱触发</td><td style="text-align:right;color:#ff6644;">${s.trapsTriggered || 0}</td></tr>
+              <tr><td>陷阱闪避</td><td style="text-align:right;color:#44ff88;">${s.trapsEvaded || 0}</td></tr>
               <tr><td>回合数</td><td style="text-align:right;color:#888;">${s.turnsPlayed}</td></tr>
               <tr><td>游戏时间</td><td style="text-align:right;color:#888;">${playMin}分${playSec}秒</td></tr>
             </table>
@@ -473,6 +477,7 @@ export function showStatsPanel() {
               <tr><td>金币获得</td><td style="text-align:right;color:#ffcc44;">${s.goldEarned || 0}G</td></tr>
               <tr><td>奖励点消费</td><td style="text-align:right;color:#cc8844;">${s.goldSpent || 0}RP</td></tr>
               <tr><td>物品使用</td><td style="text-align:right;color:#aaa;">${s.itemsUsed}</td></tr>
+              <tr><td>消耗品</td><td style="text-align:right;color:#44cc88;">${s.consumablesUsed || 0}</td></tr>
               <tr><td>技能使用</td><td style="text-align:right;color:#aa88ff;">${s.skillsUsed || 0}</td></tr>
             </table>
           </div>
