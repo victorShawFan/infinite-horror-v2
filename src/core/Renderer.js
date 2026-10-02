@@ -273,9 +273,32 @@ export class Renderer {
 
       // 底色/光环
       if (e.type === ENTITY_TYPE.ENEMY || e.type === ENTITY_TYPE.BOSS) {
+        // 难度色彩: 绿=轻松 黄=匹配 红=困难 紫=极难
+        const p_ = gameState.player;
+        const pAtk = getEffectiveAtk(p_);
+        const pDef = getEffectiveDef(p_);
+        const dmgTo = Math.max(1, pAtk - (e.def || 0));
+        const dmgFrom = Math.max(0, (e.atk || 0) - pDef);
+        const turnsToKill = dmgTo > 0 ? Math.ceil((e.hp || 50) / dmgTo) : 999;
+        const turnsToLose = dmgFrom > 0 ? Math.ceil(p_.hp / dmgFrom) : 999;
+        const ratio = turnsToKill / Math.max(1, turnsToLose);
+        let glowR, glowG, glowB;
+        if (ratio < 0.3) { glowR=60; glowG=200; glowB=60; }         // 轻松
+        else if (ratio < 0.7) { glowR=200; glowG=200; glowB=60; }   // 匹配
+        else if (ratio < 1.0) { glowR=255; glowG=120; glowB=40; }   // 困难
+        else if (ratio < 2.0) { glowR=255; glowG=60; glowB=60; }    // 极难
+        else { glowR=180; glowG=40; glowB=200; }                     // 致命
         const glow = 0.15 + 0.1 * Math.sin(this._time * 0.06);
-        ctx.fillStyle = `rgba(255, 60, 60, ${glow})`;
+        ctx.fillStyle = `rgba(${glowR}, ${glowG}, ${glowB}, ${glow})`;
         ctx.fillRect(px + 2, py + 2, TILE_SIZE - 4, TILE_SIZE - 4);
+        // 精英词缀标记
+        if (e.affix) {
+          ctx.font = '8px sans-serif';
+          ctx.fillStyle = e.affix.color || '#ffaa00';
+          ctx.textAlign = 'right';
+          ctx.fillText(e.affix.icon || '★', px + TILE_SIZE - 2, py + 10);
+          ctx.textAlign = 'left';
+        }
       } else if (e.type === ENTITY_TYPE.COMPANION) {
         ctx.fillStyle = 'rgba(68, 136, 255, 0.12)';
         ctx.fillRect(px + 2, py + 2, TILE_SIZE - 4, TILE_SIZE - 4);
