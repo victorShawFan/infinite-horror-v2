@@ -140,6 +140,57 @@ export class CombatAnimator {
         const py = window._gamePlayerY || 0;
         this._queue.push({ type: 'text', text: entry.text.slice(0, 20), x: px, y: py - 0.9, color: 'rgb(136, 170, 204)', delay });
         delay += 150;
+      } else if (entry.type === 'boss_phase') {
+        // Boss相位切换 — 红紫闪光 + 震屏
+        this._queue.push({ type: 'text', text: entry.text.slice(0, 24), x: enemy.x, y: enemy.y - 0.8, color: 'rgb(255, 68, 136)', delay });
+        this._queue.push({ type: 'flash', color: 'rgba(255, 68, 136, 0.3)', delay });
+        this._queue.push({ type: 'shake', intensity: 4, delay });
+        this._queue.push({ type: 'particles', x: enemy.x * TILE_SIZE + TILE_SIZE/2, y: enemy.y * TILE_SIZE + TILE_SIZE/2, color: 'rgb(255, 68, 136)', count: 12, delay });
+        delay += 500;
+      } else if (entry.type === 'boss_special') {
+        // Boss特殊技能 — 红色大字 + 强震
+        this._queue.push({ type: 'text', text: entry.text.slice(0, 20), x: enemy.x, y: enemy.y - 0.5, color: 'rgb(255, 34, 102)', delay });
+        this._queue.push({ type: 'flash', color: 'rgba(255, 0, 0, 0.4)', delay });
+        this._queue.push({ type: 'shake', intensity: 6, delay });
+        delay += 400;
+      } else if (entry.type === 'block') {
+        // 格挡 — 蓝色盾牌
+        const px = window._gamePlayerX || 0;
+        const py = window._gamePlayerY || 0;
+        this._queue.push({ type: 'text', text: '🛡 格挡！', x: px, y: py - 0.5, color: 'rgb(68, 136, 255)', delay });
+        this._queue.push({ type: 'particles', x: px * TILE_SIZE + TILE_SIZE/2, y: py * TILE_SIZE + TILE_SIZE/2, color: 'rgb(68, 136, 255)', count: 6, delay });
+        delay += 200;
+      } else if (entry.type === 'talent_save') {
+        // 天赋死亡保护 — 金色大闪
+        const px = window._gamePlayerX || 0;
+        const py = window._gamePlayerY || 0;
+        this._queue.push({ type: 'text', text: '🌟 重生！', x: px, y: py - 0.8, color: 'rgb(255, 221, 68)', delay });
+        this._queue.push({ type: 'flash', color: 'rgba(255, 221, 68, 0.5)', delay });
+        this._queue.push({ type: 'particles', x: px * TILE_SIZE + TILE_SIZE/2, y: py * TILE_SIZE + TILE_SIZE/2, color: 'rgb(255, 221, 68)', count: 15, delay });
+        delay += 600;
+      } else if (entry.type === 'elemental_advantage') {
+        // 元素克制 — 橙色
+        this._queue.push({ type: 'text', text: '✦ 元素克制！', x: enemy.x, y: enemy.y - 0.7, color: 'rgb(255, 136, 68)', delay });
+        delay += 200;
+      } else if (entry.type === 'elemental_resonance') {
+        // 元素共鸣 — 金色闪光
+        const px = window._gamePlayerX || 0;
+        const py = window._gamePlayerY || 0;
+        this._queue.push({ type: 'text', text: entry.text.slice(0, 18), x: px, y: py - 0.9, color: 'rgb(255, 204, 68)', delay });
+        this._queue.push({ type: 'flash', color: 'rgba(255, 204, 68, 0.2)', delay });
+        delay += 300;
+      } else if (entry.type === 'loot' || entry.type === 'loot_equipment') {
+        // 掉落 — 金色浮字
+        const px = window._gamePlayerX || 0;
+        const py = window._gamePlayerY || 0;
+        const lootColor = entry.color || 'rgb(255, 204, 68)';
+        this._queue.push({ type: 'text', text: entry.text.slice(0, 24), x: px, y: py - 0.3, color: lootColor, delay });
+        delay += 200;
+      } else if (entry.type === 'enemy_revive') {
+        // 敌人复活 — 紫色闪光
+        this._queue.push({ type: 'text', text: '💀 复活！', x: enemy.x, y: enemy.y - 0.5, color: 'rgb(255, 68, 255)', delay });
+        this._queue.push({ type: 'flash', color: 'rgba(255, 68, 255, 0.3)', delay });
+        delay += 400;
       }
 
       // 限制最多显示的回合数，避免太长

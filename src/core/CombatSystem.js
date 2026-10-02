@@ -18,6 +18,8 @@ import {
   getBossPhases, getCurrentPhase, applyPhaseModifiers,
   shouldUseBossSpecial, calcBossSpecialDamage, processEnemyTraits
 } from './EnemyAbilitySystem.js';
+import { calcElementalModifier, getPlayerActiveElements, getEnemyElement, checkElementalResonance, ELEMENT_INFO } from './ElementalSystem.js';
+import { generateLoot, formatLootLog, applyLoot } from './LootSystem.js';
 
 // ── 伤害计算 ──
 export function calcDamage(attacker, defender, damageType = DAMAGE_TYPE.PHYSICAL, minDmg = 1) {
@@ -25,6 +27,12 @@ export function calcDamage(attacker, defender, damageType = DAMAGE_TYPE.PHYSICAL
 
   const isWeak = defender.weaknesses?.includes(damageType) || false;
   if (isWeak) baseDmg = Math.floor(baseDmg * 1.5);
+
+  // 元素相克
+  const elemMod = calcElementalModifier(damageType, defender.damageType || defender.element);
+  if (elemMod.multiplier !== 1.0) {
+    baseDmg = Math.max(minDmg, Math.floor(baseDmg * elemMod.multiplier));
+  }
 
   // 灵体物理减伤
   if (defender.physicalResist && damageType === DAMAGE_TYPE.PHYSICAL) {
@@ -279,6 +287,24 @@ export function executeBattle(enemy) {
   if (availSkills.length > 0) {
     log.push({ text: `🎯 可用技能：${availSkills.map(s => s.name).join('、')}`, type: 'info' });
   }
+
+  // ── 元素相克提示 ──
+  try {
+    const playerElements = getPlayerActiveElements(p);
+    const enemyElem = getEnemyElement(enemy);
+    if (playerElements.length > 0 && enemyElem !== 'physical') {
+      for (const pe of playerElements) {
+        const mod = calcElementalModifier(pe, enemyElem);
+        if (mod.isAdvantage) log.push({ text: `✦ 元素克制！${mod.text}`, type: 'elemental_advantage' });
+        if (mod.isResist) log.push({ text: `⚠ 元素抗性：${mod.text}`, type: 'elemental_resist' });
+      }
+    }
+    // 元素共鸣
+    const resonances = checkElementalResonance(playerElements);
+    for (const r of resonances) {
+      log.push({ text: `${r.icon} 元素共鸣【${r.name}】激活！`, type: 'elemental_resonance' });
+    }
+  } catch {}
 
   while (enemyHp > 0 && playerHp > 0) {
     round++;
@@ -586,21 +612,15 @@ export function executeBattle(enemy) {
     if (rewards.gold) p.gold += rewards.gold;
     if (rewards.rewardPoints) p.rewardPoints += rewards.rewardPoints;
 
-    // ── 宝石掉落 ──
-    if (rewards.gems) {
-      for (const gemId of rewards.gems) {
-        gameState.gemInventory.push(gemId);
-        const gemNames = { ruby:'红宝石', sapphire:'蓝宝石', emerald:'绿宝石', topaz:'黄宝石', diamond:'钻石', amethyst:'紫水晶', obsidian:'黑曜石' };
-        log.push({ text: `💎 获得 ${gemNames[gemId] || gemId}！`, type: 'reward' });
+    // ── 战利品掉落系统 ──
+    try {
+      const loot = generateLoot(enemy, gameState.chapter || 1);
+      if (loot.length > 0) {
+        const lootLogs = formatLootLog(loot);
+        for (const ll of lootLogs) log.push(ll);
+        applyLoot(loot, p, gameState);
       }
-    } else if (enemy.bossId) {
-      // Boss 固定掉落随机宝石
-      const gemPool = ['ruby', 'sapphire', 'emerald', 'topaz', 'diamond', 'amethyst'];
-      const drop = gemPool[Math.floor(Math.random() * gemPool.length)];
-      gameState.gemInventory.push(drop);
-      const gemNames = { ruby:'红宝石', sapphire:'蓝宝石', emerald:'绿宝石', topaz:'黄宝石', diamond:'钻石', amethyst:'紫水晶' };
-      log.push({ text: `💎 Boss掉落 ${gemNames[drop]}！`, type: 'reward' });
-    }
+    } catch {}
 
     // ── 天赋：击杀回血 ──
     if (talentFx.killHeal > 0) {

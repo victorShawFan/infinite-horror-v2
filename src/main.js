@@ -1401,6 +1401,61 @@ function showInventoryPanel() {
           </div>
         </div>
 
+
+        <!-- 天赋树 + 装备 + 元素 -->
+        <div style="margin-top: 20px; border-top: 1px solid #333; padding-top: 16px;">
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+            <div>
+              <h3 style="color: #ffdd44; margin-bottom: 10px;">🌟 天赋 <span style="color:#888;font-size:11px;">(点数: ${gameState.talents.points})</span></h3>
+              ${Object.entries(TALENT_PATHS).map(([id, path]) => {
+                const alloc = gameState.talents.allocated[id] || 0;
+                return '<div style="margin-bottom:6px;"><span style="color:' + path.color + ';font-size:12px;">' + path.icon + ' ' + path.name + ': ' + alloc + '/10</span> <div style="background:#1a1a2a;border-radius:3px;height:4px;overflow:hidden;display:inline-block;width:80px;vertical-align:middle;"><div style="background:' + path.color + ';width:' + (alloc*10) + '%;height:100%;"></div></div></div>';
+              }).join('')}
+              ${(() => {
+                const fx = getTalentEffects(gameState.talents);
+                const active = [
+                  fx.atk > 0 ? 'ATK+'+fx.atk : '',
+                  fx.def > 0 ? 'DEF+'+fx.def : '',
+                  fx.spd > 0 ? 'SPD+'+fx.spd : '',
+                  fx.crt > 0 ? 'CRT+'+fx.crt+'%' : '',
+                  fx.maxHp > 0 ? 'HP+'+fx.maxHp : '',
+                  fx.dodgeChance > 0 ? '闪避'+Math.floor(fx.dodgeChance*100)+'%' : '',
+                  fx.blockChance > 0 ? '格挡'+Math.floor(fx.blockChance*100)+'%' : '',
+                  fx.deathSave ? '重生' : '',
+                ].filter(Boolean);
+                return active.length > 0 ? '<p style="color:#aaa;font-size:11px;margin-top:4px;">加成: ' + active.join(' | ') + '</p>' : '';
+              })()}
+            </div>
+            <div>
+              <h3 style="color: #ff6644; margin-bottom: 10px;">🔨 装备强化</h3>
+              ${[['⚔ 武器', p.weapon], ['🛡 护甲', p.armor], ['💍 饰品', p.accessory]].map(([label, item]) => {
+                if (!item) return '<p style="color:#555;font-size:12px;">' + label + ': 无</p>';
+                const dn = typeof getEquipmentDisplayName === 'function' ? getEquipmentDisplayName(item) : item.name;
+                return '<p style="color:#ccc;font-size:12px;">' + label + ': <span style="color:#ffaa44;">' + dn + '</span></p>';
+              }).join('')}
+              ${(() => {
+                const elems = typeof getPlayerActiveElements === 'function' ? getPlayerActiveElements(p) : [];
+                if (elems.length === 0) return '';
+                const elemStr = elems.map(e => { const info = ELEMENT_INFO[e]; return info ? '<span style="color:' + info.color + ';">' + info.icon + info.name + '</span>' : e; }).join(' ');
+                const resonances = typeof checkElementalResonance === 'function' ? checkElementalResonance(elems) : [];
+                const resStr = resonances.length > 0 ? '<br><span style="color:#ffcc44;font-size:11px;">共鸣: ' + resonances.map(r => r.icon + r.name).join(' ') + '</span>' : '';
+                return '<div style="margin-top:8px;"><span style="color:#888;font-size:11px;">元素: </span>' + elemStr + resStr + '</div>';
+              })()}
+              ${(() => {
+                const gems = gameState.gemInventory || [];
+                return gems.length > 0 ? '<p style="color:#aa88ff;font-size:11px;margin-top:6px;">💎 宝石库: ' + gems.length + '个</p>' : '';
+              })()}
+            </div>
+          </div>
+        </div>
+
+
+        <!-- 背包 -->
+        <div style="margin-top: 16px; border-top: 1px solid #333; padding-top: 12px;">
+          <h3 style="color: #ffcc44; margin-bottom: 10px;">📦 背包 (${(p.inventory||[]).length}/${p.maxInventory||20})</h3>
+          <div id="inv-items-container" style="max-height: 150px; overflow-y: auto;"></div>
+        </div>
+
         <div style="text-align: center; margin-top: 24px;">
           <button id="btn-close-inv" style="
             background: transparent; border: 1px solid #444; color: #888;
@@ -1411,6 +1466,79 @@ function showInventoryPanel() {
       </div>
     </div>
   `;
+
+  // ── 背包物品管理 ──
+  function renderInventoryItems() {
+    const inv = document.getElementById('inv-items-container');
+    if (!inv) return;
+    const items = p.inventory || [];
+    if (items.length === 0) {
+      inv.innerHTML = '<p style="color:#555;text-align:center;">背包为空</p>';
+      return;
+    }
+    inv.innerHTML = items.map((item, idx) => {
+      if (item.type === 'consumable') {
+        return `<div class="inv-item" data-idx="${idx}" style="display:flex;justify-content:space-between;align-items:center;background:rgba(255,255,255,0.03);border:1px solid #444;border-radius:8px;padding:8px 12px;margin-bottom:4px;cursor:pointer;">
+          <span style="color:#ccc;font-size:13px;">📦 ${item.name}</span>
+          <span style="color:#888;font-size:11px;">${item.desc || ''}</span>
+          <button class="btn-use-item" data-idx="${idx}" style="background:#44cc44;border:none;color:#000;padding:4px 10px;border-radius:4px;font-size:11px;cursor:pointer;">使用</button>
+        </div>`;
+      } else if (item.type === 'equipment') {
+        const e = item.equipment;
+        const stats = [];
+        if (e.atk) stats.push('ATK+'+e.atk);
+        if (e.def) stats.push('DEF+'+e.def);
+        if (e.spd) stats.push('SPD+'+e.spd);
+        if (e.crt) stats.push('CRT+'+e.crt);
+        return `<div class="inv-item" data-idx="${idx}" style="display:flex;justify-content:space-between;align-items:center;background:rgba(255,255,255,0.03);border:1px solid ${e.rarityColor||'#444'};border-radius:8px;padding:8px 12px;margin-bottom:4px;">
+          <span style="color:${e.rarityColor||'#ccc'};font-size:13px;">⚔ ${e.name} <span style="color:#888;font-size:11px;">(${stats.join(', ')})</span></span>
+          <button class="btn-equip-item" data-idx="${idx}" data-slot="${e.slot}" style="background:#4488ff;border:none;color:#fff;padding:4px 10px;border-radius:4px;font-size:11px;cursor:pointer;">装备</button>
+        </div>`;
+      }
+      return '';
+    }).join('');
+    
+    // 使用消耗品
+    inv.querySelectorAll('.btn-use-item').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const idx = parseInt(btn.dataset.idx);
+        const item = p.inventory[idx];
+        if (!item) return;
+        if (item.effect?.healPercent) {
+          const heal = Math.floor(p.maxHp * item.effect.healPercent);
+          p.hp = Math.min(p.maxHp, p.hp + heal);
+        }
+        if (item.effect?.manaRestore) {
+          p.mana = Math.min(p.maxMana, (p.mana||0) + item.effect.manaRestore);
+        }
+        p.inventory.splice(idx, 1);
+        renderInventoryItems();
+      });
+    });
+    
+    // 装备
+    inv.querySelectorAll('.btn-equip-item').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const idx = parseInt(btn.dataset.idx);
+        const item = p.inventory[idx];
+        if (!item?.equipment) return;
+        const slot = item.equipment.slot;
+        // 如果已有装备，放回背包
+        if (p[slot]) {
+          p.inventory.push({ type: 'equipment', equipment: p[slot] });
+        }
+        p[slot] = item.equipment;
+        p.inventory.splice(idx, 1);
+        renderInventoryItems();
+      });
+    });
+  }
+
+  // 初始化背包视图
+  const invContainer = document.getElementById('inv-items-container');
+  if (invContainer) renderInventoryItems();
 
   const close = () => {
     overlay.innerHTML = '';

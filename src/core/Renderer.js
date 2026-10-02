@@ -830,6 +830,22 @@ export class Renderer {
         case 'poison': ctx.fillStyle = '#88ff44'; break;
         case 'info': ctx.fillStyle = '#88aacc'; break;
         case 'separator': ctx.fillStyle = '#333'; break;
+        // ── 新系统颜色 ──
+        case 'boss_phase': ctx.fillStyle = '#ff4488'; break;
+        case 'boss_special': ctx.fillStyle = '#ff2266'; break;
+        case 'block': ctx.fillStyle = '#4488ff'; break;
+        case 'talent_save': ctx.fillStyle = '#ffdd44'; break;
+        case 'enemy_heal': ctx.fillStyle = '#44ff88'; break;
+        case 'enemy_enrage': ctx.fillStyle = '#ff6644'; break;
+        case 'enemy_dodge': ctx.fillStyle = '#aaaaaa'; break;
+        case 'enemy_shield': ctx.fillStyle = '#6688cc'; break;
+        case 'enemy_revive': ctx.fillStyle = '#ff44ff'; break;
+        case 'enemy_hurt': ctx.fillStyle = '#ff8844'; break;
+        case 'elemental_advantage': ctx.fillStyle = '#ff8844'; break;
+        case 'elemental_resist': ctx.fillStyle = '#6688aa'; break;
+        case 'elemental_resonance': ctx.fillStyle = '#ffcc44'; break;
+        case 'loot': ctx.fillStyle = '#ffcc44'; break;
+        case 'loot_equipment': ctx.fillStyle = entry.color || '#aa44ff'; break;
         default: ctx.fillStyle = COLORS.TEXT_DIM;
       }
       ctx.fillText(entry.text, x + 16, y + 52 + (i - startIdx) * 22);
