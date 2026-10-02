@@ -22,6 +22,7 @@ import { calcElementalModifier, getPlayerActiveElements, getEnemyElement, checkE
 import { generateLoot, formatLootLog, applyLoot } from './LootSystem.js';
 import { getCompanionCombatBonus } from './RelationshipSystem.js';
 import { generateCombatDialogue, getVictoryComment } from './CompanionDialogue.js';
+import { COMPANION_PROFILES } from './RelationshipSystem.js';
 
 // ── 伤害计算 ──
 export function calcDamage(attacker, defender, damageType = DAMAGE_TYPE.PHYSICAL, minDmg = 1) {
@@ -873,15 +874,69 @@ export function executeBattle(enemy) {
 
     eventBus.emit('combat:victory', { enemy, rewards, log });
   } else {
-    p.hp = 0;
-    p.mana = playerMana;
-    log.push({ text: `被 ${enemy.name} 击败了...`, type: 'defeat' });
-    eventBus.emit('combat:defeat', { enemy, log });
-    gameState.stats.deathCount++;
-    eventBus.emit('player:death', {});
+    // ── 同伴救援机会（高关系限定）──
+    let companionRescue = false;
+    try {
+      const aliveComps = (gameState.companions || []).filter(c => c.alive);
+      const bondCompanions = aliveComps.filter(c => 
+        (gameState.relationships?.[c.id] || 0) >= 71
+      );
+      // 羁绊同伴有35%概率救援（最多尝试3次）
+      for (const bc of bondCompanions.slice(0, 3)) {
+        if (Math.random() < 0.35) {
+          companionRescue = true;
+          const profile = COMPANION_PROFILES?.[bc.id];
+          const name = profile?.name || bc.name || bc.id;
+          playerHp = Math.max(1, Math.floor(p.maxHp * 0.15));
+          p.hp = playerHp;
+          log.push({ text: ``, type: 'separator' });
+          log.push({ text: `✦ ${name}的羁绊之力发动！`, type: 'companion_rescue' });
+          log.push({ text: `💬 ${name}：「我不会让你倒下的！」`, type: 'companion_dialogue', color: '#ffaa00' });
+          log.push({ text: `HP恢复至 ${playerHp}！`, type: 'heal' });
+          // 继续战斗几回合
+          for (let extra = 0; extra < 5 && enemyHp > 0 && playerHp > 0; extra++) {
+            const pRes = calcDamage(
+              { atk: Math.floor(pAtk * 1.2), crt: pCrt + 10, geneLock: p.geneLock },
+              { ...enemy, def: bossPhases ? effectiveEnemyDef : enemy.def },
+              p.weapon?.damageType || DAMAGE_TYPE.PHYSICAL
+            );
+            enemyHp -= pRes.damage;
+            log.push({ text: `⚔ 绝地反击！${pRes.damage}${pRes.isCrit ? ' 暴击！' : ''}`, type: 'critical' });
+            if (enemyHp <= 0) break;
+            const eRes = calcDamage(
+              { atk: bossPhases ? effectiveEnemyAtk : enemyEffAtk, crt: enemy.crt || 0 },
+              { def: Math.floor(pDef * 1.3), res: p.res || 0 },
+              enemy.damageType || DAMAGE_TYPE.PHYSICAL, 0
+            );
+            playerHp -= eRes.damage;
+          }
+          if (enemyHp <= 0) {
+            p.hp = Math.max(1, playerHp);
+            gameState.stats.enemiesKilled++;
+            const rewards = enemy.rewards || {};
+            if (rewards.exp) gameState.addExp(rewards.exp);
+            if (rewards.gold) p.gold += rewards.gold;
+            log.push({ text: `✦ 在${name}的支援下击败了 ${enemy.name}！`, type: 'victory' });
+            eventBus.emit('combat:victory', { enemy, rewards, log });
+            return { victory: true, log, rounds: round, companionRescue: true };
+          }
+          p.hp = Math.max(0, playerHp);
+          break;
+        }
+      }
+    } catch {}
+    
+    if (!companionRescue || p.hp <= 0) {
+      p.hp = 0;
+      p.mana = playerMana;
+      log.push({ text: `被 ${enemy.name} 击败了...`, type: 'defeat' });
+      eventBus.emit('combat:defeat', { enemy, log });
+      gameState.stats.deathCount++;
+      eventBus.emit('player:death', {});
+    }
   }
 
-  return { victory, log, rounds: round };
+  return { victory: enemyHp <= 0, log, rounds: round };
 }
 
 // ── 有效属性计算 ──
