@@ -266,6 +266,9 @@ function menuLoop() {
 function startNewGame() {
   // 重置状态
   gameState.reset();
+  // 重置线索收集
+  loreTracker.fromJSON({ discovered: [] });
+  try { localStorage.removeItem("ih_lore"); } catch {}
 
   // 初始化音频
   audioEngine.init();
@@ -1625,6 +1628,32 @@ function showInventoryPanel() {
               '</div>';
             }).join('')}
           </div>
+        </div>
+
+
+        <!-- 线索收集 -->
+        <div style="margin-top: 20px; border-top: 1px solid #333; padding-top: 16px;">
+          <h3 style="color: #ffcc44; margin-bottom: 10px;">📖 环境线索 <span style="color:#888;font-size:11px;">(${loreTracker.getDiscoveredCount()}/${loreTracker.getTotalCount()})</span></h3>
+          ${(() => {
+            const discovered = loreTracker.getDiscoveredCount();
+            const total = loreTracker.getTotalCount();
+            const pct = total > 0 ? Math.floor(discovered / total * 100) : 0;
+            const chapters = [1,2,3,4,5,7,10,12];
+            let html = '<div style="margin-bottom:8px;"><div style="background:#1a1a2a;border-radius:3px;height:6px;overflow:hidden;"><div style="background:linear-gradient(90deg,#ffcc44,#ff8800);width:' + pct + '%;height:100%;border-radius:3px;"></div></div><p style="color:#666;font-size:10px;text-align:right;margin-top:2px;">' + pct + '% 收集</p></div>';
+            html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;">';
+            for (const ch of chapters) {
+              const found = loreTracker.getDiscoveredByChapter(ch);
+              const chTotal = Object.entries(LORE_ENTRIES).filter(([,e]) => e.chapter === ch).length;
+              const chLabel = '第' + ch + '章';
+              if (found.length > 0) {
+                html += found.map(f => '<div style="padding:4px 8px;background:rgba(255,204,68,0.08);border:1px solid rgba(255,204,68,0.2);border-radius:4px;"><span style="font-size:12px;">' + (f.icon||'📖') + '</span> <span style="color:#ddc866;font-size:11px;">' + f.title + '</span><p style="color:#776633;font-size:10px;margin-top:2px;">' + chLabel + '</p></div>').join('');
+              } else if (chTotal > 0) {
+                html += '<div style="padding:4px 8px;background:rgba(255,255,255,0.02);border:1px solid #333;border-radius:4px;"><span style="color:#555;font-size:11px;">❓ ' + chLabel + ' — 未发现</span></div>';
+              }
+            }
+            html += '</div>';
+            return html;
+          })()}
         </div>
 
         <div style="text-align: center; margin-top: 24px;">
