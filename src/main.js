@@ -1380,6 +1380,53 @@ function pickupItem(item) {
 function triggerEvent(entity) {
   const evt = entity.event;
   if (!evt) return;
+
+  // ── 陷阱事件 ──
+  if (evt.isTrap && evt.trapType) {
+    const result = fireTrap(evt.trapType, gameState.chapter || 1);
+    const p = gameState.player;
+    if (result.dodged) {
+      renderer.addFloatText('💨 闪避!', p.x, p.y - 1, 'rgb(100, 255, 200)');
+      audioEngine.playPickup();
+    } else {
+      renderer.addFloatText(`-${result.damage}`, p.x, p.y - 1, 'rgb(255, 80, 80)');
+      renderer.shake(4, 200);
+      renderer.flash('rgba(255, 50, 50)', 150);
+      audioEngine.playDamage();
+    }
+    // 移除已触发陷阱
+    const idx = entities.indexOf(entity);
+    if (idx >= 0) entities.splice(idx, 1);
+    startDialogue([{ text: result.effect, speaker: '系统' }]);
+    return;
+  }
+
+  // ── 宝箱事件 ──
+  if (evt.isChest && evt.chestType) {
+    const result = openChest(evt.chestType, gameState.chapter || 1);
+    const p = gameState.player;
+    if (!result.success) {
+      startDialogue([{ text: result.message, speaker: '系统' }]);
+      return;
+    }
+    audioEngine.playPickup();
+    if (result.trapResult && !result.trapResult.dodged) {
+      renderer.shake(3, 150);
+      renderer.flash('rgba(255, 100, 0)', 100);
+    }
+    // 显示奖励浮字
+    result.loot.forEach((item, i) => {
+      const text = item.type === 'gold' ? `+${item.value}G` : item.type === 'exp' ? `+${item.value}EXP` : item.type === 'heal' ? `+${item.value}HP` : `+${item.stat || item.type}`;
+      const color = item.type === 'gold' ? 'rgb(255,204,68)' : item.type === 'exp' ? 'rgb(170,136,255)' : 'rgb(100,255,150)';
+      renderer.addFloatText(text, p.x + i * 0.3, p.y - 1 - i * 0.4, color);
+    });
+    // 移除已开宝箱
+    const idx = entities.indexOf(entity);
+    if (idx >= 0) entities.splice(idx, 1);
+    startDialogue([{ text: result.message, speaker: '系统' }]);
+    return;
+  }
+
   audioEngine.playDialogue();
 
   // 检查是否已触发
