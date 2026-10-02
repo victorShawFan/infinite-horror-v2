@@ -47,6 +47,7 @@ import { ngPlusState, formatClearScreen, formatCycleInfo, TITLES } from './core/
 import { fadeBlackTransition, chapterIntroTransition, floorTransition, victoryFlash } from './core/TransitionSystem.js';
 import { MiniMap } from './core/MiniMap.js';
 import { atmosphereRenderer } from './core/AtmosphereSystem.js';
+import { tutorialManager } from './core/TutorialSystem.js';
 
 // ── 全局状态 ──
 let renderer;
@@ -227,6 +228,7 @@ function showMainMenu() {
     if (gameState.load(0)) {
       try { const ms = localStorage.getItem('ih_milestones'); if (ms) milestoneTracker.fromJSON(JSON.parse(ms)); } catch {}
       try { const lr = localStorage.getItem('ih_lore'); if (lr) loreTracker.fromJSON(JSON.parse(lr)); } catch {}
+      try { const tt = localStorage.getItem('ih_tutorial'); if (tt) tutorialManager.fromJSON(JSON.parse(tt)); } catch {}
       try { if (window._miniMap) { const mm = localStorage.getItem('ih_minimap'); if (mm) window._miniMap.fromJSON(JSON.parse(mm)); } } catch {}
       try { const br = localStorage.getItem('ih_bestiary'); if (br) bestiary.fromJSON(JSON.parse(br)); } catch {}
       try { const ng = localStorage.getItem('ih_ngplus'); if (ng) ngPlusState.fromJSON(JSON.parse(ng)); } catch {}
@@ -337,6 +339,8 @@ function startNewGame() {
 
 function startGame() {
   menuState = 'playing';
+  // 新手引导
+  tutorialManager.trigger('game_start');
   document.getElementById('ui-overlay').innerHTML = '';
   combatAnimator = new CombatAnimator(renderer);
 
@@ -659,6 +663,7 @@ document.addEventListener('keydown', (e) => {
     gameState.save(0);
     try { localStorage.setItem('ih_milestones', JSON.stringify(milestoneTracker.toJSON())); } catch {}
     try { localStorage.setItem('ih_lore', JSON.stringify(loreTracker.toJSON())); } catch {}
+    try { localStorage.setItem('ih_tutorial', JSON.stringify(tutorialManager.toJSON())); } catch {}
     try { if (window._miniMap) localStorage.setItem('ih_minimap', JSON.stringify(window._miniMap.toJSON())); } catch {}
     try { localStorage.setItem('ih_ngplus', JSON.stringify(ngPlusState.toJSON())); } catch {}
     renderer.notify('💾 手动存档完成', '#44ff88', 90);
@@ -882,6 +887,8 @@ function movePlayer(dx, dy) {
   p.y = ny;
   gameState.turn++;
   gameState.stats.turnsPlayed++;
+  gameState.stats.stepsWalked = (gameState.stats.stepsWalked || 0) + 1;
+  if (gameState.stats.stepsWalked === 1) tutorialManager.trigger("first_move");
 
   // 潜行系统 — 移动噪音 + 噪音衰减
   onPlayerMove();
@@ -904,6 +911,7 @@ function movePlayer(dx, dy) {
 
 // ── 战前确认 ──
 function showCombatConfirm(enemy) {
+  tutorialManager.trigger('first_combat_confirm');
   const p = gameState.player;
   // 难度缩放：根据章节动态调整敌人属性
   const scaledEnemy = scaleEnemy(enemy, gameState.chapter);
