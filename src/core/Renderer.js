@@ -829,6 +829,33 @@ export class Renderer {
       } else if (theme.startsWith('alien')) {
         color = `rgba(${30 + Math.random()*20}, ${40 + Math.random()*30}, ${80 + Math.random()*40},`;
         size = 1 + Math.random() * 1.5;
+      } else if (theme.startsWith('juon')) {
+        color = `rgba(${60 + Math.random()*30}, ${40 + Math.random()*20}, ${50 + Math.random()*30},`;
+        size = 0.8 + Math.random() * 1;
+      } else if (theme.startsWith('desert') || theme.startsWith('tomb')) {
+        color = `rgba(${120 + Math.random()*40}, ${100 + Math.random()*30}, ${50 + Math.random()*20},`;
+        size = 1 + Math.random() * 1.5;
+      } else if (theme.startsWith('modern')) {
+        color = `rgba(${80 + Math.random()*30}, ${80 + Math.random()*30}, ${90 + Math.random()*30},`;
+        size = 0.5 + Math.random() * 0.8;
+      } else if (theme === 'mental_space' || theme === 'spirit') {
+        color = `rgba(${40 + Math.random()*20}, ${40 + Math.random()*20}, ${120 + Math.random()*60},`;
+        size = 1 + Math.random() * 2;
+      } else if (theme === 'biolab') {
+        color = `rgba(${60 + Math.random()*40}, ${80 + Math.random()*40}, ${30 + Math.random()*20},`;
+        size = 1 + Math.random() * 1.5;
+      } else if (theme === 'jungle') {
+        color = `rgba(${30 + Math.random()*20}, ${80 + Math.random()*40}, ${20 + Math.random()*15},`;
+        size = 1.5 + Math.random() * 2;
+      } else if (theme === 'scifi_base' || theme === 'mech') {
+        color = `rgba(${40 + Math.random()*20}, ${50 + Math.random()*20}, ${90 + Math.random()*40},`;
+        size = 0.8 + Math.random() * 1;
+      } else if (theme === 'fantasy') {
+        color = `rgba(${60 + Math.random()*30}, ${70 + Math.random()*30}, ${40 + Math.random()*20},`;
+        size = 1 + Math.random() * 1.5;
+      } else if (theme === 'nightmare') {
+        color = `rgba(${100 + Math.random()*50}, ${20 + Math.random()*20}, ${60 + Math.random()*40},`;
+        size = 1.5 + Math.random() * 2;
       } else {
         color = `rgba(${150 + Math.random()*50}, ${150 + Math.random()*50}, ${160 + Math.random()*50},`;
         size = 0.8 + Math.random() * 1.2;
