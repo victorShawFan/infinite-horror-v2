@@ -486,6 +486,11 @@ export class Renderer {
     if (e.type === ENTITY_TYPE.ENEMY || e.type === ENTITY_TYPE.BOSS) {
       const preview = previewBattle(p, e);
       lines.push(`HP: ${e.hp}  ATK: ${e.atk}  DEF: ${e.def}`);
+      if (e.weaknesses?.length) {
+        const wMap = { fire: '🔥火', ice: '❄冰', poison: '☠毒', psychic: '🧠念', dark: '🌑暗', holy: '✦圣' };
+        lines.push('弱点: ' + e.weaknesses.map(w => wMap[w] || w).join(' '));
+      }
+      if (e.res) lines.push(`法抗: ${e.res}%`);
       // 描述自动换行（短句显示）
       if (e.description) {
         const desc = e.description;
@@ -743,12 +748,18 @@ export class Renderer {
     for (let i = startIdx; i < result.log.length; i++) {
       const entry = result.log[i];
       switch (entry.type) {
-        case 'attack': case 'critical': ctx.fillStyle = '#ffcc88'; break;
+        case 'attack': ctx.fillStyle = '#ffcc88'; break;
+        case 'critical': ctx.fillStyle = '#ffaa00'; break;
         case 'enemy_attack': ctx.fillStyle = '#ff8888'; break;
         case 'victory': ctx.fillStyle = COLORS.TEXT_HEAL; break;
         case 'defeat': ctx.fillStyle = COLORS.TEXT_DANGER; break;
         case 'reward': ctx.fillStyle = COLORS.TEXT_GOLD; break;
         case 'danger': ctx.fillStyle = COLORS.TEXT_DANGER; break;
+        case 'heal': ctx.fillStyle = '#88ffaa'; break;
+        case 'buff': ctx.fillStyle = '#66ccff'; break;
+        case 'spell': ctx.fillStyle = '#cc88ff'; break;
+        case 'burn': ctx.fillStyle = '#ff8833'; break;
+        case 'reflect': ctx.fillStyle = '#6699ff'; break;
         default: ctx.fillStyle = COLORS.TEXT_DIM;
       }
       ctx.fillText(entry.text, x + 16, y + 52 + (i - startIdx) * 22);

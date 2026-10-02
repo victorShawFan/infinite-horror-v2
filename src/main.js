@@ -631,6 +631,8 @@ function showCombatConfirm(enemy) {
             <p style="color:#eee; font-size:13px;">HP <span style="color:#ff6666">${enemy.hp}</span></p>
             <p style="color:#ff8866; font-size:12px;">ATK ${enemy.atk}</p>
             <p style="color:#6688ff; font-size:12px;">DEF ${enemy.def}</p>
+            ${enemy.weaknesses?.length ? '<p style="color:#ff8833;font-size:10px;">弱点: ' + enemy.weaknesses.map(w => ({fire:'🔥火',ice:'❄冰',poison:'☠毒',psychic:'🧠念',dark:'🌑暗',holy:'✦圣'}[w]||w)).join(' ') + '</p>' : ''}
+            ${enemy.res ? '<p style="color:#8888aa;font-size:10px;">法抗: ' + enemy.res + '%</p>' : ''}
           </div>
         </div>
         
