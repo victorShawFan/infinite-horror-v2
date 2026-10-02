@@ -578,6 +578,10 @@ export class Renderer {
         lines.push(`✗ 无法击败！差距过大`);
         lines.push(`需要ATK>${e.def}才能造成伤害`);
       }
+      // 显示特性和Boss相位警告
+      if (preview.warnings && preview.warnings.length > 0) {
+        lines.push('特性: ' + preview.warnings.join(' / '));
+      }
       if (e.rewards) {
         const r = e.rewards;
         lines.push(`奖励: ${r.exp || 0}EXP  ${r.gold || 0}G`);

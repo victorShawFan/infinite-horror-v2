@@ -161,14 +161,37 @@ export function previewBattle(player, enemy) {
   }
   const totalWithAcid = totalDamage + acidDmg;
 
+  // ── 调整预判：Boss相位+敌人特性增加实际伤害 ──
+  let adjustedDmg = totalWithAcid;
+  const traits = enemy.traits || [];
+  
+  if (enemy.bossId) adjustedDmg = Math.floor(adjustedDmg * 1.5);
+  if (traits.includes('thorns')) adjustedDmg = Math.floor(adjustedDmg * 1.15);
+  if (traits.includes('regen')) adjustedDmg = Math.floor(adjustedDmg * 1.20);
+  if (traits.includes('undying')) adjustedDmg = Math.floor(adjustedDmg * 1.25);
+  if (traits.includes('swift')) adjustedDmg = Math.floor(adjustedDmg * 1.10);
+  if (traits.includes('enrage')) adjustedDmg = Math.floor(adjustedDmg * 1.20);
+  if (traits.includes('poisonous')) adjustedDmg = Math.floor(adjustedDmg * 1.10);
+  if (traits.includes('shield')) adjustedDmg = Math.floor(adjustedDmg * 1.10);
+
+  // 预判标签
+  const warnings = [];
+  if (enemy.bossId) warnings.push('Boss多相位');
+  for (const t of traits) {
+    const names = { thorns:'荆棘', regen:'再生', undying:'不死', swift:'迅捷', 
+                    enrage:'狂怒', evasive:'闪避', shield:'护盾', poisonous:'剧毒',
+                    armored:'重甲', vampiric:'吸血' };
+    if (names[t]) warnings.push(names[t]);
+  }
+
   return {
-    canWin: player.hp > totalWithAcid,
-    totalDamage: totalWithAcid,
+    canWin: player.hp > adjustedDmg,
+    totalDamage: adjustedDmg,
     turnsNeeded,
     playerDmgPerHit: playerDmg,
     enemyDmgPerHit: enemyDmg,
     rewards: enemy.rewards || {},
-    hpAfter: player.hp - totalWithAcid,
+    hpAfter: player.hp - adjustedDmg,
     acidDmg,
     isDouble,
     burnDmg: chipFx.burnDmg,
@@ -180,6 +203,8 @@ export function previewBattle(player, enemy) {
     effectiveDmgPerRound,
     hasSkills,
     availableSkills: skills.map(s => s.name),
+    warnings,
+    originalDamage: totalWithAcid,
   };
 }
 
@@ -306,6 +331,21 @@ export function executeBattle(enemy) {
     }
   } catch {}
 
+  // ── 战前自动使用消耗品（HP<50%时使用修复包） ──
+  try {
+    const inv = p.inventory || [];
+    if (playerHp < p.maxHp * 0.5) {
+      const healIdx = inv.findIndex(item => item.type === 'consumable' && item.effect?.healPercent);
+      if (healIdx >= 0) {
+        const item = inv[healIdx];
+        const healAmt = Math.floor(p.maxHp * item.effect.healPercent);
+        playerHp = Math.min(p.maxHp, playerHp + healAmt);
+        inv.splice(healIdx, 1);
+        log.push({ text: `📦 战前使用 ${item.name}！恢复 ${healAmt} HP`, type: 'heal' });
+      }
+    }
+  } catch {}
+
   while (enemyHp > 0 && playerHp > 0) {
     round++;
     combatState.turn = round;
@@ -337,6 +377,14 @@ export function executeBattle(enemy) {
         }
       }
     }
+
+    // ── 敌人特性：每回合再生 ──
+    if ((enemy.traits || []).includes('regen') && enemyHp > 0 && enemyHp < enemyMaxHp) {
+      const regenAmt = Math.max(1, Math.floor(enemyMaxHp * 0.05));
+      enemyHp = Math.min(enemyMaxHp, enemyHp + regenAmt);
+      if (round <= 6) log.push({ text: `🔄 ${enemy.name}再生 +${regenAmt} HP`, type: 'enemy_heal' });
+    }
+    // ── 敌人特性：护盾（前2回合减伤） ──
 
     // ── 天赋：处决伤害（每N回合） ──
     if (talentFx.executeDmg && round % talentFx.executeDmg.interval === 0 && enemyHp > 0) {
@@ -388,6 +436,15 @@ export function executeBattle(enemy) {
     const mcBuff = (combatState.statusEffects?.player || []).find(e => e.type === STATUS_EFFECT.BUFF_ATK);
     if (mcBuff && mcBuff.value > 50) atkMultiplier = 2; // muscle_control gives 100% buff
 
+    // ── 敌人特性：狂怒（低HP增攻） ──
+    let enemyEnrageMult = 1;
+    if ((enemy.traits || []).includes('enrage') && enemyHp < enemyMaxHp * 0.5) {
+      enemyEnrageMult = 1.4;
+      if (round <= 6 || round === Math.ceil(enemyMaxHp * 0.5 / 77)) {
+        log.push({ text: `🔥 ${enemy.name}陷入狂怒！ATK +40%`, type: 'enemy_enrage' });
+      }
+    }
+
     // ── 天赋：狂暴（低HP加攻） ──
     let berserkMult = 1;
     if (talentFx.berserkerThreshold && playerHp < p.maxHp * talentFx.berserkerThreshold) {
@@ -429,6 +486,20 @@ export function executeBattle(enemy) {
         const steal = Math.max(1, Math.floor(pHit.damage * 0.1));
         playerHp = Math.min(p.maxHp, playerHp + steal);
         log.push({ text: `🩸 吸血 +${steal} HP`, type: 'heal' });
+      }
+
+      // ── 敌人特性：荆棘反伤 ──
+      if ((enemy.traits || []).includes('thorns') && pHit.damage > 0) {
+        const thornDmg = Math.max(1, Math.floor(pHit.damage * 0.15));
+        playerHp -= thornDmg;
+        if (round <= 6 || i === 0) log.push({ text: `🌿 荆棘反弹 ${thornDmg}！`, type: 'reflect' });
+      }
+
+      // ── 敌人特性：护盾（前2回合减伤50%） ──
+      if ((enemy.traits || []).includes('shield') && round <= 2 && pHit.damage > 0) {
+        const shieldRestore = Math.floor(pHit.damage * 0.5);
+        enemyHp += shieldRestore;
+        if (i === 0) log.push({ text: `🛡 护盾减免 ${shieldRestore}！`, type: 'enemy_shield' });
       }
     }
 
@@ -509,9 +580,13 @@ export function executeBattle(enemy) {
         log.push({ text: `💨 天赋闪避！躲开了 ${enemy.name} 的攻击`, type: 'dodge' });
       } else {
 
-      // ── 敌人攻击 ──
+      // ── 敌人特性：幻影闪避 ──
+      const enemyDodged = (enemy.traits || []).includes('evasive') && Math.random() < 0.15;
+      // (闪避在上方天赋闪避之外，这里仅标记用于日志)
+
+      // ── 敌人攻击（含狂怒加成） ──
       const eHit = calcDamage(
-        { atk: bossPhases ? effectiveEnemyAtk : enemyEffAtk, crt: enemy.crt || 0 },
+        { atk: Math.floor((bossPhases ? effectiveEnemyAtk : enemyEffAtk) * enemyEnrageMult), crt: enemy.crt || 0 },
         { def: pDef, res: p.res || 0 },
         enemy.damageType || DAMAGE_TYPE.PHYSICAL,
         0
@@ -575,6 +650,31 @@ export function executeBattle(enemy) {
         log.push({ text: `🛡 武修反伤 ${reflect}`, type: 'reflect' });
       }
 
+      // ── 敌人特性：迅捷（20%双击） ──
+      if ((enemy.traits || []).includes('swift') && Math.random() < 0.20 && enemyHp > 0 && playerHp > 0) {
+        const eHit2 = calcDamage(
+          { atk: Math.floor((bossPhases ? effectiveEnemyAtk : enemyEffAtk) * enemyEnrageMult), crt: enemy.crt || 0 },
+          { def: pDef, res: p.res || 0 },
+          enemy.damageType || DAMAGE_TYPE.PHYSICAL, 0
+        );
+        playerHp -= eHit2.damage;
+        if (eHit2.damage > 0) log.push({ text: `⚡ ${enemy.name}二连击！${eHit2.damage}`, type: 'enemy_attack' });
+      }
+
+      // ── 敌人特性：吸血 ──
+      if ((enemy.traits || []).includes('vampiric') && eHit && eHit.damage > 0 && enemyHp > 0) {
+        const vampHeal = Math.max(1, Math.floor(eHit.damage * 0.20));
+        enemyHp = Math.min(enemyMaxHp, enemyHp + vampHeal);
+        if (round <= 6) log.push({ text: `🩸 ${enemy.name}吸血 +${vampHeal}`, type: 'enemy_heal' });
+      }
+
+      // ── 敌人特性：剧毒 ──
+      if ((enemy.traits || []).includes('poisonous') && playerHp > 0) {
+        const poisonDmg = Math.max(1, Math.floor(p.maxHp * 0.03));
+        playerHp -= poisonDmg;
+        if (round <= 6) log.push({ text: `☠ 中毒！-${poisonDmg} HP`, type: 'poison' });
+      }
+
       } // close talent dodge else
     } else {
       log.push({ text: `💫 ${enemy.name} 处于控制状态，无法行动！`, type: 'control' });
@@ -582,6 +682,30 @@ export function executeBattle(enemy) {
 
     // ── 回合结束：冷却递减 ──
     tickCooldowns(combatState);
+  }
+
+  // ── 敌人特性：不死（首次击杀恢复20%HP） ──
+  if (enemyHp <= 0 && (enemy.traits || []).includes('undying') && !enemy._revived) {
+    enemy._revived = true;
+    const reviveHp = Math.floor(enemyMaxHp * 0.20);
+    enemyHp = reviveHp;
+    log.push({ text: `💀 ${enemy.name}从死亡中复活！HP恢复至${reviveHp}`, type: 'enemy_revive' });
+    // 继续战斗 — 简化处理：额外几回合
+    for (let extraRound = 0; extraRound < 10 && enemyHp > 0 && playerHp > 0; extraRound++) {
+      const pExtra = calcDamage(
+        { atk: pAtk, crt: pCrt, geneLock: p.geneLock },
+        { ...enemy, def: bossPhases ? effectiveEnemyDef : enemy.def },
+        p.weapon?.damageType || DAMAGE_TYPE.PHYSICAL
+      );
+      enemyHp -= pExtra.damage;
+      if (enemyHp <= 0) break;
+      const eExtra = calcDamage(
+        { atk: bossPhases ? effectiveEnemyAtk : enemyEffAtk, crt: enemy.crt || 0 },
+        { def: pDef, res: p.res || 0 },
+        enemy.damageType || DAMAGE_TYPE.PHYSICAL, 0
+      );
+      playerHp -= eExtra.damage;
+    }
   }
 
   const victory = enemyHp <= 0;

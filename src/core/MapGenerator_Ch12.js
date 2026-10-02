@@ -22,7 +22,7 @@ function f12_2(){const g=makeGrid();carveRoom(g,1,1,7,6);carveCorridor(g,7,3,10,
 
 // ═══ 12-3 亚当补全战线 ═══
 function f12_3(){const g=makeGrid();carveRoom(g,1,1,5,5);carveCorridor(g,5,3,9,3);carveRoom(g,9,1,14,5);carveCorridor(g,11,5,11,9);carveRoom(g,8,9,14,13);carveRoom(g,1,8,6,12);carveCorridor(g,4,5,4,8);carveCorridor(g,6,10,8,10);carveRoom(g,15,9,19,14);carveCorridor(g,14,11,15,11);g[13][18]=TILE.STAIRS;return{id:'12-3',name:'亚当补全战线',subtitle:'亚当——主神系统的终极创造物。它开始行动了。',bgColor:'#140808',theme:'biolab',tiles:g,width:W,height:H,playerStart:{x:3,y:3},entities:[
-{type:ENTITY_TYPE.BOSS,id:'boss_adam',name:'亚当',x:11,y:9,sprite:'☠',color:'#cc0000',hp:450,atk:48,def:22,spd:14,rewards:{exp:400,gold:300,rewardPoints:500},lore:'主神的终极创造物。拥有无法计算的战斗力。'},
+{type:ENTITY_TYPE.BOSS,id:'boss_adam',bossId:'divine_vanguard',damageType:'holy',traits:['undying','regen'],name:'亚当',x:11,y:9,sprite:'☠',color:'#cc0000',hp:450,atk:48,def:22,spd:14,rewards:{exp:400,gold:300,rewardPoints:500},lore:'主神的终极创造物。拥有无法计算的战斗力。'},
 {type:ENTITY_TYPE.ENEMY,id:'adam_spawn',name:'亚当触手',x:4,y:10,sprite:'🦑',color:'#aa2222',hp:100,atk:38,def:10,spd:16,rewards:{exp:80,gold:55}},
 {type:ENTITY_TYPE.ITEM,id:'medkit_ch12_3',name:'生命之泉',x:17,y:12,sprite:'♥',color:'#44ffaa',itemType:'consumable',effect:{heal:180}},
 {type:ENTITY_TYPE.ITEM,id:'def_ch12',name:'最终防御结晶',x:2,y:9,sprite:'◆',color:'#4444ff',itemType:'stat_boost',effect:{def:10}},

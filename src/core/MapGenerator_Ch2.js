@@ -86,7 +86,7 @@ function generateFloor_2_1() {
         description: '一只从卵囊中爬出的抱脸虫。体型小巧但速度惊人，会直扑面部。击杀时酸血会造成少量反噬伤害。',
         acidBlood: 2, // 酸血反噬伤害
       },
-      { type: ENTITY_TYPE.ENEMY, id: 'facehugger_2', name: '抱脸虫',
+      { type: ENTITY_TYPE.ENEMY, id: 'facehugger_2', traits: ['swift'], name: '抱脸虫',
         x: 12, y: 9, sprite: '蛛', color: '#886644',
         hp: 10, atk: 8, def: 1, spd: 12, weaknesses: ['fire'],
         rewards: { exp: 20, gold: 5 },
