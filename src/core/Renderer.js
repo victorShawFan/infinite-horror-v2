@@ -30,6 +30,7 @@ export class Renderer {
     this._shakeX = 0;
     this._shakeY = 0;
     this._floatTexts = []; // { text, x, y, color, life }
+    this._saveIndicator = 0; // countdown frames
     this._particles = [];
     this._ambientParticles = [];
     this._ambientTimer = 0;
@@ -166,6 +167,7 @@ export class Renderer {
     try { atmosphereRenderer.render(ctx, this.canvas.width, this.canvas.height); } catch {}
 
     // ── HUD（固定位置）──
+    this._entities = entities;
     this._drawHUD(ctx, p, floor);
 
     // ── 全屏闪光效果 ──
@@ -493,6 +495,37 @@ export class Renderer {
     ctx.fillText(`💰 ${p.gold}G  ⬡${p.rewardPoints}`, rx, pad + 92);
     ctx.fillStyle = '#666';
     ctx.fillText(`回合 ${gameState.stats.turnsPlayed}`, rx, pad + 110);
+
+    // ── 下方：楼层信息条 ──
+    {
+      const floorName = floor?.name || '';
+      const floorEnemies = (this._entities || []).filter(e => e.type === 'enemy' || e.type === 'boss').length;
+      const floorItems = (this._entities || []).filter(e => e.type === 'item' || e.type === 'stat_boost' || e.type === 'consumable' || e.type === 'key' || e.type === 'weapon' || e.type === 'armor').length;
+      
+      if (floorName) {
+        ctx.save();
+        ctx.font = '11px "Microsoft YaHei"';
+        ctx.textAlign = 'center';
+        ctx.fillStyle = 'rgba(255,255,255,0.3)';
+        let infoText = floorName;
+        if (floorEnemies > 0) infoText += ` · ⚔${floorEnemies}`;
+        if (floorItems > 0) infoText += ` · ✦${floorItems}`;
+        ctx.fillText(infoText, CANVAS_W / 2, CANVAS_H - 8);
+        ctx.restore();
+      }
+    }
+
+    // 存档指示器
+    if (this._saveIndicator > 0) {
+      this._saveIndicator--;
+      const alpha = Math.min(1, this._saveIndicator / 30);
+      ctx.save();
+      ctx.font = '12px "Microsoft YaHei"';
+      ctx.fillStyle = `rgba(136, 136, 136, ${alpha})`;
+      ctx.textAlign = 'right';
+      ctx.fillText('💾', CANVAS_W - pad - 5, CANVAS_H - pad - 5);
+      ctx.restore();
+    }
 
     // 天赋点提醒
     try {

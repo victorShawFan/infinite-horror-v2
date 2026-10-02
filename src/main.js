@@ -1215,7 +1215,7 @@ function startCombat(enemy, preScaledEnemy) {
     }
 
     gameState.save(0); // 自动存档
-    renderer.notify('💾 自动存档', '#888888', 60);
+    try { renderer.showSaveIndicator(); } catch {}
   });
 }
 
