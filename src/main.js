@@ -1069,12 +1069,21 @@ function showInventoryPanel() {
           <div>
             <h3 style="color: #ff8866; margin-bottom: 10px;">战斗属性</h3>
             <table style="width: 100%; color: #ccc; font-size: 14px; line-height: 2;">
-              <tr><td>等级</td><td style="text-align: right; color: #ffcc44;">Lv.${p.level}</td></tr>
+              <tr><td>等级</td><td style="text-align: right; color: #ffcc44;">Lv.${p.level} <span style="color:#888;font-size:11px;">(${p.exp}/${p.expToNext} EXP)</span></td></tr>
               <tr><td>❤ 生命</td><td style="text-align: right; color: #44cc44;">${p.hp} / ${p.maxHp}</td></tr>
-              <tr><td>⚔ 攻击</td><td style="text-align: right; color: #ff8866;">${p.atk}${p.weapon ? ` (+${p.weapon.atk})` : ''}</td></tr>
-              <tr><td>🛡 防御</td><td style="text-align: right; color: #6688ff;">${p.def}${p.armor ? ` (+${p.armor.def})` : ''}</td></tr>
+              <tr><td>⚔ 攻击</td><td style="text-align: right; color: #ff8866;">
+                <span style="color:#ffcc44;font-weight:bold;">${getEffectiveAtk(p)}</span>
+                <span style="color:#665533;font-size:11px;">(${p.atk}${p.weapon ? '+' + (p.weapon.atk||0) : ''}${p.chips.filter(c=>c.stat==='atk').reduce((s,c)=>s+c.value,0) > 0 ? '+' + p.chips.filter(c=>c.stat==='atk').reduce((s,c)=>s+c.value,0) : ''})</span>
+              </td></tr>
+              <tr><td>🛡 防御</td><td style="text-align: right; color: #6688ff;">
+                <span style="color:#88aaff;font-weight:bold;">${getEffectiveDef(p)}</span>
+                <span style="color:#334466;font-size:11px;">(${p.def}${p.armor ? '+' + (p.armor.def||0) : ''}${p.chips.filter(c=>c.stat==='def').reduce((s,c)=>s+c.value,0) > 0 ? '+' + p.chips.filter(c=>c.stat==='def').reduce((s,c)=>s+c.value,0) : ''})</span>
+              </td></tr>
               <tr><td>💨 速度</td><td style="text-align: right; color: #44ffaa;">${p.spd}</td></tr>
-              <tr><td>✦ 暴击</td><td style="text-align: right; color: #ffcc44;">${p.crt}%</td></tr>
+              <tr><td>✦ 暴击</td><td style="text-align: right; color: #ffcc44;">
+                <span style="font-weight:bold;">${getEffectiveCrt(p)}%</span>
+                ${p.accessory?.crt ? '<span style="color:#555;font-size:11px;">(+' + p.accessory.crt + ')</span>' : ''}
+              </td></tr>
               <tr><td>🔑 钥匙</td><td style="text-align: right;">黄${p.keys.yellow} 蓝${p.keys.blue} 红${p.keys.red}</td></tr>
               <tr><td>💰 金币</td><td style="text-align: right; color: #ffcc44;">${p.gold}G</td></tr>
               <tr><td>⬡ 奖励点</td><td style="text-align: right; color: #ff8844;">${p.rewardPoints}</td></tr>
