@@ -124,6 +124,7 @@ export function purchaseItem(item) {
 
   // 扣费
   p.rewardPoints -= item.cost;
+  gameState.stats.goldSpent = (gameState.stats.goldSpent || 0) + item.cost;
   getPurchased().add(item.id);
 
   // 应用效果

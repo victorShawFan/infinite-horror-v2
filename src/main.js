@@ -414,6 +414,7 @@ function startGame() {
 }
 
 function loadFloor(index) {
+  if (index > 0) gameState.stats.floorsCleared++;
   if (index >= chapter.floors.length) {
     // 所有层完成 — 进入主神空间
     showChapterComplete();
@@ -1136,6 +1137,7 @@ function pickupItem(item) {
       if (item.loreId) {
         const discovered = loreTracker.discover(item.loreId);
         if (discovered) {
+          gameState.stats.loreFound++;
           const entry = LORE_ENTRIES[item.loreId];
           if (entry) {
             // Show lore popup as a dialogue
@@ -1150,6 +1152,7 @@ function pickupItem(item) {
       }
       break;
     case 'consumable':
+      gameState.stats.itemsUsed++;
       if (item.effect.heal) {
         const healed = gameState.healPlayer(item.effect.heal);
         renderer.addParticle(item.x * TILE_SIZE + TILE_SIZE/2, item.y * TILE_SIZE + TILE_SIZE/2, 'rgb(68, 255, 136)', 6);
@@ -1911,7 +1914,7 @@ function showStatsPanel() {
             <h3 style="color:#ffcc44;font-size:13px;margin-bottom:8px;">💰 经济</h3>
             <table style="width:100%;color:#aaa;font-size:12px;line-height:2;">
               <tr><td>金币获得</td><td style="text-align:right;color:#ffcc44;">${s.goldEarned || 0}G</td></tr>
-              <tr><td>金币消费</td><td style="text-align:right;color:#cc8844;">${s.goldSpent || 0}G</td></tr>
+              <tr><td>奖励点消费</td><td style="text-align:right;color:#cc8844;">${s.goldSpent || 0}RP</td></tr>
               <tr><td>物品使用</td><td style="text-align:right;color:#aaa;">${s.itemsUsed}</td></tr>
               <tr><td>技能使用</td><td style="text-align:right;color:#aa88ff;">${s.skillsUsed || 0}</td></tr>
             </table>
@@ -2306,6 +2309,7 @@ function showCombatLog() {
 // ── 章节完成 ──
 function showChapterComplete() {
   gameStarted = false;
+  gameState.stats.chaptersCleared++;
   const p = gameState.player;
   const chapterNum = gameState.chapter;
   const chapterNames = { 1: '名为生化', 2: '异形杀戮', 3: '咒怨阴影', 4: '神鬼秘宝', 5: '死神绝境', 6: '异形再临', 7: '恶魔初临', 8: '重建中洲', 9: '星河远征', 10: '五队大战', 11: '心魔与终战前奏', 12: '生化终战' };

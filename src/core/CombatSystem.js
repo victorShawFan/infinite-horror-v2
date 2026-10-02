@@ -489,6 +489,7 @@ if (chipFx.hasIceChip && enemy.atk !== enemyEffAtk) {
       const tempPlayer = { ...p, hp: playerHp, mana: playerMana, atk: pAtk, def: pDef, crt: pCrt, spd: pSpd };
       const tempEnemy = { ...enemy, hp: enemyHp };
       const skillResult = useSkill(tempPlayer, skill.id, tempEnemy, combatState);
+        gameState.stats.skillsUsed++;
       for (const entry of skillResult.log) log.push(entry);
 
       // 应用技能效果
@@ -539,7 +540,7 @@ if (chipFx.hasIceChip && enemy.atk !== enemyEffAtk) {
 
       const hitLabel = isDouble ? `[${i + 1}击] ` : '';
       const multiLabel = atkMultiplier > 1 ? ' 💪强化！' : '';
-      if (pHit.isCrit) lastCrit = true;
+      if (pHit.isCrit) { lastCrit = true; gameState.stats.criticalHits++; }
       // 天赋：暴击伤害加成
       let finalDmg = pHit.damage;
       if (pHit.isCrit && talentFx.critDmgBonus > 0) {
@@ -557,6 +558,7 @@ if (chipFx.hasIceChip && enemy.atk !== enemyEffAtk) {
         text: `${hitLabel}郑吒 → ${enemy.name} ${finalDmg}${pHit.isCrit ? ' 暴击！' : ''}${pHit.isWeak ? ' 弱点！' : ''}${multiLabel}`,
         type: pHit.isCrit ? 'critical' : 'attack',
       });
+      if (finalDmg > gameState.stats.maxSingleHit) gameState.stats.maxSingleHit = finalDmg;
 
       // 装备吸血
       if (equipLifeStealPct > 0 && pHit.damage > 0) {
@@ -818,6 +820,7 @@ if (chipFx.hasIceChip && enemy.atk !== enemyEffAtk) {
     }
 
     gameState.stats.enemiesKilled++;
+    if (enemy.bossId || enemy.type === 'boss') gameState.stats.bossesKilled++;
     gameState.stats.damageDealt += enemy.hp;
 
     const rewards = enemy.rewards || {};
