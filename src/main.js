@@ -392,6 +392,29 @@ document.addEventListener('keydown', (e) => {
     return;
   }
 
+  // 快捷保存/读档 (任何状态下可用)
+  if (e.key === 'F5') {
+    e.preventDefault();
+    gameState.save(0);
+    renderer.notify('💾 手动存档完成', '#44ff88', 90);
+    return;
+  }
+  if (e.key === 'F9') {
+    e.preventDefault();
+    if (gameState.load(0)) {
+      // 根据存档章节加载对应地图
+      const chapterGens = { 1: generateChapter1, 2: generateChapter2 };
+      const gen = chapterGens[gameState.chapter] || generateChapter1;
+      chapter = gen();
+      currentFloorIndex = gameState.nodeIndex || 0;
+      loadFloor(currentFloorIndex);
+      renderer.notify('💾 存档已加载', '#44aaff', 90);
+    } else {
+      renderer.notify('❌ 无存档', '#ff4444', 60);
+    }
+    return;
+  }
+
   // 探索模式
   if (gameState.state === GAME_STATE.EXPLORING) {
     let dx = 0, dy = 0;
@@ -1196,6 +1219,10 @@ function showHelpPanel() {
           <tr><td style="color: #aa88ff;">I</td><td>打开状态/背包</td></tr>
           <tr><td style="color: #ffcc44;">H / ?</td><td>帮助</td></tr>
           <tr><td style="color: #44ff88;">鼠标悬停</td><td>查看敌人/物品详情</td></tr>
+          <tr><td style="color: #ff8866;">L</td><td>战斗日志回顾</td></tr>
+          <tr><td style="color: #44ffff;">M</td><td>全地图视图</td></tr>
+          <tr><td style="color: #44ff88;">F5</td><td>快速存档</td></tr>
+          <tr><td style="color: #44aaff;">F9</td><td>快速读档</td></tr>
         </table>
         <hr style="border-color: #333; margin: 16px 0;">
         <h3 style="color: #ff4444; margin-bottom: 8px;">战斗提示</h3>
