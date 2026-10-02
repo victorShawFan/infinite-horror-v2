@@ -464,3 +464,31 @@ export function showChapter4Cutscene(onFinish) {
     setTimeout(() => advance(), SCENES_CH4[0].duration);
   }
 }
+
+// ═══ 第五章 过场：主神空间→死神来了世界 ═══
+const SCENES_CH5 = [
+  { bg: '/assets/scenes/lord_god_space.jpg', text: '十天。又是十天。\n每一次从主神空间出发，都意味着可能再也回不来。', duration: 3500 },
+  { bg: '/assets/scenes/lord_god_space.jpg', text: '少了零点和齐腾一的队伍显得空荡荡的。\n但新面孔王侠——一个沉默的女人——加入了。', duration: 4000 },
+  { bg: '/assets/scenes/lord_god_space.jpg', speaker: '张杰', text: '"下一个世界没有怪物。但它比任何怪物都危险。\n因为……死神会用环境本身来杀死你。"', duration: 4500 },
+  { bg: '/assets/scenes/lord_god_space.jpg', speaker: '主神', text: '"下一个世界——\n《死神来了》。\n任务：在因果连锁中存活。"', duration: 3500 },
+  { bg: '/assets/scenes/lord_god_space.jpg', text: '白光消散时，你们坐在一辆疾驰的高速巴士上。\n窗外的世界看似平常——但死亡的征兆已经悄然展开。', duration: 4500 },
+  { bg: '/assets/scenes/lord_god_space.jpg', text: '第五章', type: 'title', duration: 2000 },
+  { bg: '/assets/scenes/lord_god_space.jpg', text: '死 神 绝 境', type: 'subtitle', duration: 2500 },
+];
+
+export function showChapter5Cutscene(onFinish) {
+  const overlay = document.getElementById('ui-overlay');
+  let sceneIdx = 0;
+  const skipHandler = (e) => { if (e.key === 'Escape') { document.removeEventListener('keydown', skipHandler); overlay.innerHTML = ''; onFinish(); } };
+  document.addEventListener('keydown', skipHandler);
+  function renderScene() {
+    if (sceneIdx >= SCENES_CH5.length) { document.removeEventListener('keydown', skipHandler); overlay.innerHTML = ''; onFinish(); return; }
+    const s = SCENES_CH5[sceneIdx];
+    const isTitle = s.type === 'title', isSubtitle = s.type === 'subtitle';
+    const bgOverlay = (isTitle || isSubtitle) ? 'radial-gradient(ellipse at center, rgba(0,0,0,0.5) 0%, rgba(0,0,0,0.9) 100%)' : 'linear-gradient(180deg, rgba(0,0,0,0.3) 0%, rgba(0,0,0,0.7) 40%, rgba(0,0,0,0.95) 100%)';
+    overlay.innerHTML = `<div style="width:100%;height:100%;background-image:${bgOverlay};display:flex;align-items:${isTitle||isSubtitle?'center':'flex-end'};justify-content:center;animation:fadeIn 0.8s ease;"><div style="${isTitle?'font-size:56px;letter-spacing:12px;color:#c0c8d0;text-shadow:0 0 30px rgba(100,120,160,0.6);':''}${isSubtitle?'font-size:36px;letter-spacing:20px;color:#8899bb;text-shadow:0 0 20px rgba(100,120,160,0.4);':''}${!isTitle&&!isSubtitle?'max-width:700px;padding:30px 40px;margin-bottom:60px;background:rgba(0,0,0,0.6);border-radius:12px;border-left:3px solid rgba(100,120,160,0.5);':''}font-family:'Microsoft YaHei',sans-serif;">${s.speaker?`<p style="color:#8899bb;font-size:14px;margin-bottom:8px;letter-spacing:2px;">${s.speaker}</p>`:''}${!isTitle&&!isSubtitle?`<p style="color:#d0d0d8;font-size:18px;line-height:1.8;white-space:pre-line;">${s.text}</p>`:s.text}</div></div><style>@keyframes fadeIn{from{opacity:0}to{opacity:1}}</style>`;
+  }
+  function advance() { sceneIdx++; renderScene(); if (sceneIdx < SCENES_CH5.length) setTimeout(() => advance(), SCENES_CH5[sceneIdx]?.duration || 3000); }
+  renderScene();
+  if (SCENES_CH5.length > 0) setTimeout(() => advance(), SCENES_CH5[0].duration);
+}
