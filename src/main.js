@@ -1565,12 +1565,26 @@ function startCombat(enemy, preScaledEnemy) {
           const bkh = (e) => { if (e.key === ' ' || e.key === 'Enter') closeBossPanel(); };
           document.addEventListener('keydown', bkh);
         }, 800);
-      } else if (enemy.onDefeat) {
-        // 非Boss的特殊击败事件
-        setTimeout(() => {
-          if (enemy.onDefeat.flag) gameState.setFlag(enemy.onDefeat.flag);
-          startDialogue(enemy.onDefeat.lines);
-        }, 300);
+      } else {
+        // 非Boss战斗简报（只在消耗较大的战斗后显示）
+        const actualDmg = Math.max(0, hpBeforeCombat - gameState.player.hp);
+        const hpLostPct = Math.round(actualDmg / gameState.player.maxHp * 100);
+        if (hpLostPct >= 20 || result.rounds >= 4) {
+          // 有意义的战斗，显示简短总结
+          const summaryColor = hpLostPct < 30 ? '#44ff88' : hpLostPct < 60 ? '#ffcc44' : '#ff6644';
+          renderer.notify(
+            `⚔ ${scaledEnemy.name} · ${result.rounds}回合 · -${actualDmg}HP (${hpLostPct}%)`,
+            summaryColor, 150
+          );
+        }
+        
+        if (enemy.onDefeat) {
+          // 非Boss的特殊击败事件
+          setTimeout(() => {
+            if (enemy.onDefeat.flag) gameState.setFlag(enemy.onDefeat.flag);
+            startDialogue(enemy.onDefeat.lines);
+          }, 300);
+        }
       }
     }
 
