@@ -314,6 +314,27 @@ export function executeBattle(enemy) {
     log.push({ text: `🎯 可用技能：${availSkills.map(s => s.name).join('、')}`, type: 'info' });
   }
 
+  // ── 装备词缀：吸血和破甲 ──
+  let equipLifeStealPct = 0;
+  let equipArmorPenPct = 0;
+  if (p.weapon?.lifeStealPct) equipLifeStealPct += p.weapon.lifeStealPct;
+  if (p.armor?.lifeStealPct) equipLifeStealPct += p.armor.lifeStealPct;
+  if (p.accessory?.lifeStealPct) equipLifeStealPct += p.accessory.lifeStealPct;
+  if (p.weapon?.armorPenPct) equipArmorPenPct += p.weapon.armorPenPct;
+  if (p.armor?.armorPenPct) equipArmorPenPct += p.armor.armorPenPct;
+  if (p.accessory?.armorPenPct) equipArmorPenPct += p.accessory.armorPenPct;
+  if (equipLifeStealPct > 0) log.push({ text: `🩸 装备吸血 ${equipLifeStealPct}%`, type: 'buff' });
+  if (equipArmorPenPct > 0) log.push({ text: `🔪 装备破甲 ${equipArmorPenPct}%`, type: 'buff' });
+
+  // ── 元素共鸣状态 ──
+  let resonanceBonusDmg = 0;
+  let resonanceArmorIgnore = 0;
+  let resonanceDotMult = 1.0;
+  let resonanceStunChance = 0;
+  let resonanceHealPct = 0;
+  let resonanceCleanse = false;
+  let resonancePurify = false;
+
   // ── 元素相克提示 ──
   try {
     const playerElements = getPlayerActiveElements(p);
@@ -325,10 +346,17 @@ export function executeBattle(enemy) {
         if (mod.isResist) log.push({ text: `⚠ 元素抗性：${mod.text}`, type: 'elemental_resist' });
       }
     }
-    // 元素共鸣
+    // 元素共鸣 — 记录并应用实际效果
     const resonances = checkElementalResonance(playerElements);
     for (const r of resonances) {
       log.push({ text: `${r.icon} 元素共鸣【${r.name}】激活！`, type: 'elemental_resonance' });
+      if (r.bonusDmgPct) resonanceBonusDmg += r.bonusDmgPct;
+      if (r.armorIgnore) resonanceArmorIgnore = Math.max(resonanceArmorIgnore, r.armorIgnore);
+      if (r.dotMultiplier) resonanceDotMult = Math.max(resonanceDotMult, r.dotMultiplier);
+      if (r.stunChance) resonanceStunChance = Math.max(resonanceStunChance, r.stunChance);
+      if (r.healPct) resonanceHealPct += r.healPct;
+      if (r.cleanse) resonanceCleanse = true;
+      if (r.purify) resonancePurify = true;
     }
   } catch {}
 
@@ -356,6 +384,12 @@ export function executeBattle(enemy) {
       const regenAmt = Math.max(1, Math.floor(p.maxHp * talentFx.regenPercent));
       playerHp = Math.min(p.maxHp, playerHp + regenAmt);
       if (round <= 6) log.push({ text: `💚 天赋恢复 +${regenAmt} HP`, type: 'heal' });
+    }
+    // ── 元素共鸣：净化回血 ──
+    if (resonanceHealPct > 0 && playerHp > 0) {
+      const resHeal = Math.max(1, Math.floor(p.maxHp * resonanceHealPct));
+      playerHp = Math.min(p.maxHp, playerHp + resHeal);
+      if (round <= 6) log.push({ text: `✨ 共鸣净化 +${resHeal} HP`, type: 'heal' });
     }
     // ── 天赋：每回合法力恢复 ──
     if (talentFx.manaRegen && playerMana < (p.maxMana || 0)) {
@@ -458,8 +492,10 @@ export function executeBattle(enemy) {
 
     const attackCount = isDouble ? 2 : 1;
     for (let i = 0; i < attackCount && enemyHp > 0; i++) {
-      // 应用破甲天赋
-      const armorPenDef = talentFx.armorPen ? Math.floor(enemy.def * (1 - talentFx.armorPen)) : enemy.def;
+      // 应用破甲（天赋 + 装备 + 共鸣叠加）
+      let totalArmorPen = (talentFx.armorPen || 0) + (equipArmorPenPct / 100) + resonanceArmorIgnore;
+      totalArmorPen = Math.min(totalArmorPen, 0.80); // 上限80%
+      const armorPenDef = totalArmorPen > 0 ? Math.floor(enemy.def * (1 - totalArmorPen)) : enemy.def;
       const pHit = calcDamage(
         { atk: Math.floor(pAtk * atkMultiplier * berserkMult), crt: pCrt + chainCritBonus, geneLock: p.geneLock },
         { ...enemy, def: bossPhases ? effectiveEnemyDef : armorPenDef },
@@ -477,12 +513,24 @@ export function executeBattle(enemy) {
         finalDmg += bonus;
         enemyHp -= bonus; // 额外扣除
       }
+      // 元素共鸣额外伤害
+      if (resonanceBonusDmg > 0) {
+        const resBonus = Math.floor(pHit.damage * resonanceBonusDmg);
+        finalDmg += resBonus;
+        enemyHp -= resBonus;
+      }
       log.push({
         text: `${hitLabel}郑吒 → ${enemy.name} ${finalDmg}${pHit.isCrit ? ' 暴击！' : ''}${pHit.isWeak ? ' 弱点！' : ''}${multiLabel}`,
         type: pHit.isCrit ? 'critical' : 'attack',
       });
 
-      // 吸血
+      // 装备吸血
+      if (equipLifeStealPct > 0 && pHit.damage > 0) {
+        const equipSteal = Math.max(1, Math.floor(pHit.damage * equipLifeStealPct / 100));
+        playerHp = Math.min(p.maxHp, playerHp + equipSteal);
+        if (round <= 6) log.push({ text: `🩸 装备吸血 +${equipSteal} HP`, type: 'heal' });
+      }
+      // 血统吸血
       if (isVampire) {
         const steal = Math.max(1, Math.floor(pHit.damage * 0.1));
         playerHp = Math.min(p.maxHp, playerHp + steal);
@@ -515,10 +563,11 @@ export function executeBattle(enemy) {
       });
     }
 
-    // ── 火芯片灼烧 ──
+    // ── 火芯片灼烧（共鸣加成） ──
     if (chipFx.burnDmg > 0 && enemyHp > 0) {
-      enemyHp -= chipFx.burnDmg;
-      log.push({ text: `🔥 灼烧 ${chipFx.burnDmg}`, type: 'burn' });
+      const burnFinal = resonanceDotMult > 1.0 ? Math.floor(chipFx.burnDmg * resonanceDotMult) : chipFx.burnDmg;
+      enemyHp -= burnFinal;
+      log.push({ text: `🔥 灼烧 ${burnFinal}${resonanceDotMult > 1.0 ? ' (共鸣强化)' : ''}`, type: 'burn' });
     }
 
     // ── 天赋：节奏打击（每N回合额外一击） ──
@@ -535,9 +584,14 @@ export function executeBattle(enemy) {
     if (enemyHp <= 0) break;
 
     // ── 敌人回合：检查眩晕/冻结 ──
-    const enemyStunned = (combatState.statusEffects?.enemy || []).some(
+    let enemyStunned = (combatState.statusEffects?.enemy || []).some(
       e => e.type === STATUS_EFFECT.STUN || e.type === STATUS_EFFECT.FREEZE
     );
+    // 元素共鸣眩晕概率
+    if (!enemyStunned && resonanceStunChance > 0 && Math.random() < resonanceStunChance) {
+      enemyStunned = true;
+      if (round <= 8) log.push({ text: `❄ 冻结思维！${enemy.name}被冻结！`, type: 'control' });
+    }
 
     if (!enemyStunned) {
       // ── Boss 特殊技能 ──
