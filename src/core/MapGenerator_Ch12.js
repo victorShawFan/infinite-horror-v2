@@ -47,7 +47,9 @@ function f12_5(){const g=makeGrid();carveRoom(g,3,3,17,13);carveRoom(g,1,7,2,10)
 {type:ENTITY_TYPE.BOSS,id:'boss_copy_zhengzha_final',bossId:'clone_zhengzha_final',traits:['swift','enrage'],name:'复制体郑吒·终极',x:14,y:6,sprite:'郑',color:'#ff2222',hp:400,atk:56,def:20,spd:16,rewards:{exp:500,gold:350,rewardPoints:600},lore:'恶魔队队长。拥有与郑吒相同的洪荒之力，但被黑暗吞噬。'},
 {type:ENTITY_TYPE.EVENT,id:'chuxuan_sacrifice',name:'楚轩的牺牲',x:10,y:10,sprite:'✦',color:'#ffdd44',event:{type:'dialogue',lines:[{text:'楚轩突然倒在地上。鲜血从口中涌出。',speaker:'旁白'},{text:'楚轩！！',speaker:'郑吒'},{text:'计划的最后一步——需要一个人作为锚点。',speaker:'楚轩'},{text:'这是我自己的选择。不是你的错。',speaker:'楚轩'},{text:'替我……看看主神空间之外的世界。',speaker:'楚轩'}],flag:'chuxuan_sacrifice',companionDeaths:['chuxuan']}},
 {type:ENTITY_TYPE.ITEM,id:'medkit_12_5',name:'生命极限药剂',x:1,y:8,sprite:'♥',color:'#ff4488',itemType:'consumable',effect:{heal:300}},
-{type:ENTITY_TYPE.ITEM,id:'atk_final',name:'洪荒之力碎片',x:19,y:8,sprite:'✦',color:'#ff8844',itemType:'stat_boost',effect:{atk:12,crt:8}}]};}
+{type:ENTITY_TYPE.ITEM,id:'atk_final',name:'洪荒之力碎片',x:19,y:8,sprite:'✦',color:'#ff8844',itemType:'stat_boost',effect:{atk:12,crt:8}},
+{type:ENTITY_TYPE.ITEM,id:'lore_truth',name:'主神的真相',x:6,y:8,sprite:'✦',color:'#ffdd00',itemType:'lore',loreId:'lore_12_truth',description:'一块散发金色光芒的碎片，上面记载着主神存在的终极真相。'}
+]};}
 
 function f12_6(){const g=makeGrid();carveRoom(g,4,4,16,12);carveRoom(g,1,7,3,10);carveCorridor(g,3,8,4,8);carveRoom(g,17,7,19,10);carveCorridor(g,16,8,17,8);carveRoom(g,8,1,12,3);carveCorridor(g,10,3,10,4);carveRoom(g,8,13,12,16);carveCorridor(g,10,12,10,13);g[15][11]=TILE.STAIRS;return{id:'12-6',name:'终章 · 归途',subtitle:'不是所有人都能活着走出去。但这就是——无限恐怖。',bgColor:'#100505',theme:'finale',tiles:g,width:W,height:H,playerStart:{x:10,y:14},entities:[
 {type:ENTITY_TYPE.EVENT,id:'final_assembly',name:'最后的集结',x:10,y:12,sprite:'✦',color:'#ffdd44',event:{type:'dialogue',lines:[{text:'楚轩的意识化为金色光网，覆盖整个战场。',speaker:'旁白'},{text:'所有活着的队友都感受到了彼此的力量。',speaker:'旁白'},{text:'让我们——一起活着回去。所有人。一个都不能少。',speaker:'郑吒'}],flag:'final_assembly'}},

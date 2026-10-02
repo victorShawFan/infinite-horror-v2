@@ -95,6 +95,7 @@ import { openMerchantShop } from './core/FieldMerchant.js';
 import { getStash, addToStash, removeFromStash, isStashFull, openEquipmentStash, serializeStash, deserializeStash } from './core/EquipmentStash.js';
 import { getCompanionCombatBonuses, getCompanionBattleCry, formatCompanionCombatHTML } from './core/CompanionCombat.js';
 import { drawQuestHUD, formatQuestPanelHTML } from './core/QuestTracker.js';
+import { initTitleFX, spawnDamageNumber, screenShake, screenFlash } from './core/TitleScreenFX.js';
 
 // ── 全局状态 ──
 let renderer;
@@ -625,7 +626,28 @@ function showMainMenu() {
     </div>
   `;
 
-  document.getElementById('btn-new-game').addEventListener('click', () => {
+  
+  // ── 标题画面特效 ──
+  {
+    const titleContainer = overlay.querySelector('div');
+    if (titleContainer) {
+      const titleH1 = titleContainer.querySelector('h1');
+      if (titleH1) titleH1.classList.add('title-fx-glow');
+      const subtitle = titleContainer.querySelector('p');
+      if (subtitle) subtitle.classList.add('title-fx-subtitle');
+      // 按钮逐个延迟出现
+      const buttons = titleContainer.querySelectorAll('button');
+      buttons.forEach((btn, i) => {
+        btn.classList.add('title-fx-btn');
+        btn.style.animationDelay = `${0.8 + i * 0.15}s`;
+      });
+      // 粒子效果
+      if (typeof window._titleFXCleanup === 'function') window._titleFXCleanup();
+      window._titleFXCleanup = initTitleFX(overlay.firstElementChild);
+    }
+  }
+
+document.getElementById('btn-new-game').addEventListener('click', () => {
     showOpeningCutscene(() => startNewGame());
   });
 
@@ -1320,6 +1342,24 @@ eventBus.on('player:death', () => {
 });
 
 // ── 游戏主循环 ──
+
+// ── 战斗视觉反馈 ──
+eventBus.on('combat:boss_phase', () => {
+  const canvas = document.getElementById('game-canvas');
+  if (canvas) screenShake(canvas, 8, 400);
+});
+eventBus.on('combat:critical', (data) => {
+  const canvas = document.getElementById('game-canvas');
+  if (canvas) {
+    screenShake(canvas, 4, 200);
+    screenFlash(canvas.parentElement || document.body, '#ff444466', 150);
+  }
+});
+eventBus.on('combat:player_hurt', (data) => {
+  const canvas = document.getElementById('game-canvas');
+  if (canvas) screenFlash(canvas.parentElement || document.body, '#ff000033', 100);
+});
+
 function gameLoop() {
   if (!gameStarted) { gameLoopRunning = false; return; }
 

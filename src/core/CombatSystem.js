@@ -469,6 +469,7 @@ if (chipFx.hasIceChip && enemy.atk !== enemyEffAtk) {
       if (affix.poisonDmg && playerHp > 0) {
         const toxicDmg = Math.max(1, Math.floor(p.maxHp * affix.poisonDmg));
         playerHp -= toxicDmg;
+      eventBus.emit('combat:player_hurt', { });
         if (round <= 6) log.push({ text: `☠ 【${affix.name}】毒素 -${toxicDmg} HP`, type: 'affix_damage' });
         if (playerHp <= 0) break;
       }
@@ -545,6 +546,7 @@ if (chipFx.hasIceChip && enemy.atk !== enemyEffAtk) {
         if (round > 1) {
           log.push({ text: ``, type: 'separator' });
           log.push({ text: `⚠ ${enemy.name}进入【${ph.name}】阶段！`, type: 'boss_phase' });
+          eventBus.emit('combat:boss_phase', { phase: ph, enemy });
           log.push({ text: `  ${ph.desc}`, type: 'boss_phase' });
         }
       }
@@ -563,6 +565,7 @@ if (chipFx.hasIceChip && enemy.atk !== enemyEffAtk) {
       const execDmg = Math.max(1, Math.floor(enemyHp * talentFx.executeDmg.percent));
       enemyHp -= execDmg;
       log.push({ text: `⚔ 灭世之力！真实伤害 ${execDmg}`, type: 'critical' });
+      eventBus.emit('combat:critical', { damage: playerDmg });
       if (enemyHp <= 0) break;
     }
 
