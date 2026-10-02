@@ -1760,6 +1760,29 @@ function _showAbyssMenu() {
 }
 
 
+
+// ════════════════════════════════════════════════════════════════
+// 浏览器关闭/切换自动存档
+// ════════════════════════════════════════════════════════════════
+window.addEventListener('beforeunload', () => {
+  try {
+    if (gameStarted) autoSave('浏览器关闭前存档');
+  } catch {}
+});
+
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden && gameStarted) {
+    try { autoSave('切后台存档'); } catch {}
+  }
+});
+
+// 每5分钟定时存档
+setInterval(() => {
+  if (gameStarted) {
+    try { autoSave('定时存档'); } catch {}
+  }
+}, 300000);
+
 // ════════════════════════════════════════════════════════════════
 // 触摸控制 — 滑动移动 + 点击互动
 // ════════════════════════════════════════════════════════════════
