@@ -3,6 +3,7 @@
 // ═══════════════════════════════════════════════════════════════
 
 import { TILE_SIZE, TILE, COLORS, CANVAS_W, CANVAS_H, ENTITY_TYPE } from './constants.js';
+import { getInventoryList } from './ConsumableSystem.js';
 import { assetLoader } from './AssetLoader.js';
 import { gameState } from './GameState.js';
 import { atmosphereRenderer } from './AtmosphereSystem.js';
@@ -603,6 +604,56 @@ export class Renderer {
       ctx.fillStyle = ammoColor;
       ctx.fillText(`🔫 弹药 ${ammo}/${ammoMax}`, stX + 10, stY + 44);
     }
+
+    // ── 消耗品快捷栏（底部上方）──
+    try {
+      const items = getInventoryList().slice(0, 4); // 最多显示4个
+      if (items.length > 0) {
+        const qX = CANVAS_W - pad - items.length * 42 - 8;
+        const qY = CANVAS_H - 78;
+        ctx.fillStyle = 'rgba(10, 10, 20, 0.82)';
+        roundRect(ctx, qX, qY, items.length * 42 + 8, 32, 6);
+        ctx.fill();
+        ctx.strokeStyle = 'rgba(68, 204, 136, 0.3)';
+        roundRect(ctx, qX, qY, items.length * 42 + 8, 32, 6);
+        ctx.stroke();
+        items.forEach((item, i) => {
+          ctx.font = '14px sans-serif';
+          ctx.textAlign = 'center';
+          ctx.fillStyle = item.color || '#ccc';
+          ctx.fillText(item.icon, qX + 16 + i * 42, qY + 17);
+          ctx.font = '9px "Microsoft YaHei"';
+          ctx.fillStyle = '#888';
+          ctx.fillText('×' + item.count, qX + 32 + i * 42, qY + 26);
+        });
+        ctx.font = '8px "Microsoft YaHei"';
+        ctx.textAlign = 'right';
+        ctx.fillStyle = '#555';
+        ctx.fillText('Q=道具', qX - 4, qY + 22);
+        ctx.textAlign = 'left';
+      }
+    } catch {}
+    
+    // ── 待生效增益指示器 ──
+    try {
+      const buffs = gameState._pendingBuffs || [];
+      if (buffs.length > 0) {
+        const bX = pad;
+        const bY = CANVAS_H - 78;
+        ctx.fillStyle = 'rgba(10, 20, 10, 0.85)';
+        roundRect(ctx, bX, bY, buffs.length * 50 + 10, 30, 6);
+        ctx.fill();
+        ctx.strokeStyle = 'rgba(68, 204, 102, 0.4)';
+        roundRect(ctx, bX, bY, buffs.length * 50 + 10, 30, 6);
+        ctx.stroke();
+        ctx.font = '10px "Microsoft YaHei"';
+        ctx.textAlign = 'left';
+        buffs.forEach((b, i) => {
+          ctx.fillStyle = '#44cc66';
+          ctx.fillText('⚔ ' + (b.stat || '').toUpperCase(), bX + 6 + i * 50, bY + 20);
+        });
+      }
+    } catch {}
 
     // ── 底部：钥匙 + 楼层信息 ──
     ctx.fillStyle = 'rgba(10, 10, 20, 0.85)';
