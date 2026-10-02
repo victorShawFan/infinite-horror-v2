@@ -154,11 +154,19 @@ function startGame() {
     window._levelupListenerRegistered = true;
     eventBus.on('player:levelup', () => {
       audioEngine.playLevelUp();
-      renderer.addFloatText('LEVEL UP!', gameState.player.x, gameState.player.y - 1.5, 'rgb(255, 215, 0)');
+      const p = gameState.player;
+      renderer.addFloatText('LEVEL UP!', p.x, p.y - 1.5, 'rgb(255, 215, 0)');
+      renderer.addFloatText('Lv.' + p.level, p.x, p.y - 2, 'rgb(255, 255, 150)');
       renderer.addParticle(
-        gameState.player.x * TILE_SIZE + TILE_SIZE / 2,
-        gameState.player.y * TILE_SIZE + TILE_SIZE / 2,
-        'rgb(255, 215, 0)', 15
+        p.x * TILE_SIZE + TILE_SIZE / 2,
+        p.y * TILE_SIZE + TILE_SIZE / 2,
+        'rgb(255, 215, 0)', 20
+      );
+      renderer.shake(4, 300);
+      renderer.flash('rgba(255, 215, 0)', 300);
+      renderer.notify(
+        'Lv.' + p.level + ' 升级！HP+' + Math.floor(8 + p.level * 1.5) + ' ATK+2 DEF+1',
+        'rgb(255, 215, 0)', 120
       );
     });
   }
@@ -626,7 +634,7 @@ function pickupItem(item) {
 
     case 'key':
       p.keys[item.keyColor] = (p.keys[item.keyColor] || 0) + 1;
-      renderer.addFloatText(`+1 ${item.keyColor}钥匙`, item.x, item.y, 'rgb(255, 204, 68)');
+      renderer.addFloatText(`+1 ${item.keyColor === 'yellow' ? '黄色' : item.keyColor === 'blue' ? '蓝色' : '红色'}钥匙`, item.x, item.y, 'rgb(255, 204, 68)');
       break;
 
     case 'door':

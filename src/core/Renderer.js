@@ -762,6 +762,13 @@ export class Renderer {
     this._notifications.push({ text, color, life: duration, maxLife: duration });
   }
 
+  /** 全屏闪光效果 */
+  flash(color, duration = 200) {
+    this._flashColor = color;
+    this._flashDuration = duration;
+    this._flashStart = performance.now();
+  }
+
   /** 屏幕过渡：淡入黑色 */
   fadeOut(speed = 0.05) {
     this._transitionTarget = 1;
