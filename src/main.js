@@ -55,6 +55,7 @@ import { addConsumable, useConsumable, getInventoryList, consumePendingBuffs, gi
 import { generateSecretEntities, tryBreakSecret, SECRET_TYPES } from './core/SecretRoomSystem.js';
 import { getCurrentStance, setStance, getAvailableStances, getStanceId, restoreStance } from './core/CombatStance.js';
 import { challengeState, CHALLENGE_TYPES } from './core/ChallengeDungeon.js';
+import { getQualityColor, getQualityName, formatEquipmentTooltip } from './core/EquipmentAffixes.js';
 
 // ── 全局状态 ──
 let renderer;
@@ -72,6 +73,111 @@ let combatHistory = []; // 战斗历史记录
 let gameLoopRunning = false; // 防止gameLoop重复启动
 
 // ── 初始化 ──
+
+// ═══════════════════════════════════════════════════════════
+// 装备比较面板 — 让玩家选择保留或替换
+// ═══════════════════════════════════════════════════════════
+function _showEquipCompare(current, newEquip, slot, itemEntity) {
+  const overlay = document.getElementById('ui-overlay');
+  const p = gameState.player;
+  
+  function statLine(label, curVal, newVal) {
+    curVal = curVal || 0;
+    newVal = newVal || 0;
+    const diff = newVal - curVal;
+    const color = diff > 0 ? '#44ff88' : diff < 0 ? '#ff4444' : '#888';
+    const sign = diff > 0 ? '+' : '';
+    return '<tr><td style="color:#aaa;">' + label + '</td>' +
+      '<td style="text-align:right;color:#888;">' + curVal + '</td>' +
+      '<td style="text-align:center;font-size:11px;">→</td>' +
+      '<td style="text-align:right;color:' + color + ';">' + newVal +
+      (diff !== 0 ? ' (' + sign + diff + ')' : '') + '</td></tr>';
+  }
+
+  const qColorCur = getQualityColor(current.quality) || '#aaa';
+  const qColorNew = getQualityColor(newEquip.quality) || '#aaa';
+  const qNameCur = current.quality ? getQualityName(current.quality) : '';
+  const qNameNew = newEquip.quality ? getQualityName(newEquip.quality) : '';
+  const slotLabel = { weapon: '⚔ 武器', armor: '🛡 护甲', accessory: '💍 饰品' }[slot] || slot;
+
+  overlay.innerHTML = `
+    <div style="position:absolute;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.85);
+      display:flex;align-items:center;justify-content:center;" id="equip-compare-backdrop">
+      <div style="background:rgba(10,10,20,0.97);border:1px solid #555;border-radius:16px;
+        padding:24px;max-width:500px;width:90%;">
+        <h3 style="text-align:center;color:#ffcc44;letter-spacing:3px;margin-bottom:16px;">
+          ${slotLabel} 替换确认
+        </h3>
+        <div style="display:grid;grid-template-columns:1fr auto 1fr;gap:8px;align-items:start;">
+          <div style="background:rgba(255,100,100,0.06);border:1px solid rgba(255,100,100,0.2);
+            border-radius:10px;padding:12px;">
+            <p style="color:#ff8866;font-size:12px;margin-bottom:6px;">当前装备</p>
+            <p style="color:${qColorCur};font-weight:bold;font-size:13px;">
+              ${qNameCur ? '[' + qNameCur + '] ' : ''}${current.displayName || current.name}
+            </p>
+          </div>
+          <div style="display:flex;align-items:center;color:#666;font-size:20px;">→</div>
+          <div style="background:rgba(68,255,100,0.06);border:1px solid rgba(68,255,100,0.2);
+            border-radius:10px;padding:12px;">
+            <p style="color:#44ff88;font-size:12px;margin-bottom:6px;">新装备</p>
+            <p style="color:${qColorNew};font-weight:bold;font-size:13px;">
+              ${qNameNew ? '[' + qNameNew + '] ' : ''}${newEquip.displayName || newEquip.name}
+            </p>
+          </div>
+        </div>
+        
+        <table style="width:100%;margin:12px 0;font-size:13px;border-collapse:collapse;">
+          ${statLine('ATK', current.atk, newEquip.atk)}
+          ${statLine('DEF', current.def, newEquip.def)}
+          ${statLine('MaxHP', current.maxHp, newEquip.maxHp)}
+          ${statLine('SPD', current.spd, newEquip.spd)}
+          ${statLine('CRT', current.crt, newEquip.crt)}
+        </table>
+
+        ${newEquip.affixes?.suffix ? '<p style="color:#4488ff;font-size:12px;text-align:center;margin-bottom:12px;">✦ ' + newEquip.affixes.suffix.desc + '</p>' : ''}
+
+        <div style="display:flex;gap:12px;justify-content:center;margin-top:8px;">
+          <button id="btn-equip-new" style="background:rgba(68,255,100,0.15);border:2px solid #44ff88;
+            color:#44ff88;padding:10px 24px;cursor:pointer;font-size:14px;font-weight:bold;
+            font-family:inherit;border-radius:8px;">✓ 装备新的</button>
+          <button id="btn-keep-old" style="background:rgba(100,100,100,0.1);border:1px solid #555;
+            color:#888;padding:10px 24px;cursor:pointer;font-size:14px;
+            font-family:inherit;border-radius:8px;">✗ 保留旧的</button>
+        </div>
+        <p style="color:#444;font-size:10px;text-align:center;margin-top:8px;">1 = 装备新的 · 2 = 保留旧的</p>
+      </div>
+    </div>
+  `;
+
+  const close = () => {
+    overlay.innerHTML = '';
+    document.removeEventListener('keydown', kh);
+  };
+
+  document.getElementById('btn-equip-new').addEventListener('click', () => {
+    p[slot] = newEquip;
+    renderer.addFloatText('装备替换: ' + (newEquip.displayName || newEquip.name), 
+      itemEntity.x, itemEntity.y, 'rgb(68, 255, 100)');
+    close();
+  });
+
+  document.getElementById('btn-keep-old').addEventListener('click', () => {
+    // 卖掉新装备获得金币
+    const sellGold = Math.floor((newEquip.atk || 0) + (newEquip.def || 0) * 2 + (newEquip.maxHp || 0) / 5) * 3 + 10;
+    p.gold = (p.gold || 0) + sellGold;
+    gameState.stats.goldEarned = (gameState.stats.goldEarned || 0) + sellGold;
+    renderer.addFloatText('分解: +' + sellGold + 'G', itemEntity.x, itemEntity.y, 'rgb(255, 204, 68)');
+    close();
+  });
+
+  const kh = (e) => {
+    if (e.key === '1') document.getElementById('btn-equip-new')?.click();
+    if (e.key === '2') document.getElementById('btn-keep-old')?.click();
+    if (e.key === 'Escape') document.getElementById('btn-keep-old')?.click();
+  };
+  document.addEventListener('keydown', kh);
+}
+
 // ═══════════════════════════════════════════════════════════
 // 挑战副本战斗循环
 // ═══════════════════════════════════════════════════════════
@@ -1866,21 +1972,33 @@ function pickupItem(item) {
       break;
 
     case 'weapon':
-      p.weapon = item.weapon;
-      renderer.addFloatText(`装备: ${item.weapon.name}`, item.x, item.y, 'rgb(255, 170, 0)');
-      renderer.addParticle(item.x * TILE_SIZE + TILE_SIZE/2, item.y * TILE_SIZE + TILE_SIZE/2, 'rgb(255, 170, 0)', 8);
+      if (p.weapon) {
+        _showEquipCompare(p.weapon, item.weapon, 'weapon', item);
+      } else {
+        p.weapon = item.weapon;
+        renderer.addFloatText(`装备: ${item.weapon.name}`, item.x, item.y, 'rgb(255, 170, 0)');
+        renderer.addParticle(item.x * TILE_SIZE + TILE_SIZE/2, item.y * TILE_SIZE + TILE_SIZE/2, 'rgb(255, 170, 0)', 8);
+      }
       break;
 
     case 'armor':
-      p.armor = item.armor;
-      renderer.addFloatText(`装备: ${item.armor.name}`, item.x, item.y, 'rgb(100, 136, 255)');
-      renderer.addParticle(item.x * TILE_SIZE + TILE_SIZE/2, item.y * TILE_SIZE + TILE_SIZE/2, 'rgb(100, 136, 255)', 8);
+      if (p.armor) {
+        _showEquipCompare(p.armor, item.armor, 'armor', item);
+      } else {
+        p.armor = item.armor;
+        renderer.addFloatText(`装备: ${item.armor.name}`, item.x, item.y, 'rgb(100, 136, 255)');
+        renderer.addParticle(item.x * TILE_SIZE + TILE_SIZE/2, item.y * TILE_SIZE + TILE_SIZE/2, 'rgb(100, 136, 255)', 8);
+      }
       break;
 
     case 'accessory':
-      p.accessory = item.accessory;
-      renderer.addFloatText(`装备: ${item.accessory.name}`, item.x, item.y, 'rgb(170, 136, 255)');
-      renderer.addParticle(item.x * TILE_SIZE + TILE_SIZE/2, item.y * TILE_SIZE + TILE_SIZE/2, 'rgb(170, 136, 255)', 8);
+      if (p.accessory) {
+        _showEquipCompare(p.accessory, item.accessory, 'accessory', item);
+      } else {
+        p.accessory = item.accessory;
+        renderer.addFloatText(`装备: ${item.accessory.name}`, item.x, item.y, 'rgb(170, 136, 255)');
+        renderer.addParticle(item.x * TILE_SIZE + TILE_SIZE/2, item.y * TILE_SIZE + TILE_SIZE/2, 'rgb(170, 136, 255)', 8);
+      }
       break;
 
     case 'chip':
