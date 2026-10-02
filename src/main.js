@@ -1347,13 +1347,18 @@ function showCombatLog() {
           <span style="color: #666; font-size: 12px;">${entry.floor} · ${entry.rounds}回合</span>
         </div>
         <div style="color: #aaa; font-size: 12px; line-height: 1.6;">
-          ${entry.log.slice(-4).map(l => {
+          ${entry.log.slice(-8).map(l => {
             let c = '#999';
-            if (l.type === 'attack' || l.type === 'critical') c = '#ff8866';
+            if (l.type === 'attack') c = '#ffcc88';
+            if (l.type === 'critical') c = '#ffaa00';
             if (l.type === 'enemy_attack') c = '#ff6644';
             if (l.type === 'victory') c = '#44ff88';
             if (l.type === 'reward') c = '#ffcc44';
-            if (l.type === 'heal') c = '#44ff88';
+            if (l.type === 'heal') c = '#88ffaa';
+            if (l.type === 'spell') c = '#cc88ff';
+            if (l.type === 'burn') c = '#ff8833';
+            if (l.type === 'reflect') c = '#6699ff';
+            if (l.type === 'buff') c = '#66ccff';
             return '<span style="color:' + c + '">' + l.text + '</span>';
           }).join('<br>')}
         </div>
