@@ -10,7 +10,11 @@ function f10_1(){const g=makeGrid();carveRoom(g,1,7,6,10);carveCorridor(g,6,8,10
 {type:ENTITY_TYPE.ENEMY,id:'bio_guard_1',name:'生化实验体',x:13,y:8,sprite:'🧟',color:'#668844',hp:120,atk:38,def:16,spd:10,rewards:{exp:95,gold:65}},
 {type:ENTITY_TYPE.ITEM,id:'medkit_ch10_1',name:'急救包',x:14,y:14,sprite:'♥',color:'#ff4488',itemType:'consumable',effect:{heal:120}},
 {type:ENTITY_TYPE.ITEM,id:'atk_ch10',name:'魔力结晶',x:18,y:7,sprite:'◆',color:'#ff8844',itemType:'stat_boost',effect:{atk:7}},
-{type:ENTITY_TYPE.ENEMY,id:'bio_drone',name:'生化无人机',x:5,y:3,sprite:'🤖',color:'#668844',hp:100,atk:34,def:12,spd:14,rewards:{exp:80,gold:55}}]};}
+{type:ENTITY_TYPE.ENEMY,id:'bio_drone',name:'生化无人机',x:5,y:3,sprite:'🤖',color:'#668844',hp:100,atk:34,def:12,spd:14,rewards:{exp:80,gold:55}},
+{type:ENTITY_TYPE.ENEMY,id:'bio_mutant',name:'变异猎手',x:12,y:14,sprite:'🦎',color:'#668844',hp:110,atk:36,def:14,spd:12,rewards:{exp:85,gold:60},traits:['regen']},
+{type:ENTITY_TYPE.EVENT,id:'team_intel',name:'敌队情报',x:7,y:3,sprite:'📋',color:'#88aaff',event:{type:'dialogue',lines:[{text:'楚轩收集到了五支队伍的情报。',speaker:'旁白'},{text:'天使队——擅长光明魔法。恶魔队——我们的老对手。',speaker:'楚轩'},{text:'东征队——剑士为主。自由队——散兵游勇。',speaker:'楚轩'},{text:'西游队——他们很强。但最危险的，还是恶魔队。',speaker:'楚轩'}]}},
+{type:'item',id:'lore_teams',name:'五队情报总汇',x:16,y:6,sprite:'📝',color:'#88aaff',itemType:'lore',loreId:'lore_10_teams',description:'楚轩整理的五支轮回者队伍详细情报。每支队伍的能力、弱点和可能的战术。'},
+{type:ENTITY_TYPE.ITEM,id:'def_ch10_1',name:'反冲装甲',x:4,y:9,sprite:'◆',color:'#6688ff',itemType:'stat_boost',effect:{def:7}}]};}
 
 // ═══ 10-2 三人复活 ═══
 function f10_2(){const g=makeGrid();carveRoom(g,1,1,7,6);carveCorridor(g,7,3,10,3);carveRoom(g,10,1,16,6);carveCorridor(g,13,6,13,9);carveRoom(g,10,9,16,13);carveRoom(g,1,9,7,13);carveCorridor(g,4,6,4,9);carveCorridor(g,7,11,10,11);carveRoom(g,16,10,19,15);carveCorridor(g,16,12,16,12);g[14][18]=TILE.STAIRS;return{id:'10-2',name:'三人复活',subtitle:'赵樱空、张恒、程啸——三道金光同时亮起。',bgColor:'#0a0a08',theme:'biolab',tiles:g,width:W,height:H,playerStart:{x:4,y:3},entities:[
@@ -25,7 +29,7 @@ function f10_3(){const g=makeGrid();carveRoom(g,1,1,5,5);carveCorridor(g,5,3,9,3
 {type:ENTITY_TYPE.ENEMY,id:'orc_scout',name:'兽人斥候',x:4,y:10,sprite:'👹',color:'#886644',hp:100,atk:34,def:12,spd:12,rewards:{exp:80,gold:52}},
 {type:ENTITY_TYPE.ENEMY,id:'orc_warrior',name:'兽人战士',x:17,y:12,sprite:'👹',color:'#886644',hp:115,atk:36,def:14,spd:10,rewards:{exp:88,gold:58}},
 {type:ENTITY_TYPE.ITEM,id:'def_ch10',name:'秘银护甲片',x:2,y:9,sprite:'◆',color:'#6688ff',itemType:'stat_boost',effect:{def:7}},
-{type:ENTITY_TYPE.ITEM,id:'medkit_10_3',name:'精灵草药',x:18,y:12,sprite:'♥',color:'#44ff88',itemType:'consumable',effect:{heal:120}},{type:'item',id:'lore_teams',name:'轮回者观察报告',x:3,y:10,sprite:'📋',color:'#ffdd44',itemType:'lore',loreId:'lore_10_teams',description:'一份关于五支队伍的观察报告。'}]};}
+{type:ENTITY_TYPE.ITEM,id:'medkit_10_3',name:'精灵草药',x:18,y:12,sprite:'♥',color:'#44ff88',itemType:'consumable',effect:{heal:120}},{type:'item',id:'lore_teams_detail',name:'轮回者观察报告',x:3,y:10,sprite:'📋',color:'#ffdd44',itemType:'lore',loreId:'lore_10_teams',description:'一份关于五支队伍的观察报告。'}]};}
 
 // ═══ 10-4 五队接触 ═══
 function f10_4(){const g=makeGrid();carveRoom(g,1,6,6,11);carveCorridor(g,6,8,10,8);carveRoom(g,10,4,15,12);carveCorridor(g,15,8,18,8);carveRoom(g,16,5,19,11);carveRoom(g,5,1,10,3);carveCorridor(g,8,3,8,4);carveRoom(g,8,13,14,16);carveCorridor(g,11,12,11,13);g[15][13]=TILE.STAIRS;return{id:'10-4',name:'五队接触',subtitle:'战场上出现了其他轮回者队伍。有人试图联盟，有人选择背叛。',bgColor:'#0a0c10',theme:'fantasy',tiles:g,width:W,height:H,playerStart:{x:3,y:8},entities:[

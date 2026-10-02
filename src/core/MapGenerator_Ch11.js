@@ -15,9 +15,12 @@ function f11_1(){const g=makeGrid();carveRoom(g,1,7,6,10);carveCorridor(g,6,8,10
 // ═══ 11-2 猛鬼街梦层 ═══
 function f11_2(){const g=makeGrid();carveRoom(g,1,1,7,6);carveCorridor(g,7,3,10,3);carveRoom(g,10,1,16,6);carveCorridor(g,13,6,13,9);carveRoom(g,10,9,16,13);carveRoom(g,1,9,7,13);carveCorridor(g,4,6,4,9);carveCorridor(g,7,11,10,11);carveRoom(g,16,10,19,15);carveCorridor(g,16,12,16,12);g[14][18]=TILE.STAIRS;return{id:'11-2',name:'猛鬼街梦层',subtitle:'所有人都陷入了沉睡。在梦中，弗莱迪掌控一切。',bgColor:'#100810',theme:'nightmare',tiles:g,width:W,height:H,playerStart:{x:4,y:3},entities:[
 {type:ENTITY_TYPE.ENEMY,id:'nightmare_shade',name:'噩梦幻影',x:13,y:3,sprite:'👻',color:'#884488',hp:100,atk:38,def:8,spd:18,damageType:'psychic',rewards:{exp:90,gold:60}},
-{type:ENTITY_TYPE.ENEMY,id:'dream_trap',name:'梦境陷阱',x:4,y:11,sprite:'🕸',color:'#664466',hp:85,atk:35,def:6,spd:16,damageType:'psychic',rewards:{exp:80,gold:55}},
-{type:ENTITY_TYPE.ITEM,id:'medkit_ch11_2',name:'精神稳定剂',x:18,y:13,sprite:'♥',color:'#ff4488',itemType:'consumable',effect:{heal:140}},
-{type:ENTITY_TYPE.ITEM,id:'def_ch11',name:'心灵屏障',x:13,y:11,sprite:'◆',color:'#8844ff',itemType:'stat_boost',effect:{def:8}},
+{type:ENTITY_TYPE.ENEMY,id:'dream_spider',name:'梦境蜘蛛',x:2,y:11,sprite:'🕷',color:'#664488',hp:85,atk:34,def:6,spd:20,damageType:'psychic',rewards:{exp:75,gold:50}},
+{type:ENTITY_TYPE.EVENT,id:'dream_test',name:'心灵试炼',x:13,y:11,sprite:'👁',color:'#aa88ff',event:{type:'dialogue',lines:[{text:'梦境中，弗莱迪的声音回荡：',speaker:'旁白'},{text:'"你最害怕什么？是失去同伴？还是……变成另一个自己？"',speaker:'弗莱迪'},{text:'郑吒闭上眼睛。他不再害怕了。',speaker:'旁白'},{text:'"我害怕的，是在该战斗的时候退缩。"',speaker:'郑吒'}]}},
+{type:'item',id:'lore_nightmare',name:'弗莱迪的恐惧之书',x:18,y:13,sprite:'📕',color:'#884488',itemType:'lore',loreId:'lore_11_nightmare',description:'记录着每个人内心最深处的恐惧。但郑吒的那一页是空白的——因为他已经战胜了恐惧。'},
+{type:ENTITY_TYPE.ENEMY,id:'dream_trap',name:'梦境陷阱',x:3,y:11,sprite:'🕸',color:'#664466',hp:85,atk:35,def:6,spd:16,damageType:'psychic',rewards:{exp:80,gold:55}},
+{type:ENTITY_TYPE.ITEM,id:'medkit_ch11_2',name:'精神稳定剂',x:17,y:14,sprite:'♥',color:'#ff4488',itemType:'consumable',effect:{heal:140}},
+{type:ENTITY_TYPE.ITEM,id:'def_ch11',name:'心灵屏障',x:12,y:12,sprite:'◆',color:'#8844ff',itemType:'stat_boost',effect:{def:8}},
 {type:ENTITY_TYPE.ENEMY,id:'nightmare_walker',name:'梦境行者',x:14,y:11,sprite:'👻',color:'#664488',hp:95,atk:40,def:10,spd:16,damageType:'psychic',rewards:{exp:85,gold:58}}]};}
 
 // ═══ 11-3 郑吒自杀破心魔 ═══

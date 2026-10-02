@@ -10,7 +10,10 @@ function f9_1(){const g=makeGrid();carveRoom(g,1,7,6,10);carveCorridor(g,6,8,10,
 {type:ENTITY_TYPE.ENEMY,id:'tomb_sentinel',name:'陵墓哨兵',x:13,y:8,sprite:'💀',color:'#886633',hp:105,atk:32,def:14,spd:8,rewards:{exp:80,gold:55}},
 {type:ENTITY_TYPE.ITEM,id:'medkit_ch9_1',name:'急救包',x:14,y:14,sprite:'♥',color:'#ff4488',itemType:'consumable',effect:{heal:100}},
 {type:ENTITY_TYPE.ITEM,id:'atk_ch9',name:'狙击瞄准器',x:18,y:7,sprite:'◆',color:'#ff8844',itemType:'stat_boost',effect:{atk:6}},
-{type:ENTITY_TYPE.ENEMY,id:'tomb_guardian',name:'陵墓看守',x:5,y:3,sprite:'💀',color:'#776633',hp:90,atk:30,def:12,spd:7,rewards:{exp:70,gold:48}}]};}
+{type:ENTITY_TYPE.ENEMY,id:'tomb_guardian',name:'陵墓看守',x:5,y:3,sprite:'💀',color:'#776633',hp:90,atk:30,def:12,spd:7,rewards:{exp:70,gold:48}},
+{type:ENTITY_TYPE.EVENT,id:'revival_ceremony',name:'复活场景',x:11,y:14,sprite:'✨',color:'#ffdd44',event:{type:'dialogue',lines:[{text:'金色光芒笼罩祭坛。三个灵魂在光中重新凝聚。',speaker:'旁白'},{text:'零点第一个睁开了眼睛。冷漠的目光扫过四周——然后停在了郑吒脸上。',speaker:'旁白'},{text:'你让我等了很久。',speaker:'零点'},{text:'詹岚温柔地笑了。"谢谢你，郑吒。"',speaker:'旁白'}]}},
+{type:ENTITY_TYPE.ITEM,id:'def_ch9_1',name:'能量护盾碎片',x:16,y:9,sprite:'◆',color:'#6688ff',itemType:'stat_boost',effect:{def:6}},
+{type:'item',id:'lore_revival',name:'复活真经的代价',x:4,y:9,sprite:'📜',color:'#ffdd44',itemType:'lore',loreId:'lore_9_revival',description:'每次复活都要消耗巨量的奖励点。而奖励点，是用命换来的。'}]};}
 
 // ═══ 9-2 主神十日整备 ═══
 function f9_2(){const g=makeGrid();carveRoom(g,1,1,7,6);carveCorridor(g,7,3,10,3);carveRoom(g,10,1,16,6);carveCorridor(g,13,6,13,9);carveRoom(g,10,9,16,13);carveRoom(g,1,9,7,13);carveCorridor(g,4,6,4,9);carveCorridor(g,7,11,10,11);carveRoom(g,16,10,19,15);carveCorridor(g,16,12,16,12);g[14][18]=TILE.STAIRS;return{id:'9-2',name:'主神十日整备',subtitle:'十天的准备期。零点校准狙击镜，楚轩制定战术方案。',bgColor:'#060810',theme:'scifi_base',tiles:g,width:W,height:H,playerStart:{x:4,y:3},entities:[
