@@ -49,6 +49,7 @@ import { ngPlusState, formatClearScreen, formatCycleInfo, TITLES, getActiveMutat
 import { fadeBlackTransition, chapterIntroTransition, floorTransition, victoryFlash } from './core/TransitionSystem.js';
 import { MiniMap } from './core/MiniMap.js';
 import { openCodex } from './core/Codex.js';
+import { recordVictory as ddRecordVictory, recordDeath as ddRecordDeath, getDynamicFactor, applyDynamicScaling, serializeDynamicDifficulty, deserializeDynamicDifficulty, getDynamicDifficultyInfo } from './core/DynamicDifficulty.js';
 import { addEffect, tickEffects, getActiveEffects, getEffectModifiers, renderEffectHUD, serializeEffects, deserializeEffects, clearAllEffects } from './core/StatusEffectTracker.js';
 import { recordBattle, showBattleReplay, showBattleHistoryPanel, serializeBattleHistory, deserializeBattleHistory } from './core/BattleReplay.js';
 import { tryUpgradeToElite, getEliteDescription, recordEliteKill, getEliteStats, resetEliteStats, serializeEliteStats, deserializeEliteStats } from './core/EliteMonsterSystem.js';
@@ -123,6 +124,7 @@ function autoSave(reason = '') {
     localStorage.setItem('ih_elite', JSON.stringify(serializeEliteStats()));
     localStorage.setItem('ih_battle_history', JSON.stringify(serializeBattleHistory()));
     localStorage.setItem('ih_status_effects', JSON.stringify(serializeEffects()));
+    localStorage.setItem('ih_dynamic_diff', JSON.stringify(serializeDynamicDifficulty()));
     // 设置持久化：难度 + 音量 + 迷雾
     try {
       const settingsData = {
@@ -903,7 +905,8 @@ function startGame() {
     try { localStorage.setItem('ih_challenge', JSON.stringify(challengeState.toJSON()));
     localStorage.setItem('ih_elite', JSON.stringify(serializeEliteStats()));
     localStorage.setItem('ih_battle_history', JSON.stringify(serializeBattleHistory()));
-    localStorage.setItem('ih_status_effects', JSON.stringify(serializeEffects())); } catch {}
+    localStorage.setItem('ih_status_effects', JSON.stringify(serializeEffects()));
+    localStorage.setItem('ih_dynamic_diff', JSON.stringify(serializeDynamicDifficulty())); } catch {}
     try { localStorage.setItem('ih_streak', JSON.stringify(killStreak.toJSON())); } catch {}
     try { localStorage.setItem('ih_fog', JSON.stringify(fogOfWar.toJSON())); } catch {}
   });
@@ -1076,6 +1079,7 @@ function showFloorTitle(floor) {
 
 // ── 游戏失败处理 ──
 eventBus.on('player:death', () => {
+    try { ddRecordDeath(); } catch {}
     killStreak.recordDeath();
   gameStarted = false;
   audioEngine.playDamage();
@@ -1296,7 +1300,8 @@ document.addEventListener('keydown', (e) => {
     try { localStorage.setItem('ih_challenge', JSON.stringify(challengeState.toJSON()));
     localStorage.setItem('ih_elite', JSON.stringify(serializeEliteStats()));
     localStorage.setItem('ih_battle_history', JSON.stringify(serializeBattleHistory()));
-    localStorage.setItem('ih_status_effects', JSON.stringify(serializeEffects())); } catch {}
+    localStorage.setItem('ih_status_effects', JSON.stringify(serializeEffects()));
+    localStorage.setItem('ih_dynamic_diff', JSON.stringify(serializeDynamicDifficulty())); } catch {}
     renderer.notify('💾 手动存档完成', '#44ff88', 90);
     return;
   }
@@ -2411,7 +2416,7 @@ function startCombat(enemy, preScaledEnemy) {
   audioEngine.playDamage();
   
   // 使用预缩放敌人（从战前确认传入），避免二次随机缩放导致数值不一致
-  const scaledEnemy = preScaledEnemy || scaleEnemy(enemy, gameState.chapter);
+  const scaledEnemy = applyDynamicScaling(preScaledEnemy || scaleEnemy(enemy, gameState.chapter));
   
   // ── 消耗品战斗增益 ──
   const pendingBuffs = consumePendingBuffs();
@@ -2516,6 +2521,8 @@ function startCombat(enemy, preScaledEnemy) {
 
     if (result.victory) {
       try { victoryFlash(document.getElementById('ui-overlay')); } catch {}
+      // 动态难度记录胜利
+      try { const hpLostPct = 1 - (p.hp / p.maxHp); ddRecordVictory(hpLostPct); } catch {}
       renderer.addFloatText(battleRating.icon + ' ' + battleRating.grade, gameState.player.x, gameState.player.y - 2.5, battleRating.color);
       renderer.addFloatText(`+${scaledEnemy.rewards?.exp || 0} EXP`, enemy.x, enemy.y - 1, 'rgb(170, 136, 255)');
       if (scaledEnemy.rewards?.gold) renderer.addFloatText(`+${scaledEnemy.rewards.gold}G`, enemy.x, enemy.y - 0.4, 'rgb(255, 204, 68)');
