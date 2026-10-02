@@ -860,6 +860,7 @@ export class Renderer {
         case 'elemental_resonance': ctx.fillStyle = '#ffcc44'; break;
         case 'loot': ctx.fillStyle = '#ffcc44'; break;
         case 'loot_equipment': ctx.fillStyle = entry.color || '#aa44ff'; break;
+        case 'companion_dialogue': ctx.fillStyle = entry.color || '#aaccff'; break;
         default: ctx.fillStyle = COLORS.TEXT_DIM;
       }
       ctx.fillText(entry.text, x + 16, y + 52 + (i - startIdx) * 22);
