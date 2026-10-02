@@ -57,7 +57,7 @@ import { getCurrentStance, setStance, getAvailableStances, getStanceId, restoreS
 import { challengeState, CHALLENGE_TYPES } from './core/ChallengeDungeon.js';
 import { getQualityColor, getQualityName, formatEquipmentTooltip, getAllAffixEffects } from './core/EquipmentAffixes.js';
 import { killStreak } from './core/KillStreak.js';
-import { rateBattle, recordRating, formatRatingHTML } from './core/BattleRating.js';
+import { rateBattle, recordRating, formatRatingHTML, getRatingStats } from './core/BattleRating.js';
 import { fogOfWar } from './core/FogOfWar.js';
 
 // ── 全局状态 ──
@@ -926,31 +926,85 @@ eventBus.on('player:death', () => {
 
   setTimeout(() => {
     const overlay = document.getElementById('ui-overlay');
+    const p = gameState.player;
+    const ratingStats = getRatingStats();
+    const deathTips = [
+      '试试在战前使用回复药剂，满血迎战更有胜算。',
+      '切换战斗姿态可以改变战局。防御姿态适合高攻敌人。',
+      '别忘了在主神空间购买属性强化和消耗品。',
+      '装备词缀中的吸血和荆棘效果可以改变对撞结果。',
+      '如果敌人太强，先去探索其他房间收集道具和经验。',
+      '连杀加成会随每次击杀提升，保持连胜获得更多收益。',
+      '隐藏房间中往往藏着大量属性提升和稀有道具。',
+      '注意敌人的弱点属性，携带对应元素装备事半功倍。',
+      '基因锁的主动技能有强力Buff效果，记得在主神空间升级。',
+      '天赋树的投资会显著改变战斗风格，找到适合你的路线。',
+    ];
+    const tip = deathTips[Math.floor(Math.random() * deathTips.length)];
+    const lastBattle = combatHistory.length > 0 ? combatHistory[combatHistory.length - 1] : null;
+    const deathQuotes = [
+      '"死亡不过是另一种开始。在主神的世界里，每一次失败都是通往更强大的你的阶梯。"',
+      '"只要还有恐惧，就还没有真正的死亡。" —— 楚轩',
+      '"人只有在接近死亡时，才能触碰到那个极限。" —— 张杰',
+      '"主神空间不养废物，但每个幸存者都曾是废物。" —— 郑吒',
+      '"恐惧是最好的老师，它教会你活下去。"',
+      '"在这里死去，只是暂时的。真正的死亡，是放弃。"',
+    ];
+    const quote = deathQuotes[Math.floor(Math.random() * deathQuotes.length)];
+
     overlay.innerHTML = `
       <div style="
         position: absolute; top: 0; left: 0; right: 0; bottom: 0;
         display: flex; flex-direction: column; align-items: center; justify-content: center;
         background: rgba(80, 0, 0, 0.85);
         animation: fadeIn 0.5s;
+        overflow-y: auto;
       ">
         <h1 style="font-size: 56px; color: #ff2222; letter-spacing: 8px;
-          text-shadow: 0 0 40px rgba(255,34,34,0.6); margin-bottom: 16px;">
+          text-shadow: 0 0 40px rgba(255,34,34,0.6); margin-bottom: 8px;">
           轮 回 终 结
         </h1>
-        <p style="color: #cc8888; font-size: 18px; margin-bottom: 40px;">
+        <p style="color: #cc8888; font-size: 18px; margin-bottom: 24px;">
           郑吒在${chapter.floors[currentFloorIndex]?.name || '未知区域'}中陨落...
         </p>
-        <div style="background: rgba(0,0,0,0.4); border-radius: 10px; padding: 16px 24px; margin-bottom: 20px; max-width: 400px;">
-          <p style="color: #aa6666; font-size: 12px; letter-spacing: 3px; margin-bottom: 8px;">轮回记录</p>
-          <p style="color: #cc8888; font-size: 13px; line-height: 1.8;">
-            等级 Lv.${gameState.player.level} · 击杀 ${gameState.stats.enemiesKilled} · 
-            回合 ${gameState.stats.turnsPlayed} · 死亡 ${gameState.stats.deathCount}<br>
-            ${gameState.player.activeBloodline !== 'none' ? '血统: ' + gameState.player.activeBloodline + ' · ' : ''}
-            ${gameState.player.geneLock > 0 ? '基因锁' + gameState.player.geneLock + '阶' : ''}
-          </p>
+
+        <!-- 详细战斗报告 -->
+        <div style="display:flex; gap:12px; max-width:520px; width:92%; margin-bottom:16px; flex-wrap:wrap; justify-content:center;">
+          <div style="flex:1; min-width:140px; background:rgba(0,0,0,0.5); border:1px solid #aa333360; border-radius:8px; padding:12px; text-align:center;">
+            <p style="color:#aa6666; font-size:10px; letter-spacing:2px; margin-bottom:6px;">⚔ 战斗数据</p>
+            <p style="color:#ff8866; font-size:20px; font-weight:bold;">${gameState.stats.enemiesKilled}</p>
+            <p style="color:#886666; font-size:11px;">敌人击杀</p>
+            <p style="color:#cc8888; font-size:12px; margin-top:4px;">${gameState.stats.turnsPlayed} 回合</p>
+            ${ratingStats.total > 0 ? '<p style="color:#ffcc44; font-size:11px;">' + ratingStats.S + '个S评级 · 均分' + ratingStats.avgScore + '</p>' : ''}
+          </div>
+          <div style="flex:1; min-width:140px; background:rgba(0,0,0,0.5); border:1px solid #aa333360; border-radius:8px; padding:12px; text-align:center;">
+            <p style="color:#aa6666; font-size:10px; letter-spacing:2px; margin-bottom:6px;">📊 角色状态</p>
+            <p style="color:#6699ff; font-size:20px; font-weight:bold;">Lv.${p.level}</p>
+            <p style="color:#886666; font-size:11px;">ATK ${p.atk} · DEF ${p.def}</p>
+            <p style="color:#886666; font-size:11px;">${p.activeBloodline !== 'none' ? p.activeBloodline : '无血统'} · 基因锁${p.geneLock || 0}阶</p>
+            <p style="color:#ffcc44; font-size:11px;">${p.gold || 0}G · ${gameState.stats.goldEarned || 0}G累计</p>
+          </div>
+          <div style="flex:1; min-width:140px; background:rgba(0,0,0,0.5); border:1px solid #aa333360; border-radius:8px; padding:12px; text-align:center;">
+            <p style="color:#aa6666; font-size:10px; letter-spacing:2px; margin-bottom:6px;">🗺 探索进度</p>
+            <p style="color:#44cc88; font-size:20px; font-weight:bold;">${gameState.chapter}-${currentFloorIndex + 1}</p>
+            <p style="color:#886666; font-size:11px;">第${gameState.chapter}章 · 第${currentFloorIndex + 1}层</p>
+            <p style="color:#886666; font-size:11px;">${gameState.stats.floorsCleared || 0}层已通过</p>
+            <p style="color:#886666; font-size:11px;">死亡 ${gameState.stats.deathCount} 次</p>
+          </div>
         </div>
-        <p style="color: #664444; font-size: 13px; max-width: 500px; text-align: center; line-height: 1.6; margin-bottom: 20px; font-style: italic;">
-          "死亡不过是另一种开始。在主神的世界里，每一次失败都是通往更强大的你的阶梯。"
+
+        ${lastBattle ? '<div style="background:rgba(0,0,0,0.4); border:1px solid #ff444430; border-radius:8px; padding:10px 16px; max-width:400px; margin-bottom:12px;">' +
+          '<p style="color:#ff6644; font-size:11px; margin-bottom:4px;">最后一战: vs ' + lastBattle.enemy + '</p>' +
+          '<p style="color:#886666; font-size:11px;">' + lastBattle.rounds + '回合 · ' + (lastBattle.victory ? '✓胜利' : '✗落败') +
+          (lastBattle.rating ? ' · <span style="color:' + lastBattle.rating.color + '">' + lastBattle.rating.grade + '级</span>' : '') + '</p></div>' : ''}
+
+        <!-- 战斗提示 -->
+        <div style="background:rgba(0,50,100,0.2); border:1px solid #336699; border-radius:8px; padding:10px 16px; max-width:400px; margin-bottom:16px;">
+          <p style="color:#6699ff; font-size:11px;">💡 轮回指南: ${tip}</p>
+        </div>
+
+        <p style="color: #664444; font-size: 13px; max-width: 500px; text-align: center; line-height: 1.6; margin-bottom: 16px; font-style: italic;">
+          ${quote}
         </p>
         <div style="display: flex; gap: 16px; flex-wrap: wrap; justify-content: center;">
           <button id="btn-load" style="

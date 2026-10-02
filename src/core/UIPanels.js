@@ -803,9 +803,24 @@ export function showCombatLog() {
   const overlay = document.getElementById('ui-overlay');
   
   const logs = _combatHistory().slice().reverse();
+  // 战斗统计摘要
+  const totalBattles = logs.length;
+  const wins = logs.filter(e => e.victory).length;
+  const losses = totalBattles - wins;
+  const avgRounds = totalBattles > 0 ? Math.round(logs.reduce((s,e) => s + e.rounds, 0) / totalBattles) : 0;
+  const sCount = logs.filter(e => e.rating?.grade === 'S').length;
+  const summaryHtml = totalBattles > 0 ? `
+    <div style="display:flex; gap:8px; margin-bottom:12px; justify-content:center; flex-wrap:wrap;">
+      <span style="background:rgba(68,255,136,0.1); border:1px solid #44ff8830; border-radius:6px; padding:4px 12px; color:#44ff88; font-size:12px;">✓ ${wins}胜</span>
+      <span style="background:rgba(255,68,68,0.1); border:1px solid #ff444430; border-radius:6px; padding:4px 12px; color:#ff4444; font-size:12px;">✗ ${losses}败</span>
+      <span style="background:rgba(255,204,68,0.1); border:1px solid #ffcc4430; border-radius:6px; padding:4px 12px; color:#ffcc44; font-size:12px;">⌀ ${avgRounds}回合</span>
+      ${sCount > 0 ? '<span style="background:rgba(255,221,0,0.1); border:1px solid #ffdd0030; border-radius:6px; padding:4px 12px; color:#ffdd00; font-size:12px;">⭐ ' + sCount + '个S</span>' : ''}
+    </div>
+  ` : '';
+
   const logHtml = logs.length === 0 
     ? '<p style="color: #666; text-align: center; margin: 20px;">尚无战斗记录</p>'
-    : logs.map((entry, i) => `
+    : summaryHtml + logs.map((entry, i) => `
       <div style="
         background: rgba(${entry.victory ? '40,80,40' : '80,30,30'}, 0.3);
         border: 1px solid ${entry.victory ? '#44884433' : '#884444'};
@@ -818,84 +833,36 @@ export function showCombatLog() {
           <span style="color: #666; font-size: 12px;">${entry.floor} · ${entry.rounds}回合${entry.rating ? ' · <span style="color:' + entry.rating.color + '">' + entry.rating.grade + '</span>' : ''}</span>
         </div>
         <div style="color: #aaa; font-size: 12px; line-height: 1.6;">
-          ${entry.log.slice(-8).map(l => {
+          ${entry.log.slice(-10).map(l => {
             let c = '#999';
             if (l.type === 'attack') c = '#ffcc88';
             if (l.type === 'critical') c = '#ffaa00';
             if (l.type === 'enemy_attack') c = '#ff6644';
+            if (l.type === 'enemy_critical') c = '#ff3322';
             if (l.type === 'victory') c = '#44ff88';
             if (l.type === 'reward') c = '#ffcc44';
             if (l.type === 'heal') c = '#88ffaa';
             if (l.type === 'spell') c = '#cc88ff';
+            if (l.type === 'skill') c = '#44ddff';
             if (l.type === 'burn') c = '#ff8833';
+            if (l.type === 'poison') c = '#88ff00';
+            if (l.type === 'freeze') c = '#88ccff';
             if (l.type === 'reflect') c = '#6699ff';
             if (l.type === 'buff') c = '#66ccff';
-            return '<span style="color:' + c + '">' + l.text + '</span>';
+            if (l.type === 'debuff') c = '#ff8888';
+            if (l.type === 'status') c = '#aa88cc';
+            if (l.type === 'dodge') c = '#aaddff';
+            if (l.type === 'block') c = '#88aacc';
+            if (l.type === 'counter') c = '#ffaa88';
+            if (l.type === 'death_save') c = '#ffdd00';
+            if (l.type === 'execute') c = '#ff0000';
+            const icon = { skill: '🧬', spell: '✦', burn: '🔥', poison: '☠', freeze: '❄', dodge: '💨', block: '🛡', counter: '⚡', death_save: '💀', execute: '☠' }[l.type] || '';
+            return '<span style="color:' + c + '">' + icon + (icon ? ' ' : '') + l.text + '</span>';
           }).join('<br>')}
         </div>
       </div>
     `).join('');
 
-  overlay.innerHTML = `
-    <div style="
-      position: absolute; top: 0; left: 0; right: 0; bottom: 0;
-      display: flex; align-items: center; justify-content: center;
-      background: rgba(0,0,0,0.8);
-    " id="log-backdrop">
-      <div style="
-        background: rgba(10,10,20,0.97); border: 1px solid #444; border-radius: 16px;
-        padding: 30px; max-width: 600px; width: 90%; max-height: 80vh; overflow-y: auto;
-      ">
-        <h2 style="color: #ff8866; text-align: center; letter-spacing: 4px; margin-bottom: 16px;">
-          ⚔ 战斗日志 ⚔
-        </h2>
-        ${logHtml}
-        <div style="text-align: center; margin-top: 16px;">
-          <button id="btn-close-log" style="
-            background: transparent; border: 1px solid #444; color: #888;
-            padding: 8px 30px; cursor: pointer; font-size: 14px; font-family: inherit;
-            border-radius: 6px;
-          ">关闭 (L)</button>
-        </div>
-      </div>
-    </div>
-  `;
-
-  const close = () => { overlay.innerHTML = ''; };
-  document.getElementById('btn-close-log').addEventListener('click', close);
-  document.getElementById('log-backdrop').addEventListener('click', (e) => {
-    if (e.target.id === 'log-backdrop') close();
-  });
-  const kh = (e) => {
-    if (e.key === 'l' || e.key === 'Escape') { close(); document.removeEventListener('keydown', kh); }
-  };
-  document.addEventListener('keydown', kh);
-}
-
-// ── 成就面板 ──
-export function showAchievementPanel() {
-  if (gameState.state !== GAME_STATE.EXPLORING) return;
-  const overlay = document.getElementById('ui-overlay');
-  const unlocked = milestoneTracker.unlocked;
-  const allMilestones = Object.entries(MILESTONES);
-  const ratingStats = getRatingStats();
-
-  const milestoneHTML = allMilestones.map(([id, m]) => {
-    const done = unlocked.has(id);
-    return `<div style="
-      display: flex; align-items: center; gap: 10px; padding: 10px 14px;
-      background: ${done ? 'rgba(255,204,68,0.06)' : 'rgba(30,30,40,0.5)'};
-      border: 1px solid ${done ? m.color + '40' : '#222'};
-      border-radius: 8px; opacity: ${done ? 1 : 0.5};
-    ">
-      <span style="font-size: 22px;">${done ? m.icon : '🔒'}</span>
-      <div>
-        <div style="color: ${done ? m.color : '#666'}; font-weight: bold; font-size: 13px;">${m.name}</div>
-        <div style="color: ${done ? '#aaa' : '#444'}; font-size: 11px;">${m.desc}</div>
-      </div>
-      ${done ? '<span style="color: #44ff88; font-size: 11px; margin-left: auto;">✓</span>' : ''}
-    </div>`;
-  }).join('');
 
   // 统计概要
   const totalUnlocked = unlocked.size;
