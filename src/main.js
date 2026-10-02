@@ -2161,6 +2161,16 @@ function _showCombatStatsPanel() {
           </p>
         </div>` : ''}
         
+        ${(() => { try { const es = getEliteStats(); const t = es.rare + es.elite + es.legendary; return t > 0 ? `
+        <div style="background:rgba(170,68,255,0.05);border:1px solid #aa44ff22;border-radius:8px;padding:10px;margin-bottom:12px;">
+          <p style="color:#aa44ff;font-size:11px;letter-spacing:2px;margin-bottom:4px;">◆ 精英怪物</p>
+          <p style="color:#888;font-size:11px;">
+            稀有: <span style="color:#4488ff">${es.rare}</span> · 
+            精英: <span style="color:#aa44ff">${es.elite}</span> · 
+            传说: <span style="color:#ff8800">${es.legendary}</span> · 
+            总计: <span style="color:#ccc">${t}</span>
+          </p>
+        </div>` : ''; } catch { return ''; } })()}
         <div style="background:rgba(68,136,255,0.04);border:1px solid #4488ff22;border-radius:8px;padding:10px;margin-bottom:12px;">
           <p style="color:#4488ff;font-size:11px;letter-spacing:2px;margin-bottom:4px;">👥 队伍</p>
           <p style="color:#888;font-size:11px;">
