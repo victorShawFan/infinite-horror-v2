@@ -29,6 +29,7 @@ export const COMPANION_PROFILES = {
     dislikes: ['无谓牺牲', '背叛', '鲁莽'],
     deathChapter: 5,
     memoir: '张杰。中洲队的第一任队长。他不是最强的，但他是最值得信赖的。在死神来了的世界里，他用自己的命换来了郑吒的成长。那天之后，郑吒明白了什么叫做"队长"。',
+    deathQuote: '队长……活下去，这是我最后的命令。',
   },
   zhan_lan: {
     name: '詹岚',
@@ -38,6 +39,7 @@ export const COMPANION_PROFILES = {
     likes: ['精准行动', '理性分析', '保护同伴'],
     dislikes: ['混乱', '犹豫', '浪费'],
     memoir: '詹岚。她的枪法和她的心一样，从不偏离目标。',
+    deathQuote: '瞄准镜里……我看到了你们的未来……很好。',
   },
   chuxuan: {
     name: '楚轩',
@@ -49,6 +51,7 @@ export const COMPANION_PROFILES = {
     deathChapter: 7, // 暂时死亡
     reviveChapter: 8,
     memoir: '楚轩。他用冰冷的逻辑拯救了无数次中洲队。当他选择牺牲自己的时候，所有人才意识到，那颗冰冷的心里，一直燃烧着最炽热的火焰。',
+    deathQuote: '……计划之外的变量。有趣。',
   },
   li_xiaoyi: {
     name: '李小意',
@@ -58,6 +61,7 @@ export const COMPANION_PROFILES = {
     likes: ['被认可', '学习', '保护人'],
     dislikes: ['被忽视', '无力感'],
     memoir: '李小意。他是所有人的影子——每一个刚进入主神空间的普通人。他的成长，就是我们每个人的成长。',
+    deathQuote: '嘿……帮我把这个送给我妈。',
   },
   mou_gang: {
     name: '牟刚',
@@ -67,6 +71,7 @@ export const COMPANION_PROFILES = {
     likes: ['正面对决', '兄弟义气', '简单直接'],
     dislikes: ['阴谋诡计', '伤害无辜'],
     memoir: '牟刚。他像一座山，沉默而坚定。在所有人都想逃跑的时候，他总是第一个站出来。',
+    deathQuote: '防线……我会守到最后。',
   },
   lingdian: {
     name: '零点',

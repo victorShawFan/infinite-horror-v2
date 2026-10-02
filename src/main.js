@@ -1386,10 +1386,17 @@ function triggerEvent(entity) {
       const comp = gameState.companions.find(c => c.id === evt.companionDeath);
       if (comp) {
         comp.alive = false;
-        // 队友牺牲 → 关系大幅提升（铭记）
         changeRelationship(evt.companionDeath, 'sacrifice', gameState.relationships);
         renderer.shake(8, 600);
+        renderer.flash('rgba(255, 0, 0)', 500);
         renderer.addFloatText(`${comp.name} 阵亡`, gameState.player.x, gameState.player.y - 1, 'rgb(255, 0, 0)');
+        // 阵亡特写通知
+        const profile = COMPANION_PROFILES[comp.id];
+        const farewell = profile?.deathQuote || profile?.quote || '"……"';
+        setTimeout(() => {
+          renderer.notify(`✝ ${comp.name} 永远离开了队伍`, '#ff2222', 120);
+          setTimeout(() => renderer.notify(`"${farewell}" —— ${comp.name}`, '#aa6666', 150), 2000);
+        }, 800);
       }
       // 也从地图实体移除队友图标
       const compEntIdx = entities.findIndex(e => e.id === evt.companionDeath);
