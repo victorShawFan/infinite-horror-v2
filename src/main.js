@@ -302,10 +302,24 @@ eventBus.on('player:death', () => {
         <p style="color: #cc8888; font-size: 18px; margin-bottom: 40px;">
           郑吒在${chapter.floors[currentFloorIndex]?.name || '未知区域'}中陨落...
         </p>
-        <p style="color: #885555; font-size: 14px; max-width: 500px; text-align: center; line-height: 1.6; margin-bottom: 30px;">
+        <div style="background: rgba(0,0,0,0.4); border-radius: 10px; padding: 16px 24px; margin-bottom: 20px; max-width: 400px;">
+          <p style="color: #aa6666; font-size: 12px; letter-spacing: 3px; margin-bottom: 8px;">轮回记录</p>
+          <p style="color: #cc8888; font-size: 13px; line-height: 1.8;">
+            等级 Lv.${gameState.player.level} · 击杀 ${gameState.stats.enemiesKilled} · 
+            回合 ${gameState.stats.turnsPlayed} · 死亡 ${gameState.stats.deathCount}<br>
+            ${gameState.player.activeBloodline !== 'none' ? '血统: ' + gameState.player.activeBloodline + ' · ' : ''}
+            ${gameState.player.geneLock > 0 ? '基因锁' + gameState.player.geneLock + '阶' : ''}
+          </p>
+        </div>
+        <p style="color: #664444; font-size: 13px; max-width: 500px; text-align: center; line-height: 1.6; margin-bottom: 20px; font-style: italic;">
           "死亡不过是另一种开始。在主神的世界里，每一次失败都是通往更强大的你的阶梯。"
         </p>
-        <div style="display: flex; gap: 20px;">
+        <div style="display: flex; gap: 16px; flex-wrap: wrap; justify-content: center;">
+          <button id="btn-load" style="
+            background: transparent; border: 1px solid #4488ff; color: #6699ff;
+            padding: 12px 30px; cursor: pointer; font-size: 14px;
+            letter-spacing: 3px; font-family: inherit; border-radius: 8px;
+          ">读取存档 (F9)</button>
           <button id="btn-retry" style="
             background: transparent; border: 2px solid #ff4444; color: #ff4444;
             padding: 14px 40px; cursor: pointer; font-size: 16px;
@@ -327,6 +341,22 @@ eventBus.on('player:death', () => {
       </div>
       <style>@keyframes fadeIn { from { opacity: 0 } to { opacity: 1 } }</style>
     `;
+
+    document.getElementById('btn-load')?.addEventListener('click', () => {
+      overlay.innerHTML = '';
+      if (gameState.load(0)) {
+        const chapterGens = { 1: generateChapter1, 2: generateChapter2 };
+        const gen = chapterGens[gameState.chapter] || generateChapter1;
+        chapter = gen();
+        currentFloorIndex = gameState.nodeIndex || 0;
+        loadFloor(currentFloorIndex);
+        gameStarted = true;
+        if (!gameLoopRunning) { gameLoopRunning = true; requestAnimationFrame(gameLoop); }
+        renderer.notify('💾 存档已加载', '#44aaff', 90);
+      } else {
+        renderer.notify('❌ 无存档可加载', '#ff4444', 60);
+      }
+    });
 
     document.getElementById('btn-retry').addEventListener('click', () => {
       overlay.innerHTML = '';
