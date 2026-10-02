@@ -309,6 +309,7 @@ export function executeBattle(enemy) {
   let playerHp = p.hp;
   let playerMana = p.mana || 0;
   let round = 0;
+  let _totalDmgDealt = 0, _totalDmgTaken = 0, _critHits = 0;
   // 应用战斗姿态修正
   const _rawAtk = getEffectiveAtk(p);
   const _rawDef = getEffectiveDef(p);
@@ -691,7 +692,11 @@ if (chipFx.hasIceChip && enemy.atk !== enemyEffAtk) {
       log.push({
         text: `${hitLabel}郑吒 → ${enemy.name} ${finalDmg}${pHit.isCrit ? ' 暴击！' : ''}${pHit.isWeak ? ' 弱点！' : ''}${multiLabel}`,
         type: pHit.isCrit ? 'critical' : 'attack',
+        damage: finalDmg,
+        playerHp, enemyHp, round,
       });
+      _totalDmgDealt += finalDmg;
+      if (pHit.isCrit) _critHits++;
       if (finalDmg > gameState.stats.maxSingleHit) gameState.stats.maxSingleHit = finalDmg;
 
       // 装备吸血
@@ -1176,15 +1181,24 @@ if (chipFx.hasIceChip && enemy.atk !== enemyEffAtk) {
   }
 
   // Compute stats from log
-  let _totalDmgDealt = 0, _totalDmgTaken = 0, _critHits = 0;
-  for (const entry of log) {
-    if (entry.type === 'player_attack' || entry.type === 'critical' || entry.type === 'skill_damage') {
-      _totalDmgDealt += (entry.damage || 0);
-      if (entry.type === 'critical' || (entry.text && entry.text.includes('\u66b4\u51fb'))) _critHits++;
+  // 从日志回补统计（仅当内联追踪未覆盖时补充）
+  if (_totalDmgDealt === 0 && _totalDmgTaken === 0) {
+    for (const entry of log) {
+      if (entry.type === 'attack' || entry.type === 'player_attack' || entry.type === 'critical' || entry.type === 'skill_damage') {
+        _totalDmgDealt += (entry.damage || 0);
+        if (entry.type === 'critical' || (entry.text && entry.text.includes('暴击'))) _critHits++;
+      }
+      if (entry.type === 'enemy_attack' || entry.type === 'damage_taken') {
+        _totalDmgTaken += (entry.damage || 0);
+      }
     }
-    if (entry.type === 'enemy_attack' || entry.type === 'damage_taken') {
-      _totalDmgTaken += (entry.damage || 0);
-    }
+  }
+  // 回退计算：如果日志无damage字段，用HP差推算
+  if (_totalDmgDealt === 0 && victory) {
+    _totalDmgDealt = enemy.hp; // 至少打完了enemy全部HP
+  }
+  if (_totalDmgTaken === 0 && playerHp < p.maxHp) {
+    _totalDmgTaken = p.maxHp - Math.max(0, playerHp);
   }
   return { victory: enemyHp <= 0, log, rounds: round, totalDamageDealt: _totalDmgDealt, totalDamageTaken: _totalDmgTaken, critCount: _critHits };
 }
