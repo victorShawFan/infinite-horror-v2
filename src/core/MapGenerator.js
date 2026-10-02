@@ -113,7 +113,7 @@ function generateFloor_1_1() {
         description: '一个穿着实验室制服的感染者。眼神空洞，皮肤呈灰绿色，嘴角还挂着不明液体。行动迟缓但会本能地扑向活物。',
       },
       { type: ENTITY_TYPE.ENEMY, id: 'zombie_2', name: '僵化感染者',
-        x: 4, y: 5, sprite: '尸', color: '#668866',
+        x: 5, y: 4, sprite: '尸', color: '#668866',
         hp: 15, atk: 6, def: 2, spd: 3,
         rewards: { exp: 15, gold: 5 },
         geneLockCharge: 3,
@@ -121,13 +121,13 @@ function generateFloor_1_1() {
       },
       // 补给品
       { type: ENTITY_TYPE.ITEM, id: 'potion_1', name: '急救喷雾',
-        x: 9, y: 5, sprite: '♥', color: '#ff4488',
+        x: 10, y: 5, sprite: '♥', color: '#ff4488',
         itemType: 'consumable', effect: { heal: 30 },
         description: '恢复30点生命值。',
       },
       // 隐藏物品：座椅下的手记
       { type: ENTITY_TYPE.EVENT, id: 'hidden_note', name: '座椅下的纸条',
-        x: 3, y: 5, sprite: '📜', color: '#ccaa66',
+        x: 2, y: 6, sprite: '📜', color: '#ccaa66',
         event: {
           type: 'investigate',
           lines: [
@@ -141,7 +141,7 @@ function generateFloor_1_1() {
       },
       // 其他新人（叙事用）
       { type: ENTITY_TYPE.NPC, id: 'newbie_1', name: '惊慌的新人',
-        x: 8, y: 9, sprite: '人', color: '#888888',
+        x: 8, y: 10, sprite: '人', color: '#888888',
         dialogue: [
           { text: '这、这是怎么回事？我明明在家里睡觉...', speaker: '新人' },
           { text: '你冷静点。先听那边那个人说什么。', speaker: '郑吒' },

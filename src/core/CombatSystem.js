@@ -13,8 +13,8 @@ import { gameState } from './GameState.js';
  * @param {string} damageType
  * @returns {{ damage: number, isCrit: boolean, isWeak: boolean }}
  */
-export function calcDamage(attacker, defender, damageType = DAMAGE_TYPE.PHYSICAL) {
-  let baseDmg = Math.max(1, attacker.atk - defender.def);
+export function calcDamage(attacker, defender, damageType = DAMAGE_TYPE.PHYSICAL, minDmg = 1) {
+  let baseDmg = Math.max(minDmg, attacker.atk - defender.def);
 
   // 属性克制
   const isWeak = defender.weaknesses?.includes(damageType) || false;
@@ -30,7 +30,7 @@ export function calcDamage(attacker, defender, damageType = DAMAGE_TYPE.PHYSICAL
     baseDmg = Math.max(1, Math.floor(baseDmg * (100 - defender.res) / 100));
   }
 
-  return { damage: Math.max(1, baseDmg), isCrit, isWeak };
+  return { damage: Math.max(minDmg, baseDmg), isCrit, isWeak };
 }
 
 /**
@@ -103,7 +103,8 @@ export function executeBattle(enemy) {
     const eHit = calcDamage(
       { atk: enemy.atk, crt: enemy.crt || 0 },
       { def: getEffectiveDef(p), res: p.res || 0 },
-      enemy.damageType || DAMAGE_TYPE.PHYSICAL
+      enemy.damageType || DAMAGE_TYPE.PHYSICAL,
+      0  // 魔塔规则：DEF ≥ 敌ATK时受伤为0
     );
     playerHp -= eHit.damage;
     log.push({
