@@ -244,6 +244,8 @@ export class Renderer {
     this._drawMinimap(ctx, floor, entities, p);
 
     // ── 悬停信息 ──
+    this._drawActiveEffects(ctx);
+
     if (hoveredEntity && !dialogueState) {
       this._drawEntityTooltip(ctx, hoveredEntity);
     }
@@ -752,7 +754,33 @@ export class Renderer {
     );
   }
 
-  _drawBar(ctx, x, y, w, h, current, max, color, bgColor) {
+  _drawActiveEffects(ctx) {
+    const effects = getActiveEffects();
+    if (effects.length === 0) return;
+    const startX = 10;
+    const startY = 54; // below HP/Mana bars
+    ctx.font = '10px "Microsoft YaHei"';
+    for (let i = 0; i < effects.length; i++) {
+      const e = effects[i];
+      const x = startX + i * 56;
+      const bgColor = e.type.positive ? 'rgba(68,255,136,0.08)' : 'rgba(255,68,68,0.08)';
+      ctx.fillStyle = bgColor;
+      roundRect(ctx, x, startY, 52, 18, 4);
+      ctx.fill();
+      ctx.strokeStyle = e.type.color + '40';
+      ctx.lineWidth = 1;
+      roundRect(ctx, x, startY, 52, 18, 4);
+      ctx.stroke();
+      ctx.fillStyle = e.type.color;
+      ctx.textAlign = 'left';
+      ctx.fillText(e.type.icon + (e.value > 0 ? '+' : '') + e.value, x + 3, startY + 12);
+      ctx.fillStyle = '#666';
+      ctx.fillText(e.remaining + '', x + 42, startY + 12);
+    }
+    ctx.textAlign = 'left';
+  }
+
+    _drawBar(ctx, x, y, w, h, current, max, color, bgColor) {
     ctx.fillStyle = bgColor;
     roundRect(ctx, x, y, w, h, h / 2);
     ctx.fill();

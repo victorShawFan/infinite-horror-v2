@@ -49,6 +49,7 @@ import { ngPlusState, formatClearScreen, formatCycleInfo, TITLES, getActiveMutat
 import { fadeBlackTransition, chapterIntroTransition, floorTransition, victoryFlash } from './core/TransitionSystem.js';
 import { MiniMap } from './core/MiniMap.js';
 import { openCodex } from './core/Codex.js';
+import { addEffect, tickEffects, getActiveEffects, getEffectModifiers, renderEffectHUD, serializeEffects, deserializeEffects, clearAllEffects } from './core/StatusEffectTracker.js';
 import { recordBattle, showBattleReplay, showBattleHistoryPanel, serializeBattleHistory, deserializeBattleHistory } from './core/BattleReplay.js';
 import { tryUpgradeToElite, getEliteDescription, recordEliteKill, getEliteStats, resetEliteStats, serializeEliteStats, deserializeEliteStats } from './core/EliteMonsterSystem.js';
 import { atmosphereRenderer } from './core/AtmosphereSystem.js';
@@ -121,6 +122,7 @@ function autoSave(reason = '') {
     localStorage.setItem('ih_challenge', JSON.stringify(challengeState.toJSON()));
     localStorage.setItem('ih_elite', JSON.stringify(serializeEliteStats()));
     localStorage.setItem('ih_battle_history', JSON.stringify(serializeBattleHistory()));
+    localStorage.setItem('ih_status_effects', JSON.stringify(serializeEffects()));
     // 设置持久化：难度 + 音量 + 迷雾
     try {
       const settingsData = {
@@ -900,7 +902,8 @@ function startGame() {
 
     try { localStorage.setItem('ih_challenge', JSON.stringify(challengeState.toJSON()));
     localStorage.setItem('ih_elite', JSON.stringify(serializeEliteStats()));
-    localStorage.setItem('ih_battle_history', JSON.stringify(serializeBattleHistory())); } catch {}
+    localStorage.setItem('ih_battle_history', JSON.stringify(serializeBattleHistory()));
+    localStorage.setItem('ih_status_effects', JSON.stringify(serializeEffects())); } catch {}
     try { localStorage.setItem('ih_streak', JSON.stringify(killStreak.toJSON())); } catch {}
     try { localStorage.setItem('ih_fog', JSON.stringify(fogOfWar.toJSON())); } catch {}
   });
@@ -1292,7 +1295,8 @@ document.addEventListener('keydown', (e) => {
     try { localStorage.setItem('ih_stance', getStanceId()); } catch {}
     try { localStorage.setItem('ih_challenge', JSON.stringify(challengeState.toJSON()));
     localStorage.setItem('ih_elite', JSON.stringify(serializeEliteStats()));
-    localStorage.setItem('ih_battle_history', JSON.stringify(serializeBattleHistory())); } catch {}
+    localStorage.setItem('ih_battle_history', JSON.stringify(serializeBattleHistory()));
+    localStorage.setItem('ih_status_effects', JSON.stringify(serializeEffects())); } catch {}
     renderer.notify('💾 手动存档完成', '#44ff88', 90);
     return;
   }
@@ -2493,7 +2497,10 @@ function startCombat(enemy, preScaledEnemy) {
       turn: gameState.turn,
       rating: battleRating,
     });
-    if (combatHistory.length > 20) combatHistory.shift(); // 保留最近20场
+    if (combatHistory.length > 20) combatHistory.shift();
+    // 递减持续效果
+    const expiredEffects = tickEffects();
+    for (const eff of expiredEffects) { renderer.notify(eff.name + ' \u5df2\u6d88\u9000', '#888', 60); } // 保留最近20场
     // 记录到战斗回放系统
     try { recordBattle({ enemy, victory: result.victory, rounds: result.rounds, rating: battleRating, log: result.log, playerHpBefore: hpBeforeCombat, playerHpAfter: p.hp, playerMaxHp: p.maxHp, playerAtk: p.atk, playerDef: p.def, enemyMaxHp: enemy._maxHp || enemy.hp, enemyAtk: enemy.atk, enemyDef: enemy.def, totalDamageDealt: result.totalDamageDealt || 0, totalDamageTaken: result.totalDamageTaken || 0, critCount: result.critCount || 0 }); } catch(err) {}
 
