@@ -89,6 +89,19 @@ function autoSave(reason = '') {
     localStorage.setItem('ih_streak', JSON.stringify(killStreak.toJSON()));
     localStorage.setItem('ih_bestiary', JSON.stringify(bestiary.toJSON()));
     localStorage.setItem('ih_challenge', JSON.stringify(challengeState.toJSON()));
+    // 设置持久化：难度 + 音量 + 迷雾
+    try {
+      const settingsData = {
+        difficulty: getDifficulty(),
+        volume: audioEngine.masterGain?.gain?.value ?? 0.5,
+        fog: fogOfWar.enabled !== false
+      };
+      localStorage.setItem('ih_settings', JSON.stringify(settingsData));
+    } catch {}
+    // 随机遭遇持久化
+    try {
+      localStorage.setItem('ih_encounters', JSON.stringify(randomEncounterManager.toJSON()));
+    } catch {}
     try { renderer.showSaveIndicator(); } catch {}
     if (reason) console.log('[AutoSave]', reason);
   } catch (e) {
@@ -521,6 +534,22 @@ function showMainMenu() {
       try { const cs = localStorage.getItem('ih_challenge'); if (cs) challengeState.fromJSON(JSON.parse(cs)); } catch {}
       try { const ks = localStorage.getItem('ih_streak'); if (ks) killStreak.fromJSON(JSON.parse(ks)); } catch {}
       try { const fg = localStorage.getItem('ih_fog'); if (fg) fogOfWar.fromJSON(JSON.parse(fg)); } catch {}
+      // 设置恢复：难度 + 音量
+      try {
+        const st = localStorage.getItem('ih_settings');
+        if (st) {
+          const settings = JSON.parse(st);
+          if (settings.difficulty) setDifficulty(settings.difficulty);
+          if (settings.volume !== undefined && audioEngine.masterGain) {
+            try { audioEngine.masterGain.gain.value = settings.volume; } catch {}
+          }
+        }
+      } catch {}
+      // 随机遭遇恢复
+      try {
+        const enc = localStorage.getItem('ih_encounters');
+        if (enc) randomEncounterManager.fromJSON(JSON.parse(enc));
+      } catch {}
       const chapterGens = { 1: generateChapter1, 2: generateChapter2, 3: generateChapter3, 4: generateChapter4, 5: generateChapter5, 6: generateChapter6, 7: generateChapter7, 8: generateChapter8, 9: generateChapter9, 10: generateChapter10, 11: generateChapter11, 12: generateChapter12 };
       const gen = chapterGens[gameState.chapter] || generateChapter1;
 
