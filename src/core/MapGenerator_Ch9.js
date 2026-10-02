@@ -21,7 +21,7 @@ function f9_2(){const g=makeGrid();carveRoom(g,1,1,7,6);carveCorridor(g,7,3,10,3
 {type:ENTITY_TYPE.ENEMY,id:'training_drone',name:'训练靶机',x:13,y:11,sprite:'🎯',color:'#668888',hp:80,atk:20,def:8,spd:10,rewards:{exp:60,gold:40}},
 {type:ENTITY_TYPE.ITEM,id:'def_ch9',name:'合金护甲片',x:4,y:11,sprite:'◆',color:'#6688ff',itemType:'stat_boost',effect:{def:6}},
 {type:ENTITY_TYPE.ITEM,id:'medkit_ch9_2',name:'急救包',x:18,y:13,sprite:'♥',color:'#ff4488',itemType:'consumable',effect:{heal:100}},
-{type:ENTITY_TYPE.ENEMY,id:'training_bot2',name:'训练靶机β',x:6,y:3,sprite:'🎯',color:'#669988',hp:85,atk:22,def:10,spd:12,rewards:{exp:65,gold:42}}]};}
+{type:ENTITY_TYPE.EVENT,id:'lingdian_training',name:'零点的校准',x:3,y:4,sprite:'🎯',color:'#88aaff',event:{type:'dialogue',lines:[{text:'零点在训练场的角落独自校准狙击镜。',speaker:'旁白'},{text:'1200米。风速7。湿度43%。修正值0.3。',speaker:'零点'},{text:'（他的专注力令人敬畏。每一发子弹都是精确计算的结果。）',speaker:'旁白'}],flag:'lingdian_training'}},{type:ENTITY_TYPE.ENEMY,id:'training_bot2',name:'训练靶机β',x:6,y:3,sprite:'🎯',color:'#669988',hp:85,atk:22,def:10,spd:12,rewards:{exp:65,gold:42}}]};}
 
 // ═══ 9-3 军事基地 ═══
 function f9_3(){const g=makeGrid();carveRoom(g,1,1,5,5);carveCorridor(g,5,3,9,3);carveRoom(g,9,1,14,5);carveCorridor(g,11,5,11,9);carveRoom(g,8,9,14,13);carveRoom(g,1,8,6,12);carveCorridor(g,4,5,4,8);carveCorridor(g,6,10,8,10);carveRoom(g,15,9,19,14);carveCorridor(g,14,11,15,11);g[13][18]=TILE.STAIRS;return{id:'9-3',name:'军事基地',subtitle:'星河战队世界。人类军事基地外围已经出现虫族斥候。',bgColor:'#060810',theme:'scifi_base',tiles:g,width:W,height:H,playerStart:{x:3,y:3},entities:[
@@ -37,7 +37,7 @@ function f9_4(){const g=makeGrid();carveRoom(g,1,6,6,11);carveCorridor(g,6,8,10,
 {type:ENTITY_TYPE.ENEMY,id:'tanker_bug',name:'坦克虫',x:8,y:1,sprite:'🐛',color:'#665533',hp:150,atk:30,def:22,spd:5,rewards:{exp:85,gold:60}},
 {type:ENTITY_TYPE.ITEM,id:'medkit_ch9_4',name:'军用急救包',x:11,y:14,sprite:'♥',color:'#ff4488',itemType:'consumable',effect:{heal:110}},
 {type:ENTITY_TYPE.ITEM,id:'crt_ch9',name:'弱点分析芯片',x:18,y:7,sprite:'◆',color:'#ffcc44',itemType:'stat_boost',effect:{crt:5}},
-{type:ENTITY_TYPE.ENEMY,id:'fire_bug',name:'喷火虫',x:5,y:8,sprite:'🔥',color:'#aa4400',hp:85,atk:32,def:8,spd:12,damageType:'fire',rewards:{exp:70,gold:50}}]};}
+{type:ENTITY_TYPE.ITEM,id:'chest_ch9',name:'军用物资箱',x:12,y:10,sprite:'📦',color:'#ffaa44',itemType:'chest',chestType:'silver'},{type:ENTITY_TYPE.ITEM,id:'trap_ch9_laser',name:'⚡ 激光警报',x:9,y:8,sprite:'⚡',color:'#ff2200',itemType:'trap',trapType:'laser_grid'},{type:ENTITY_TYPE.ENEMY,id:'fire_bug',name:'喷火虫',x:5,y:8,sprite:'🔥',color:'#aa4400',hp:85,atk:32,def:8,spd:12,damageType:'fire',rewards:{exp:70,gold:50}}]};}
 
 // ═══ 9-5 多队博弈 ═══
 function f9_5(){const g=makeGrid();carveRoom(g,6,5,14,12);carveRoom(g,1,7,5,10);carveCorridor(g,5,8,6,8);carveRoom(g,15,7,19,10);carveCorridor(g,14,8,15,8);carveRoom(g,8,1,12,4);carveCorridor(g,10,4,10,5);carveRoom(g,8,13,12,16);carveCorridor(g,10,12,10,13);g[1][11]=TILE.STAIRS;return{id:'9-5',name:'多队博弈',subtitle:'詹岚发现了其他轮回者队伍的痕迹。不确定是敌是友。',bgColor:'#080810',theme:'scifi_base',tiles:g,width:W,height:H,playerStart:{x:10,y:15},entities:[

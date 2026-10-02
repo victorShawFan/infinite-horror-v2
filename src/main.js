@@ -79,6 +79,26 @@ let combatHistory = []; // 战斗历史记录
 // ── 自动保存 ──
 // 锻造台全局入口，供LordGodSpace调用
 window._showForgePanel = showForgePanel;
+
+// 成就解锁通知
+eventBus.on('achievement:unlocked', ({ achievement }) => {
+  const notif = document.createElement('div');
+  notif.style.cssText = 'position:fixed;top:20px;right:20px;z-index:99999;' +
+    'background:linear-gradient(135deg,rgba(20,15,5,0.95),rgba(30,20,8,0.95));' +
+    'border:1px solid #ffcc44;border-radius:12px;padding:16px 24px;' +
+    'box-shadow:0 0 30px rgba(255,200,68,0.3);' +
+    'animation:achSlideIn 0.5s ease;max-width:320px;';
+  notif.innerHTML = `<div style="display:flex;align-items:center;gap:12px;">` +
+    `<span style="font-size:32px;">${achievement.icon}</span>` +
+    `<div><p style="color:#ffcc44;font-size:11px;letter-spacing:3px;margin-bottom:4px;">🏆 成就解锁</p>` +
+    `<p style="color:#e8d8c0;font-size:15px;font-weight:bold;">${achievement.name}</p>` +
+    `<p style="color:#888;font-size:12px;margin-top:2px;">${achievement.desc}</p></div></div>`;
+  const style = document.createElement('style');
+  style.textContent = '@keyframes achSlideIn{from{transform:translateX(100%);opacity:0}to{transform:translateX(0);opacity:1}}';
+  document.head.appendChild(style);
+  document.body.appendChild(notif);
+  setTimeout(() => { notif.style.transition = 'opacity 0.5s'; notif.style.opacity = '0'; setTimeout(() => notif.remove(), 600); }, 3500);
+});
 let _lastAutoSave = 0;
 function autoSave(reason = '') {
   const now = Date.now();
@@ -2064,6 +2084,12 @@ function startCombat(enemy, preScaledEnemy) {
 
 // 连杀记录
     killStreak.recordKill();
+    // 成就追踪: 击杀
+    try {
+      const nearDeath = gameState.player.hp <= gameState.player.maxHp * 0.1;
+      achievementTracker.recordKill(scaledEnemy || enemy, { playerHp: gameState.player.hp, nearDeath });
+      achievementTracker.recordStreak(killStreak.kills || 0);
+    } catch {}
     const streakDisplay = killStreak.getDisplay();
     if (streakDisplay) {
       renderer.addFloatText(streakDisplay.icon + ' ' + streakDisplay.name + ' x' + streakDisplay.kills, gameState.player.x, gameState.player.y - 2, streakDisplay.color);
@@ -2103,6 +2129,8 @@ function startCombat(enemy, preScaledEnemy) {
     // 战斗评级 — 只计算一次
     const battleRating = result.victory ? rateBattle(result, gameState.player) : null;
     if (battleRating) recordRating(battleRating);
+      // 成就追踪: 战斗评级
+      try { if (battleRating && (battleRating.grade === 'S' || battleRating.grade === 'SS')) achievementTracker.stats.sRatings++; achievementTracker.checkStats(); } catch {}
 
     // 记录战斗历史
     combatHistory.push({
@@ -2428,6 +2456,8 @@ function triggerEvent(entity) {
   const onComplete = () => {
     // 设置标记
     if (evt.flag) gameState.setFlag(evt.flag);
+    // 成就追踪: 剧情标记
+    try { if (evt.flag) achievementTracker.recordFlag(evt.flag); } catch {}
 
     // 奖励
     if (evt.rewards) {
@@ -2562,6 +2592,8 @@ function triggerEvent(entity) {
       const rp = evt.rewards?.rewardPoints || 1000;
       renderer.addFloatText(`+${rp} 奖励点 (通关)`, gameState.player.x, gameState.player.y - 1, 'rgb(255, 170, 0)');
       // 里程碑：章节通关
+      // 成就追踪: 章节完成
+      try { achievementTracker.recordChapterComplete(gameState.chapter); } catch {}
       try { checkChapterMilestones(milestoneTracker, gameState.chapter); } catch {}
       try { checkChapterMilestones(milestoneTracker, gameState.chapter); } catch {}
       setTimeout(() => showChapterComplete(), 800);
@@ -2591,6 +2623,8 @@ function triggerEvent(entity) {
           if (choice.effect.crt) { p.crt += choice.effect.crt; renderer.addFloatText(`CRT+${choice.effect.crt}%`, p.x, p.y - 1, 'rgb(255, 204, 68)'); }
           if (choice.effect.hp) { p.maxHp += choice.effect.hp; p.hp += choice.effect.hp; renderer.addFloatText(`MaxHP+${choice.effect.hp}`, p.x, p.y - 1, 'rgb(68, 255, 136)'); }
           if (choice.effect.flag) gameState.setFlag(choice.effect.flag);
+          // 成就追踪: 抉择标记
+          try { if (choice.effect.flag) achievementTracker.recordFlag(choice.effect.flag); } catch {}
           if (choice.effect.description) renderer.notify(choice.effect.description, '#ffcc44', 120);
           // 关系变化
           if (choice.effect.relationship) {
