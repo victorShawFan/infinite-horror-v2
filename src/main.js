@@ -36,7 +36,7 @@ import { renderLordGodSpace } from './core/LordGodSpace.js';
 import { CombatAnimator } from './core/CombatAnimation.js';
 import { showOpeningCutscene, showChapter2Cutscene, showChapter3Cutscene, showChapter4Cutscene, showChapter5Cutscene, showChapter6Cutscene, showChapter7Cutscene, showChapter8Cutscene, showChapter9Cutscene, showChapter10Cutscene, showChapter11Cutscene, showChapter12Cutscene } from './core/Cutscene.js';
 import { assetLoader } from './core/AssetLoader.js';
-import { milestoneTracker, checkCombatMilestones, checkGrowthMilestones, checkChapterMilestones, checkEquipmentMilestones } from './core/MilestoneSystem.js';
+import { milestoneTracker, checkCombatMilestones, checkGrowthMilestones, checkChapterMilestones, checkEquipmentMilestones, MILESTONES } from './core/MilestoneSystem.js';
 import { getTalentEffects, TALENT_PATHS } from './core/TalentTree.js';
 import { getEquipmentDisplayName, getEquipmentTotalStats } from './core/EquipmentSystem.js';
 import { getPlayerActiveElements, ELEMENT_INFO, checkElementalResonance } from './core/ElementalSystem.js';
@@ -1585,6 +1585,22 @@ function showInventoryPanel() {
         <div style="margin-top: 16px; border-top: 1px solid #333; padding-top: 12px;">
           <h3 style="color: #ffcc44; margin-bottom: 10px;">📦 背包 (${(p.inventory||[]).length}/${p.maxInventory||20})</h3>
           <div id="inv-items-container" style="max-height: 150px; overflow-y: auto;"></div>
+        </div>
+
+        <div style="margin-top: 16px; border-top: 1px solid #333; padding-top: 12px;">
+          <h3 style="color: #ffaa00; margin-bottom: 10px;">🏆 成就 (${milestoneTracker.getUnlockedCount()}/${milestoneTracker.getTotalCount()})</h3>
+          <div style="display: flex; flex-wrap: wrap; gap: 4px;">
+            ${Object.entries(MILESTONES).map(([id, ms]) => {
+              const unlocked = milestoneTracker.unlocked.has(id);
+              return '<div style="padding:3px 8px;border-radius:4px;font-size:10px;' +
+                (unlocked 
+                  ? 'background:rgba(255,170,0,0.1);border:1px solid ' + ms.color + '33;color:' + ms.color 
+                  : 'background:rgba(30,30,40,0.5);border:1px solid #222;color:#444') +
+                ';" title="' + ms.desc + '">' +
+                ms.icon + ' ' + ms.name +
+              '</div>';
+            }).join('')}
+          </div>
         </div>
 
         <div style="text-align: center; margin-top: 24px;">
