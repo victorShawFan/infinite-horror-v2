@@ -78,7 +78,10 @@ export function getCompanionCombatBonuses() {
     const skillDef = COMPANION_SKILLS[comp.id];
     if (!skillDef) continue;
 
-    const relLevel = getRelationshipLevel(comp.id, gameState.relationships) || 0;
+    const relValue = gameState.relationships?.[comp.id] || 0;
+    const relObj = getRelationshipLevel(relValue);
+    // Map to numeric level: 0=敌对/疏远/中立, 1=友好, 2=亲密, 3=羁绊, 4=max
+    const relLevel = relValue <= 10 ? 0 : relValue <= 40 ? 1 : relValue <= 70 ? 2 : relValue <= 85 ? 3 : 4;
     
     for (const skill of skillDef.skills) {
       if (relLevel >= skill.level) {
@@ -121,7 +124,10 @@ export function formatCompanionCombatHTML() {
   for (const comp of companions) {
     const skillDef = COMPANION_SKILLS[comp.id];
     if (!skillDef) continue;
-    const relLevel = getRelationshipLevel(comp.id, gameState.relationships) || 0;
+    const relValue = gameState.relationships?.[comp.id] || 0;
+    const relObj = getRelationshipLevel(relValue);
+    // Map to numeric level: 0=敌对/疏远/中立, 1=友好, 2=亲密, 3=羁绊, 4=max
+    const relLevel = relValue <= 10 ? 0 : relValue <= 40 ? 1 : relValue <= 70 ? 2 : relValue <= 85 ? 3 : 4;
     const alive = comp.alive;
 
     html += `<div style="margin-bottom:8px;padding:8px;background:rgba(255,255,255,0.02);
