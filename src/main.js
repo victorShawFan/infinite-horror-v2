@@ -13,7 +13,7 @@ import { generateChapter2 } from './core/MapGenerator_Ch2.js';
 import { audioEngine } from './core/AudioEngine.js';
 import { renderLordGodSpace } from './core/LordGodSpace.js';
 import { CombatAnimator } from './core/CombatAnimation.js';
-import { showOpeningCutscene } from './core/Cutscene.js';
+import { showOpeningCutscene, showChapter2Cutscene } from './core/Cutscene.js';
 import { assetLoader } from './core/AssetLoader.js';
 
 // ── 全局状态 ──
@@ -1577,6 +1577,10 @@ function showChapterComplete() {
           </div>
         `;
         document.getElementById('btn-next-chapter').addEventListener('click', () => {
+          // 播放下一章过场动画
+          const cutscenes = { 2: showChapter2Cutscene };
+          const cutsceneFn = cutscenes[nextChapter];
+          const doStart = () => {
           gameState.chapter = nextChapter;
           gameState.nodeIndex = 0;
           // 清除已移除实体（新章节新地图）
@@ -1606,6 +1610,9 @@ function showChapterComplete() {
           gameStarted = true;
           if (!gameLoopRunning) { gameLoopRunning = true; gameLoop(); }
           gameState.save(0);
+          };
+          if (cutsceneFn) cutsceneFn(doStart);
+          else doStart();
         });
       } else {
         // 无更多章节
