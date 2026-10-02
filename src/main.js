@@ -49,7 +49,7 @@ import { ngPlusState, formatClearScreen, formatCycleInfo, TITLES, getActiveMutat
 import { fadeBlackTransition, chapterIntroTransition, floorTransition, victoryFlash } from './core/TransitionSystem.js';
 import { MiniMap } from './core/MiniMap.js';
 import { openCodex } from './core/Codex.js';
-import { recordChapterSnapshot, recordMilestone, serializeGrowth, deserializeGrowth } from './core/GrowthTracker.js';
+import { recordChapterSnapshot, recordMilestone, serializeGrowth, deserializeGrowth, renderGrowthPanel } from './core/GrowthTracker.js';
 import { recordVictory as ddRecordVictory, recordDeath as ddRecordDeath, getDynamicFactor, applyDynamicScaling, serializeDynamicDifficulty, deserializeDynamicDifficulty, getDynamicDifficultyInfo } from './core/DynamicDifficulty.js';
 import { generateAbyssFloor, startAbyss, nextAbyssFloor, getAbyssState, isAbyssActive, endAbyss, serializeAbyss, deserializeAbyss } from './core/AbyssMode.js';
 import { generateDailyChallenge, isDailyCompleted, completeDailyChallenge, getDailyRecord, serializeDaily, deserializeDaily } from './core/DailyChallenge.js';
@@ -1133,6 +1133,16 @@ function showFloorTitle(floor) {
 
 // ── 游戏失败处理 ──
 eventBus.on('player:death', () => {
+    // ── 深渊模式死亡 — 显示深渊结算 ──
+    if (gameState._abyssActive && isAbyssActive()) {
+      const abyssResult = endAbyss('death');
+      gameState._abyssActive = false;
+      gameStarted = false;
+      setTimeout(() => {
+        _showAbyssEndScreen(abyssResult);
+      }, 500);
+      return;
+    }
     try { ddRecordDeath(); } catch {}
     killStreak.recordDeath();
   gameStarted = false;
@@ -1454,6 +1464,10 @@ case 'h': case '?':
         // 设置面板
         showSettingsPanel();
         return;
+      case 'y':
+        // 成长轨迹
+        _showGrowthPanel();
+        return;
       case 'escape':
         // 暂停菜单
         _showPauseMenu();
@@ -1467,6 +1481,147 @@ case 'h': case '?':
   }
 });
 
+
+
+
+
+// ── 深渊结算画面 ──
+function _showAbyssEndScreen(result) {
+  const overlay = document.getElementById('ui-overlay');
+  const p = gameState.player;
+  
+  overlay.innerHTML = `
+    <div style="
+      position:absolute;top:0;left:0;right:0;bottom:0;
+      display:flex;flex-direction:column;align-items:center;justify-content:center;
+      background:rgba(20,0,40,0.92);animation:fadeIn 0.5s;
+    ">
+      <h1 style="font-size:40px;color:#aa66ff;letter-spacing:8px;
+        text-shadow:0 0 40px rgba(170,102,255,0.5);margin-bottom:8px;">
+        深 渊 终 结
+      </h1>
+      <p style="color:#8866aa;font-size:16px;margin-bottom:24px;">
+        在深渊第${result.floor}层陨落
+      </p>
+      
+      <div style="display:flex;gap:16px;margin-bottom:24px;flex-wrap:wrap;justify-content:center;">
+        <div style="background:rgba(0,0,0,0.5);border:1px solid #8844ff40;border-radius:8px;padding:16px 24px;text-align:center;">
+          <p style="color:#8866aa;font-size:10px;letter-spacing:2px;">最深层数</p>
+          <p style="color:#aa66ff;font-size:32px;font-weight:bold;">${result.floor}</p>
+        </div>
+        <div style="background:rgba(0,0,0,0.5);border:1px solid #8844ff40;border-radius:8px;padding:16px 24px;text-align:center;">
+          <p style="color:#8866aa;font-size:10px;letter-spacing:2px;">得分</p>
+          <p style="color:#ffcc44;font-size:32px;font-weight:bold;">${result.score}</p>
+        </div>
+        <div style="background:rgba(0,0,0,0.5);border:1px solid #8844ff40;border-radius:8px;padding:16px 24px;text-align:center;">
+          <p style="color:#8866aa;font-size:10px;letter-spacing:2px;">最高分</p>
+          <p style="color:#ffaa00;font-size:32px;font-weight:bold;">${result.highScore}</p>
+        </div>
+      </div>
+      
+      <div style="display:flex;gap:12px;">
+        <button id="btn-abyss-retry" style="
+          background:rgba(136,68,255,0.15);border:1px solid #8844ff;color:#aa66ff;
+          padding:12px 30px;cursor:pointer;font-size:14px;font-family:inherit;border-radius:8px;
+        ">再次挑战</button>
+        <button id="btn-abyss-return" style="
+          background:transparent;border:1px solid #444;color:#888;
+          padding:10px 24px;cursor:pointer;font-size:13px;font-family:inherit;border-radius:6px;
+        ">返回主菜单</button>
+      </div>
+    </div>
+  `;
+  
+  document.getElementById('btn-abyss-retry')?.addEventListener('click', () => {
+    overlay.innerHTML = '';
+    _showAbyssMenu();
+  });
+  document.getElementById('btn-abyss-return')?.addEventListener('click', () => {
+    overlay.innerHTML = '';
+    showMainMenu();
+  });
+}
+
+// ── 深渊模式楼层加载 ──
+function _loadAbyssFloor(floorData) {
+  const floorObj = {
+    id: floorData.id,
+    name: floorData.name,
+    width: floorData.width,
+    height: floorData.height,
+    tiles: floorData.tiles,
+    entities: floorData.entities,
+    theme: floorData.theme,
+    playerStart: floorData.playerStart,
+  };
+  
+  // Update entities reference
+  entities.length = 0;
+  for (const e of floorData.entities) entities.push(e);
+  
+  // Update current floor reference
+  if (!chapter.floors) chapter.floors = [];
+  chapter.floors[currentFloorIndex] = floorObj;
+  
+  // Reset fog for new floor
+  try { fogOfWar.resetFloor(currentFloorIndex); } catch {}
+  fogOfWar.updateVision(currentFloorIndex, gameState.player.x, gameState.player.y);
+  
+  // Update atmosphere
+  try { if (floorData.theme) atmosphereRenderer.setFloorTheme(floorData.theme); } catch {}
+  
+  gameState.setState(GAME_STATE.EXPLORING);
+  renderer.notify('🕳 ' + floorData.name, '#aa66ff', 100);
+}
+
+// ── 成长轨迹面板 ──
+function _showGrowthPanel() {
+  if (gameState.state !== GAME_STATE.EXPLORING) return;
+  gameState.setState(GAME_STATE.INVENTORY);
+  const overlay = document.getElementById('ui-overlay');
+  
+  const growthContent = renderGrowthPanel();
+  
+  overlay.innerHTML = `
+    <div style="
+      position:absolute;top:0;left:0;right:0;bottom:0;
+      display:flex;align-items:center;justify-content:center;
+      background:rgba(0,0,0,0.8);
+    " id="growth-backdrop">
+      <div style="
+        background:rgba(10,10,20,0.97);border:1px solid #ffcc4440;border-radius:16px;
+        padding:24px;max-width:450px;width:90%;max-height:80vh;overflow-y:auto;
+      ">
+        <h2 style="color:#ffcc44;text-align:center;letter-spacing:4px;margin-bottom:16px;font-size:16px;">
+          📈 成长轨迹
+        </h2>
+        ${growthContent}
+        <div style="text-align:center;margin-top:16px;">
+          <button id="btn-close-growth" style="
+            background:transparent;border:1px solid #444;color:#888;
+            padding:6px 24px;cursor:pointer;font-size:12px;font-family:inherit;border-radius:6px;
+          ">关闭 (Y/Esc)</button>
+        </div>
+      </div>
+    </div>
+  `;
+  
+  const close = () => {
+    overlay.innerHTML = '';
+    gameState.setState(GAME_STATE.EXPLORING);
+  };
+  document.getElementById('btn-close-growth')?.addEventListener('click', close);
+  document.getElementById('growth-backdrop')?.addEventListener('click', (e) => {
+    if (e.target.id === 'growth-backdrop') close();
+  });
+  const kh = (e) => {
+    if (e.key === 'Escape' || e.key.toLowerCase() === 'y') {
+      close();
+      document.removeEventListener('keydown', kh);
+    }
+  };
+  document.addEventListener('keydown', kh);
+}
 
 // ── 每日挑战菜单 ──
 function _showDailyChallengeMenu() {
@@ -1582,13 +1737,14 @@ function _showAbyssMenu() {
     }
     try {
       loadGame(0);
-      startAbyss();
-      const floor = generateAbyssFloor(1);
-      // Load the abyss floor as a special chapter
+      const abyssFloorData = startAbyss();
       gameState._abyssActive = true;
-      gameState._abyssFloor = 1;
       overlay.innerHTML = '';
-      gameState.setState(GAME_STATE.EXPLORING);
+      gameStarted = true;
+      _loadAbyssFloor(abyssFloorData);
+      gameState.player.x = abyssFloorData.playerStart.x;
+      gameState.player.y = abyssFloorData.playerStart.y;
+      renderer.notify('🕳 深渊模式开始！', '#aa66ff', 120);
     } catch (err) {
       console.error('Abyss start error:', err);
       overlay.innerHTML = '';
@@ -1752,6 +1908,22 @@ function movePlayer(dx, dy) {
 
   // 楼梯 → 检查是否可以下一层
   if (tile === TILE.STAIRS) {
+    // ── 深渊模式楼层切换 ──
+    if (gameState._abyssActive && isAbyssActive()) {
+      const abyssState = getAbyssState();
+      const bossEntities = entities.filter(e => e.type === ENTITY_TYPE.BOSS);
+      if (bossEntities.length > 0) {
+        startDialogue([{ text: '前方的路还没有打通。先消灭深渊守护者！', speaker: '系统' }]);
+        return;
+      }
+      renderer.flash('rgba(136,68,255,0.3)', 300);
+      renderer.notify('深渊第' + (abyssState.currentFloor + 1) + '层...', '#aa66ff', 80);
+      const nextFloor = nextAbyssFloor();
+      _loadAbyssFloor(nextFloor);
+      p.x = nextFloor.playerStart.x;
+      p.y = nextFloor.playerStart.y;
+      return;
+    }
     const floor = chapter.floors[currentFloorIndex];
     if (floor.onClear) {
       // 检查是否有需要先击败boss的条件
@@ -3618,7 +3790,16 @@ function showChapterComplete() {
   document.getElementById('btn-enter-hub').addEventListener('click', () => {
     renderLordGodSpace(() => {
       // 从主神空间离开 — 进入下一章或结束
-      const nextChapter = gameState.chapter + 1;
+      // 每日挑战完成检测
+      if (gameState._dailyChallengeActive) {
+        try {
+          const today = new Date().toISOString().split('T')[0];
+          const elapsed = Math.floor((Date.now() - (gameState._dailyChallengeStart || Date.now())) / 1000);
+          const score = gameState.stats.enemiesKilled * 10 + (gameState.player.level || 1) * 50;
+          completeDailyChallenge(today, elapsed, score);
+          gameState._dailyChallengeActive = false;
+        } catch {}
+      }      const nextChapter = gameState.chapter + 1;
       const chapterGenerators = { 2: generateChapter2, 3: generateChapter3, 4: generateChapter4, 5: generateChapter5, 6: generateChapter6, 7: generateChapter7, 8: generateChapter8, 9: generateChapter9, 10: generateChapter10, 11: generateChapter11, 12: generateChapter12 };
       const gen = chapterGenerators[nextChapter];
 

@@ -61,7 +61,7 @@ assert(gameState.stats.maxSingleHit > 0, `maxSingleHit>0 (got ${gameState.stats.
 
 // Test 4: criticalHits (with 30% crit, very likely over many tests)
 resetPlayer(); resetStats();
-gameState.player.crt = 90; // near-guaranteed crit
+gameState.player.crt = 999; // guaranteed crit
 executeBattle({ id: 'w3', name: '暴击靶', hp: 100, atk: 3, def: 1, spd: 1, rewards: { exp: 5 } });
 assert(gameState.stats.criticalHits > 0, `criticalHits>0 with 90% crt (got ${gameState.stats.criticalHits})`);
 
