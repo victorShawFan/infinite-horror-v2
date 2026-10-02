@@ -23,6 +23,7 @@ import { calcElementalModifier, getPlayerActiveElements, getEnemyElement, checkE
 import { generateLoot, formatLootLog, applyLoot } from './LootSystem.js';
 import { applyStanceModifiers, getCurrentStance } from './CombatStance.js';
 import { killStreak } from './KillStreak.js';
+import { getAllAffixEffects } from './EquipmentAffixes.js';
 import { getCompanionCombatBonus } from './RelationshipSystem.js';
 import { generateCombatDialogue, getVictoryComment } from './CompanionDialogue.js';
 import { COMPANION_PROFILES } from './RelationshipSystem.js';
@@ -318,6 +319,12 @@ export function executeBattle(enemy) {
   const stanceCritDmgBonus = stanceMod.critDmgBonus || 0;
   // 连杀加成
   const streakBonus = killStreak.getBonus();
+  // 装备词缀战斗效果
+  const affixFx = getAllAffixEffects(p);
+  if (affixFx.allStats > 0) {
+    stanceMod.atk += affixFx.allStats;
+    stanceMod.def += affixFx.allStats;
+  }
   if (streakBonus.atkPct > 0) {
     stanceMod.atk = Math.floor(stanceMod.atk * (1 + streakBonus.atkPct / 100));
     stanceMod.crt = stanceMod.crt + (streakBonus.crt || 0);
@@ -580,7 +587,7 @@ if (chipFx.hasIceChip && enemy.atk !== enemyEffAtk) {
     const attackCount = isDouble ? 2 : 1;
     for (let i = 0; i < attackCount && enemyHp > 0; i++) {
       // 应用破甲（天赋 + 装备 + 共鸣叠加）
-      let totalArmorPen = (talentFx.armorPen || 0) + (equipArmorPenPct / 100) + resonanceArmorIgnore;
+      let totalArmorPen = (talentFx.armorPen || 0) + (equipArmorPenPct / 100) + resonanceArmorIgnore + (affixFx.ignoreDefPct / 100);
       totalArmorPen = Math.min(totalArmorPen, 0.80); // 上限80%
       const armorPenDef = totalArmorPen > 0 ? Math.floor(enemy.def * (1 - totalArmorPen)) : enemy.def;
       const pHit = calcDamage(
@@ -616,6 +623,27 @@ if (chipFx.hasIceChip && enemy.atk !== enemyEffAtk) {
         const resBonus = Math.floor(pHit.damage * resonanceBonusDmg);
         finalDmg += resBonus;
         enemyHp -= resBonus;
+      }
+      // 装备词缀额外伤害
+      const affixExtraDmg = (affixFx.fireDmg || 0) + (affixFx.iceDmg || 0) + (affixFx.poisonDmg || 0) + (affixFx.holyDmg || 0);
+      if (affixExtraDmg > 0 && i === 0) {
+        finalDmg += affixExtraDmg;
+        enemyHp -= affixExtraDmg;
+        if (round <= 4) {
+          const types = [];
+          if (affixFx.fireDmg) types.push('🔥' + affixFx.fireDmg);
+          if (affixFx.iceDmg) types.push('❄' + affixFx.iceDmg);
+          if (affixFx.poisonDmg) types.push('☠' + affixFx.poisonDmg);
+          if (affixFx.holyDmg) types.push('✦' + affixFx.holyDmg);
+          log.push({ text: '词缀伤害: ' + types.join(' '), type: 'buff' });
+        }
+      }
+      // 词缀无视防御（已通过armorPen处理）
+      // 词缀吸血
+      if (affixFx.lifestealPct > 0 && finalDmg > 0) {
+        const affixSteal = Math.max(1, Math.floor(finalDmg * affixFx.lifestealPct / 100));
+        playerHp = Math.min(p.maxHp, playerHp + affixSteal);
+        if (round <= 4 && i === 0) log.push({ text: '🩸 词缀吸血 +' + affixSteal + ' HP', type: 'heal' });
       }
       log.push({
         text: `${hitLabel}郑吒 → ${enemy.name} ${finalDmg}${pHit.isCrit ? ' 暴击！' : ''}${pHit.isWeak ? ' 弱点！' : ''}${multiLabel}`,

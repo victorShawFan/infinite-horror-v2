@@ -516,10 +516,10 @@ export class Renderer {
 
     // ── 右上：战斗属性 ──
     ctx.fillStyle = 'rgba(10, 10, 20, 0.88)';
-    roundRect(ctx, CANVAS_W - 160 - pad, pad, 160, 136, 8);
+    roundRect(ctx, CANVAS_W - 160 - pad, pad, 160, 148, 8);
     ctx.fill();
     ctx.strokeStyle = 'rgba(255, 100, 100, 0.3)';
-    roundRect(ctx, CANVAS_W - 160 - pad, pad, 160, 136, 8);
+    roundRect(ctx, CANVAS_W - 160 - pad, pad, 160, 148, 8);
     ctx.stroke();
 
     const rx = CANVAS_W - 150;
@@ -536,6 +536,19 @@ export class Renderer {
     ctx.fillText(`💰 ${p.gold}G  ⬡${p.rewardPoints}`, rx, pad + 92);
     ctx.fillStyle = '#666';
     ctx.fillText(`回合 ${gameState.stats.turnsPlayed}`, rx, pad + 110);
+    // 连杀指示器
+    const streak = killStreak.getDisplay();
+    if (streak) {
+      ctx.fillStyle = streak.color;
+      ctx.fillText(streak.icon + ' ' + streak.name + ' x' + streak.kills, rx, pad + 128);
+    }
+
+    // 姿态指示器
+    const stance = getCurrentStance();
+    if (stance && stance.id !== 'balanced') {
+      ctx.fillStyle = stance.color || '#888';
+      ctx.fillText('⚔ ' + stance.name, rx + 80, pad + 128);
+    }
 
     // ── 下方：楼层信息条 ──
     {

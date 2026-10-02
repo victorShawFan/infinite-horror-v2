@@ -55,7 +55,7 @@ import { addConsumable, useConsumable, getInventoryList, consumePendingBuffs, gi
 import { generateSecretEntities, tryBreakSecret, SECRET_TYPES } from './core/SecretRoomSystem.js';
 import { getCurrentStance, setStance, getAvailableStances, getStanceId, restoreStance } from './core/CombatStance.js';
 import { challengeState, CHALLENGE_TYPES } from './core/ChallengeDungeon.js';
-import { getQualityColor, getQualityName, formatEquipmentTooltip } from './core/EquipmentAffixes.js';
+import { getQualityColor, getQualityName, formatEquipmentTooltip, getAllAffixEffects } from './core/EquipmentAffixes.js';
 import { killStreak } from './core/KillStreak.js';
 
 // ── 全局状态 ──
@@ -1845,6 +1845,18 @@ function startCombat(enemy, preScaledEnemy) {
       try { victoryFlash(document.getElementById('ui-overlay')); } catch {}
       renderer.addFloatText(`+${scaledEnemy.rewards?.exp || 0} EXP`, enemy.x, enemy.y - 1, 'rgb(170, 136, 255)');
       if (scaledEnemy.rewards?.gold) renderer.addFloatText(`+${scaledEnemy.rewards.gold}G`, enemy.x, enemy.y - 0.4, 'rgb(255, 204, 68)');
+      // 词缀金币/经验加成
+      const affixBonus = getAllAffixEffects(gameState.player);
+      if (affixBonus.goldBonus > 0 && scaledEnemy.rewards?.gold) {
+        const extraGold = Math.floor(scaledEnemy.rewards.gold * affixBonus.goldBonus / 100);
+        gameState.player.gold = (gameState.player.gold || 0) + extraGold;
+        if (extraGold > 0) renderer.addFloatText('+' + extraGold + 'G(词缀)', enemy.x + 1, enemy.y - 0.5, 'rgb(255, 200, 100)');
+      }
+      if (affixBonus.expBonus > 0 && scaledEnemy.rewards?.exp) {
+        const extraExp = Math.floor(scaledEnemy.rewards.exp * affixBonus.expBonus / 100);
+        gameState.player.exp += extraExp;
+        if (extraExp > 0) renderer.addFloatText('+' + extraExp + 'EXP(词缀)', enemy.x - 1, enemy.y - 0.5, 'rgb(200, 170, 255)');
+      }
       if (scaledEnemy.rewards?.rewardPoints) renderer.addFloatText(`+${scaledEnemy.rewards.rewardPoints}RP`, enemy.x + 0.5, enemy.y - 1.5, 'rgb(255, 170, 0)');
 
       // 里程碑：战斗成就

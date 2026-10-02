@@ -186,6 +186,13 @@ export function purchaseItem(item) {
     p.accessory = { ...item.accessory, enhanceLevel: 0, enhanceBonuses: {}, gemSlots: [], maxGemSlots: 1 };
   }
 
+  // 消耗品购买
+  if (item.consumable) {
+    addConsumable(item.consumable.id, item.consumable.count || 1);
+    // 消耗品可重复购买 — 移除purchased标记
+    getPurchased().delete(item.id);
+  }
+
   audioEngine.playPickup();
   eventBus.emit('shop:purchase', item);
   gameState.save(0);
