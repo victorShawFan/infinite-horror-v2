@@ -24,6 +24,10 @@ const ENEMY_LOOKS = {
   crawler: { body: '#553333', head: '#664444', eye: '#ffaa00', glow: '#ff4444' },
   boss: { body: '#554466', head: '#665577', eye: '#ff44ff', glow: '#ff00ff' },
   mutant: { body: '#886644', head: '#997755', eye: '#ff6600', glow: '#ffaa44' },
+  facehugger: { body: '#887755', head: '#998866', eye: '#ffcc44', glow: '#ffaa00' },
+  xenomorph: { body: '#222233', head: '#333344', eye: '#ccddff', glow: '#4488ff' },
+  xeno_elite: { body: '#2a2a3a', head: '#3a3a4a', eye: '#88ccff', glow: '#66aaff' },
+  queen: { body: '#332244', head: '#443355', eye: '#ff66ff', glow: '#ff44ff' },
 };
 
 /**
@@ -150,6 +154,12 @@ function _drawEnemySprite(ctx, x, y, charOrName, color, options) {
   if (name.includes('爬行') || name.includes('猎食')) look = ENEMY_LOOKS.crawler;
   if (name.includes('暴君') || name.includes('Boss') || options.isBoss) look = ENEMY_LOOKS.boss;
   if (name.includes('猎犬') || name.includes('变异')) look = ENEMY_LOOKS.mutant;
+  // Ch2 异形系
+  if (name.includes('抱脸')) look = ENEMY_LOOKS.facehugger;
+  if (name.includes('异形') && !name.includes('皇后')) look = ENEMY_LOOKS.xenomorph;
+  if (name.includes('禁卫') || name.includes('护卫')) look = ENEMY_LOOKS.xeno_elite;
+  if (name.includes('皇后')) look = ENEMY_LOOKS.queen;
+  if (name.includes('卵囊')) look = ENEMY_LOOKS.facehugger;
 
   // 阴影
   ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';

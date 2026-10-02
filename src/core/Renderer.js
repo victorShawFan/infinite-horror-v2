@@ -491,6 +491,7 @@ export class Renderer {
         lines.push('弱点: ' + e.weaknesses.map(w => wMap[w] || w).join(' '));
       }
       if (e.res) lines.push(`法抗: ${e.res}%`);
+      if (e.acidBlood) lines.push(`☠ 酸血: 击杀后反噬${e.acidBlood}伤害`);
       // 描述自动换行（短句显示）
       if (e.description) {
         const desc = e.description;

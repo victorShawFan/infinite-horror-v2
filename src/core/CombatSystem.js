@@ -109,8 +109,11 @@ export function previewBattle(player, enemy) {
 
   const totalDamage = Math.max(0, enemyDmg * enemyHits - lifeStealPerHit * enemyHits);
 
-  // 酸血反噬
-  const acidDmg = enemy.acidBlood || 0;
+  // 酸血反噬（抗酸芯片减免50%）
+  let acidDmg = enemy.acidBlood || 0;
+  if (acidDmg > 0 && (player.chips || []).some(c => c.special === 'acid_resist')) {
+    acidDmg = Math.floor(acidDmg * 0.5);
+  }
   const totalWithAcid = totalDamage + acidDmg;
 
   return {
@@ -251,9 +254,17 @@ export function executeBattle(enemy) {
 
     // 酸血反噬（异形系敌人）
     if (enemy.acidBlood && enemy.acidBlood > 0) {
-      const acidDmg = enemy.acidBlood;
-      p.hp = Math.max(1, p.hp - acidDmg);
-      log.push({ text: `☠ 酸血反噬 ${acidDmg}！`, type: 'burn' });
+      let acidDmg = enemy.acidBlood;
+      // 抗酸芯片减免50%
+      const hasAcidResist = (p.chips || []).some(c => c.special === 'acid_resist');
+      if (hasAcidResist) {
+        acidDmg = Math.floor(acidDmg * 0.5);
+        log.push({ text: `🛡 抗酸芯片减免酸血伤害`, type: 'buff' });
+      }
+      if (acidDmg > 0) {
+        p.hp = Math.max(1, p.hp - acidDmg);
+        log.push({ text: `☠ 酸血反噬 ${acidDmg}！`, type: 'burn' });
+      }
     }
 
     gameState.stats.enemiesKilled++;
