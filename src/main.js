@@ -110,9 +110,14 @@ function showMainMenu() {
   if (saveData) {
     try {
       const save = JSON.parse(saveData);
-      const floorNames = ['列车醒来', '蜂巢入口', '红后机房', '激光通道', '丧尸巢穴', '六小时回归'];
-      const floorName = floorNames[save.nodeIndex] || '未知';
-      btnCont.innerHTML = '继续轮回<br><span style="font-size:11px;color:#888;">1-' + (save.nodeIndex + 1) + ' ' + floorName + ' · Lv.' + save.player.level + '</span>';
+      const chapterFloors = {
+        1: ['列车醒来', '蜂巢入口', '红后机房', '激光通道', '丧尸巢穴', '六小时回归'],
+        2: ['飞船封锁', '新人分队', '通风管潜行', '抱脸虫隔离', '巢穴救援', '皇后与撤离'],
+      };
+      const ch = save.chapter || 1;
+      const floors = chapterFloors[ch] || chapterFloors[1];
+      const floorName = floors[save.nodeIndex] || '未知';
+      btnCont.innerHTML = '继续轮回<br><span style="font-size:11px;color:#888;">' + ch + '-' + (save.nodeIndex + 1) + ' ' + floorName + ' · Lv.' + save.player.level + '</span>';
       btnCont.style.borderColor = '#888';
       btnCont.style.color = '#aaa';
     } catch(e) {}
@@ -120,7 +125,21 @@ function showMainMenu() {
 
   btnCont.addEventListener('click', () => {
     if (gameState.load(0)) {
-      startGame();
+      // 根据存档章节加载对应地图
+      const chapterGens = { 1: generateChapter1, 2: generateChapter2 };
+      const gen = chapterGens[gameState.chapter] || generateChapter1;
+      audioEngine.init();
+      audioEngine.resume();
+      audioEngine.startAmbience();
+      menuState = 'playing';
+      document.getElementById('ui-overlay').innerHTML = '';
+      combatAnimator = new CombatAnimator(renderer);
+      chapter = gen();
+      currentFloorIndex = gameState.nodeIndex || 0;
+      loadFloor(currentFloorIndex);
+      gameState.setState(GAME_STATE.EXPLORING);
+      gameStarted = true;
+      if (!gameLoopRunning) { gameLoopRunning = true; gameLoop(); }
     } else {
       showOpeningCutscene(() => startNewGame());
     }
