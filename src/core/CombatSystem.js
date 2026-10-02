@@ -1,10 +1,17 @@
 // ═══════════════════════════════════════════════════════════════
 // 战斗系统 — 魔塔式数值对撞 + 血统特技 + 芯片元素 + 速度双击
+//            + 主动技能 + 状态效果 + 基因锁进阶
 // ═══════════════════════════════════════════════════════════════
 
 import { DAMAGE_TYPE, GENE_LOCK, BLOODLINE } from './constants.js';
 import { eventBus } from './EventBus.js';
 import { gameState } from './GameState.js';
+import { checkGeneLockAdvancement, advanceGeneLock } from './GeneLockSystem.js';
+import {
+  getAvailableSkills, canUseSkill, useSkill,
+  processStatusEffects, applyStatusEffect, tickCooldowns,
+  STATUS_EFFECT
+} from './SkillSystem.js';
 
 // ── 伤害计算 ──
 export function calcDamage(attacker, defender, damageType = DAMAGE_TYPE.PHYSICAL, minDmg = 1) {
@@ -13,7 +20,7 @@ export function calcDamage(attacker, defender, damageType = DAMAGE_TYPE.PHYSICAL
   const isWeak = defender.weaknesses?.includes(damageType) || false;
   if (isWeak) baseDmg = Math.floor(baseDmg * 1.5);
 
-  // 灵体物理减伤 — 对灵体用物理武器伤害减半（灵类武器不受影响）
+  // 灵体物理减伤
   if (defender.physicalResist && damageType === DAMAGE_TYPE.PHYSICAL) {
     baseDmg = Math.max(minDmg, Math.floor(baseDmg * (1 - defender.physicalResist)));
   }
@@ -48,7 +55,7 @@ function getChipEffects(player) {
       effects.hasFireChip = true;
     }
     if (chip.damageType === 'ice' || chip.id === 'ice') {
-      effects.slowPct += 10; // 减少敌方攻击力10%
+      effects.slowPct += 10;
       effects.hasIceChip = true;
     }
   }
@@ -60,7 +67,7 @@ function canDoubleAttack(playerSpd, enemySpd) {
   return playerSpd >= (enemySpd || 5) * 2;
 }
 
-// ── 战斗预判 ──
+// ── 战斗预判（保持原有接口兼容） ──
 export function previewBattle(player, enemy) {
   const pAtk = getEffectiveAtk(player);
   const pDef = getEffectiveDef(player);
@@ -68,18 +75,15 @@ export function previewBattle(player, enemy) {
   const pCrt = getEffectiveCrt(player);
   const chipFx = getChipEffects(player);
 
-  // 道法血统：法术伤害（不受物防影响）
   const isDaoist = player.activeBloodline === BLOODLINE.DAOIST;
   const hasMana = player.mana > 0 && player.maxMana > 0;
   const spellCost = 8;
 
-  // 冰芯片减敌攻
   const enemyEffAtk = chipFx.hasIceChip
     ? Math.floor(enemy.atk * (1 - chipFx.slowPct / 100))
     : enemy.atk;
 
   let playerDmg = Math.max(1, pAtk - enemy.def);
-  // 灵体物理减伤预判
   const weaponDmgType = player.weapon?.damageType || 'physical';
   if (enemy.physicalResist && weaponDmgType === 'physical') {
     playerDmg = Math.max(1, Math.floor(playerDmg * (1 - enemy.physicalResist)));
@@ -87,11 +91,14 @@ export function previewBattle(player, enemy) {
   const enemyDmg = Math.max(0, enemyEffAtk - pDef);
   const isDouble = canDoubleAttack(pSpd, enemy.spd || 5);
 
-  if (playerDmg <= 0 && !(isDaoist && hasMana)) {
+  // 计算技能加成估算
+  const skills = getAvailableSkills(player);
+  const hasSkills = skills.length > 0;
+
+  if (playerDmg <= 0 && !(isDaoist && hasMana) && !hasSkills) {
     return { canWin: false, totalDamage: Infinity, turnsNeeded: Infinity, rewards: enemy.rewards };
   }
 
-  // ── 精确回合模拟预判 ──
   let spellDmgEst = 0;
   if (isDaoist && hasMana) {
     spellDmgEst = Math.max(1, Math.floor(pAtk * 0.8) + 5 - Math.floor((enemy.res || 0) * 0.3));
@@ -105,53 +112,35 @@ export function previewBattle(player, enemy) {
     lifeStealPerHit = Math.max(1, Math.floor(playerDmg * 0.1));
   }
 
-  // 逐回合模拟（确定性，不含暴击随机）
+  // 逐回合确定性模拟
   let simEnemyHp = enemy.hp;
   let simMana = player.mana || 0;
   let turnsNeeded = 0;
   let totalPlayerDmgTaken = 0;
   let totalLifeSteal = 0;
-  const maxTurns = 200; // 安全上限
+  const maxTurns = 200;
 
   while (simEnemyHp > 0 && turnsNeeded < maxTurns) {
     turnsNeeded++;
-
-    // 玩家物理攻击
     const hits = isDouble ? 2 : 1;
     for (let i = 0; i < hits && simEnemyHp > 0; i++) {
       simEnemyHp -= playerDmg;
       if (lifeStealPerHit > 0) totalLifeSteal += lifeStealPerHit;
     }
-
-    // 道法法术（有蓝时才释放）
     if (isDaoist && simMana >= spellCost && simEnemyHp > 0) {
       simEnemyHp -= spellDmgEst;
       simMana -= spellCost;
     }
-
-    // 火芯片灼烧
-    if (chipFx.burnDmg > 0 && simEnemyHp > 0) {
-      simEnemyHp -= chipFx.burnDmg;
-    }
-
-    if (simEnemyHp <= 0) break;
-
-    // 敌人攻击（从第1回合开始,但首轮玩家先手）
-    totalPlayerDmgTaken += enemyDmg;
-
-    // 武修反伤
-    if (reflectDmg > 0 && simEnemyHp > 0) {
-      simEnemyHp -= reflectDmg;
-    }
+    if (chipFx.burnDmg > 0 && simEnemyHp > 0) simEnemyHp -= chipFx.burnDmg;
+    if (reflectDmg > 0 && simEnemyHp > 0) simEnemyHp -= reflectDmg;
+    if (simEnemyHp > 0) totalPlayerDmgTaken += enemyDmg;
   }
 
-  // 基础伤害per round（用于显示）
-  let effectiveDmgPerRound = playerDmg * (isDouble ? 2 : 1) + chipFx.burnDmg;
+  let effectiveDmgPerRound = playerDmg * (isDouble ? 2 : 1) + chipFx.burnDmg + reflectDmg;
   if (isDaoist && hasMana) effectiveDmgPerRound += spellDmgEst;
 
   const totalDamage = Math.max(0, totalPlayerDmgTaken - totalLifeSteal);
 
-  // 酸血反噬（抗酸芯片减免50%）
   let acidDmg = enemy.acidBlood || 0;
   if (acidDmg > 0 && (player.chips || []).some(c => c.special === 'acid_resist')) {
     acidDmg = Math.floor(acidDmg * 0.5);
@@ -167,7 +156,6 @@ export function previewBattle(player, enemy) {
     rewards: enemy.rewards || {},
     hpAfter: player.hp - totalWithAcid,
     acidDmg,
-    // 新增详情
     isDouble,
     burnDmg: chipFx.burnDmg,
     reflectDmg,
@@ -176,10 +164,53 @@ export function previewBattle(player, enemy) {
     isDaoist: isDaoist && hasMana,
     hasIceChip: chipFx.hasIceChip,
     effectiveDmgPerRound,
+    hasSkills,
+    availableSkills: skills.map(s => s.name),
   };
 }
 
-// ── 执行战斗 ──
+// ── 技能AI：选择最佳技能使用 ──
+function pickBestSkill(player, enemy, combatState, enemyHp, playerHp) {
+  const skills = getAvailableSkills(player);
+  if (skills.length === 0) return null;
+
+  // 优先级：治疗（低血时）> 爆发伤害 > 减伤 > 增益
+  const lowHp = playerHp < player.maxHp * 0.4;
+
+  for (const skill of skills) {
+    const check = canUseSkill(player, skill.id, combatState);
+    if (!check.usable) continue;
+
+    // 低血量优先治疗技能
+    if (lowHp && skill.id === 'heart_light') return skill;
+    if (lowHp && skill.id === 'iron_body') return skill;
+    if (lowHp && skill.id === 'blood_drain') return skill;
+  }
+
+  // 非低血量时，优先爆发伤害技能
+  const dmgSkills = ['tiger_fist', 'thunder_spell', 'dragon_breath', 'mind_crush', 'muscle_control'];
+  for (const sid of dmgSkills) {
+    const skill = skills.find(s => s.id === sid);
+    if (skill) {
+      const check = canUseSkill(player, sid, combatState);
+      if (check.usable) return skill;
+    }
+  }
+
+  // 增益技能
+  const buffSkills = ['sensory_boost', 'simulation_mind'];
+  for (const sid of buffSkills) {
+    const skill = skills.find(s => s.id === sid);
+    if (skill) {
+      const check = canUseSkill(player, sid, combatState);
+      if (check.usable) return skill;
+    }
+  }
+
+  return null;
+}
+
+// ── 执行战斗（增强版：技能 + 状态效果 + 基因锁进阶） ──
 export function executeBattle(enemy) {
   const p = gameState.player;
   const preview = previewBattle(p, enemy);
@@ -204,6 +235,13 @@ export function executeBattle(enemy) {
   const isMartial = p.activeBloodline === BLOODLINE.MARTIAL;
   const spellCost = 8;
 
+  // 初始化战斗状态（技能冷却 + 状态效果）
+  const combatState = {
+    cooldowns: {},
+    statusEffects: { player: [], enemy: [] },
+    turn: 0,
+  };
+
   // 冰芯片减敌攻
   const enemyEffAtk = chipFx.hasIceChip
     ? Math.floor(enemy.atk * (1 - chipFx.slowPct / 100))
@@ -216,26 +254,72 @@ export function executeBattle(enemy) {
     log.push({ text: `⚡ 速度碾压！每回合发动二连击`, type: 'buff' });
   }
 
+  // 展示可用技能
+  const availSkills = getAvailableSkills(p);
+  if (availSkills.length > 0) {
+    log.push({ text: `🎯 可用技能：${availSkills.map(s => s.name).join('、')}`, type: 'info' });
+  }
+
   while (enemyHp > 0 && playerHp > 0) {
     round++;
+    combatState.turn = round;
+
+    // ── 回合开始：处理玩家状态效果 ──
+    const playerEffects = processStatusEffects('player', combatState);
+    for (const entry of playerEffects.log) log.push(entry);
+    if (playerEffects.damage) {
+      playerHp -= playerEffects.damage;
+      if (playerHp <= 0) break;
+    }
+
+    // ── 回合开始：处理敌人状态效果 ──
+    const enemyEffects = processStatusEffects('enemy', combatState);
+    for (const entry of enemyEffects.log) log.push(entry);
+    if (enemyEffects.damage) {
+      enemyHp -= enemyEffects.damage;
+      if (enemyHp <= 0) break;
+    }
+
+    // ── 玩家回合：尝试使用技能 ──
+    const skill = pickBestSkill(p, enemy, combatState, enemyHp, playerHp);
+    if (skill) {
+      // 创建临时player/enemy对象以避免修改实际状态
+      const tempPlayer = { ...p, hp: playerHp, mana: playerMana, atk: pAtk, def: pDef, crt: pCrt, spd: pSpd };
+      const tempEnemy = { ...enemy, hp: enemyHp };
+      const skillResult = useSkill(tempPlayer, skill.id, tempEnemy, combatState);
+      for (const entry of skillResult.log) log.push(entry);
+
+      // 应用技能效果
+      if (skillResult.damage) enemyHp -= skillResult.damage;
+      if (skillResult.heal) playerHp = Math.min(p.maxHp, playerHp + skillResult.heal);
+      if (skillResult.manaCost) playerMana -= skillResult.manaCost;
+    }
+
+    if (enemyHp <= 0) break;
 
     // ── 玩家物理攻击 ──
+    // 检查是否有 muscle_control buff（下次攻击双倍）
+    let atkMultiplier = 1;
+    const mcBuff = (combatState.statusEffects?.player || []).find(e => e.type === STATUS_EFFECT.BUFF_ATK);
+    if (mcBuff && mcBuff.value > 50) atkMultiplier = 2; // muscle_control gives 100% buff
+
     const attackCount = isDouble ? 2 : 1;
     for (let i = 0; i < attackCount && enemyHp > 0; i++) {
       const pHit = calcDamage(
-        { atk: pAtk, crt: pCrt, geneLock: p.geneLock },
+        { atk: Math.floor(pAtk * atkMultiplier), crt: pCrt, geneLock: p.geneLock },
         enemy,
         p.weapon?.damageType || DAMAGE_TYPE.PHYSICAL
       );
       enemyHp -= pHit.damage;
 
       const hitLabel = isDouble ? `[${i + 1}击] ` : '';
+      const multiLabel = atkMultiplier > 1 ? ' 💪强化！' : '';
       log.push({
-        text: `${hitLabel}郑吒 → ${enemy.name} ${pHit.damage}${pHit.isCrit ? ' 暴击！' : ''}${pHit.isWeak ? ' 弱点！' : ''}`,
+        text: `${hitLabel}郑吒 → ${enemy.name} ${pHit.damage}${pHit.isCrit ? ' 暴击！' : ''}${pHit.isWeak ? ' 弱点！' : ''}${multiLabel}`,
         type: pHit.isCrit ? 'critical' : 'attack',
       });
 
-      // 吸血（每次命中触发）
+      // 吸血
       if (isVampire) {
         const steal = Math.max(1, Math.floor(pHit.damage * 0.1));
         playerHp = Math.min(p.maxHp, playerHp + steal);
@@ -243,12 +327,9 @@ export function executeBattle(enemy) {
       }
     }
 
-    // ── 道法法术（有蓝时自动释放） ──
+    // ── 道法法术 ──
     if (isDaoist && playerMana >= spellCost && enemyHp > 0) {
-      const spell = calcSpellDamage(
-        { atk: pAtk, crt: pCrt },
-        enemy
-      );
+      const spell = calcSpellDamage({ atk: pAtk, crt: pCrt }, enemy);
       enemyHp -= spell.damage;
       playerMana -= spellCost;
       log.push({
@@ -265,27 +346,48 @@ export function executeBattle(enemy) {
 
     if (enemyHp <= 0) break;
 
-    // ── 敌人攻击 ──
-    const eHit = calcDamage(
-      { atk: enemyEffAtk, crt: enemy.crt || 0 },
-      { def: pDef, res: p.res || 0 },
-      enemy.damageType || DAMAGE_TYPE.PHYSICAL,
-      0
+    // ── 敌人回合：检查眩晕/冻结 ──
+    const enemyStunned = (combatState.statusEffects?.enemy || []).some(
+      e => e.type === STATUS_EFFECT.STUN || e.type === STATUS_EFFECT.FREEZE
     );
-    playerHp -= eHit.damage;
-    if (eHit.damage > 0) {
-      log.push({
-        text: `${enemy.name} → 郑吒 ${eHit.damage}${eHit.isCrit ? ' 暴击！' : ''}`,
-        type: 'enemy_attack',
-      });
+
+    if (!enemyStunned) {
+      // ── 敌人攻击 ──
+      const eHit = calcDamage(
+        { atk: enemyEffAtk, crt: enemy.crt || 0 },
+        { def: pDef, res: p.res || 0 },
+        enemy.damageType || DAMAGE_TYPE.PHYSICAL,
+        0
+      );
+
+      // 检查玩家闪避（simulation_mind效果）
+      const dodgeBuff = (combatState.statusEffects?.player || []).find(
+        e => e.type === STATUS_EFFECT.BUFF_DEF && e.value >= 100
+      );
+      if (dodgeBuff) {
+        log.push({ text: `🌀 模拟思维预判！闪避了 ${enemy.name} 的攻击`, type: 'dodge' });
+      } else {
+        playerHp -= eHit.damage;
+        if (eHit.damage > 0) {
+          log.push({
+            text: `${enemy.name} → 郑吒 ${eHit.damage}${eHit.isCrit ? ' 暴击！' : ''}`,
+            type: 'enemy_attack',
+          });
+        }
+      }
+
+      // ── 武修反伤 ──
+      if (isMartial && !dodgeBuff && eHit.damage > 0 && enemyHp > 0) {
+        const reflect = Math.max(1, Math.floor(eHit.damage * 0.15));
+        enemyHp -= reflect;
+        log.push({ text: `🛡 武修反伤 ${reflect}`, type: 'reflect' });
+      }
+    } else {
+      log.push({ text: `💫 ${enemy.name} 处于控制状态，无法行动！`, type: 'control' });
     }
 
-    // ── 武修反伤 ──
-    if (isMartial && eHit.damage > 0 && enemyHp > 0) {
-      const reflect = Math.max(1, Math.floor(eHit.damage * 0.15));
-      enemyHp -= reflect;
-      log.push({ text: `🛡 武修反伤 ${reflect}`, type: 'reflect' });
-    }
+    // ── 回合结束：冷却递减 ──
+    tickCooldowns(combatState);
   }
 
   const victory = enemyHp <= 0;
@@ -294,10 +396,9 @@ export function executeBattle(enemy) {
     p.hp = playerHp;
     p.mana = playerMana;
 
-    // 酸血反噬（异形系敌人）
+    // 酸血反噬
     if (enemy.acidBlood && enemy.acidBlood > 0) {
       let acidDmg = enemy.acidBlood;
-      // 抗酸芯片减免50%
       const hasAcidResist = (p.chips || []).some(c => c.special === 'acid_resist');
       if (hasAcidResist) {
         acidDmg = Math.floor(acidDmg * 0.5);
@@ -317,12 +418,39 @@ export function executeBattle(enemy) {
     if (rewards.gold) p.gold += rewards.gold;
     if (rewards.rewardPoints) p.rewardPoints += rewards.rewardPoints;
 
-    // 基因锁充能
+    // ── 基因锁充能 + 进阶检测 ──
     if (p.geneLock < GENE_LOCK.STAGE_4) {
-      p.geneLockCharge += enemy.geneLockCharge || 5;
+      const chargeGain = enemy.geneLockCharge || 5;
+      p.geneLockCharge += chargeGain;
+      log.push({ text: `⚡ 基因锁充能 +${chargeGain} (${p.geneLockCharge})`, type: 'geneLock' });
+
+      // 检测是否可以进阶
+      const advCheck = checkGeneLockAdvancement(p);
+      if (advCheck.advanced) {
+        const advResult = advanceGeneLock(p);
+        if (advResult.success) {
+          log.push({ text: ``, type: 'separator' });
+          log.push({ text: `🧬 ═══ 基因锁突破！═══`, type: 'geneLock_advance' });
+          log.push({ text: `🧬 ${advResult.message}`, type: 'geneLock_advance' });
+          const b = advResult.bonuses;
+          const bonusTexts = [];
+          if (b.atk) bonusTexts.push(`ATK+${b.atk}`);
+          if (b.def) bonusTexts.push(`DEF+${b.def}`);
+          if (b.spd) bonusTexts.push(`SPD+${b.spd}`);
+          if (b.maxHp) bonusTexts.push(`MaxHP+${b.maxHp}`);
+          if (b.crt) bonusTexts.push(`CRT+${b.crt}`);
+          if (b.maxMana) bonusTexts.push(`MaxMana+${b.maxMana}`);
+          log.push({ text: `🧬 永久加成：${bonusTexts.join(' / ')}`, type: 'geneLock_advance' });
+          log.push({ text: `🧬 ═══════════════════`, type: 'geneLock_advance' });
+
+          // 更新当前战斗中的HP（进阶时回满）
+          playerHp = p.hp;
+          p.hp = playerHp;
+        }
+      }
     }
 
-    // 法力自然恢复（道法血统每场战斗恢复少量）
+    // 法力自然恢复
     if (p.activeBloodline === BLOODLINE.DAOIST && p.maxMana > 0) {
       const manaRegen = Math.min(5, p.maxMana - p.mana);
       if (manaRegen > 0) {
@@ -350,20 +478,18 @@ export function executeBattle(enemy) {
 }
 
 // ── 有效属性计算 ──
-// 队友被动加成表
 const COMPANION_BONUSES = {
-  zhang_jie: { atk: 2, def: 0 },    // 张杰：战术领队，攻击支援
-  zhan_lan: { atk: 0, def: 0, crt: 3 }, // 詹岚：情报分析，暴击支援
-  li_xiaoyi: { atk: 1, def: 1 },    // 李萧毅：机动支援
-  mou_gang: { atk: 0, def: 3 },     // 牟钢：防线坚守
-  chuxuan: { atk: 0, def: 0, spd: 3 }, // 楚轩：军师，速度支援
-  lingdian: { atk: 3, def: 0, crt: 5 }, // 零点：狙击手，攻击+暴击
-  bawang: { atk: 2, def: 2 },       // 霸王：近战强手
-  lishuaixi: { atk: 1, def: 0 },    // 李帅西：新人
+  zhang_jie: { atk: 2, def: 0 },
+  zhan_lan: { atk: 0, def: 0, crt: 3 },
+  li_xiaoyi: { atk: 1, def: 1 },
+  mou_gang: { atk: 0, def: 3 },
+  chuxuan: { atk: 0, def: 0, spd: 3 },
+  lingdian: { atk: 3, def: 0, crt: 5 },
+  bawang: { atk: 2, def: 2 },
+  lishuaixi: { atk: 1, def: 0 },
 };
 
 function getCompanionBonuses(stat) {
-  // Import gameState indirectly to avoid circular dependency
   try {
     const gs = gameState;
     if (!gs?.companions) return 0;
@@ -376,16 +502,12 @@ function getCompanionBonuses(stat) {
 export function getEffectiveAtk(player) {
   let atk = player.atk;
   if (player.weapon) atk += player.weapon.atk || 0;
-  // 队友被动加成
   atk += getCompanionBonuses('atk');
-
   if (player.activeBloodline === BLOODLINE.VAMPIRE) atk += Math.floor(atk * 0.15);
   if (player.activeBloodline === BLOODLINE.ANCIENT_WU) atk += Math.floor(atk * 0.2);
-
   if (player.geneLockActive && player.geneLock > 0) {
     atk += Math.floor(atk * 0.2 * player.geneLock);
   }
-
   for (const chip of player.chips || []) {
     if (chip.stat === 'atk') atk += chip.value;
   }
@@ -397,11 +519,9 @@ export function getEffectiveDef(player) {
   if (player.armor) def += player.armor.def || 0;
   def += getCompanionBonuses('def');
   if (player.activeBloodline === BLOODLINE.MARTIAL) def += Math.floor(def * 0.2);
-
   if (player.geneLockActive && player.geneLock > 0) {
     def += Math.floor(def * 0.15 * player.geneLock);
   }
-
   for (const chip of player.chips || []) {
     if (chip.stat === 'def') def += chip.value;
   }
@@ -456,7 +576,6 @@ export function getStatsBreakdown(player) {
     if (chip.stat === 'def') breakdown.def.chips += chip.value;
   }
 
-  // 队友被动加成
   breakdown.atk.companion = getCompanionBonuses('atk');
   breakdown.def.companion = getCompanionBonuses('def');
 

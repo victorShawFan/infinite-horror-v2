@@ -6,6 +6,8 @@ import { BLOODLINE, GENE_LOCK } from './constants.js';
 import { eventBus } from './EventBus.js';
 import { gameState } from './GameState.js';
 import { audioEngine } from './AudioEngine.js';
+import { checkGeneLockAdvancement, advanceGeneLock, getGeneLockProgress, getGeneLockDescription } from './GeneLockSystem.js';
+import { getAvailableSkills, SKILL_DEFINITIONS } from './SkillSystem.js';
 
 /** 主神空间商店/强化项目 */
 export const SHOP_ITEMS = {
@@ -171,6 +173,7 @@ export function renderLordGodSpace(onClose) {
       { key: 'bloodline', name: '🩸 血统', color: '#ff4488' },
       { key: 'chips', name: '💎 芯片', color: '#aa44ff' },
       { key: 'equipment', name: '⚔ 装备', color: '#ffcc44' },
+      { key: 'geneLock', name: '🧬 基因锁', color: '#ff6600' },
     ];
 
     overlay.innerHTML = `
@@ -251,6 +254,77 @@ export function renderLordGodSpace(onClose) {
 
   function showCategory(cat) {
     const container = document.getElementById('shop-items');
+
+    // ── 基因锁特殊页面 ──
+    if (cat === 'geneLock') {
+      const progress = getGeneLockProgress(p);
+      const check = checkGeneLockAdvancement(p);
+      const desc = getGeneLockDescription(progress.currentStage);
+      const nextDesc = progress.currentStage < 4 ? getGeneLockDescription(progress.currentStage + 1) : null;
+      const skills = getAvailableSkills(p);
+      const allSkillNames = skills.map(s => `${s.name}（${s.description || s.desc || ''}）`);
+
+      container.innerHTML = `
+        <div style="background: rgba(255,100,0,0.05); border: 1px solid #ff660040; border-radius: 12px; padding: 24px; margin-bottom: 16px;">
+          <h3 style="color: #ff6600; margin-bottom: 12px;">🧬 基因锁状态</h3>
+          <p style="color: #e0e0e0; margin-bottom: 8px;">
+            当前阶段: <strong style="color: #ff8800;">第${progress.currentStage}阶</strong>
+            ${progress.currentStage === 0 ? '（未开启）' : ''}
+            ${progress.currentStage === 4 ? '（已臻巅峰）' : ''}
+          </p>
+          <p style="color: #aaa; font-size: 13px; margin-bottom: 8px;">${desc}</p>
+          ${progress.nextThreshold ? `
+            <div style="margin: 12px 0;">
+              <div style="display: flex; justify-content: space-between; color: #888; font-size: 12px; margin-bottom: 4px;">
+                <span>充能进度</span>
+                <span>${progress.charge} / ${progress.nextThreshold} (${progress.progressPercent}%)</span>
+              </div>
+              <div style="background: #1a1a2a; border-radius: 4px; height: 8px; overflow: hidden;">
+                <div style="background: linear-gradient(90deg, #ff6600, #ff8800); width: ${Math.min(100, progress.progressPercent)}%; height: 100%; border-radius: 4px; transition: width 0.3s;"></div>
+              </div>
+            </div>
+          ` : ''}
+          ${check.advanced ? `
+            <button id="btn-gene-advance" style="
+              background: linear-gradient(135deg, #ff6600, #ff8800); border: none;
+              color: #fff; padding: 12px 24px; cursor: pointer; border-radius: 8px;
+              font-size: 15px; font-family: inherit; margin-top: 12px; letter-spacing: 2px;
+              box-shadow: 0 0 20px rgba(255,100,0,0.3);
+            ">🧬 突破至第${check.newStage}阶！</button>
+          ` : ''}
+          ${nextDesc && !check.advanced ? `
+            <p style="color: #555; font-size: 12px; margin-top: 8px;">
+              下一阶: ${nextDesc}
+            </p>
+          ` : ''}
+        </div>
+
+        ${skills.length > 0 ? `
+          <div style="background: rgba(255,100,0,0.03); border: 1px solid #ff660020; border-radius: 12px; padding: 20px;">
+            <h3 style="color: #ff8800; margin-bottom: 12px;">⚔ 已解锁技能</h3>
+            ${allSkillNames.map(s => `<p style="color: #ccc; font-size: 13px; margin-bottom: 6px;">• ${s}</p>`).join('')}
+          </div>
+        ` : `
+          <div style="background: rgba(100,100,100,0.03); border: 1px solid #44444420; border-radius: 12px; padding: 20px;">
+            <p style="color: #666; font-size: 13px;">开启基因锁后将解锁战斗技能。持续战斗积累充能即可突破。</p>
+          </div>
+        `}
+      `;
+
+      // 绑定突破按钮
+      const advBtn = document.getElementById('btn-gene-advance');
+      if (advBtn) {
+        advBtn.addEventListener('click', () => {
+          const result = advanceGeneLock(p);
+          if (result.success) {
+            renderShop(); // 刷新
+            showCategory('geneLock');
+          }
+        });
+      }
+      return;
+    }
+
     const items = SHOP_ITEMS[cat] || [];
 
     container.innerHTML = items.map(item => {
