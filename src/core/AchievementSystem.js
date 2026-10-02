@@ -50,6 +50,13 @@ export const ACHIEVEMENTS = [
   { id: 'lore_10',           name: '历史发掘者',     icon: '📜', desc: '收集10条lore', category: 'collect', hidden: false },
   { id: 'gold_10000',        name: '万金之躯',      icon: '💰', desc: '累计获得10000金币', category: 'collect', hidden: false },
   { id: 'fragment_500',      name: '灵魂收割者',     icon: '💎', desc: '累计获得500灵魂碎片', category: 'collect', hidden: true },
+
+  // ── 精英怪物成就 ──
+  { id: 'elite_first',       name: '精英猎人',      icon: '◆', desc: '击败第一个精英怪物', category: 'combat', hidden: false },
+  { id: 'elite_10',          name: '精英征服者',     icon: '◆◆', desc: '累计击败10个精英怪物', category: 'combat', hidden: false },
+  { id: 'legendary_slayer',  name: '传说终结者',     icon: '★', desc: '击败一个传说级怪物', category: 'combat', hidden: true },
+  { id: 'elite_no_damage',   name: '轻松碾压',      icon: '💎', desc: '无伤击败精英怪物', category: 'combat', hidden: true },
+  { id: 'elite_collector',   name: '精英收藏家',     icon: '📖', desc: '击败过所有3个阶级的精英怪', category: 'collect', hidden: true },
 ];
 
 class AchievementTracker {
