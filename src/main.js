@@ -28,6 +28,7 @@ let gameStarted = false;
 let menuState = 'title'; // 'title' | 'playing'
 let combatAnimator = null;
 let combatHistory = []; // 战斗历史记录
+let gameLoopRunning = false; // 防止gameLoop重复启动
 
 // ── 初始化 ──
 window.addEventListener('load', async () => {
@@ -136,7 +137,7 @@ function menuLoop() {
 
 function startNewGame() {
   // 重置状态
-  Object.assign(gameState, new (gameState.constructor)());
+  gameState.reset();
 
   // 初始化音频
   audioEngine.init();
@@ -187,7 +188,10 @@ function startGame() {
   }
 
   // 启动游戏循环
-  requestAnimationFrame(gameLoop);
+  if (!gameLoopRunning) {
+    gameLoopRunning = true;
+    requestAnimationFrame(gameLoop);
+  }
 }
 
 function loadFloor(index) {
@@ -335,7 +339,7 @@ eventBus.on('player:death', () => {
       }
       loadFloor(currentFloorIndex);
       gameStarted = true;
-      requestAnimationFrame(gameLoop);
+      if (!gameLoopRunning) { gameLoopRunning = true; requestAnimationFrame(gameLoop); }
     });
 
     document.getElementById('btn-restart').addEventListener('click', () => {
@@ -347,7 +351,7 @@ eventBus.on('player:death', () => {
 
 // ── 游戏主循环 ──
 function gameLoop() {
-  if (!gameStarted) return;
+  if (!gameStarted) { gameLoopRunning = false; return; }
 
   const floor = chapter.floors[currentFloorIndex];
   renderer.render(floor, entities, hoveredEntity, dialogueState, combatResult);
@@ -720,7 +724,12 @@ function pickupItem(item) {
     case 'consumable':
       if (item.effect.heal) {
         const healed = gameState.healPlayer(item.effect.heal);
-        renderer.addParticle(item.x * TILE_SIZE + TILE_SIZE/2, item.y * TILE_SIZE + TILE_SIZE/2, 'rgb(68, 255, 136)', 6);        renderer.addFloatText(`+${healed} HP`, item.x, item.y, 'rgb(68, 255, 136)');
+        renderer.addParticle(item.x * TILE_SIZE + TILE_SIZE/2, item.y * TILE_SIZE + TILE_SIZE/2, 'rgb(68, 255, 136)', 6);
+        if (healed > 0) {
+          renderer.addFloatText(`+${healed} HP`, item.x, item.y, 'rgb(68, 255, 136)');
+        } else {
+          renderer.addFloatText('HP已满', item.x, item.y, 'rgb(150, 200, 150)');
+        }
       }
       break;
 

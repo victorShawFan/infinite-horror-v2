@@ -89,6 +89,36 @@ class GameState {
     this.removedEntityIds = {};  // { floorIndex: Set<entityId> }
   }
 
+
+  /** 完全重置游戏状态（新游戏） */
+  reset() {
+    this.state = GAME_STATE.LOADING;
+    this.turn = 0;
+    this.chapter = 1;
+    this.nodeIndex = 0;
+    this.worldName = '生化危机一';
+    this.player = {
+      name: '郑吒', level: 1, exp: 0, expToNext: 100,
+      hp: 100, maxHp: 100, atk: 12, def: 8, spd: 10, crt: 5,
+      mana: 0, maxMana: 0, stamina: 100, maxStamina: 100,
+      geneLock: GENE_LOCK.LOCKED, geneLockCharge: 0, geneLockActive: false,
+      bloodlines: [], activeBloodline: BLOODLINE.NONE,
+      weapon: null, armor: null, accessory: null,
+      chips: [], maxChips: 4,
+      inventory: [], maxInventory: 20,
+      keys: { yellow: 0, blue: 0, red: 0, special: 0 },
+      rewardPoints: 0, gold: 0,
+      x: 0, y: 0, facing: 'down',
+    };
+    this.companions = [];
+    this.flags = new Set();
+    this.defeatedBosses = new Set();
+    this.combatLog = [];
+    this.choices = [];
+    this.stats = { enemiesKilled: 0, damageDealt: 0, damageTaken: 0, itemsUsed: 0, turnsPlayed: 0, deathCount: 0 };
+    this.removedEntityIds = {};
+  }
+
   setState(newState) {
     const old = this.state;
     this.state = newState;
