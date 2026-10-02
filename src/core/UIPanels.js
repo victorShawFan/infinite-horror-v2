@@ -658,6 +658,8 @@ export function showHelpPanel() {
           <tr><td style="color: #ffcc44;">H / ?</td><td>帮助</td></tr>
           <tr><td style="color: #44ff88;">鼠标悬停</td><td>查看敌人/物品详情</td></tr>
           <tr><td style="color: #ff8866;">L</td><td>战斗日志回顾</td></tr>
+          <tr><td style="color: #ffcc44;">J</td><td>成就面板</td></tr>
+          <tr><td style="color: #44ccaa;">V</td><td>迷雾开关</td></tr>
           <tr><td style="color: #44ffff;">M</td><td>全地图视图</td></tr>
           <tr><td style="color: #44cc88;">Q</td><td>道具背包</td></tr>
           <tr><td style="color: #44ff88;">F5</td><td>快速存档</td></tr>
@@ -866,6 +868,92 @@ export function showCombatLog() {
   });
   const kh = (e) => {
     if (e.key === 'l' || e.key === 'Escape') { close(); document.removeEventListener('keydown', kh); }
+  };
+  document.addEventListener('keydown', kh);
+}
+
+// ── 成就面板 ──
+export function showAchievementPanel() {
+  if (gameState.state !== GAME_STATE.EXPLORING) return;
+  const overlay = document.getElementById('ui-overlay');
+  const unlocked = milestoneTracker.unlocked;
+  const allMilestones = Object.entries(MILESTONES);
+  const ratingStats = getRatingStats();
+
+  const milestoneHTML = allMilestones.map(([id, m]) => {
+    const done = unlocked.has(id);
+    return `<div style="
+      display: flex; align-items: center; gap: 10px; padding: 10px 14px;
+      background: ${done ? 'rgba(255,204,68,0.06)' : 'rgba(30,30,40,0.5)'};
+      border: 1px solid ${done ? m.color + '40' : '#222'};
+      border-radius: 8px; opacity: ${done ? 1 : 0.5};
+    ">
+      <span style="font-size: 22px;">${done ? m.icon : '🔒'}</span>
+      <div>
+        <div style="color: ${done ? m.color : '#666'}; font-weight: bold; font-size: 13px;">${m.name}</div>
+        <div style="color: ${done ? '#aaa' : '#444'}; font-size: 11px;">${m.desc}</div>
+      </div>
+      ${done ? '<span style="color: #44ff88; font-size: 11px; margin-left: auto;">✓</span>' : ''}
+    </div>`;
+  }).join('');
+
+  // 统计概要
+  const totalUnlocked = unlocked.size;
+  const totalMilestones = allMilestones.length;
+  const pct = Math.floor(totalUnlocked / totalMilestones * 100);
+
+  overlay.innerHTML = `
+    <div style="
+      position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+      display: flex; align-items: center; justify-content: center;
+      background: rgba(0,0,0,0.85);
+    " id="ach-backdrop">
+      <div style="
+        background: rgba(10,10,20,0.97); border: 1px solid #444; border-radius: 16px;
+        padding: 24px; max-width: 650px; width: 92%; max-height: 85vh; overflow-y: auto;
+      ">
+        <h2 style="color: #ffcc44; text-align: center; letter-spacing: 4px; margin-bottom: 6px;">
+          🏆 成就
+        </h2>
+        <p style="color: #888; text-align: center; font-size: 13px; margin-bottom: 16px;">
+          ${totalUnlocked}/${totalMilestones} (${pct}%) · 
+          战斗评级 S:${ratingStats.S} A:${ratingStats.A} B:${ratingStats.B} · 
+          连杀最高: ${killStreak.best}
+        </p>
+        
+        <div style="
+          background: rgba(255,204,68,0.08); border-radius: 6px; height: 8px;
+          margin-bottom: 20px; overflow: hidden;
+        ">
+          <div style="
+            background: linear-gradient(90deg, #ffcc44, #ff8844);
+            height: 100%; width: ${pct}%;
+            border-radius: 6px; transition: width 0.5s;
+          "></div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+          ${milestoneHTML}
+        </div>
+
+        <div style="text-align: center; margin-top: 16px;">
+          <button id="btn-close-ach" style="
+            background: transparent; border: 1px solid #444; color: #888;
+            padding: 8px 30px; cursor: pointer; font-size: 14px; font-family: inherit;
+            border-radius: 6px;
+          ">关闭 (J)</button>
+        </div>
+      </div>
+    </div>
+  `;
+
+  const close = () => { overlay.innerHTML = ''; };
+  document.getElementById('btn-close-ach').addEventListener('click', close);
+  document.getElementById('ach-backdrop').addEventListener('click', (e) => {
+    if (e.target.id === 'ach-backdrop') close();
+  });
+  const kh = (e) => {
+    if (e.key === 'j' || e.key === 'Escape') { close(); document.removeEventListener('keydown', kh); }
   };
   document.addEventListener('keydown', kh);
 }
