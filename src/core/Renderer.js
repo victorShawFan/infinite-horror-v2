@@ -73,8 +73,19 @@ export class Renderer {
     tick();
   }
 
-  addFloatText(text, x, y, color = COLORS.TEXT_WHITE) {
-    this._floatTexts.push({ text, x, y, vy: -1.5, color, life: 60 });
+  addFloatText(text, x, y, color = COLORS.TEXT_WHITE, opts = {}) {
+    const isCrit = opts.crit || text.includes('暴击') || text.includes('LEVEL');
+    const isHeal = opts.heal || text.includes('+') && text.includes('HP');
+    this._floatTexts.push({ 
+      text, x, y, 
+      vy: isCrit ? -2.0 : isHeal ? -1.0 : -1.5, 
+      color, 
+      life: isCrit ? 75 : 60,
+      maxLife: isCrit ? 75 : 60,
+      fontSize: isCrit ? 18 : isHeal ? 13 : 14,
+      scale: isCrit ? 1.3 : 1.0,
+      bounce: isCrit,
+    });
   }
 
   addParticle(x, y, color, count = 5) {
@@ -902,12 +913,28 @@ export class Renderer {
   _drawFloatTexts(ctx) {
     this._floatTexts = this._floatTexts.filter(ft => {
       ft.y += ft.vy;
+      ft.vy *= 0.98; // gentle deceleration
       ft.life--;
-      const alpha = ft.life / 60;
-      ctx.font = 'bold 14px "Microsoft YaHei"';
-      ctx.fillStyle = ft.color.replace(')', `, ${alpha})`).replace('rgb', 'rgba');
+      const alpha = Math.min(1, ft.life / (ft.maxLife * 0.4));
+      const progress = 1 - (ft.life / ft.maxLife);
+      // Bounce scale animation for crits
+      let scale = ft.scale || 1.0;
+      if (ft.bounce && progress < 0.15) {
+        scale = ft.scale * (1 + 0.3 * Math.sin(progress / 0.15 * Math.PI));
+      }
+      const size = Math.round((ft.fontSize || 14) * scale);
+      ctx.save();
+      ctx.font = `bold ${size}px "Microsoft YaHei"`;
+      // Text outline for better readability
+      ctx.strokeStyle = `rgba(0,0,0,${alpha * 0.8})`;
+      ctx.lineWidth = 3;
       ctx.textAlign = 'center';
-      ctx.fillText(ft.text, ft.x * TILE_SIZE + TILE_SIZE / 2, ft.y * TILE_SIZE);
+      const tx = ft.x * TILE_SIZE + TILE_SIZE / 2;
+      const ty = ft.y * TILE_SIZE;
+      ctx.strokeText(ft.text, tx, ty);
+      ctx.fillStyle = ft.color.replace(')', `, ${alpha})`).replace('rgb', 'rgba');
+      ctx.fillText(ft.text, tx, ty);
+      ctx.restore();
       return ft.life > 0;
     });
   }
