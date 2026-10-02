@@ -101,11 +101,26 @@ function showMainMenu() {
   document.getElementById('btn-new-game').addEventListener('click', () => {
     showOpeningCutscene(() => startNewGame());
   });
-  document.getElementById('btn-continue').addEventListener('click', () => {
+  // Check if save exists and update continue button
+  const saveKey = 'infinite_horror_save_0';
+  const saveData = localStorage.getItem(saveKey);
+  const btnCont = document.getElementById('btn-continue');
+  if (saveData) {
+    try {
+      const save = JSON.parse(saveData);
+      const floorNames = ['列车醒来', '蜂巢入口', '红后机房', '激光通道', '丧尸巢穴', '六小时回归'];
+      const floorName = floorNames[save.nodeIndex] || '未知';
+      btnCont.innerHTML = '继续轮回<br><span style="font-size:11px;color:#888;">1-' + (save.nodeIndex + 1) + ' ' + floorName + ' · Lv.' + save.player.level + '</span>';
+      btnCont.style.borderColor = '#888';
+      btnCont.style.color = '#aaa';
+    } catch(e) {}
+  }
+
+  btnCont.addEventListener('click', () => {
     if (gameState.load(0)) {
       startGame();
     } else {
-      startNewGame();
+      showOpeningCutscene(() => startNewGame());
     }
   });
 
