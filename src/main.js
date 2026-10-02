@@ -44,7 +44,7 @@ import { getPlayerActiveElements, ELEMENT_INFO, checkElementalResonance } from '
 import { changeRelationship, getRelationshipLevel, getRelationshipSummary, COMPANION_PROFILES } from './core/RelationshipSystem.js';
 import { loreTracker, LORE_ENTRIES, formatLorePopup } from './core/LoreSystem.js';
 import { bestiary, getDifficulty, setDifficulty, getDifficultyConfig, applyDifficultyScaling, formatBestiaryPanel, formatDifficultySelector, DIFFICULTY, DIFFICULTY_CONFIG } from './core/DifficultySystem.js';
-import { initPanelContext, showInventoryPanel, showStatsPanel, showBestiaryPanel, showRelationshipPanel, showHelpPanel, showFullMap, showCombatLog, showAchievementPanel } from './core/UIPanels.js';
+import { initPanelContext, showInventoryPanel, showStatsPanel, showBestiaryPanel, showRelationshipPanel, showHelpPanel, showFullMap, showCombatLog, showAchievementPanel, showSettingsPanel } from './core/UIPanels.js';
 import { ngPlusState, formatClearScreen, formatCycleInfo, TITLES, getActiveMutators } from './core/NewGamePlus.js';
 import { fadeBlackTransition, chapterIntroTransition, floorTransition, victoryFlash } from './core/TransitionSystem.js';
 import { MiniMap } from './core/MiniMap.js';
@@ -1204,6 +1204,10 @@ case 'h': case '?':
       case 'q':
         // 快捷道具面板
         _showExplorationItemPanel();
+        return;
+      case 'p':
+        // 设置面板
+        showSettingsPanel();
         return;
       default: return;
     }

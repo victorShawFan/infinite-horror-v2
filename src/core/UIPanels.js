@@ -662,6 +662,7 @@ export function showHelpPanel() {
           <tr><td style="color: #44ccaa;">V</td><td>迷雾开关</td></tr>
           <tr><td style="color: #44ffff;">M</td><td>全地图视图</td></tr>
           <tr><td style="color: #44cc88;">Q</td><td>道具背包</td></tr>
+          <tr><td style="color: #888888;">P</td><td>设置 (音量/难度/迷雾)</td></tr>
           <tr><td style="color: #44ff88;">F5</td><td>快速存档</td></tr>
           <tr><td style="color: #44aaff;">F9</td><td>快速读档</td></tr>
         </table>
@@ -923,4 +924,135 @@ export function showCombatLog() {
     if (e.key === 'j' || e.key === 'Escape') { close(); document.removeEventListener('keydown', kh); }
   };
   document.addEventListener('keydown', kh);
+}
+
+// ── 设置面板 ──
+import { audioEngine } from './AudioEngine.js';
+import { fogOfWar } from './FogOfWar.js';
+import { setDifficulty, DIFFICULTY } from './DifficultySystem.js';
+
+export function showSettingsPanel() {
+  if (gameState.state !== GAME_STATE.EXPLORING) return;
+  gameState.setState(GAME_STATE.INVENTORY);
+  const overlay = document.getElementById('ui-overlay');
+  
+  const currentVol = Math.round((audioEngine.masterGain?.gain?.value ?? 0.5) * 200);
+  const fogEnabled = fogOfWar.enabled !== false;
+  const diff = getDifficulty();
+  const diffNames = { easy: '简单', normal: '普通', hard: '困难', nightmare: '噩梦' };
+  
+  const _render = () => {
+    const vol = Math.round((audioEngine.masterGain?.gain?.value ?? 0.5) * 200);
+    const fog = fogOfWar.enabled !== false;
+    const d = getDifficulty();
+    
+    overlay.innerHTML = `
+      <div style="
+        position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+        display: flex; align-items: center; justify-content: center;
+        background: rgba(0,0,0,0.8);
+      " id="settings-backdrop">
+        <div style="
+          background: rgba(10,10,20,0.97); border: 1px solid #444; border-radius: 16px;
+          padding: 30px; max-width: 420px; width: 90%;
+        ">
+          <h2 style="color: #888; text-align: center; letter-spacing: 4px; margin-bottom: 24px;">
+            ⚙ 设置
+          </h2>
+          
+          <!-- 音量 -->
+          <div style="margin-bottom: 20px;">
+            <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
+              <span style="color:#aaa;font-size:13px;">🔊 音量</span>
+              <span style="color:#ffcc44;font-size:13px;" id="vol-display">${vol}%</span>
+            </div>
+            <input type="range" id="vol-slider" min="0" max="100" value="${vol}" style="
+              width:100%; accent-color:#ffcc44; cursor:pointer;
+            "/>
+          </div>
+          
+          <!-- 迷雾 -->
+          <div style="margin-bottom: 20px; display:flex; justify-content:space-between; align-items:center;">
+            <span style="color:#aaa;font-size:13px;">🌫 战争迷雾</span>
+            <button id="fog-toggle" style="
+              background:${fog ? 'rgba(68,255,136,0.15)' : 'rgba(255,68,68,0.15)'};
+              border:1px solid ${fog ? '#44ff88' : '#ff4444'};
+              color:${fog ? '#44ff88' : '#ff4444'};
+              padding:6px 16px; cursor:pointer; font-size:12px;
+              font-family:inherit; border-radius:6px;
+            ">${fog ? '✓ 开启' : '✗ 关闭'}</button>
+          </div>
+          
+          <!-- 难度 -->
+          <div style="margin-bottom: 20px;">
+            <span style="color:#aaa;font-size:13px;display:block;margin-bottom:8px;">⚔ 难度</span>
+            <div style="display:flex;gap:8px;justify-content:center;">
+              ${Object.entries(diffNames).map(([key, name]) => `
+                <button class="diff-btn" data-diff="${key}" style="
+                  background:${d === key ? 'rgba(255,204,68,0.15)' : 'transparent'};
+                  border:1px solid ${d === key ? '#ffcc44' : '#333'};
+                  color:${d === key ? '#ffcc44' : '#666'};
+                  padding:6px 14px; cursor:pointer; font-size:12px;
+                  font-family:inherit; border-radius:6px;
+                ">${name}</button>
+              `).join('')}
+            </div>
+          </div>
+          
+          <!-- 快捷键提示 -->
+          <div style="background:rgba(255,255,255,0.03);border:1px solid #222;border-radius:8px;padding:10px;margin-bottom:16px;">
+            <p style="color:#555;font-size:11px;text-align:center;">
+              F5 存档 · F9 读档 · H 帮助 · V 迷雾 · Tab 小地图 · M 全图
+            </p>
+          </div>
+          
+          <div style="text-align: center;">
+            <button id="btn-close-settings" style="
+              background: transparent; border: 1px solid #444; color: #888;
+              padding: 8px 30px; cursor: pointer; font-size: 14px; font-family: inherit;
+              border-radius: 6px;
+            ">关闭 (Esc)</button>
+          </div>
+        </div>
+      </div>
+    `;
+    
+    // Volume slider
+    document.getElementById('vol-slider')?.addEventListener('input', (e) => {
+      const v = parseInt(e.target.value) / 100;
+      try { if (audioEngine.masterGain) audioEngine.masterGain.gain.value = v / 2; } catch {}
+      const display = document.getElementById('vol-display');
+      if (display) display.textContent = e.target.value + '%';
+    });
+    
+    // Fog toggle
+    document.getElementById('fog-toggle')?.addEventListener('click', () => {
+      fogOfWar.enabled = !fogOfWar.enabled;
+      _render();
+    });
+    
+    // Difficulty buttons
+    document.querySelectorAll('.diff-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        try { setDifficulty(btn.dataset.diff); } catch {}
+        _render();
+      });
+    });
+    
+    // Close
+    const close = () => {
+      overlay.innerHTML = '';
+      gameState.setState(GAME_STATE.EXPLORING);
+    };
+    document.getElementById('btn-close-settings')?.addEventListener('click', close);
+    document.getElementById('settings-backdrop')?.addEventListener('click', (e) => {
+      if (e.target.id === 'settings-backdrop') close();
+    });
+    const kh = (e) => {
+      if (e.key === 'Escape' || e.key === 'p') { close(); document.removeEventListener('keydown', kh); }
+    };
+    document.addEventListener('keydown', kh);
+  };
+  
+  _render();
 }
