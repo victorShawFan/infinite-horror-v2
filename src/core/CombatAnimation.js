@@ -34,15 +34,18 @@ export class CombatAnimator {
     // 开场震屏
     this._queue.push({ type: 'shake', intensity: 3, duration: 150, delay: 0 });
 
-    // 逐回合播放伤害数字
+    // 逐回合播放伤害数字和特效
     let delay = 200;
     let roundIdx = 0;
     for (const entry of log) {
+      const dmgMatch = entry.text.match(/(\d+)/);
+      const dmgText = dmgMatch ? dmgMatch[1] : '?';
+
       if (entry.type === 'attack' || entry.type === 'critical') {
         roundIdx++;
         this._queue.push({
           type: 'playerAttack',
-          text: `-${entry.text.match(/造成 (\d+)/)?.[1] || '?'}`,
+          text: `-${dmgText}`,
           x: enemy.x, y: enemy.y,
           isCrit: entry.type === 'critical',
           delay,
@@ -51,14 +54,42 @@ export class CombatAnimator {
           this._queue.push({ type: 'shake', intensity: 6, duration: 200, delay: delay + 50 });
           this._queue.push({ type: 'flash', color: 'rgba(255, 200, 50, 0.2)', duration: 150, delay });
         }
-        delay += 250;
+        delay += 220;
       } else if (entry.type === 'enemy_attack') {
         this._queue.push({
           type: 'enemyAttack',
-          text: `-${entry.text.match(/造成 (\d+)/)?.[1] || '?'}`,
+          text: `-${dmgText}`,
           delay,
         });
         this._queue.push({ type: 'shake', intensity: 2, duration: 100, delay: delay + 50 });
+        delay += 200;
+      } else if (entry.type === 'heal') {
+        // 吸血/回复 — 绿色浮字在玩家头上
+        const px = window._gamePlayerX || 0;
+        const py = window._gamePlayerY || 0;
+        this._queue.push({ type: 'text', text: `+${dmgText} HP`, x: px, y: py - 0.5, color: 'rgb(100, 255, 140)', delay });
+        delay += 150;
+      } else if (entry.type === 'spell') {
+        // 法术 — 紫色浮字在敌人头上 + 闪光
+        this._queue.push({ type: 'text', text: `✦ -${dmgText}`, x: enemy.x, y: enemy.y - 0.5, color: 'rgb(180, 120, 255)', delay });
+        this._queue.push({ type: 'flash', color: 'rgba(150, 80, 255, 0.15)', duration: 120, delay });
+        delay += 220;
+      } else if (entry.type === 'burn') {
+        // 灼烧 — 橙色浮字
+        this._queue.push({ type: 'text', text: `🔥 -${dmgText}`, x: enemy.x, y: enemy.y - 0.3, color: 'rgb(255, 130, 50)', delay });
+        this._queue.push({ type: 'particles', x: enemy.x * TILE_SIZE + TILE_SIZE / 2, y: enemy.y * TILE_SIZE + TILE_SIZE / 2, color: 'rgb(255, 100, 30)', count: 4, delay });
+        delay += 180;
+      } else if (entry.type === 'reflect') {
+        // 反伤 — 蓝色浮字在敌人头上
+        this._queue.push({ type: 'text', text: `🛡 -${dmgText}`, x: enemy.x, y: enemy.y - 0.3, color: 'rgb(100, 150, 255)', delay });
+        this._queue.push({ type: 'shake', intensity: 1, duration: 80, delay });
+        delay += 150;
+      } else if (entry.type === 'buff') {
+        // Buff提示 — 蓝色浮字
+        const shortText = entry.text.length > 16 ? entry.text.slice(0, 16) + '…' : entry.text;
+        const px = window._gamePlayerX || 0;
+        const py = window._gamePlayerY || 0;
+        this._queue.push({ type: 'text', text: shortText, x: px, y: py - 0.8, color: 'rgb(100, 200, 255)', delay });
         delay += 200;
       }
 
