@@ -38,28 +38,61 @@ export const GEM_TYPES = {
 // ── 套装定义 ──
 export const EQUIPMENT_SETS = {
   umbrella_corp: {
-    name: '安布雷拉套装',
-    pieces: ['weapon_biohazard_blade', 'armor_biohazard_suit', 'acc_biohazard_scope'],
+    name: '保护伞遗产',
+    pieces: ['umbrella_pistol', 'umbrella_vest', 'umbrella_badge'],
     bonuses: {
-      2: { atk: 5, def: 5, desc: '2件: ATK+5, DEF+5' },
-      3: { atk: 10, def: 10, maxHp: 50, desc: '3件: ATK+10, DEF+10, MaxHP+50' },
+      2: { atk: 5, def: 5, desc: '☣ 2件: ATK+5, DEF+5 — 抗毒体质' },
+      3: { atk: 10, def: 10, maxHp: 50, desc: '🧬 3件: ATK+10, DEF+10, MaxHP+50 — 生化改造' },
+    }
+  },
+  alien_hunter: {
+    name: '异形猎手',
+    pieces: ['acid_blade', 'xenomorph_carapace', 'motion_tracker'],
+    bonuses: {
+      2: { spd: 4, crt: 5, desc: '📡 2件: SPD+4, CRT+5% — 动态追踪' },
+      3: { spd: 4, crt: 15, atk: 6, desc: '🎯 3件: SPD+4, CRT+15%, ATK+6 — 猎手直觉' },
+    }
+  },
+  divine_scroll: {
+    name: '神鬼真经',
+    pieces: ['imhotep_staff', 'anubis_armor', 'scarab_amulet'],
+    bonuses: {
+      2: { maxHp: 60, def: 6, desc: '🏺 2件: MaxHP+60, DEF+6 — 亡灵祝福' },
+      3: { maxHp: 80, def: 10, atk: 6, desc: '📜 3件: MaxHP+80, DEF+10, ATK+6 — 复活真经' },
     }
   },
   lord_god: {
     name: '主神套装',
-    pieces: ['weapon_lord_blade', 'armor_lord_guard', 'acc_lord_ring'],
+    pieces: ['lord_blade', 'lord_guard', 'lord_ring'],
     bonuses: {
-      2: { atk: 8, crt: 5, desc: '2件: ATK+8, CRT+5%' },
-      3: { atk: 15, def: 15, crt: 10, spd: 5, desc: '3件: ATK+15, DEF+15, CRT+10%, SPD+5' },
+      2: { atk: 8, crt: 5, desc: '⚡ 2件: ATK+8, CRT+5% — 主神馈赠' },
+      3: { atk: 15, def: 15, crt: 10, spd: 5, desc: '👑 3件: ATK+15, DEF+15, CRT+10%, SPD+5 — 主神之力' },
     }
   },
   gene_breaker: {
     name: '基因突破者',
-    pieces: ['weapon_gene_fist', 'armor_gene_suit'],
+    pieces: ['gene_gauntlet', 'gene_suit', 'gene_core'],
     bonuses: {
-      2: { atk: 12, maxHp: 80, geneLockChargeBonus: 0.2, desc: '2件: ATK+12, MaxHP+80, 基因锁充能+20%' },
+      2: { atk: 12, maxHp: 80, desc: '🧬 2件: ATK+12, MaxHP+80 — 基因增幅' },
+      3: { atk: 20, maxHp: 120, spd: 4, desc: '⚡ 3件: ATK+20, MaxHP+120, SPD+4 — 超进化' },
     }
-  }
+  },
+  zhongzhou_elite: {
+    name: '中洲精锐',
+    pieces: ['zhongzhou_sword', 'zhongzhou_plate', 'zhongzhou_ring'],
+    bonuses: {
+      2: { atk: 6, def: 8, desc: '🤝 2件: ATK+6, DEF+8 — 团队协作' },
+      3: { atk: 10, def: 12, maxHp: 40, spd: 3, desc: '👑 3件: ATK+10, DEF+12, HP+40, SPD+3 — 队长意志' },
+    }
+  },
+  demon_slayer: {
+    name: '弑魔者',
+    pieces: ['holy_blade', 'crusader_armor', 'exorcist_cross'],
+    bonuses: {
+      2: { atk: 10, desc: '✝ 2件: ATK+10 — 圣光之力' },
+      3: { atk: 18, def: 8, crt: 8, desc: '⚔ 3件: ATK+18, DEF+8, CRT+8% — 弑魔本能' },
+    }
+  },
 };
 
 // ── 强化装备 ──
@@ -220,4 +253,27 @@ export function getEnhanceCost(equipment) {
   if (level >= 10) return { cost: Infinity, successRate: 0, maxed: true };
   const row = ENHANCE_TABLE[level];
   return { cost: row[3], successRate: row[2], nextLevel: level + 1, maxed: false };
+}
+
+
+// ── 格式化套装信息HTML ──
+export function formatSetBonusHTML(player) {
+  const equipped = [player.weapon, player.armor, player.accessory].filter(Boolean);
+  const equippedSetIds = equipped.map(e => e.setId).filter(Boolean);
+  if (equippedSetIds.length === 0) return '<p style="color:#444;font-size:12px;">暂无套装部件</p>';
+  
+  let html = '';
+  for (const [setKey, setDef] of Object.entries(EQUIPMENT_SETS)) {
+    const count = equippedSetIds.filter(id => setDef.pieces.includes(id)).length;
+    if (count === 0) continue;
+    
+    html += `<div style="margin-bottom:8px;padding:8px;background:rgba(255,255,255,0.02);border:1px solid ${count >= 2 ? '#ffcc4433' : '#22222266'};border-radius:6px;">`;
+    html += `<p style="color:${count >= 2 ? '#ffcc44' : '#666'};font-size:12px;font-weight:bold;">${setDef.name} (${count}/${setDef.pieces.length})</p>`;
+    for (const [tier, bonus] of Object.entries(setDef.bonuses)) {
+      const active = count >= parseInt(tier);
+      html += `<p style="color:${active ? '#44ff88' : '#444'};font-size:11px;margin-top:2px;">${active ? '✓' : '○'} ${bonus.desc}</p>`;
+    }
+    html += '</div>';
+  }
+  return html;
 }

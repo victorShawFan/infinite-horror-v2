@@ -162,7 +162,7 @@ function generateFloor_4_2() {
       { type: ENTITY_TYPE.ITEM, id: 'desert_blade', name: '沙漠弯刀',
         x: 3, y: 11, sprite: '🗡', color: '#ddaa44',
         itemType: 'weapon',
-        weapon: { name: '沙漠弯刀', atk: 16, damageType: 'physical', crt: 4 },
+        weapon: { name: '沙漠弯刀', atk: 16, damageType: 'physical', crt: 4, setId: 'scarab_amulet', slot: 'weapon' },
       },
       // 护甲
       { type: ENTITY_TYPE.ITEM, id: 'desert_armor', name: '沙漠披风',

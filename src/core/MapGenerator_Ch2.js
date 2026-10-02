@@ -371,7 +371,7 @@ function generateFloor_2_4() {
       { type: ENTITY_TYPE.ITEM, id: 'weapon_flamer', name: '火焰喷射器',
         x: 17, y: 14, sprite: '⚔', color: '#ff8844',
         itemType: 'weapon',
-        weapon: { name: '火焰喷射器', atk: 10, damageType: 'fire', spd: -2 },
+        weapon: { name: '火焰喷射器', atk: 10, damageType: 'fire', spd: -2, setId: 'acid_blade', slot: 'weapon' },
         description: '海军陆战队标配M240火焰喷射器。对异形极其有效。',
       },
       { type: ENTITY_TYPE.ITEM, id: 'medkit_ch2_4', name: '强效医疗包',

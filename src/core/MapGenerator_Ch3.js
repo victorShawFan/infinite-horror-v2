@@ -523,7 +523,7 @@ function generateFloor_3_5() {
       { type: ENTITY_TYPE.ITEM, id: 'spirit_blade', name: '退魔短刀',
         x: 2, y: 9, sprite: '🗡', color: '#cc88ff',
         itemType: 'weapon',
-        weapon: { name: '退魔短刀', atk: 14, damageType: 'spirit', crt: 3 },
+        weapon: { name: '退魔短刀', atk: 14, damageType: 'spirit', crt: 3, setId: 'imhotep_staff', slot: 'weapon' },
       },
       // HP
       { type: ENTITY_TYPE.ITEM, id: 'medkit_ch3_5', name: '急救包',

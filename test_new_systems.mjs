@@ -89,8 +89,8 @@ console.log('══════════════════════�
 // 套装效果
 {
   const player = {
-    weapon: { setId: 'weapon_lord_blade' },
-    armor: { setId: 'armor_lord_guard' },
+    weapon: { setId: 'lord_blade' },
+    armor: { setId: 'lord_guard' },
     accessory: null,
   };
   const bonuses = getActiveSetBonuses(player);
