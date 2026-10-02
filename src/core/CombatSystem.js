@@ -22,6 +22,7 @@ import {
 import { calcElementalModifier, getPlayerActiveElements, getEnemyElement, checkElementalResonance, ELEMENT_INFO } from './ElementalSystem.js';
 import { generateLoot, formatLootLog, applyLoot } from './LootSystem.js';
 import { applyStanceModifiers, getCurrentStance } from './CombatStance.js';
+import { killStreak } from './KillStreak.js';
 import { getCompanionCombatBonus } from './RelationshipSystem.js';
 import { generateCombatDialogue, getVictoryComment } from './CompanionDialogue.js';
 import { COMPANION_PROFILES } from './RelationshipSystem.js';
@@ -315,6 +316,12 @@ export function executeBattle(enemy) {
   const pCrt = stanceMod.crt;
   const pSpd = stanceMod.spd;
   const stanceCritDmgBonus = stanceMod.critDmgBonus || 0;
+  // 连杀加成
+  const streakBonus = killStreak.getBonus();
+  if (streakBonus.atkPct > 0) {
+    stanceMod.atk = Math.floor(stanceMod.atk * (1 + streakBonus.atkPct / 100));
+    stanceMod.crt = stanceMod.crt + (streakBonus.crt || 0);
+  }
   const chipFx = getChipEffects(p);
   const isDouble = canDoubleAttack(pSpd, enemy.spd || 5);
   const isDaoist = p.activeBloodline === BLOODLINE.DAOIST;

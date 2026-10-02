@@ -56,6 +56,7 @@ import { generateSecretEntities, tryBreakSecret, SECRET_TYPES } from './core/Sec
 import { getCurrentStance, setStance, getAvailableStances, getStanceId, restoreStance } from './core/CombatStance.js';
 import { challengeState, CHALLENGE_TYPES } from './core/ChallengeDungeon.js';
 import { getQualityColor, getQualityName, formatEquipmentTooltip } from './core/EquipmentAffixes.js';
+import { killStreak } from './core/KillStreak.js';
 
 // ── 全局状态 ──
 let renderer;
@@ -493,6 +494,7 @@ function showMainMenu() {
       try { const ng = localStorage.getItem('ih_ngplus'); if (ng) ngPlusState.fromJSON(JSON.parse(ng)); } catch {}
       try { const st = localStorage.getItem('ih_stance'); if (st) restoreStance(st); } catch {}
       try { const cs = localStorage.getItem('ih_challenge'); if (cs) challengeState.fromJSON(JSON.parse(cs)); } catch {}
+      try { const ks = localStorage.getItem('ih_streak'); if (ks) killStreak.fromJSON(JSON.parse(ks)); } catch {}
       const chapterGens = { 1: generateChapter1, 2: generateChapter2, 3: generateChapter3, 4: generateChapter4, 5: generateChapter5, 6: generateChapter6, 7: generateChapter7, 8: generateChapter8, 9: generateChapter9, 10: generateChapter10, 11: generateChapter11, 12: generateChapter12 };
       const gen = chapterGens[gameState.chapter] || generateChapter1;
 
@@ -724,6 +726,7 @@ function startGame() {
     }
 
     try { localStorage.setItem('ih_challenge', JSON.stringify(challengeState.toJSON())); } catch {}
+    try { localStorage.setItem('ih_streak', JSON.stringify(killStreak.toJSON())); } catch {}
   });
 
   eventBus.on('relationship:change', (data) => {
@@ -881,6 +884,7 @@ function showFloorTitle(floor) {
 
 // ── 游戏失败处理 ──
 eventBus.on('player:death', () => {
+    killStreak.recordDeath();
   gameStarted = false;
   audioEngine.playDamage();
   renderer.shake(10, 800);
@@ -1788,7 +1792,29 @@ function startCombat(enemy, preScaledEnemy) {
     try { const actualDamageTaken = Math.max(0, hpBeforeCombat - gameState.player.hp); bestiary.record(scaledEnemy, { victory: true, damageDealt: scaledEnemy.hp, damageTaken: actualDamageTaken }); } catch {}
     try { localStorage.setItem('ih_bestiary', JSON.stringify(bestiary.toJSON())); } catch {}
 
-// 并肩作战 → 存活同伴关系+3
+// 连杀记录
+    killStreak.recordKill();
+    const streakDisplay = killStreak.getDisplay();
+    if (streakDisplay) {
+      renderer.addFloatText(streakDisplay.icon + ' ' + streakDisplay.name + ' x' + streakDisplay.kills, gameState.player.x, gameState.player.y - 2, streakDisplay.color);
+    }
+
+    // 连杀经验加成
+    const streakBonus = killStreak.getBonus();
+    if (streakBonus.expPct > 0 && result.rewards?.exp) {
+      const bonusExp = Math.floor(result.rewards.exp * streakBonus.expPct / 100);
+      gameState.player.exp += bonusExp;
+      if (bonusExp > 0) renderer.addFloatText('+' + bonusExp + ' 连杀EXP', gameState.player.x + 1, gameState.player.y - 1.5, '#ffaa44');
+    }
+
+    // 连杀回血
+    if (streakBonus.healPct > 0) {
+      const healAmt = Math.floor(gameState.player.maxHp * streakBonus.healPct / 100);
+      gameState.player.hp = Math.min(gameState.player.maxHp, gameState.player.hp + healAmt);
+      if (healAmt > 0) renderer.addFloatText('+' + healAmt + ' HP', gameState.player.x - 1, gameState.player.y - 1, '#44ff88');
+    }
+
+    // 并肩作战 → 存活同伴关系+3
     for (const c of gameState.companions.filter(c => c.alive)) {
       changeRelationship(c.id, 'fight_together', gameState.relationships);
     }
