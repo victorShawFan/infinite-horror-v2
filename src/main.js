@@ -1258,6 +1258,23 @@ function triggerEvent(entity) {
           if (choice.effect.hp) { p.maxHp += choice.effect.hp; p.hp += choice.effect.hp; renderer.addFloatText(`MaxHP+${choice.effect.hp}`, p.x, p.y - 1, 'rgb(68, 255, 136)'); }
           if (choice.effect.flag) gameState.setFlag(choice.effect.flag);
           if (choice.effect.description) renderer.notify(choice.effect.description, '#ffcc44', 120);
+          // 关系变化
+          if (choice.effect.relationship) {
+            for (const [companionId, eventId] of Object.entries(choice.effect.relationship)) {
+              const r = changeRelationship(companionId, eventId, gameState.relationships);
+              if (r && r.levelChanged) {
+                const profile = COMPANION_PROFILES[companionId];
+                const name = profile?.name || companionId;
+                renderer.addFloatText(`${name} → ${r.newLevelName}`, gameState.player.x, gameState.player.y - 2, getRelationshipLevel(r.newValue).color);
+              }
+            }
+          }
+          // 全队正面/负面事件
+          if (choice.effect.allRelationship) {
+            for (const c of gameState.companions.filter(c => c.alive)) {
+              changeRelationship(c.id, choice.effect.allRelationship, gameState.relationships);
+            }
+          }
         }
 
         startDialogue([{ text: `选择了"${choice.text}"`, speaker: '系统' }], null, onComplete);

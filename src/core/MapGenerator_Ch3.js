@@ -337,6 +337,30 @@ function generateFloor_3_4() {
     tiles: grid, width: W, height: H, playerStart: { x: 4, y: 8 },
     entities: [
       // 新人冲突事件
+      // ── 剧情选择：面对新人的态度 ──
+      { type: ENTITY_TYPE.EVENT, id: 'newbie_attitude', name: '队伍分歧',
+        x: 3, y: 6, sprite: '?', color: '#ffcc44',
+        event: {
+          type: 'choice',
+          lines: [
+            { text: '新来的队员情绪崩溃，抱怨张杰不该把大家带进这个鬼地方。', speaker: '旁白' },
+            { text: '郑吒。你怎么看？', speaker: '张杰' },
+          ],
+          choices: [
+            { id: 'comfort', text: '安慰新人，分享物资',
+              effect: { hp: 15, description: '你的善意稳定了队伍的士气',
+                relationship: { zhang_jie: 'protect_weak', li_xiaoyi: 'honest_talk' },
+                allRelationship: 'share_item' } },
+            { id: 'discipline', text: '严厉训斥：死了就没有抱怨的机会了',
+              effect: { atk: 3, description: '你的果断让新人闭上了嘴',
+                relationship: { chuxuan: 'good_decision' } } },
+            { id: 'ignore', text: '沉默不语，转身继续探索',
+              effect: { spd: 2, description: '你选择了独行',
+                allRelationship: 'ignore' } },
+          ],
+          flag: 'newbie_attitude_chosen',
+        },
+      },
       { type: ENTITY_TYPE.EVENT, id: 'newbie_conflict', name: '新人冲突',
         x: 5, y: 8, sprite: '⚡', color: '#ff8844',
         event: {

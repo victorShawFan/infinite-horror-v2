@@ -286,6 +286,30 @@ function generateFloor_5_5() {
     bgColor: '#0a0a12', theme: 'mental_space',
     tiles: grid, width: W, height: H, playerStart: { x: 3, y: 3 },
     entities: [
+      // ── 剧情选择：张杰的请求 ──
+      { type: ENTITY_TYPE.EVENT, id: 'zhangjie_request', name: '张杰的请求',
+        x: 4, y: 9, sprite: '?', color: '#ffcc44',
+        event: {
+          type: 'choice',
+          lines: [
+            { text: '张杰把你拉到一边。他的表情异常凝重。', speaker: '旁白' },
+            { text: '郑吒……如果我出了什么事，你能替我照顾好他们吗？', speaker: '张杰' },
+            { text: '（张杰的眼神里有一种你从未见过的东西——是释然。）', speaker: '旁白' },
+          ],
+          choices: [
+            { id: 'promise', text: '我答应你。不管发生什么。',
+              effect: { def: 3, hp: 20, description: '你许下了承诺，心中多了一份力量',
+                relationship: { zhang_jie: 'save_life' } } },
+            { id: 'refuse', text: '别说这种话。你会活着回来的。',
+              effect: { atk: 4, description: '你拒绝接受这个可能性',
+                relationship: { zhang_jie: 'honest_talk' } } },
+            { id: 'question', text: '你是不是知道了什么？',
+              effect: { crt: 3, description: '你洞察到了张杰隐藏的秘密',
+                relationship: { zhang_jie: 'good_decision', chuxuan: 'good_decision' } } },
+          ],
+          flag: 'zhangjie_request_chosen',
+        },
+      },
       { type: ENTITY_TYPE.EVENT, id: 'captain_test', name: '队长考验开始',
         x: 4, y: 3, sprite: '⚔', color: '#ffcc44',
         event: { type: 'dialogue', lines: [

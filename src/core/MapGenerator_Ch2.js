@@ -157,9 +157,11 @@ function generateFloor_2_2() {
           ],
           choices: [
             { id: 'upper', text: '上路 — 跟随楚轩前往控制室', 
-              effect: { flag: 'chose_upper_route', spd: 2, description: '楚轩的路线规划让你获得了战术优势' } },
+              effect: { flag: 'chose_upper_route', spd: 2, description: '楚轩的路线规划让你获得了战术优势',
+                relationship: { chuxuan: 'good_decision' } } },
             { id: 'lower', text: '下路 — 率队前往动力舱', 
-              effect: { flag: 'chose_lower_route', atk: 3, description: '在动力舱的危险环境中，你的战斗本能得到了磨炼' } },
+              effect: { flag: 'chose_lower_route', atk: 3, description: '在动力舱的危险环境中，你的战斗本能得到了磨炼',
+                relationship: { mou_gang: 'good_decision', zhan_lan: 'good_decision' } } },
           ],
         },
       },
