@@ -302,6 +302,8 @@ function startGame() {
     window._levelupListenerRegistered = true;
     eventBus.on('player:levelup', () => {
       audioEngine.playLevelUp();
+      try { checkGrowthMilestones(milestoneTracker, gameState.player); } catch {}
+      try { checkGrowthMilestones(milestoneTracker, gameState.player); } catch {}
       const p = gameState.player;
       renderer.addFloatText('LEVEL UP!', p.x, p.y - 1.5, 'rgb(255, 215, 0)');
       renderer.addFloatText('Lv.' + p.level, p.x, p.y - 2, 'rgb(255, 255, 150)');
@@ -317,6 +319,17 @@ function startGame() {
         'rgb(255, 215, 0)', 120
       );
     });
+  }
+
+  // 里程碑通知轮询
+  if (!window._milestonePollerRegistered) {
+    window._milestonePollerRegistered = true;
+    setInterval(() => {
+      if (milestoneTracker.hasNotifications()) {
+        const ms = milestoneTracker.getNextNotification();
+        if (ms) showMilestonePopup(ms);
+      }
+    }, 1500);
   }
 
   // 启动游戏循环
@@ -973,6 +986,11 @@ function startCombat(enemy) {
     if (result.victory) {
       renderer.addFloatText(`+${enemy.rewards?.exp || 0} EXP`, enemy.x, enemy.y - 1, 'rgb(170, 136, 255)');
 
+      // 里程碑：战斗成就
+      try { checkCombatMilestones(milestoneTracker, gameState.stats, enemy, result); } catch {}
+      // 里程碑：成长成就（战斗后可能升级/进阶）
+      try { checkGrowthMilestones(milestoneTracker, gameState.player); } catch {}
+
       // 检查boss特殊事件
       if (enemy.onDefeat) {
         setTimeout(() => {
@@ -1093,7 +1111,10 @@ function triggerEvent(entity) {
 
     // 奖励
     if (evt.rewards) {
-      if (evt.rewards.exp) gameState.addExp(evt.rewards.exp);
+      if (evt.rewards.exp) {
+        gameState.addExp(evt.rewards.exp);
+        try { checkGrowthMilestones(milestoneTracker, gameState.player); } catch {}
+      }
       if (evt.rewards.gold) gameState.player.gold += evt.rewards.gold;
       if (evt.rewards.rewardPoints) gameState.player.rewardPoints += evt.rewards.rewardPoints;
       if (evt.rewards.keys) {
@@ -1107,6 +1128,8 @@ function triggerEvent(entity) {
     if (evt.effect?.geneLock) {
       gameState.player.geneLock = evt.effect.geneLock;
       renderer.shake(6, 500);
+      // 里程碑：基因锁
+      try { checkGrowthMilestones(milestoneTracker, gameState.player); } catch {}
     }
 
     // 移除队友
@@ -1204,6 +1227,9 @@ function triggerEvent(entity) {
       // 通关奖励由 evt.rewards.rewardPoints 统一处理（在上方 evt.rewards 块）
       const rp = evt.rewards?.rewardPoints || 1000;
       renderer.addFloatText(`+${rp} 奖励点 (通关)`, gameState.player.x, gameState.player.y - 1, 'rgb(255, 170, 0)');
+      // 里程碑：章节通关
+      try { checkChapterMilestones(milestoneTracker, gameState.chapter); } catch {}
+      try { checkChapterMilestones(milestoneTracker, gameState.chapter); } catch {}
       setTimeout(() => showChapterComplete(), 800);
     }
 
