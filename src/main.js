@@ -1267,7 +1267,7 @@ document.addEventListener('keydown', (e) => {
         // 统计面板
         showStatsPanel();
         return;
-      case 'b':
+      case 'n':
         // 怪物图鉴
         showBestiaryPanel();
         return;

@@ -15,6 +15,7 @@ import { allocateTalentPoint, resetTalents, getTalentEffects,
          getTalentPathInfo, TALENT_PATHS } from './TalentTree.js';
 import { getAvailableChallenges, challengeState } from './ChallengeDungeon.js';
 import { getAvailableRecipes, QUALITY } from './ForgeSystem.js';
+import { openEquipmentStash } from './EquipmentStash.js';
 
 /** 主神空间商店/强化项目 */
 export const SHOP_ITEMS = {
@@ -220,6 +221,7 @@ export function renderLordGodSpace(onClose) {
       { key: 'geneLock', name: '🧬 基因锁', color: '#ff6600' },
       { key: 'consumables', name: '🧪 消耗品', color: '#44cc88' },
       { key: 'challenge', name: '⚔ 挑战副本', color: '#ff4444' },
+      { key: 'stash', name: '📦 仓库', color: '#cc8844' },
     ];
 
     overlay.innerHTML = `
@@ -578,6 +580,12 @@ export function renderLordGodSpace(onClose) {
 
 
     // ── 挑战副本页面 ──
+        if (cat === 'stash') {
+      container.innerHTML = '<div style="text-align:center;padding:20px;"><button id="btn-open-stash" style="background:rgba(255,204,68,0.12);border:1px solid #cc884466;color:#cc8844;padding:12px 30px;cursor:pointer;font-size:16px;font-family:inherit;border-radius:8px;letter-spacing:2px;">📦 打开装备仓库</button><p style=\"color:#666;font-size:12px;margin-top:8px;\">查看、装备、分解你的备用装备</p></div>';
+      document.getElementById('btn-open-stash')?.addEventListener('click', () => openEquipmentStash());
+      return;
+    }
+
     if (cat === 'challenge') {
       const challenges = getAvailableChallenges(gameState.chapter, gameState.defeatedBosses);
       container.innerHTML = `
