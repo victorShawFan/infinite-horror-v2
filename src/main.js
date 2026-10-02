@@ -411,11 +411,34 @@ window.addEventListener('load', async () => {
   renderer = new Renderer(canvas);
 
   const fill = document.querySelector('#loading-bar .fill');
+  const loadingText = document.querySelector('#loading-screen .loading-text');
+  
+  // 加载提示
+  const LOADING_TIPS = [
+    '💡 悬停敌人可查看战斗预判',
+    '💡 按H查看完整操作指南',
+    '💡 基因锁(G键)在关键战斗前记得激活',
+    '💡 战前按Q使用增益药剂',
+    '💡 装备仓库(B键)可存放替换的装备',
+    '💡 隐藏房间中常有稀有物品',
+    '💡 注意敌人弱点属性，克制伤害翻倍',
+    '💡 商人NPC(🏪)出售独家道具',
+    '💡 同伴关系越高，战斗加成越强',
+    '💡 连杀不断可获得额外奖励',
+    '💡 按J查看成就，收集隐藏成就',
+    '💡 T键打开战斗统计面板',
+  ];
+  let tipIdx = 0;
+  const tipInterval = setInterval(() => {
+    if (loadingText) loadingText.textContent = LOADING_TIPS[tipIdx % LOADING_TIPS.length];
+    tipIdx++;
+  }, 2000);
   
   // 实际加载资产
   fill.style.width = '30%';
   await assetLoader.loadAll();
   fill.style.width = '100%';
+  clearInterval(tipInterval);
   
   setTimeout(() => {
     document.getElementById('loading-screen').classList.add('hidden');
