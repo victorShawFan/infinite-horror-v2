@@ -1,6 +1,7 @@
 // ═══════════════════════════════════════════════════════════════
 // 无限恐怖：中洲轮回 — 主入口
 // 2D俯视角 Roguelike + 魔塔式数值战斗 + 叙事选择
+
 // ═══════════════════════════════════════════════════════════════
 
 import { TILE, TILE_SIZE, ENTITY_TYPE, GAME_STATE, GENE_LOCK, COLORS, CANVAS_W, CANVAS_H } from './core/constants.js';
@@ -53,6 +54,7 @@ import { triggerTrap as fireTrap, openChest, TRAP_TYPES, CHEST_TYPES } from './c
 import { addConsumable, useConsumable, getInventoryList, consumePendingBuffs, giveStarterConsumables, CONSUMABLE_DEFS } from './core/ConsumableSystem.js';
 import { generateSecretEntities, tryBreakSecret, SECRET_TYPES } from './core/SecretRoomSystem.js';
 import { getCurrentStance, setStance, getAvailableStances, getStanceId, restoreStance } from './core/CombatStance.js';
+import { challengeState, CHALLENGE_TYPES } from './core/ChallengeDungeon.js';
 
 // ── 全局状态 ──
 let renderer;
@@ -70,6 +72,141 @@ let combatHistory = []; // 战斗历史记录
 let gameLoopRunning = false; // 防止gameLoop重复启动
 
 // ── 初始化 ──
+// ═══════════════════════════════════════════════════════════
+// 挑战副本战斗循环
+// ═══════════════════════════════════════════════════════════
+function _showChallengePreBattle(overlay, enemy, challenge) {
+  const p = gameState.player;
+  const preview = previewBattle(p, enemy);
+
+  overlay.innerHTML = `
+    <div style="position:absolute;top:0;left:0;right:0;bottom:0;background:rgba(5,5,15,0.95);overflow-y:auto;padding:30px;">
+      <div style="max-width:600px;margin:0 auto;">
+        <h2 style="text-align:center;color:#ff4444;letter-spacing:4px;margin-bottom:8px;">
+          ⚔ ${challenge.name} — 第${challengeState.currentWave}波
+        </h2>
+        <p style="text-align:center;color:#888;font-size:12px;margin-bottom:20px;">
+          累积奖励: ${challengeState.totalRewards.exp}EXP / ${challengeState.totalRewards.gold}G
+        </p>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px;">
+          <div style="background:rgba(68,170,255,0.08);border:1px solid rgba(68,170,255,0.2);border-radius:10px;padding:16px;">
+            <h3 style="color:#44aaff;font-size:14px;margin-bottom:8px;">你的状态</h3>
+            <p style="color:#aaa;font-size:13px;line-height:2;">
+              HP: ${p.hp}/${p.maxHp}<br>
+              ATK:${p.atk} DEF:${p.def} SPD:${p.spd || 5}
+            </p>
+          </div>
+          <div style="background:rgba(255,68,68,0.08);border:1px solid rgba(255,68,68,0.2);border-radius:10px;padding:16px;">
+            <h3 style="color:#ff4444;font-size:14px;margin-bottom:8px;">${enemy.sprite || '👹'} ${enemy.name}</h3>
+            <p style="color:#aaa;font-size:13px;line-height:2;">
+              HP:${enemy.hp} ATK:${enemy.atk} DEF:${enemy.def} SPD:${enemy.spd || 5}
+              ${enemy.damageType ? '<br>属性: ' + enemy.damageType : ''}
+              ${enemy.weaknesses?.length ? '<br>弱点: ' + enemy.weaknesses.join(', ') : ''}
+            </p>
+          </div>
+        </div>
+
+        <div style="text-align:center;margin-bottom:20px;">
+          <p style="color:${preview.canWin ? '#44ff88' : '#ff4444'};font-size:14px;">
+            预测: ${preview.canWin ? '✓ 可以胜利 (~' + preview.turnsNeeded + '回合)' : '✗ 可能失败'}
+          </p>
+        </div>
+
+        <div style="display:flex;gap:12px;justify-content:center;">
+          <button id="ch-fight" style="background:#cc2222;color:white;border:none;padding:12px 30px;border-radius:8px;cursor:pointer;font-size:15px;">
+            ⚔ 战斗
+          </button>
+          <button id="ch-retreat" style="background:#444;color:#aaa;border:1px solid #555;padding:12px 30px;border-radius:8px;cursor:pointer;font-size:15px;">
+            🏃 撤退 (保留70%奖励)
+          </button>
+        </div>
+      </div>
+    </div>
+  `;
+
+  document.getElementById('ch-fight').addEventListener('click', () => {
+    _executeChallengeRound(overlay, enemy, challenge);
+  });
+
+  document.getElementById('ch-retreat').addEventListener('click', () => {
+    const rewards = challengeState.endChallenge('retreat');
+    _showChallengeResults(overlay, rewards, 'retreat', challenge);
+  });
+}
+
+function _executeChallengeRound(overlay, enemy, challenge) {
+  const result = executeBattle(enemy);
+  
+  if (result.victory) {
+    challengeState.recordVictory(enemy);
+    
+    // 恢复部分HP（挑战副本给10%回血）
+    const p = gameState.player;
+    const healAmt = Math.floor(p.maxHp * 0.1);
+    p.hp = Math.min(p.maxHp, p.hp + healAmt);
+
+    // 获取下一个敌人
+    const nextEnemy = challengeState.getNextEnemy();
+    if (nextEnemy) {
+      _showChallengePreBattle(overlay, nextEnemy, challenge);
+    } else {
+      const rewards = challengeState.endChallenge('complete');
+      _showChallengeResults(overlay, rewards, 'complete', challenge);
+    }
+  } else {
+    const rewards = challengeState.endChallenge('defeat');
+    _showChallengeResults(overlay, rewards, 'defeat', challenge);
+  }
+}
+
+function _showChallengeResults(overlay, rewards, reason, challenge) {
+  const reasonText = { complete: '🎉 挑战完成！', defeat: '💀 战斗失败', retreat: '🏃 战略撤退' };
+  const reasonColor = { complete: '#44ff88', defeat: '#ff4444', retreat: '#ffaa44' };
+
+  overlay.innerHTML = `
+    <div style="position:absolute;top:0;left:0;right:0;bottom:0;background:rgba(5,5,15,0.95);display:flex;align-items:center;justify-content:center;">
+      <div style="max-width:500px;text-align:center;">
+        <h2 style="color:${reasonColor[reason] || '#fff'};letter-spacing:4px;margin-bottom:16px;">
+          ${reasonText[reason] || '挑战结束'}
+        </h2>
+        <p style="color:#888;font-size:14px;margin-bottom:24px;">
+          ${challenge.name} — 到达第${challengeState.currentWave}波
+        </p>
+
+        <div style="background:rgba(255,255,255,0.03);border:1px solid #333;border-radius:10px;padding:20px;margin-bottom:24px;">
+          <h3 style="color:#ffcc44;margin-bottom:12px;">📦 获得奖励</h3>
+          <p style="color:#aaa;font-size:15px;line-height:2;">
+            经验值: <strong style="color:#aa88ff;">+${rewards.exp}</strong><br>
+            金币: <strong style="color:#ffcc44;">+${rewards.gold}G</strong><br>
+            ${rewards.rewardPoints > 0 ? '奖励点: <strong style="color:#ff8844;">+' + rewards.rewardPoints + 'RP</strong>' : ''}
+          </p>
+          ${reason === 'defeat' || reason === 'retreat' ? '<p style="color:#ff8844;font-size:12px;margin-top:8px;">（因未完成扣除30%奖励）</p>' : ''}
+        </div>
+
+        <button id="ch-close" style="background:#333;color:#e0e0e0;border:1px solid #555;padding:12px 40px;border-radius:8px;cursor:pointer;font-size:15px;">
+          返回主神空间
+        </button>
+      </div>
+    </div>
+  `;
+
+  document.getElementById('ch-close').addEventListener('click', () => {
+    // 发放奖励
+    eventBus.emit('challenge:end', { rewards, reason, type: challenge.type, wave: challengeState.currentWave });
+    // 返回主神空间
+    // renderLordGodSpace is imported at module scope
+    if (typeof renderLordGodSpace === 'function') {
+      renderLordGodSpace(window._onLordGodClose);
+    } else {
+      overlay.innerHTML = '';
+    }
+  });
+}
+
+
+
+
 window.addEventListener('load', async () => {
   const canvas = document.getElementById('game-canvas');
   renderer = new Renderer(canvas);
@@ -249,6 +386,7 @@ function showMainMenu() {
       try { const br = localStorage.getItem('ih_bestiary'); if (br) bestiary.fromJSON(JSON.parse(br)); } catch {}
       try { const ng = localStorage.getItem('ih_ngplus'); if (ng) ngPlusState.fromJSON(JSON.parse(ng)); } catch {}
       try { const st = localStorage.getItem('ih_stance'); if (st) restoreStance(st); } catch {}
+      try { const cs = localStorage.getItem('ih_challenge'); if (cs) challengeState.fromJSON(JSON.parse(cs)); } catch {}
       const chapterGens = { 1: generateChapter1, 2: generateChapter2, 3: generateChapter3, 4: generateChapter4, 5: generateChapter5, 6: generateChapter6, 7: generateChapter7, 8: generateChapter8, 9: generateChapter9, 10: generateChapter10, 11: generateChapter11, 12: generateChapter12 };
       const gen = chapterGens[gameState.chapter] || generateChapter1;
 
@@ -444,7 +582,45 @@ function startGame() {
   // 关系变化通知
   if (!window._relationshipListenerRegistered) {
     window._relationshipListenerRegistered = true;
-    eventBus.on('relationship:change', (data) => {
+    
+  // ── 挑战副本入口 ──
+  eventBus.on('challenge:request', (data) => {
+    const { challenge } = data;
+    const overlay = document.getElementById('ui-overlay');
+    if (!overlay) return;
+
+    const enemy = challengeState.startChallenge(
+      challenge.type, gameState.chapter
+    );
+    if (!enemy) return;
+
+    // 显示挑战战前面板
+    _showChallengePreBattle(overlay, enemy, challenge);
+  });
+
+  eventBus.on('challenge:end', (data) => {
+    // 结算奖励
+    const p = gameState.player;
+    p.exp += data.rewards.exp;
+    p.rewardPoints = (p.rewardPoints || 0) + data.rewards.rewardPoints;
+    gameState.player.gold = (gameState.player.gold || 0) + data.rewards.gold;
+    gameState.stats.goldEarned = (gameState.stats.goldEarned || 0) + data.rewards.gold;
+
+    // 检查升级
+    while (p.exp >= p.expToNext) {
+      p.exp -= p.expToNext;
+      p.level++;
+      p.expToNext = 20 + (p.level - 1) * 15;
+      p.maxHp += 12;
+      p.hp = p.maxHp;
+      p.atk += 2;
+      p.def += 1;
+    }
+
+    try { localStorage.setItem('ih_challenge', JSON.stringify(challengeState.toJSON())); } catch {}
+  });
+
+  eventBus.on('relationship:change', (data) => {
       if (data.levelChanged) {
         const color = getRelationshipLevel(data.newValue).color;
         const profile = COMPANION_PROFILES[data.companionId];
@@ -756,6 +932,7 @@ document.addEventListener('keydown', (e) => {
     try { if (window._miniMap) localStorage.setItem('ih_minimap', JSON.stringify(window._miniMap.toJSON())); } catch {}
     try { localStorage.setItem('ih_ngplus', JSON.stringify(ngPlusState.toJSON())); } catch {}
     try { localStorage.setItem('ih_stance', getStanceId()); } catch {}
+    try { localStorage.setItem('ih_challenge', JSON.stringify(challengeState.toJSON())); } catch {}
     renderer.notify('💾 手动存档完成', '#44ff88', 90);
     return;
   }

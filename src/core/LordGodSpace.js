@@ -13,6 +13,7 @@ import { enhanceEquipment, socketGem, unsocketGem, getEnhanceCost,
          getEquipmentDisplayName, GEM_TYPES, getEquipmentTotalStats } from './EquipmentSystem.js';
 import { allocateTalentPoint, resetTalents, getTalentEffects, 
          getTalentPathInfo, TALENT_PATHS } from './TalentTree.js';
+import { getAvailableChallenges, challengeState } from './ChallengeDungeon.js';
 
 /** 主神空间商店/强化项目 */
 export const SHOP_ITEMS = {
@@ -209,6 +210,8 @@ export function renderLordGodSpace(onClose) {
       { key: 'forge', name: '🔨 锻造', color: '#ff6644' },
       { key: 'talents', name: '🌟 天赋', color: '#ffdd44' },
       { key: 'geneLock', name: '🧬 基因锁', color: '#ff6600' },
+      { key: 'consumables', name: '🧪 消耗品', color: '#44cc88' },
+      { key: 'challenge', name: '⚔ 挑战副本', color: '#ff4444' },
     ];
 
     overlay.innerHTML = `
@@ -546,6 +549,56 @@ export function renderLordGodSpace(onClose) {
           }
         });
       }
+      return;
+    }
+
+
+    // ── 挑战副本页面 ──
+    if (cat === 'challenge') {
+      const challenges = getAvailableChallenges(gameState.chapter, gameState.defeatedBosses);
+      container.innerHTML = `
+        <div style="text-align:center;margin-bottom:16px;">
+          <h3 style="color:#ff4444;letter-spacing:4px;">⚔ 挑战副本</h3>
+          <p style="color:#888;font-size:12px;">消耗奖励点进入特殊战斗试炼，获取稀有奖励</p>
+        </div>
+      ` + challenges.map((ch, i) => `
+        <div class="challenge-card" data-idx="${i}" style="
+          background: rgba(255,60,60,0.05); border: 1px solid rgba(255,60,60,0.2);
+          border-radius: 10px; padding: 16px; cursor: pointer; transition: all 0.2s;
+        ">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+            <strong style="color:#e0e0e0;font-size:15px;">${ch.name}</strong>
+            <span style="color:${ch.cost > 0 ? (p.rewardPoints >= ch.cost ? '#ffcc44' : '#ff4444') : '#44ff88'};font-size:13px;">
+              ${ch.cost > 0 ? '⬡ ' + ch.cost : '免费'}
+            </span>
+          </div>
+          <p style="color:#aaa;font-size:12px;margin-bottom:4px;">${ch.desc}</p>
+          <p style="color:#666;font-size:11px;">${ch.subDesc}</p>
+        </div>
+      `).join('');
+
+      container.querySelectorAll('.challenge-card').forEach(el => {
+        el.addEventListener('click', () => {
+          const ch = challenges[parseInt(el.dataset.idx)];
+          if (!ch || (ch.cost > 0 && p.rewardPoints < ch.cost)) {
+            el.style.borderColor = '#ff4444';
+            setTimeout(() => { el.style.borderColor = 'rgba(255,60,60,0.2)'; }, 500);
+            return;
+          }
+          // 扣除费用
+          if (ch.cost > 0) p.rewardPoints -= ch.cost;
+          // 触发挑战开始事件
+          eventBus.emit('challenge:request', { challenge: ch });
+        });
+        el.addEventListener('mouseover', () => {
+          el.style.borderColor = 'rgba(255,100,100,0.5)';
+          el.style.background = 'rgba(255,60,60,0.1)';
+        });
+        el.addEventListener('mouseout', () => {
+          el.style.borderColor = 'rgba(255,60,60,0.2)';
+          el.style.background = 'rgba(255,60,60,0.05)';
+        });
+      });
       return;
     }
 
