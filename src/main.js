@@ -53,6 +53,7 @@ import { tutorialManager } from './core/TutorialSystem.js';
 import { triggerTrap as fireTrap, openChest, TRAP_TYPES, CHEST_TYPES } from './core/TrapSystem.js';
 import { addConsumable, useConsumable, getInventoryList, consumePendingBuffs, giveStarterConsumables, CONSUMABLE_DEFS } from './core/ConsumableSystem.js';
 import { generateSecretEntities, tryBreakSecret, restoreBrokenSecrets, SECRET_TYPES } from './core/SecretRoomSystem.js';
+import { randomEncounterManager } from './core/RandomEncounterSystem.js';
 import { getCurrentStance, setStance, getAvailableStances, getStanceId, restoreStance } from './core/CombatStance.js';
 import { challengeState, CHALLENGE_TYPES } from './core/ChallengeDungeon.js';
 import { getQualityColor, getQualityName, formatEquipmentTooltip, getAllAffixEffects } from './core/EquipmentAffixes.js';
@@ -1394,6 +1395,12 @@ function movePlayer(dx, dy) {
   gameState.stats.stepsWalked = (gameState.stats.stepsWalked || 0) + 1;
   if (gameState.stats.stepsWalked === 1) tutorialManager.trigger("first_move");
 
+  // 随机遭遇检测
+  const encounter = randomEncounterManager.onStep(gameState.chapter);
+  if (encounter) {
+    _showRandomEncounter(encounter);
+  }
+
   // 潜行系统 — 移动噪音 + 噪音衰减
   onPlayerMove();
   decayNoise();
@@ -1410,6 +1417,76 @@ function movePlayer(dx, dy) {
   // 自动恢复少量体力
   if (p.stamina < p.maxStamina) {
     p.stamina = Math.min(p.maxStamina, p.stamina + 1);
+  }
+}
+
+// ── 随机遭遇UI ──
+function _showRandomEncounter(encounter) {
+  const overlay = document.getElementById('ui-overlay');
+  gameState.setState(GAME_STATE.DIALOGUE);
+
+  if (encounter.type === 'choice') {
+    // 选择型遭遇
+    const choicesHtml = encounter.choices
+      .filter(c => !c.condition || c.condition(gameState.player))
+      .map((c, i) => `<button class="enc-choice" data-idx="${i}" style="
+        background: rgba(255,255,255,0.05); border: 1px solid #555; color: #ccc;
+        padding: 10px 20px; cursor: pointer; font-size: 13px; font-family: inherit;
+        border-radius: 8px; transition: all 0.2s; min-width: 120px;
+      " onmouseover="this.style.borderColor='#ffcc44';this.style.color='#ffcc44'"
+         onmouseout="this.style.borderColor='#555';this.style.color='#ccc'">
+        ${c.label}<br><span style="font-size:10px;color:#888;">${c.desc}</span>
+      </button>`).join('');
+
+    overlay.innerHTML = `
+      <div style="position:absolute;top:0;left:0;right:0;bottom:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.7);animation:fadeIn 0.2s;" id="enc-backdrop">
+        <div style="background:rgba(10,10,20,0.97);border:1px solid #ffcc4440;border-radius:14px;padding:24px;max-width:440px;width:90%;text-align:center;">
+          <p style="font-size:24px;margin-bottom:8px;">${encounter.icon}</p>
+          <h3 style="color:#ffcc44;letter-spacing:3px;margin-bottom:12px;">${encounter.name}</h3>
+          <p style="color:#aaa;font-size:13px;line-height:1.6;margin-bottom:16px;">${encounter.text}</p>
+          <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;">
+            ${choicesHtml}
+          </div>
+        </div>
+      </div>
+    `;
+
+    document.querySelectorAll('.enc-choice').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const idx = parseInt(btn.dataset.idx);
+        const validChoices = encounter.choices.filter(c => !c.condition || c.condition(gameState.player));
+        const choice = validChoices[idx];
+        if (choice) {
+          const result = choice.execute(gameState.player, gameState.chapter);
+          overlay.innerHTML = `
+            <div style="position:absolute;top:0;left:0;right:0;bottom:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.7);" id="enc-result">
+              <div style="background:rgba(10,10,20,0.97);border:1px solid ${result.color}40;border-radius:14px;padding:24px;max-width:400px;width:90%;text-align:center;">
+                <p style="color:${result.color};font-size:15px;line-height:1.6;">${result.text}</p>
+                <button id="enc-ok" style="margin-top:16px;background:transparent;border:1px solid #444;color:#888;padding:8px 24px;cursor:pointer;font-size:13px;font-family:inherit;border-radius:6px;">继续探索</button>
+              </div>
+            </div>
+          `;
+          document.getElementById('enc-ok').addEventListener('click', () => {
+            overlay.innerHTML = '';
+            gameState.setState(GAME_STATE.EXPLORING);
+          });
+          document.getElementById('enc-result').addEventListener('click', (e) => {
+            if (e.target.id === 'enc-result') { overlay.innerHTML = ''; gameState.setState(GAME_STATE.EXPLORING); }
+          });
+        }
+      });
+    });
+  } else if (encounter.type === 'narrative') {
+    // 叙事型 — 随机选一条文本
+    const narr = encounter.narratives[Math.floor(Math.random() * encounter.narratives.length)];
+    renderer.notify(encounter.icon + ' ' + narr, '#aaaacc', 150);
+    gameState.setState(GAME_STATE.EXPLORING);
+  } else {
+    // 奖励/危险型 — 直接执行并显示结果
+    const result = encounter.execute(gameState.player, gameState.chapter);
+    renderer.addFloatText(encounter.icon + ' ' + result.text, gameState.player.x, gameState.player.y - 1, result.color);
+    renderer.notify(encounter.icon + ' ' + encounter.name + ': ' + result.text, result.color, 100);
+    gameState.setState(GAME_STATE.EXPLORING);
   }
 }
 
