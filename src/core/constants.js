@@ -56,6 +56,7 @@ export const DAMAGE_TYPE = {
   PSYCHIC:  'psychic',
   DARK:     'dark',
   HOLY:     'holy',
+  SPIRIT:   'spirit',
 };
 
 // 血统类型（参考原著）

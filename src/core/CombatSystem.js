@@ -13,6 +13,11 @@ export function calcDamage(attacker, defender, damageType = DAMAGE_TYPE.PHYSICAL
   const isWeak = defender.weaknesses?.includes(damageType) || false;
   if (isWeak) baseDmg = Math.floor(baseDmg * 1.5);
 
+  // 灵体物理减伤 — 对灵体用物理武器伤害减半（灵类武器不受影响）
+  if (defender.physicalResist && damageType === DAMAGE_TYPE.PHYSICAL) {
+    baseDmg = Math.max(minDmg, Math.floor(baseDmg * (1 - defender.physicalResist)));
+  }
+
   const critRoll = Math.random() * 100;
   const isCrit = critRoll < (attacker.crt || 0);
   if (isCrit) baseDmg = Math.floor(baseDmg * 1.8);
@@ -73,7 +78,12 @@ export function previewBattle(player, enemy) {
     ? Math.floor(enemy.atk * (1 - chipFx.slowPct / 100))
     : enemy.atk;
 
-  const playerDmg = Math.max(1, pAtk - enemy.def);
+  let playerDmg = Math.max(1, pAtk - enemy.def);
+  // 灵体物理减伤预判
+  const weaponDmgType = player.weapon?.damageType || 'physical';
+  if (enemy.physicalResist && weaponDmgType === 'physical') {
+    playerDmg = Math.max(1, Math.floor(playerDmg * (1 - enemy.physicalResist)));
+  }
   const enemyDmg = Math.max(0, enemyEffAtk - pDef);
   const isDouble = canDoubleAttack(pSpd, enemy.spd || 5);
 
