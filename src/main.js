@@ -497,6 +497,30 @@ function loadFloor(index, isAdvancing) {
   gameState.nodeIndex = index;
   const floor = chapter.floors[index];
   try { if (floor.theme) atmosphereRenderer.setFloorTheme(floor.theme); } catch {}
+
+  // ── 环境叙事文本（进入新楼层时触发） ──
+  try {
+    const ch = gameState.chapter || 1;
+    const ambientTexts = {
+      1: ['空气中弥漫着刺鼻的化学气味...', '墙壁上的灯管不断闪烁', '远处传来低沉的咆哮声', '地面上有拖拽痕迹', 'T病毒的气息无处不在'],
+      2: ['飞船的金属走廊发出轻微的振动', '黏液从天花板上缓缓滴落', '通风管道中传来窸窣的爬行声', '异形的酸血腐蚀出的印记随处可见'],
+      3: ['走廊尽头隐约传来孩童的哭声', '墙上的日历停在了那个不祥的日子', '空气突然变得冰冷刺骨', '黑暗中似乎有什么在注视着你'],
+      4: ['古老的符文在墙壁上微微发光', '沙尘从裂缝中不断涌入', '棺椁上的封印已经破损', '法老的诅咒如影随形'],
+      5: ['黑色的死神之翼掠过天际', '命运之书上的文字在变化', '无数灵魂在虚空中哀嚎', '时间在这里仿佛静止了'],
+      6: ['异形的巢穴比之前更加庞大', '进化后的异形留下了更深的爪痕', '墙壁在蠕动，像是活着的组织'],
+      7: ['地狱之门的裂隙在扩大', '恶魔的低语在脑海中回响', '魔法的余波扭曲着现实'],
+      8: ['中洲的废墟上开始生长新芽', '风中带着希望的气息', '但和平的表象下暗流涌动'],
+      9: ['星际飞船的引擎发出低沉的轰鸣', '舷窗外是无尽的星海', '未知的信号从深空传来'],
+      10: ['五支轮回小队的气息交织在一起', '空气中充满了杀意和警惕', '同盟和背叛只在一念之间'],
+      11: ['心魔的低语越来越清晰', '你的恐惧在这里具象化了', '突破的时刻即将到来'],
+      12: ['最终的战场在眼前展开', '所有的轮回在此刻汇聚', '主神的真相即将揭开'],
+    };
+    const texts = ambientTexts[ch] || ambientTexts[1];
+    const text = texts[Math.floor(Math.random() * texts.length)];
+    setTimeout(() => {
+      try { renderer.notify(text, 'rgb(120, 120, 100)', 200); } catch {}
+    }, 500);
+  } catch {}
   gameState.player.x = floor.playerStart.x;
   gameState.player.y = floor.playerStart.y;
 
