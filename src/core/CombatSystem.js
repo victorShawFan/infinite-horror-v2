@@ -1077,7 +1077,18 @@ if (chipFx.hasIceChip && enemy.atk !== enemyEffAtk) {
     }
   }
 
-  return { victory: enemyHp <= 0, log, rounds: round };
+  // Compute stats from log
+  let _totalDmgDealt = 0, _totalDmgTaken = 0, _critHits = 0;
+  for (const entry of log) {
+    if (entry.type === 'player_attack' || entry.type === 'critical' || entry.type === 'skill_damage') {
+      _totalDmgDealt += (entry.damage || 0);
+      if (entry.type === 'critical' || (entry.text && entry.text.includes('\u66b4\u51fb'))) _critHits++;
+    }
+    if (entry.type === 'enemy_attack' || entry.type === 'damage_taken') {
+      _totalDmgTaken += (entry.damage || 0);
+    }
+  }
+  return { victory: enemyHp <= 0, log, rounds: round, totalDamageDealt: _totalDmgDealt, totalDamageTaken: _totalDmgTaken, critCount: _critHits };
 }
 
 // ── 有效属性计算 ──
