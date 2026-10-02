@@ -577,6 +577,25 @@ export class Renderer {
       ctx.fillStyle = streak.color;
       ctx.fillText(streak.icon + ' ' + streak.name + ' x' + streak.kills, rx, pad + 128);
     }
+    
+    // ── 状态效果指示器 ──
+    try {
+      const activeEffects = getActiveEffects();
+      if (activeEffects.length > 0) {
+        const efxY = pad + 148;
+        ctx.font = '10px "Microsoft YaHei"';
+        let efxX = rx;
+        for (const eff of activeEffects.slice(0, 4)) {
+          const icon = eff.type?.icon || '?';
+          const color = eff.type?.color || '#888';
+          ctx.fillStyle = color;
+          ctx.fillText(icon + (eff.value > 0 ? '+' : '') + eff.value, efxX, efxY);
+          ctx.fillStyle = '#555';
+          ctx.fillText(eff.remaining + '场', efxX + 30, efxY);
+          efxX += 55;
+        }
+      }
+    } catch {}
 
     // 姿态指示器
     const stance = getCurrentStance();
