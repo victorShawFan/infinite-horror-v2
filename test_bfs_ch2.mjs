@@ -28,13 +28,13 @@ for (let i = 0; i < ch2.floors.length; i++) {
   const f = ch2.floors[i];
   const ps = f.playerStart;
   
-  if (f.grid[ps.y][ps.x] !== TILE.FLOOR) {
+  if (f.tiles[ps.y][ps.x] !== TILE.FLOOR) {
     console.error(`Floor ${f.id}: ✗ playerStart(${ps.x},${ps.y}) 不是地板!`);
     allPass = false;
     continue;
   }
   
-  const visited = bfs(f.grid, ps);
+  const visited = bfs(f.tiles, ps);
   const ents = f.entities.filter(e => e.x !== undefined && e.y !== undefined);
   let unreachable = [];
   

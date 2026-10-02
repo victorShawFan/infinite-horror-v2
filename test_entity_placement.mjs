@@ -46,3 +46,51 @@ for (const f of ch1.floors) {
 
 if (issues === 0) console.log('\n═══ ✅ 实体位置验证全部通过 ═══');
 else { console.error(`\n═══ ❌ ${issues}个问题 ═══`); process.exit(1); }
+
+// ── 第二章实体位置验证 ──
+import { generateChapter2 } from './src/core/MapGenerator_Ch2.js';
+
+console.log('\n═══ 第二章实体位置验证 ═══\n');
+const ch2 = generateChapter2();
+
+for (const f of ch2.floors) {
+  const { playerStart: ps, tiles, width: w, height: h, entities } = f;
+  if (!tiles || !w || !h) {
+    console.error(`Floor ${f.id}: ✗ 缺少 tiles/width/height — Renderer契约不兼容!`);
+    issues++;
+    continue;
+  }
+  const visited = bfs(tiles, ps.x, ps.y, w, h);
+  let floorOk = true;
+  for (const e of entities.filter(e => e.x !== undefined)) {
+    if (!visited[e.y]?.[e.x]) {
+      console.error(`  ${f.id}: ${e.id}(${e.x},${e.y}) 不可达`);
+      issues++;
+      floorOk = false;
+    }
+  }
+  if (floorOk) console.log(`Floor ${f.id}: ✓ 所有实体位置正确 [${f.name}]`);
+}
+
+// ── Renderer 契约测试 ──
+console.log('\n═══ Renderer 数据契约验证 ═══\n');
+let contractOk = true;
+for (const [label, chapter] of [['Ch1', ch1], ['Ch2', ch2]]) {
+  for (const f of chapter.floors) {
+    const missing = [];
+    if (!f.tiles) missing.push('tiles');
+    if (typeof f.width !== 'number') missing.push('width');
+    if (typeof f.height !== 'number') missing.push('height');
+    if (!f.playerStart) missing.push('playerStart');
+    if (missing.length) {
+      console.error(`${label} Floor ${f.id}: ✗ 缺少 ${missing.join(', ')}`);
+      contractOk = false;
+      issues++;
+    } else {
+      console.log(`${label} Floor ${f.id}: ✓ tiles/width/height/playerStart`);
+    }
+  }
+}
+
+if (issues === 0) console.log('\n═══ ✅ 全部实体位置 + Renderer契约验证通过 ═══');
+else { console.error(`\n═══ ❌ ${issues}个问题 ═══`); process.exit(1); }
