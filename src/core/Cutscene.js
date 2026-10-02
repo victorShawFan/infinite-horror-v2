@@ -528,3 +528,22 @@ export function showChapter7Cutscene(onFinish) {
   }
   show();
 }
+
+export function showChapter8Cutscene(onFinish) {
+  const overlay = document.getElementById('ui-overlay');
+  const scenes = [
+    { bg: 'rgba(5,10,0,0.95)', text: '郑吒独自回到了哈姆纳塔的废墟。复活真经在手中微微发光。' },
+    { bg: 'rgba(5,10,0,0.95)', text: '第一个要复活的人——楚轩。没有他的智慧，队伍无法运转。' },
+    { bg: 'rgba(10,15,5,0.95)', text: '楚轩的计划永远走在所有人前面。这一次，目标是——侏罗纪世界。' },
+    { bg: 'rgba(10,15,5,0.95)', text: '在那里，他们将复活霸王和王侠，重建中洲队的战力。' },
+    { bg: 'rgba(5,10,0,0.95)', text: '第八关「重建中洲」' },
+  ];
+  let idx = 0;
+  function show() {
+    if (idx >= scenes.length) { overlay.innerHTML = ''; onFinish(); return; }
+    const s = scenes[idx];
+    overlay.innerHTML = `<div style="position:absolute;top:0;left:0;right:0;bottom:0;display:flex;align-items:center;justify-content:center;background:${s.bg};cursor:pointer;animation:fadeIn 0.8s ease"><p style="color:#e0e0e0;font-size:22px;max-width:600px;text-align:center;line-height:1.8;letter-spacing:2px">${s.text}</p></div><style>@keyframes fadeIn{from{opacity:0}to{opacity:1}}</style>`;
+    overlay.querySelector('div').addEventListener('click', () => { idx++; show(); });
+  }
+  show();
+}
