@@ -96,6 +96,7 @@ import { getStash, addToStash, removeFromStash, isStashFull, openEquipmentStash,
 import { getCompanionCombatBonuses, getCompanionBattleCry, formatCompanionCombatHTML } from './core/CompanionCombat.js';
 import { drawQuestHUD, formatQuestPanelHTML } from './core/QuestTracker.js';
 import { initTitleFX, spawnDamageNumber, screenShake, screenFlash } from './core/TitleScreenFX.js';
+import { getBattleEnvironment, formatEnvironmentHTML, processEnvironmentEffect } from './core/BattleEnvironment.js';
 
 // ── 全局状态 ──
 let renderer;
@@ -2346,6 +2347,7 @@ function showCombatConfirm(enemy) {
         
         ${traitsHtml}
         ${descText}
+        ${formatEnvironmentHTML(gameState.chapter)}
         
         <!-- Build特效提示 + 精英词缀警告 -->
         ${(() => {
