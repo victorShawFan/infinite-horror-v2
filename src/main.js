@@ -64,6 +64,7 @@ import { fogOfWar } from './core/FogOfWar.js';
 import { openMerchantShop } from './core/FieldMerchant.js';
 import { getStash, addToStash, removeFromStash, isStashFull, openEquipmentStash, serializeStash, deserializeStash } from './core/EquipmentStash.js';
 import { getCompanionCombatBonuses, getCompanionBattleCry, formatCompanionCombatHTML } from './core/CompanionCombat.js';
+import { drawQuestHUD, formatQuestPanelHTML } from './core/QuestTracker.js';
 
 // ── 全局状态 ──
 let renderer;
@@ -1175,6 +1176,11 @@ function gameLoop() {
   // 迷你地图
   if (window._miniMap && window._miniMap.visible) {
     try { window._miniMap.draw(floor, gameState.player, entities); } catch {}
+  }
+
+  // 任务追踪HUD
+  if (gameState.state === GAME_STATE.EXPLORING && !dialogueState && !combatResult) {
+    try { drawQuestHUD(renderer.ctx, renderer.canvas.width, renderer.canvas.height); } catch {}
   }
 
   requestAnimationFrame(gameLoop);
