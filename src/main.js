@@ -120,6 +120,7 @@ import { getChapterLore, renderChapterIntroCard } from './core/ChapterWorldLore.
 import { scanFloor, renderFloorOverview } from './core/FloorScanner.js';
 import { generateRewardChoices, applyReward, renderRewardChoicePanel } from './core/RewardChoiceSystem.js';
 import { generateRelicChoices, addRelic, renderRelicChoicePanel, renderRelicAcquirePanel, getOwnedRelics, getRelicDef, renderRelicInventoryPanel, getRelicCombatEffects } from './core/RelicSystem.js';
+import { getPendingPerkLevels, selectPerk, renderPerkChoicePanel, PERK_TIERS, getPerkCombatEffects, hasPerkForLevel, renderPerkSummary } from './core/PerkSystem.js';
 import { tryFlashback, renderFlashback, serializeFlashbacks, deserializeFlashbacks } from './core/FlashbackSystem.js';
 import { showLevelUpCelebration, getLevelUnlocks } from './core/LevelUpCelebration.js';
 import { assessThreat, drawThreatIndicator, getEnemyTooltipHTML } from './core/EnemyPowerIndicator.js';
@@ -1017,6 +1018,36 @@ function startGame() {
       autoSave('升级到Lv.' + gameState.player.level);
       tutorialManager.trigger('first_level_up');
       try { checkGrowthMilestones(milestoneTracker, gameState.player); } catch {}
+      
+      // ── 天赋觉醒检查（每5级） ──
+      try {
+        const pendingPerks = getPendingPerkLevels();
+        if (pendingPerks.length > 0) {
+          const perkLevel = pendingPerks[0];
+          setTimeout(() => {
+            const perkOverlay = document.createElement('div');
+            perkOverlay.id = 'perk-choice-overlay';
+            perkOverlay.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;z-index:270;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.85);animation:fadeIn 0.5s';
+            perkOverlay.innerHTML = renderPerkChoicePanel(perkLevel);
+            document.body.appendChild(perkOverlay);
+            
+            perkOverlay.querySelectorAll('.perk-choice').forEach(card => {
+              card.addEventListener('click', () => {
+                const perkId = card.dataset.perkId;
+                const res = selectPerk(perkLevel, perkId);
+                if (res.success) {
+                  renderer.addFloatText(res.perk.icon + ' ' + res.perk.name, gameState.player.x, gameState.player.y - 2, res.perk.color);
+                  renderer.notify('天赋觉醒: ' + res.perk.name + ' — ' + res.perk.desc, res.perk.color, 200);
+                  renderer.shake(6, 400);
+                  renderer.flash(res.perk.color + '44', 300);
+                  try { audioEngine.play('levelup'); } catch {}
+                }
+                perkOverlay.remove();
+              });
+            });
+          }, 1200); // 等升级动画播完再显示
+        }
+      } catch (e) { console.warn('PerkChoice:', e); }
       const p = gameState.player;
       renderer.addFloatText('LEVEL UP!', p.x, p.y - 1.5, 'rgb(255, 215, 0)');
       renderer.addFloatText('Lv.' + p.level, p.x, p.y - 2, 'rgb(255, 255, 150)');

@@ -37,6 +37,7 @@ import { initComboState, recordCrit, recordElementalHit, recordWeaknessHit, reco
 import { getKarmaCombatModifiers, getKarmaLevel } from './KarmaSystem.js';
 import { shouldPauseForAction, showBattleActionMenu, applyDefendAction, attemptFlee, ACTION_TYPE } from './BattleActionMenu.js';
 import { getRelicCombatEffects, hasRelic } from './RelicSystem.js';
+import { getPerkCombatEffects } from './PerkSystem.js';
 
 // ── 伤害计算 ──
 export function calcDamage(attacker, defender, damageType = DAMAGE_TYPE.PHYSICAL, minDmg = 1) {
@@ -401,6 +402,20 @@ export async function executeBattle(enemy) {
     log.push({ text: '📜 恶魔契约：消耗 ' + relicDmg + ' HP 换取力量', type: 'danger' });
   }
   let relicDeathSaveUsed = false;
+  // ── 天赋觉醒战斗效果 ──
+  let perkFx = {};
+  try { perkFx = getPerkCombatEffects(); } catch {}
+  let perkKillAtkStacks = 0; // 嗜血本能叠加
+  let perkConsecutiveHits = 0; // 势不可挡连击计数
+  let perkDeathResistUsed = false;
+  let perkDebuffImmuneUsed = false;
+  let perkAdaptiveResists = {}; // 自适应护甲记录
+  // 恐惧领域：降低敌人ATK
+  if (perkFx.fearAuraBase > 0) {
+    const fearReduce = Math.floor(enemy.atk * perkFx.fearAuraBase);
+    effectiveEnemyAtk = Math.max(1, (effectiveEnemyAtk || enemyEffAtk) - fearReduce);
+    log.push({ text: '👁 恐惧领域：敌人ATK-' + fearReduce, type: 'debuff' });
+  }
   let relicAutoEvadeCounter = 0;
   let _relicKillStreakAtkBonus = 0;
   const isDouble = canDoubleAttack(pSpd + (enchantFx.bonusSpd || 0), enemy.spd || 5);
@@ -595,6 +610,27 @@ if (chipFx.hasIceChip && enemy.atk !== enemyEffAtk) {
     }
     // 遗物自动闪避计数
     relicAutoEvadeCounter++;
+    // ── 天赋每回合效果 ──
+    // 超级再生
+    if (perkFx.regenPct > 0 && playerHp > 0 && playerHp < p.maxHp) {
+      const regenHp = Math.max(1, Math.floor(p.maxHp * perkFx.regenPct));
+      playerHp = Math.min(p.maxHp, playerHp + regenHp);
+      if (round <= 3) log.push({ text: '💚 再生：+' + regenHp + ' HP', type: 'heal' });
+    }
+    // 时间膨胀(额外行动) — 标记
+    let perkExtraTurn = false;
+    if (perkFx.extraTurnInterval > 0 && round > 0 && round % perkFx.extraTurnInterval === 0) {
+      perkExtraTurn = true;
+    }
+    // 过载效果
+    let perkOverchargeAtk = 0;
+    let perkOverchargeDef = 0;
+    if (perkFx.fullHpAtkBonus > 0 && playerHp >= p.maxHp) {
+      perkOverchargeAtk = Math.floor(stanceMod.atk * perkFx.fullHpAtkBonus);
+    }
+    if (perkFx.lowHpDefBonus > 0 && playerHp < p.maxHp * 0.5) {
+      perkOverchargeDef = Math.floor(stanceMod.def * perkFx.lowHpDefBonus);
+    }
     // 同伴技能冷却
     try { tickAbilityCooldowns(); } catch {}
     // 每回合重置环境修正
