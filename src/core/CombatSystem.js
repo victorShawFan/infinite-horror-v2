@@ -32,6 +32,7 @@ import { COMPANION_PROFILES } from './RelationshipSystem.js';
 import { processEnvironmentEffect } from './BattleEnvironment.js';
 import { getBossIntro, getBossPhaseDialogue, getBossLowHpLine, getBossDefeatLines, getBossKillPlayerLine, getBossPlayerLowHpLine } from './BossDialogue.js';
 import { getEnchantCombatBonus } from './EnchantSystem.js';
+import { getKarmaCombatModifiers, getKarmaLevel } from './KarmaSystem.js';
 
 // ── 伤害计算 ──
 export function calcDamage(attacker, defender, damageType = DAMAGE_TYPE.PHYSICAL, minDmg = 1) {
@@ -303,6 +304,23 @@ export function executeBattle(enemy) {
   if (stance.id !== 'balanced') {
     log.push({ text: `${stance.icon} 姿态: ${stance.name}`, type: 'buff' });
   }
+
+  // ── 业力系统战斗修正 ──
+  let karmaHealBonus = 0;
+  let karmaCompanionBonus = 0;
+  let karmaHolyDmg = 0;
+  let karmaDarkDmg = 0;
+  try {
+    const karmaLevel = getKarmaLevel();
+    const karmaMods = getKarmaCombatModifiers();
+    karmaHealBonus = karmaMods.healBonus || 0;
+    karmaCompanionBonus = karmaMods.companionBonus || 0;
+    karmaHolyDmg = karmaMods.holyDmgBonus || 0;
+    karmaDarkDmg = karmaMods.darkDmgBonus || 0;
+    if (karmaLevel.id !== 'neutral') {
+      log.push({ text: `${karmaLevel.icon} 业力: ${karmaLevel.name} — 影响战斗属性`, type: 'karma_effect' });
+    }
+  } catch {}
 
   if (!preview.canWin) {
     return { victory: false, log: [{ text: `${enemy.name}的防御太高了，无法造成有效伤害！`, type: 'danger' }] };
@@ -595,7 +613,8 @@ if (chipFx.hasIceChip && enemy.atk !== enemyEffAtk) {
     // ── 天赋：每回合生命恢复 ──
     // 附魔回血
     if (enchantFx.regenBonus > 0 && playerHp > 0) {
-      const enchRegen = Math.max(1, Math.floor(p.maxHp * enchantFx.regenBonus / 100));
+      let enchRegen = Math.max(1, Math.floor(p.maxHp * enchantFx.regenBonus / 100));
+      if (karmaHealBonus > 0) enchRegen = Math.floor(enchRegen * (1 + karmaHealBonus / 100));
       playerHp = Math.min(p.maxHp, playerHp + enchRegen);
       if (round <= 4) log.push({ text: '✨ 附魔恢复 +' + enchRegen + ' HP', type: 'heal' });
     }
@@ -604,13 +623,15 @@ if (chipFx.hasIceChip && enemy.atk !== enemyEffAtk) {
       playerMana = Math.min(p.maxMana || 0, playerMana + enchantFx.manaRegenBonus);
     }
     if (talentFx.regenPercent && playerHp > 0) {
-      const regenAmt = Math.max(1, Math.floor(p.maxHp * talentFx.regenPercent));
+      let regenAmt = Math.max(1, Math.floor(p.maxHp * talentFx.regenPercent));
+      if (karmaHealBonus > 0) regenAmt = Math.floor(regenAmt * (1 + karmaHealBonus / 100));
       playerHp = Math.min(p.maxHp, playerHp + regenAmt);
       if (round <= 6) log.push({ text: `💚 天赋恢复 +${regenAmt} HP`, type: 'heal' });
     }
     // ── 元素共鸣：净化回血 ──
     if (resonanceHealPct > 0 && playerHp > 0) {
-      const resHeal = Math.max(1, Math.floor(p.maxHp * resonanceHealPct));
+      let resHeal = Math.max(1, Math.floor(p.maxHp * resonanceHealPct));
+      if (karmaHealBonus > 0) resHeal = Math.floor(resHeal * (1 + karmaHealBonus / 100));
       playerHp = Math.min(p.maxHp, playerHp + resHeal);
       if (round <= 6) log.push({ text: `✨ 共鸣净化 +${resHeal} HP`, type: 'heal' });
     }
@@ -707,7 +728,11 @@ if (chipFx.hasIceChip && enemy.atk !== enemyEffAtk) {
 
       // 应用技能效果
       if (skillResult.damage) enemyHp -= skillResult.damage;
-      if (skillResult.heal) playerHp = Math.min(p.maxHp, playerHp + skillResult.heal);
+      if (skillResult.heal) {
+        let skillHeal = skillResult.heal;
+        if (karmaHealBonus > 0) skillHeal = Math.floor(skillHeal * (1 + karmaHealBonus / 100));
+        playerHp = Math.min(p.maxHp, playerHp + skillHeal);
+      }
       if (skillResult.manaCost) playerMana -= skillResult.manaCost;
     }
 
@@ -1391,7 +1416,13 @@ function getRelationshipMultiplier() {
     const alive = gs.companions.filter(c => c.alive);
     if (alive.length === 0) return 0;
     const totalBonus = alive.reduce((sum, c) => sum + getCompanionCombatBonus(c.id, gs.relationships), 0);
-    return totalBonus / alive.length;
+    let relMult = totalBonus / alive.length;
+    // 业力同伴加成
+    try {
+      const km = getKarmaCombatModifiers();
+      if (km.companionBonus) relMult *= (1 + km.companionBonus / 100);
+    } catch {}
+    return relMult;
   } catch { return 0; }
 }
 
@@ -1457,6 +1488,11 @@ export function getEffectiveAtk(player) {
     const statusMods = getEffectModifiers();
     if (statusMods.atk) atk += statusMods.atk;
   } catch {}
+  // 业力系统加成
+  try {
+    const karmaMods = getKarmaCombatModifiers();
+    if (karmaMods.atkBonus) atk += karmaMods.atkBonus;
+  } catch {}
   return atk;
 }
 
@@ -1496,6 +1532,11 @@ export function getEffectiveDef(player) {
     const statusMods = getEffectModifiers();
     if (statusMods.def) def += statusMods.def;
   } catch {}
+  // 业力系统加成
+  try {
+    const karmaMods = getKarmaCombatModifiers();
+    if (karmaMods.defBonus) def += karmaMods.defBonus;
+  } catch {}
   return def;
 }
 
@@ -1522,6 +1563,12 @@ export function getEffectiveCrt(player) {
     const statusMods = getEffectModifiers();
     if (statusMods.crt) crt += statusMods.crt;
   } catch {}
+  // 业力系统加成
+  try {
+    const karmaMods = getKarmaCombatModifiers();
+    if (karmaMods.critBonus) crt += karmaMods.critBonus;
+  } catch {}
+
   return Math.min(crt, 100);
 }
 

@@ -20,6 +20,28 @@ window.addEventListener('unhandledrejection', (e) => {
   console.error('Unhandled promise rejection:', e.reason);
 });
 
+// ── 全局游戏样式注入 ──
+try {
+  const _gameGlobalCSS = document.createElement('style');
+  _gameGlobalCSS.textContent = [
+    '@keyframes fadeIn{from{opacity:0}to{opacity:1}}',
+    '@keyframes fadeOut{from{opacity:1}to{opacity:0}}',
+    '@keyframes slideInRight{from{transform:translateX(100%);opacity:0}to{transform:translateX(0);opacity:1}}',
+    '@keyframes slideInUp{from{transform:translateY(30px);opacity:0}to{transform:translateY(0);opacity:1}}',
+    '@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.6}}',
+    '@keyframes glow{0%,100%{box-shadow:0 0 5px currentColor}50%{box-shadow:0 0 20px currentColor}}',
+    '#ui-overlay button:not([disabled]):hover{filter:brightness(1.15);transition:all 0.15s}',
+    '#ui-overlay button:not([disabled]):active{filter:brightness(0.9);transform:scale(0.97)}',
+    '#ui-overlay ::-webkit-scrollbar{width:4px}',
+    '#ui-overlay ::-webkit-scrollbar-track{background:rgba(255,255,255,0.02)}',
+    '#ui-overlay ::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.1);border-radius:2px}',
+    '#ui-overlay ::-webkit-scrollbar-thumb:hover{background:rgba(255,255,255,0.2)}',
+    '#game-container{font-family:"Microsoft YaHei","PingFang SC","Hiragino Sans GB",sans-serif}',
+    'canvas{image-rendering:pixelated}',
+  ].join('\n');
+  document.head.appendChild(_gameGlobalCSS);
+} catch {}
+
 // ═══════════════════════════════════════════════════════════════
 // 无限恐怖：中洲轮回 — 主入口
 // 2D俯视角 Roguelike + 魔塔式数值战斗 + 叙事选择
@@ -92,6 +114,7 @@ import { killStreak } from './core/KillStreak.js';
 import { rateBattle, recordRating, formatRatingHTML, getRatingStats } from './core/BattleRating.js';
 import { fogOfWar } from './core/FogOfWar.js';
 import { openMerchantShop } from './core/FieldMerchant.js';
+import { getKarmaLevel, getKarmaCombatModifiers, getEndingType, renderKarmaPanel, renderKarmaDisplay } from './core/KarmaSystem.js';
 import { getStash, addToStash, removeFromStash, isStashFull, openEquipmentStash, serializeStash, deserializeStash } from './core/EquipmentStash.js';
 import { getCompanionCombatBonuses, getCompanionBattleCry, formatCompanionCombatHTML } from './core/CompanionCombat.js';
 import { drawQuestHUD, formatQuestPanelHTML } from './core/QuestTracker.js';
@@ -1558,6 +1581,10 @@ case 'h': case '?':
       case 'u':
         // 属性分配
         _showStatAllocPanel();
+        return;
+      case 'k':
+        // 业力面板
+        _showKarmaPanel();
         return;
       case 'escape':
         // 暂停菜单
@@ -4345,6 +4372,8 @@ function showChapterComplete() {
         const isGameComplete = chapterNum >= 12;
         if (isGameComplete) {
           // ── Ch12 通关结算 ──
+          const endingInfo = getEndingType();
+          const karmaFinal = getKarmaLevel();
           overlay.innerHTML = `
             <div style="
               position: absolute; top: 0; left: 0; right: 0; bottom: 0;
@@ -4358,15 +4387,27 @@ function showChapterComplete() {
                 text-shadow: 0 0 30px rgba(255,68,68,0.3);
                 margin-bottom: 8px;
               ">无限恐怖</h1>
+              <p style="color:${karmaFinal.color}; letter-spacing: 4px; margin-bottom: 8px;">${karmaFinal.icon} ${endingInfo.name}</p>
               <p style="color: #888; letter-spacing: 6px; margin-bottom: 40px;">中 洲 轮 回 · 完</p>
               <div style="color: #666; max-width: 500px; text-align: center; line-height: 2; margin-bottom: 40px;">
                 <p>最终幸存者：<span style="color: #e0c080;">郑吒、刘郁、林俊天</span></p>
                 <br>
+                <p style="color:${karmaFinal.color}; font-size: 14px; font-style: italic; margin-bottom: 8px;">
+                  ${endingInfo.desc}
+                </p>
                 <p style="font-size: 13px;">十二个世界。无数次生死。</p>
-                <p style="font-size: 13px;">他们用生命换来了——活着的权利。</p>
+                <p style="font-size: 13px;">
+                  ${endingInfo.type === 'true_ending' ? '善念照亮了轮回的黑暗，他们赢得了真正的自由。'
+                    : endingInfo.type === 'good_ending' ? '他们带着温暖离开了这个世界。'
+                    : endingInfo.type === 'dark_ending' ? '他们活下来了，但代价是……'
+                    : endingInfo.type === 'fallen_ending' ? '当凝视深渊太久，深渊也回以凝视。'
+                    : '他们用生命换来了——活着的权利。'}
+                </p>
                 <br>
                 <p style="color: #555; font-size: 12px; font-style: italic;">
-                  "只要活着，就有希望。" —— 郑吒
+                  ${endingInfo.type === 'true_ending' ? '"只要心中还有光，恐怖就无法吞噬我们。" —— 郑吒'
+                    : endingInfo.type === 'fallen_ending' ? '"在无限的恐怖中，我们都变成了怪物。" —— 楚轩'
+                    : '"只要活着，就有希望。" —— 郑吒'}
                 </p>
               </div>
               <div style="color: #444; font-size: 11px; letter-spacing: 2px; margin-bottom: 30px;">

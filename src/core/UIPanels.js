@@ -5,6 +5,7 @@
 // 包含: 背包/状态、统计、图鉴、同伴关系、帮助、全地图、战斗日志
 
 import { GAME_STATE } from './constants.js';
+import { getKarmaLevel, renderKarmaDisplay } from './KarmaSystem.js';
 import { gameState } from './GameState.js';
 import { getEffectiveAtk, getEffectiveDef, getEffectiveSpd, getEffectiveCrt } from './CombatSystem.js';
 import { getDifficultyConfig, getDifficulty, setDifficulty, formatBestiaryPanel, DIFFICULTY } from './DifficultySystem.js';
@@ -769,6 +770,8 @@ export function showHelpPanel() {
           <tr><td style="color: #ff8866;">F</td><td>战斗回放</td></tr>
           <tr><td style="color: #ffcc44;">Y</td><td>成长轨迹</td></tr>
           <tr><td style="color: #aa88ff;">U</td><td>属性分配（升级后有点数可分配）</td></tr>
+          <tr><td style="color: #ffcc44;">K</td><td>业力面板（道德选择影响战斗与结局）</td></tr>
+          <li style='margin-bottom:4px;'><span style='color:#ffcc44;'>K</span> — 业力面板</li>
           <tr><td style="color: #66aaff;">X</td><td>详细统计</td></tr>
           <tr><td style="color: #ff88aa;">R</td><td>同伴关系</td></tr>
           <tr><td style="color: #44ccaa;">V</td><td>迷雾开关</td></tr>

@@ -17,6 +17,7 @@ import { getPlayerPowerRating, getEnemyPowerRating, comparePower } from './Power
 import { drawWallTile, drawFloorTile, drawLavaTile, drawStairsTile, drawCharacterSprite, drawHealthBar } from './SpriteRenderer.js';
 import { dynamicLighting } from './DynamicLighting.js';
 import { getPendingPoints } from './StatAllocation.js';
+import { getKarmaLevel } from './KarmaSystem.js';
 
 export class Renderer {
   constructor(canvas) {
@@ -644,6 +645,16 @@ export class Renderer {
       ctx.fillStyle = pr.rank.color;
       ctx.font = 'bold 11px "Microsoft YaHei"';
       ctx.fillText('战力 ' + pr.rank.name + ' ' + pr.total, rx, pad + 145);
+    } catch {}
+
+    // 业力指示器
+    try {
+      const karmaHud = getKarmaLevel();
+      if (karmaHud.id !== 'neutral') {
+        ctx.fillStyle = karmaHud.color;
+        ctx.font = '11px "Microsoft YaHei"';
+        ctx.fillText(karmaHud.icon + ' ' + karmaHud.name, rx + 90, pad + 145);
+      }
     } catch {}
 
     // ── 下方：楼层信息条 ──
