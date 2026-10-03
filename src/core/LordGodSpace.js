@@ -3,6 +3,7 @@
 // ═══════════════════════════════════════════════════════════════
 
 import { BLOODLINE, GENE_LOCK } from './constants.js';
+import { getSubplotSystem, SUBPLOT_RANKS, RANK_ORDER } from './SubplotSystem.js';
 import { eventBus } from './EventBus.js';
 import { gameState } from './GameState.js';
 import { audioEngine } from './AudioEngine.js';
@@ -264,6 +265,7 @@ export function renderLordGodSpace(onClose) {
       { key: 'challenge', name: '⚔ 挑战副本', color: '#ff4444' },
       { key: 'enchant', name: '✨ 附魔', color: '#aa88ff' },
       { key: 'stash', name: '📦 仓库', color: '#cc8844' },
+      { key: 'subplot', name: '📜 支线合成', color: '#88aaff' },
     ];
 
     overlay.innerHTML = `
@@ -701,6 +703,49 @@ export function renderLordGodSpace(onClose) {
       return;
     }
 
+
+    // ── 支线剧情合成页面 ──
+    if (cat === 'subplot') {
+      const ss = getSubplotSystem();
+      const invHTML = RANK_ORDER.map(r => {
+        const info = SUBPLOT_RANKS[r];
+        const count = ss.inventory[r] || 0;
+        const canSynth = r !== 'S' && count >= 3;
+        return '<div style="display:flex;align-items:center;gap:10px;padding:10px 12px;' +
+          'background:rgba(255,255,255,0.03);border-radius:8px;margin-bottom:6px;' +
+          'border:1px solid ' + info.color + '20;">' +
+          '<span style="font-size:22px;">' + info.icon + '</span>' +
+          '<div style="flex:1;">' +
+            '<span style="color:' + info.color + ';font-size:14px;font-weight:bold;">' + info.name + '</span>' +
+            '<span style="color:#888;font-size:13px;margin-left:8px;">× ' + count + '</span>' +
+          '</div>' +
+          (canSynth ? '<button class="synth-btn" data-rank="' + r + '" style="' +
+            'background:' + info.color + '15;border:1px solid ' + info.color + '40;' +
+            'color:' + info.color + ';padding:6px 14px;cursor:pointer;border-radius:6px;' +
+            'font-size:12px;font-family:inherit;transition:all 0.2s;"' +
+            ' onmouseover="this.style.background=\'' + info.color + '30\'"' +
+            ' onmouseout="this.style.background=\'' + info.color + '15\'"' +
+            '>合成 ↑ (3→1)</button>' : '') +
+        '</div>';
+      }).join('');
+      container.innerHTML = '<div style="padding:12px;">' +
+        '<h3 style="color:#88aaff;text-align:center;letter-spacing:4px;margin-bottom:16px;">📜 支线剧情合成</h3>' +
+        '<p style="color:#666;font-size:11px;text-align:center;margin-bottom:16px;">3个低级支线 → 1个高级支线 · 高阶强化需消耗支线</p>' +
+        invHTML +
+        '<div style="margin-top:16px;padding:10px;background:rgba(255,204,68,0.05);border:1px solid rgba(255,204,68,0.15);border-radius:8px;text-align:center;">' +
+          '<p style="color:#ffcc44;font-size:13px;">总价值: ' + ss.getTotalValue() + ' 点</p>' +
+        '</div>' +
+      '</div>';
+      container.querySelectorAll('.synth-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          if (ss.synthesize(btn.dataset.rank)) {
+            try { audioEngine.playLevelUp(); } catch {}
+            showCategory('subplot');
+          }
+        });
+      });
+      return;
+    }
 
     // ── 挑战副本页面 ──
         if (cat === 'stash') {
