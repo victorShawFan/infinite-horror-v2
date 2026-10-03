@@ -126,6 +126,7 @@ import { tryExplorationEvent, renderExplorationEvent, applyEventEffect, serializ
 import { shouldPauseForAction, showBattleActionMenu, applyDefendAction, attemptFlee, ACTION_TYPE, setStrategicMode, isStrategicMode } from './core/BattleActionMenu.js';
 import { recordBattleStats, recordMaxStreak, showPlayerStatsPanel, serializePlayerStats, deserializePlayerStats, updateHighestLevel } from './core/PlayerStats.js';
 import { modalQueue } from './core/ModalQueue.js';
+import { showLiveBattleLog, updateLiveBattleLog, hideLiveBattleLog } from './core/LiveBattleLog.js';
 import { shouldShowAnalysis, showPostCombatAnalysis } from './core/PostCombatAnalysis.js';
 import { showCharacterSheet } from './core/CharacterSheet.js';
 import { showWorldDashboard } from './core/WorldDashboard.js';
@@ -1051,6 +1052,11 @@ function startGame() {
 
     // 显示挑战战前面板
     _showChallengePreBattle(overlay, enemy, challenge);
+  });
+
+  // 实时战报更新
+  eventBus.on('combat:log_update', (data) => {
+    updateLiveBattleLog(data.log);
   });
 
   eventBus.on('challenge:end', (data) => {
@@ -3891,6 +3897,9 @@ async function startCombat(enemy, preScaledEnemy) {
   renderer.shake(3, 150);
   audioEngine.playDamage();
   
+  // 显示实时战报
+  showLiveBattleLog();
+
   // 使用预缩放敌人（从战前确认传入），避免二次随机缩放导致数值不一致
   const scaledEnemy = applyDynamicScaling(preScaledEnemy || scaleEnemy(enemy, gameState.chapter));
   
@@ -3936,6 +3945,7 @@ async function startCombat(enemy, preScaledEnemy) {
   if (result.fled) {
     renderer.addFloatText('💨 成功脱离！', p.x, p.y - 0.5, '#ffaa44');
     audioEngine.playMove();
+    hideLiveBattleLog();
     return;
   }
 
@@ -4017,8 +4027,9 @@ async function startCombat(enemy, preScaledEnemy) {
   
   // 播放战斗动画序列
   combatAnimator.playCombatSequence(result, enemy, () => {
-    // 隐藏战斗HUD
+    // 隐藏战斗HUD和实时战报
     _hideCombatHUD();
+    hideLiveBattleLog();
     // ── 战斗评级（先于奖励面板，以便奖励等级正确） ──
     const battleRating = result.victory ? rateBattle(result, gameState.player) : null;
     if (battleRating) { recordRating(battleRating); result.rating = battleRating; }

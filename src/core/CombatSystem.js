@@ -754,6 +754,8 @@ if (chipFx.hasIceChip && enemy.atk !== enemyEffAtk) {
     let _actionChoice = null;
     let _defendActive = false;
     if (shouldPauseForAction(round, enemy, playerHp, p.maxHp, combatState)) {
+      // 更新实时战报
+      eventBus.emit('combat:log_update', { log: [...log], round, playerHp, enemyHp, playerMaxHp: p.maxHp, enemyMaxHp });
       _actionChoice = await showBattleActionMenu(
         { ...p, hp: playerHp, mana: playerMana },
         { ...enemy, hp: enemyHp },
@@ -1521,6 +1523,8 @@ if (chipFx.hasIceChip && enemy.atk !== enemyEffAtk) {
     } catch {}
   }
 
+  // 最终战报更新
+  eventBus.emit('combat:log_update', { log: [...log], round, playerHp, enemyHp, playerMaxHp: p.maxHp, enemyMaxHp, final: true });
   return { victory: enemyHp <= 0, log, rounds: round, totalDamageDealt: _totalDmgDealt, totalDamageTaken: _totalDmgTaken, critCount: _critHits, drops: _lootDrops };
 }
 

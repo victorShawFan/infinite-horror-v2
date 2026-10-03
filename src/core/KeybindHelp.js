@@ -11,6 +11,7 @@ export function showKeybindHelp() {
       { key: 'WASD / 方向键', desc: '移动' },
       { key: '空格', desc: '互动 / 对话推进' },
       { key: 'Shift+移动', desc: '潜行模式' },
+      { key: 'Shift+P', desc: '玩家统计面板' },
     ]},
     { group: '战斗与装备', keys: [
       { key: '碰撞敌人', desc: '触发战斗（自动）' },
