@@ -119,7 +119,7 @@ import { injectInteractables, activateInteractable } from './core/FloorInteracta
 import { getChapterLore, renderChapterIntroCard } from './core/ChapterWorldLore.js';
 import { scanFloor, renderFloorOverview } from './core/FloorScanner.js';
 import { generateRewardChoices, applyReward, renderRewardChoicePanel } from './core/RewardChoiceSystem.js';
-import { tryFlashback, renderFlashback } from './core/FlashbackSystem.js';
+import { tryFlashback, renderFlashback, serializeFlashbacks, deserializeFlashbacks } from './core/FlashbackSystem.js';
 import { showLevelUpCelebration, getLevelUnlocks } from './core/LevelUpCelebration.js';
 import { assessThreat, drawThreatIndicator, getEnemyTooltipHTML } from './core/EnemyPowerIndicator.js';
 import { tryExplorationEvent, renderExplorationEvent, applyEventEffect, serializeExplorationEvents, deserializeExplorationEvents } from './core/ExplorationEvents.js';
@@ -828,6 +828,7 @@ document.getElementById('btn-new-game').addEventListener('click', () => {
     try { const _grData = localStorage.getItem('ih_growth'); if (_grData) deserializeGrowth(JSON.parse(_grData)); } catch {}
     try { const _saData = localStorage.getItem('ih_statalloc'); if (_saData) deserializeStatAllocation(JSON.parse(_saData)); } catch {}
     try { const _psData = localStorage.getItem('ih_player_stats'); if (_psData) deserializePlayerStats(JSON.parse(_psData)); } catch {}
+    try { const _fbData = localStorage.getItem('ih_flashbacks'); if (_fbData) deserializeFlashbacks(JSON.parse(_fbData)); } catch {}
     initStatAllocation();
     try { const _eeData = localStorage.getItem('ih_exploration_events'); if (_eeData) deserializeExplorationEvents(JSON.parse(_eeData)); } catch {}
     initKeys();
@@ -1109,7 +1110,8 @@ function startGame() {
     localStorage.setItem('ih_dynamic_diff', JSON.stringify(serializeDynamicDifficulty()));
     localStorage.setItem('ih_growth', JSON.stringify(serializeGrowth()));
     localStorage.setItem('ih_statalloc', JSON.stringify(serializeStatAllocation()));
-    localStorage.setItem('ih_player_stats', JSON.stringify(serializePlayerStats())); } catch {}
+    localStorage.setItem('ih_player_stats', JSON.stringify(serializePlayerStats()));
+    localStorage.setItem('ih_flashbacks', JSON.stringify(serializeFlashbacks())); } catch {}
     try { localStorage.setItem('ih_streak', JSON.stringify(killStreak.toJSON())); } catch {}
     localStorage.setItem('ih_abyss', JSON.stringify(serializeAbyss()));
     localStorage.setItem('ih_daily', JSON.stringify(serializeDaily()));    try { localStorage.setItem('ih_fog', JSON.stringify(fogOfWar.toJSON())); } catch {}
@@ -3851,7 +3853,7 @@ window._updateCombatHUDDelta = function(target, delta) {
 
 
 // ── 战后简短收获总结 ──
-function _showMiniLootSummary(exp, gold, drops, rating) {
+function _showMiniLootSummary(exp, gold, drops, rating, combatStats) {
   const existing = document.getElementById('mini-loot-summary');
   if (existing) existing.remove();
   
@@ -3873,10 +3875,14 @@ function _showMiniLootSummary(exp, gold, drops, rating) {
     'display:flex;gap:12px;align-items:center;' +
     'animation:slideUp 0.3s ease-out;';
   
+  const _rounds = combatStats?.rounds || 0;
+  const _dmgDealt = combatStats?.totalDamageDealt || 0;
   div.innerHTML = 
     (rating ? '<span style="color:' + rating.color + ';font-size:16px;font-weight:bold;">' + rating.grade + '</span>' : '') +
+    (_rounds ? '<span style="color:#666;font-size:10px;">' + _rounds + '回合</span>' : '') +
     '<span style="color:#aa88ff;font-size:12px;">+' + exp + ' EXP</span>' +
     (gold ? '<span style="color:#ffcc44;font-size:12px;">+' + gold + 'G</span>' : '') +
+    (_dmgDealt ? '<span style="color:#ff664488;font-size:10px;">⚔' + _dmgDealt + '</span>' : '') +
     (dropIcons ? '<span style="color:#88aaff;font-size:11px;">' + dropIcons.trim() + '</span>' : '');
   
   document.body.appendChild(div);
@@ -4161,7 +4167,8 @@ async function startCombat(enemy, preScaledEnemy) {
           scaledEnemy.rewards?.exp || 0,
           scaledEnemy.rewards?.gold || 0,
           result.drops || [],
-          battleRating
+          battleRating,
+          { rounds: result.rounds, totalDamageDealt: result.totalDamageDealt }
         );
       } catch {}
       // 奖励飞行动画 — 经验和金币从敌人飞向HUD
