@@ -39,7 +39,9 @@ function f9_3(){const g=makeGrid();carveRoom(g,1,1,5,5);carveCorridor(g,5,3,9,3)
         x: 5, y: 5, sprite: '🛸', color: '#66ff66',
         itemType: 'lore', loreId: 'lore_9_bug',
         description: '翻译后的虫族精神波动记录。',
-      }]};}
+      },
+{type:ENTITY_TYPE.ITEM,id:'gene_suit_drop',name:'基因强化服',x:11,y:8,sprite:'🛡',color:'#00ffaa',itemType:'armor',armor:{name:'基因强化服',def:20,atk:5,maxHp:50,setId:'gene_suit',slot:'armor',desc:'纳米纤维作战服'}}
+]};}
 
 // ═══ 9-4 虫潮守线 ═══
 function f9_4(){const g=makeGrid();carveRoom(g,1,6,6,11);carveCorridor(g,6,8,10,8);carveRoom(g,10,4,15,12);carveCorridor(g,15,8,18,8);carveRoom(g,16,5,19,11);carveRoom(g,5,1,10,3);carveCorridor(g,8,3,8,4);carveRoom(g,8,13,14,16);carveCorridor(g,11,12,11,13);g[15][13]=TILE.STAIRS;return{id:'9-4',name:'虫潮守线',subtitle:'第一波虫潮来了。王侠和霸王负责布雷和火力压制。',bgColor:'#080810',theme:'scifi_base',tiles:g,width:W,height:H,playerStart:{x:3,y:8},entities:[

@@ -426,7 +426,12 @@ function generateFloor_3_4() {
       { type: ENTITY_TYPE.ITEM, id: 'crt_crystal_ch3_4', name: '暴击结晶',
         x: 5, y: 1, sprite: '◆', color: '#ffcc44',
         itemType: 'stat_boost', effect: { crt: 4 },
-      }],
+      },
+      { type: ENTITY_TYPE.ITEM, id: 'curse_ward_ring', name: '破咒之戒',
+        x: 14, y: 5, sprite: '💍', color: '#aa66ff',
+        itemType: 'accessory', accessory: { name: '破咒之戒', def: 3, res: 15, slot: 'accessory', desc: '能够部分抵御诅咒的神秘戒指' },
+      },
+],
   };
 }
 

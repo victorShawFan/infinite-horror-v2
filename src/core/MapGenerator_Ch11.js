@@ -35,7 +35,9 @@ function f11_3(){const g=makeGrid();carveRoom(g,2,2,8,6);carveRoom(g,10,1,15,5);
         x: 5, y: 5, sprite: '🧬', color: '#00ffaa',
         itemType: 'lore', loreId: 'lore_11_gene',
         description: '郑吒亲笔写下的突破记录，笔迹坚定有力。',
-      }]};}
+      },
+{type:ENTITY_TYPE.ITEM,id:'exorcist_cross_drop',name:'驱魔十字架',x:9,y:10,sprite:'✝',color:'#ffffff',itemType:'accessory',accessory:{name:'驱魔十字架',def:5,res:20,setId:'exorcist_cross',slot:'accessory',desc:'对精神攻击有强力抵抗的圣物'}}
+]};}
 
 function f11_4(){const g=makeGrid();carveRoom(g,1,1,5,5);carveRoom(g,7,1,12,4);carveCorridor(g,5,3,7,3);carveRoom(g,14,1,19,5);carveCorridor(g,12,3,14,3);carveRoom(g,1,7,6,11);carveCorridor(g,3,5,3,7);carveRoom(g,8,7,14,12);carveCorridor(g,6,9,8,9);carveRoom(g,16,7,19,11);carveCorridor(g,14,9,16,9);carveRoom(g,6,13,14,16);carveCorridor(g,10,12,10,13);g[15][13]=TILE.STAIRS;return{id:'11-4',name:'天煞——武者的试炼',subtitle:'一个只属于武者的世界。这里的考验不是恐惧，而是极限。',bgColor:'#0c0a08',theme:'dojo',tiles:g,width:W,height:H,playerStart:{x:3,y:3},entities:[
 {type:ENTITY_TYPE.ENEMY,id:'celestial_guard',name:'天煞守卫',x:10,y:2,sprite:'⚔',color:'#cc8844',hp:150,atk:44,def:20,spd:12,rewards:{exp:115,gold:78}},

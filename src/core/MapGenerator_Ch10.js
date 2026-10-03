@@ -32,7 +32,9 @@ function f10_3(){const g=makeGrid();carveRoom(g,1,1,5,5);carveCorridor(g,5,3,9,3
 {type:ENTITY_TYPE.ITEM,id:'trap_ch10_curse',name:'💀 远古诅咒',x:5,y:3,sprite:'💀',color:'#aa44ff',itemType:'trap',trapType:'curse'},{type:ENTITY_TYPE.ITEM,id:'chest_ch10',name:'精灵宝箱',x:16,y:13,sprite:'📦',color:'#44ffaa',itemType:'chest',chestType:'gold'},{type:ENTITY_TYPE.ITEM,id:'medkit_10_3',name:'精灵草药',x:18,y:12,sprite:'♥',color:'#44ff88',itemType:'consumable',effect:{heal:120}},{type:'item',id:'lore_teams_detail',name:'轮回者观察报告',x:3,y:10,sprite:'📋',color:'#ffdd44',itemType:'lore',loreId:'lore_10_teams',description:'一份关于五支队伍的观察报告。'},
       {type:ENTITY_TYPE.ITEM,id:'set_zhongzhou_plate',name:'中洲铁甲',x:14,y:5,sprite:'🛡',color:'#ffcc44',
        itemType:'armor',armor:{name:'中洲铁甲',def:16,maxHp:40,setId:'zhongzhou_plate',slot:'armor',
-       description:'中洲精锐部队的制式护甲，防护优秀。'}}]};}
+       description:'中洲精锐部队的制式护甲，防护优秀。'}},
+{type:ENTITY_TYPE.ITEM,id:'divine_ring_drop',name:'天神戒指',x:11,y:8,sprite:'💍',color:'#ffcc44',itemType:'accessory',accessory:{name:'天神戒指',atk:6,crt:8,spd:2,slot:'accessory',desc:'蕴含强大力量的戒指'}}
+]};}
 
 // ═══ 10-4 五队接触 ═══
 function f10_4(){const g=makeGrid();carveRoom(g,1,6,6,11);carveCorridor(g,6,8,10,8);carveRoom(g,10,4,15,12);carveCorridor(g,15,8,18,8);carveRoom(g,16,5,19,11);carveRoom(g,5,1,10,3);carveCorridor(g,8,3,8,4);carveRoom(g,8,13,14,16);carveCorridor(g,11,12,11,13);g[15][13]=TILE.STAIRS;return{id:'10-4',name:'五队接触',subtitle:'战场上出现了其他轮回者队伍。有人试图联盟，有人选择背叛。',bgColor:'#0a0c10',theme:'fantasy',tiles:g,width:W,height:H,playerStart:{x:3,y:8},entities:[

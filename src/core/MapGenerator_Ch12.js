@@ -17,7 +17,9 @@ function f12_2(){const g=makeGrid();carveRoom(g,1,1,7,6);carveRoom(g,9,1,14,5);c
 {type:ENTITY_TYPE.ENEMY,id:'demon_elite_12_2',name:'恶魔队精锐·盾',x:17,y:4,sprite:'🛡',color:'#cc2222',hp:200,atk:40,def:28,spd:8,rewards:{exp:130,gold:90,rewardPoints:80},traits:['armored']},
 {type:ENTITY_TYPE.ENEMY,id:'demon_mage_12',name:'恶魔队·暗法师',x:17,y:12,sprite:'🔮',color:'#882288',hp:140,atk:55,def:12,spd:16,damageType:'dark',rewards:{exp:125,gold:85,rewardPoints:70}},
 {type:ENTITY_TYPE.ITEM,id:'medkit_12_2',name:'高级修复剂',x:3,y:12,sprite:'♥',color:'#ff4488',itemType:'consumable',effect:{heal:200}},
-{type:ENTITY_TYPE.ITEM,id:'def_ch12',name:'终极防御结晶',x:10,y:12,sprite:'◆',color:'#6688ff',itemType:'stat_boost',effect:{def:10}}]};}
+{type:ENTITY_TYPE.ITEM,id:'def_ch12',name:'终极防御结晶',x:10,y:12,sprite:'◆',color:'#6688ff',itemType:'stat_boost',effect:{def:10}},
+{type:ENTITY_TYPE.ITEM,id:'lord_guard_drop',name:'主神护卫铠',x:16,y:3,sprite:'🛡',color:'#ffaa00',itemType:'armor',armor:{name:'主神护卫铠',def:25,maxHp:80,atk:5,setId:'lord_guard',slot:'armor',desc:'主神碎片凝聚的终极护甲'}}
+]};}
 
 function f12_3(){const g=makeGrid();carveRoom(g,2,2,8,6);carveRoom(g,10,1,16,5);carveCorridor(g,8,4,10,4);carveRoom(g,1,8,6,14);carveCorridor(g,4,6,4,8);carveRoom(g,8,8,14,14);carveCorridor(g,6,11,8,11);carveRoom(g,16,8,19,14);carveCorridor(g,14,11,16,11);g[13][18]=TILE.STAIRS;return{id:'12-3',name:'楚轩的最终计划',subtitle:'"最后一个计划——已经启动了。"',bgColor:'#0a0808',theme:'biolab',tiles:g,width:W,height:H,playerStart:{x:5,y:4},entities:[
 {type:ENTITY_TYPE.EVENT,id:'final_plan',name:'最终计划启动',x:13,y:3,sprite:'📋',color:'#ffdd44',event:{type:'dialogue',lines:[{text:'楚轩在终端前输入代码。屏幕上是复杂的时间线。',speaker:'旁白'},{text:'最终计划需要三个条件——郑吒的洪荒之力、赵樱空的心灵之光、我的计算。',speaker:'楚轩'},{text:'三者合一——就能打破主神的规则。',speaker:'楚轩'},{text:'……但代价是什么？',speaker:'郑吒'},{text:'楚轩推了推眼镜，没有回答。',speaker:'旁白'}],flag:'final_plan_activated'}},

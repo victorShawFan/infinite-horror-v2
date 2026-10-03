@@ -55,7 +55,12 @@ function generateFloor_6_3() {
     { type:ENTITY_TYPE.ENEMY, id:'chestburster', name:'破体异形', x:11,y:11, sprite:'🐍', color:'#664422', hp:40, atk:24, def:2, spd:15, acidBlood:12, rewards:{exp:40,gold:25}},
     { type:ENTITY_TYPE.ENEMY, id:'xeno_drone_1', name:'异形无人机', x:4,y:10, sprite:'🦟', color:'#445544', hp:50, atk:19, def:4, spd:13, acidBlood:8, rewards:{exp:40,gold:30}},
     { type:ENTITY_TYPE.ITEM, id:'medkit_ch6_3', name:'大型急救包', x:17,y:12, sprite:'♥', color:'#ff4488', itemType:'consumable', effect:{heal:80}},
-    { type:ENTITY_TYPE.ITEM, id:'antiacid_chip', name:'高级抗酸芯片', x:2,y:10, sprite:'💎', color:'#44cc88', itemType:'chip', chip:{id:'acid_resist_v2',name:'抗酸+',stat:'def',value:5,special:'acid_resist'}}]};
+    { type:ENTITY_TYPE.ITEM, id:'antiacid_chip', name:'高级抗酸芯片', x:2,y:10, sprite:'💎', color:'#44cc88', itemType:'chip', chip:{id:'acid_resist_v2',name:'抗酸+',stat:'def',value:5,special:'acid_resist'}},
+      { type: ENTITY_TYPE.ITEM, id: 'xeno_carapace_armor', name: '异形甲壳护甲',
+        x: 11, y: 8, sprite: '🛡', color: '#44aaff',
+        itemType: 'armor', armor: { name: '异形甲壳护甲', def: 14, maxHp: 30, setId: 'xenomorph_carapace', slot: 'armor', desc: '用异形外骨骼打造的护甲' },
+      },
+]};
 }
 
 function generateFloor_6_4() {

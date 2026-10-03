@@ -201,7 +201,12 @@ function generateFloor_5_3() {
       { type: ENTITY_TYPE.ITEM, id: 'atk_crystal_ch5_3', name: '力量结晶',
         x: 14, y: 1, sprite: '◆', color: '#ff8844',
         itemType: 'stat_boost', effect: { atk: 4 },
-      }],
+      },
+      { type: ENTITY_TYPE.ITEM, id: 'reaper_cloak', name: '死神斗篷',
+        x: 14, y: 5, sprite: '🧥', color: '#556677',
+        itemType: 'armor', armor: { name: '死神斗篷', def: 12, spd: 3, slot: 'armor', desc: '从死神世界获得的暗色斗篷' },
+      },
+],
   };
 }
 

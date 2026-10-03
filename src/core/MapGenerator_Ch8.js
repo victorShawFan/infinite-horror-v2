@@ -28,7 +28,9 @@ function f8_3(){const g=makeGrid();carveRoom(g,1,1,5,5);carveCorridor(g,5,3,9,3)
         x: 5, y: 3, sprite: '🏪', color: '#ffcc44', merchant: true,
         dialogue: [
           { text: '"中洲的物资有限，但该有的都有。看看吧。"', speaker: '中洲军需官' }],
-      }]};}
+      },
+{type:ENTITY_TYPE.ITEM,id:'zhongzhou_plate_drop',name:'中洲精英铠',x:11,y:8,sprite:'🛡',color:'#88aa44',itemType:'armor',armor:{name:'中洲精英铠',def:18,spd:2,setId:'zhongzhou_plate',slot:'armor',desc:'中洲队定制铠甲'}}
+]};}
 
 function f8_4(){const g=makeGrid();carveRoom(g,1,6,6,11);carveCorridor(g,6,8,10,8);carveRoom(g,10,4,15,12);carveCorridor(g,15,8,18,8);carveRoom(g,16,5,19,11);carveRoom(g,5,1,10,3);carveCorridor(g,8,3,8,4);carveRoom(g,8,13,14,16);carveCorridor(g,11,12,11,13);g[15][13]=TILE.STAIRS;return{id:'8-4',name:'新人罗甘道',subtitle:'一个叫罗甘道的新人被传送到这个世界。他对一切充满疑惑。',bgColor:'#0a0c06',theme:'jungle',tiles:g,width:W,height:H,playerStart:{x:3,y:8},entities:[
 {type:ENTITY_TYPE.EVENT,id:'luogandao_arrival',name:'罗甘道到来',x:8,y:1,sprite:'✦',color:'#88aaff',event:{type:'dialogue',lines:[{text:'一道白光闪过。一个年轻人出现在丛林中，满脸困惑。',speaker:'旁白'},{text:'这……这是什么地方？你们是谁？',speaker:'罗甘道'},{text:'你是主神传送来的新人。跟着我们，别掉队。',speaker:'郑吒'},{text:'（新人罗甘道加入队伍。）',speaker:'主神'}],flag:'luogandao_joined',addCompanion:{id:'luogandao',name:'罗甘道',role:'新人',alive:true}}},{type:ENTITY_TYPE.ENEMY,id:'trex_mini',name:'霸王龙幼崽',x:12,y:8,sprite:'🦕',color:'#665533',hp:100,atk:28,def:10,spd:8,rewards:{exp:65,gold:45}},
