@@ -97,6 +97,7 @@ import { getCompanionCombatBonuses, getCompanionBattleCry, formatCompanionCombat
 import { drawQuestHUD, formatQuestPanelHTML } from './core/QuestTracker.js';
 import { initTitleFX, spawnDamageNumber, screenShake, screenFlash } from './core/TitleScreenFX.js';
 import { getBattleEnvironment, formatEnvironmentHTML, processEnvironmentEffect } from './core/BattleEnvironment.js';
+import { generateTacticalHints, formatTacticalHintsHTML } from './core/TacticalHints.js';
 
 // ── 全局状态 ──
 let renderer;
@@ -2251,6 +2252,7 @@ function showCombatConfirm(enemy) {
   // 一次性构造最终敌人快照，预判和实战共用同一份
   const scaledEnemy = applyDynamicScaling(scaleEnemy(enemy, gameState.chapter));
   const preview = previewBattle(p, scaledEnemy);
+  const tacticalHints = generateTacticalHints(p, scaledEnemy, preview);
   
   gameState.setState(GAME_STATE.DIALOGUE);
   const overlay = document.getElementById('ui-overlay');
@@ -2348,6 +2350,7 @@ function showCombatConfirm(enemy) {
         ${traitsHtml}
         ${descText}
         ${formatEnvironmentHTML(gameState.chapter)}
+        ${formatTacticalHintsHTML(tacticalHints)}
         
         <!-- Build特效提示 + 精英词缀警告 -->
         ${(() => {

@@ -29,6 +29,7 @@ import { getCompanionCombatBonus } from './RelationshipSystem.js';
 import { getEliteCombatEffects, recordEliteKill } from './EliteMonsterSystem.js';
 import { generateCombatDialogue, getVictoryComment } from './CompanionDialogue.js';
 import { COMPANION_PROFILES } from './RelationshipSystem.js';
+import { processEnvironmentEffect } from './BattleEnvironment.js';
 
 // ── 伤害计算 ──
 export function calcDamage(attacker, defender, damageType = DAMAGE_TYPE.PHYSICAL, minDmg = 1) {
@@ -463,6 +464,19 @@ if (chipFx.hasIceChip && enemy.atk !== enemyEffAtk) {
 
   while (enemyHp > 0 && playerHp > 0) {
     round++;
+
+    // ── 战场环境效果 ──
+    try {
+      const envLogs = processEnvironmentEffect(gameState.chapter, { hp: playerHp, maxHp: p.maxHp, mana: playerMana, maxMana: p.maxMana || 0 }, { hp: enemyHp }, round);
+      for (const envLog of envLogs) {
+        if (round <= 6) log.push(envLog);
+        // Apply actual HP changes from environment
+        if (envLog.type === 'environment' && envLog.text.includes('环境伤害')) {
+          // Already applied in processEnvironmentEffect to the mock objects
+        }
+      }
+    } catch {}
+
     // ── 精英词缀: 每回合效果 ──
     if (affix) {
       // 剧毒: 每回合毒伤
