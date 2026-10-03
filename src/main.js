@@ -119,6 +119,7 @@ import { injectInteractables, activateInteractable } from './core/FloorInteracta
 import { getChapterLore, renderChapterIntroCard } from './core/ChapterWorldLore.js';
 import { scanFloor, renderFloorOverview } from './core/FloorScanner.js';
 import { generateRewardChoices, applyReward, renderRewardChoicePanel } from './core/RewardChoiceSystem.js';
+import { tryFlashback, renderFlashback } from './core/FlashbackSystem.js';
 import { toggleAutoBattle, isAutoBattleEnabled, shouldAutoBattle, renderAutoBattleIndicator } from './core/AutoBattleSystem.js';
 import { drawEnemyRadar } from './core/EnemyRadar.js';
 import { renderAbilitiesPanel } from './core/CompanionAbilities.js';
@@ -2291,6 +2292,10 @@ function movePlayer(dx, dy) {
   const p = gameState.player;
   // 死亡状态不允许移动
   if (p.hp <= 0) return;
+  // 低血量闪回
+  if (p.hp > 0 && p.hp / p.maxHp < 0.2) {
+    try { const fb = tryFlashback('near_death'); if (fb) renderFlashback(fb, document.body); } catch {}
+  }
   const nx = p.x + dx;
   const ny = p.y + dy;
   const floor = chapter.floors[currentFloorIndex];
