@@ -35,6 +35,7 @@ import { getEnchantCombatBonus } from './EnchantSystem.js';
 import { initCombatAbilities, getAvailableAbilities, useCompanionAbility, tickAbilityCooldowns } from './CompanionAbilities.js';
 import { initComboState, recordCrit, recordElementalHit, recordWeaknessHit, recordCompanionAction, recordBlock, getComboBonus, formatComboLog } from './ComboSystem.js';
 import { getKarmaCombatModifiers, getKarmaLevel } from './KarmaSystem.js';
+import { shouldPauseForAction, showBattleActionMenu, applyDefendAction, attemptFlee, ACTION_TYPE } from './BattleActionMenu.js';
 
 // ── 伤害计算 ──
 export function calcDamage(attacker, defender, damageType = DAMAGE_TYPE.PHYSICAL, minDmg = 1) {
@@ -297,7 +298,7 @@ function pickBestSkill(player, enemy, combatState, enemyHp, playerHp) {
 }
 
 // ── 执行战斗（增强版：技能 + 状态效果 + 基因锁进阶） ──
-export function executeBattle(enemy) {
+export async function executeBattle(enemy) {
   const p = gameState.player;
   const preview = previewBattle(p, enemy);
   const log = [];
@@ -749,8 +750,77 @@ if (chipFx.hasIceChip && enemy.atk !== enemyEffAtk) {
       if (enemyHp <= 0) break;
     }
 
+    // ── 玩家行动选择（战术菜单） ──
+    let _actionChoice = null;
+    let _defendActive = false;
+    if (shouldPauseForAction(round, enemy, playerHp, p.maxHp, combatState)) {
+      _actionChoice = await showBattleActionMenu(
+        { ...p, hp: playerHp, mana: playerMana },
+        { ...enemy, hp: enemyHp },
+        round,
+        combatState
+      );
+      // 处理逃跑
+      if (_actionChoice.type === ACTION_TYPE.FLEE) {
+        const fleeResult = attemptFlee(p, enemy);
+        log.push(fleeResult.log);
+        if (fleeResult.success) {
+          p.hp = playerHp;
+          p.mana = playerMana;
+          return { victory: false, fled: true, log, rounds: round };
+        }
+        // 逃跑失败，本回合跳过攻击，直接承受敌人攻击
+        _actionChoice = { type: '_flee_failed' };
+      }
+      // 处理防御
+      if (_actionChoice.type === ACTION_TYPE.DEFEND) {
+        const defendResult = applyDefendAction();
+        _defendActive = true;
+        log.push(defendResult.log);
+        // 防御回合跳过攻击阶段，但仍然处理被动效果
+      }
+      // 处理道具使用
+      if (_actionChoice.type === ACTION_TYPE.ITEM && _actionChoice.data?.item) {
+        const usedItem = _actionChoice.data.item;
+        const inv = p.inventory || [];
+        const itemIdx = inv.indexOf(usedItem);
+        if (itemIdx >= 0) {
+          if (usedItem.effect?.healPercent) {
+            const healAmt = Math.floor(p.maxHp * usedItem.effect.healPercent);
+            playerHp = Math.min(p.maxHp, playerHp + healAmt);
+            log.push({ text: '📦 使用 ' + usedItem.name + '！恢复 ' + healAmt + ' HP', type: 'heal' });
+          }
+          if (usedItem.effect?.manaPercent) {
+            const manaAmt = Math.floor((p.maxMana || 0) * usedItem.effect.manaPercent);
+            playerMana = Math.min(p.maxMana || 0, playerMana + manaAmt);
+            log.push({ text: '📦 使用 ' + usedItem.name + '！恢复 ' + manaAmt + ' MP', type: 'heal' });
+          }
+          if (usedItem.effect?.atkBoost) {
+            log.push({ text: '📦 使用 ' + usedItem.name + '！ATK+' + Math.floor(usedItem.effect.atkBoost * 100) + '%', type: 'buff' });
+          }
+          inv.splice(itemIdx, 1);
+        }
+        // 使用道具后仍可正常攻击，不跳过
+        _actionChoice = { type: ACTION_TYPE.ATTACK };
+      }
+    }
+
     // ── 玩家回合：尝试使用技能 ──
-    const skill = pickBestSkill(p, enemy, combatState, enemyHp, playerHp);
+    const _skipPlayerAttack = _defendActive || (_actionChoice && _actionChoice.type === '_flee_failed');
+    let skill = null;
+    if (!_skipPlayerAttack) {
+      if (_actionChoice && _actionChoice.type === ACTION_TYPE.SKILL && _actionChoice.data?.skillId) {
+        // 玩家手动选择了技能
+        const selectedSkill = getAvailableSkills(p).find(s => s.id === _actionChoice.data.skillId);
+        if (selectedSkill) {
+          const check = canUseSkill(p, selectedSkill.id, combatState);
+          if (check.usable) skill = selectedSkill;
+        }
+      } else {
+        // 自动选择最佳技能（非策略模式或玩家选择普攻时仍自动释放）
+        skill = _actionChoice?.type === ACTION_TYPE.ATTACK ? null : pickBestSkill(p, enemy, combatState, enemyHp, playerHp);
+      }
+    }
     if (skill) {
       // 创建临时player/enemy对象以避免修改实际状态
       const tempPlayer = { ...p, hp: playerHp, mana: playerMana, atk: pAtk, def: pDef, crt: pCrt, spd: pSpd };
@@ -772,6 +842,12 @@ if (chipFx.hasIceChip && enemy.atk !== enemyEffAtk) {
     if (enemyHp <= 0) break;
 
     // ── 玩家物理攻击 ──
+    if (_skipPlayerAttack) {
+      // 防御/逃跑失败：跳过物理攻击，仅保留被动效果
+      if (_defendActive && round <= 6) {
+        log.push({ text: '🛡 防御姿态：本回合不发动攻击', type: 'defend' });
+      }
+    } else {
     // 检查是否有 muscle_control buff（下次攻击双倍）
     let atkMultiplier = 1;
     const mcBuff = (combatState.statusEffects?.player || []).find(e => e.type === STATUS_EFFECT.BUFF_ATK);
@@ -956,8 +1032,10 @@ if (chipFx.hasIceChip && enemy.atk !== enemyEffAtk) {
       }
     }
 
-    // ── 道法法术 ──
-    if (isDaoist && playerMana >= spellCost && enemyHp > 0) {
+    } // end of !_skipPlayerAttack physical attack block
+
+    // ── 道法法术 ── (also skip if defending)
+    if (!_skipPlayerAttack && isDaoist && playerMana >= spellCost && enemyHp > 0) {
       const spell = calcSpellDamage({ atk: pAtk, crt: pCrt }, enemy);
       enemyHp -= spell.damage;
       playerMana -= spellCost;
@@ -1056,15 +1134,18 @@ if (chipFx.hasIceChip && enemy.atk !== enemyEffAtk) {
       if (dodgeBuff) {
         log.push({ text: `🌀 模拟思维预判！闪避了 ${enemy.name} 的攻击`, type: 'dodge' });
       } else {
-        playerHp -= eHit.damage;
-        if (eHit.damage > 0) {
+        // 防御姿态减伤
+        const _actualEnemyDmg = _defendActive ? Math.floor(eHit.damage * 0.5) : eHit.damage;
+        playerHp -= _actualEnemyDmg;
+        if (_actualEnemyDmg > 0) {
+          const _defendLabel = _defendActive ? ' (🛡减半)' : '';
           log.push({
-            text: `${enemy.name} → 郑吒 ${eHit.damage}${eHit.isCrit ? ' 暴击！' : ''}`,
+            text: `${enemy.name} → 郑吒 ${_actualEnemyDmg}${eHit.isCrit ? ' 暴击！' : ''}${_defendLabel}`,
             type: 'enemy_attack',
           });
           // 附魔反伤
-          if (enchantFx.reflectPct > 0 && eHit.damage > 0) {
-            const enchReflectDmg = Math.max(1, Math.floor(eHit.damage * enchantFx.reflectPct / 100));
+          if (enchantFx.reflectPct > 0 && _actualEnemyDmg > 0) {
+            const enchReflectDmg = Math.max(1, Math.floor(_actualEnemyDmg * enchantFx.reflectPct / 100));
             enemyHp -= enchReflectDmg;
             if (round <= 4) log.push({ text: '✨ 附魔反弹 ' + enchReflectDmg, type: 'buff' });
           }
@@ -1075,6 +1156,14 @@ if (chipFx.hasIceChip && enemy.atk !== enemyEffAtk) {
             log.push({ text: `💀 幻痛！额外 ${phantomDmg} 伤害`, type: 'affix_damage' });
           }
         }
+      }
+
+      // ── 防御反击 ──
+      if (_defendActive && Math.random() < 0.2 && enemyHp > 0) {
+        const counterDmg = Math.max(1, Math.floor(pAtk * 0.3));
+        enemyHp -= counterDmg;
+        _totalDmgDealt += counterDmg;
+        log.push({ text: '🛡⚔ 防御反击！' + counterDmg, type: 'reflect' });
       }
 
       // ── 天赋：格挡 ──

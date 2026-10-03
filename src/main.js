@@ -124,6 +124,8 @@ import { showLevelUpCelebration, getLevelUnlocks } from './core/LevelUpCelebrati
 import { assessThreat, drawThreatIndicator, getEnemyTooltipHTML } from './core/EnemyPowerIndicator.js';
 import { tryExplorationEvent, renderExplorationEvent, applyEventEffect, serializeExplorationEvents, deserializeExplorationEvents } from './core/ExplorationEvents.js';
 import { shouldPauseForAction, showBattleActionMenu, applyDefendAction, attemptFlee, ACTION_TYPE, setStrategicMode, isStrategicMode } from './core/BattleActionMenu.js';
+import { recordBattleStats, recordMaxStreak, showPlayerStatsPanel, serializePlayerStats, deserializePlayerStats, updateHighestLevel } from './core/PlayerStats.js';
+import { modalQueue } from './core/ModalQueue.js';
 import { shouldShowAnalysis, showPostCombatAnalysis } from './core/PostCombatAnalysis.js';
 import { showCharacterSheet } from './core/CharacterSheet.js';
 import { showWorldDashboard } from './core/WorldDashboard.js';
@@ -422,9 +424,14 @@ function _showChallengePreBattle(overlay, enemy, challenge) {
   });
 }
 
-function _executeChallengeRound(overlay, enemy, challenge) {
-  const result = executeBattle(enemy);
+async function _executeChallengeRound(overlay, enemy, challenge) {
+  const result = await executeBattle(enemy);
   
+  if (result.fled) {
+    const rewards = challengeState.endChallenge('retreat');
+    _showChallengeResults(overlay, rewards, 'retreat', challenge);
+    return;
+  }
   if (result.victory) {
     challengeState.recordVictory(enemy);
     
@@ -3878,7 +3885,7 @@ function _showMiniLootSummary(exp, gold, drops, rating) {
 }
 
 
-function startCombat(enemy, preScaledEnemy) {
+async function startCombat(enemy, preScaledEnemy) {
   // 战斗发起闪光
   renderer.flash('rgba(255, 50, 50)', 150);
   renderer.shake(3, 150);
@@ -3909,7 +3916,7 @@ function startCombat(enemy, preScaledEnemy) {
     const _hadTempBuffs = Object.keys(_tempBuffs).length > 0;
 
     const hpBeforeCombat = p.hp;
-  const result = executeBattle(scaledEnemy);
+  const result = await executeBattle(scaledEnemy);
   result._isBoss = !!(enemy.type === 'boss' || enemy.isBoss || enemy.bossId);
     // 清除临时战斗buff
     if (_hadTempBuffs) {
@@ -3924,6 +3931,31 @@ function startCombat(enemy, preScaledEnemy) {
     p.def = savedStats.def;
     p.crt = savedStats.crt;
   }
+
+  // ── 逃跑成功处理 ──
+  if (result.fled) {
+    renderer.addFloatText('💨 成功脱离！', p.x, p.y - 0.5, '#ffaa44');
+    audioEngine.playMove();
+    return;
+  }
+
+  // ── 记录玩家长期统计 ──
+  try {
+    recordBattleStats({
+      damageDealt: result.totalDamageDealt || 0,
+      damageTaken: result.totalDamageTaken || 0,
+      maxHit: gameState.stats.maxSingleHit || 0,
+      critCount: result.critCount || 0,
+      victory: result.victory,
+      isBoss: result._isBoss,
+      rounds: result.rounds || 0,
+      enemyName: scaledEnemy.name || enemy.name,
+    });
+    if (result.victory) {
+      recordMaxStreak(gameState.stats.killStreak || 0);
+    }
+    updateHighestLevel(p.level || 1);
+  } catch {}
 
   if (result.victory) {
     // 移除被击败的敌人并记录
