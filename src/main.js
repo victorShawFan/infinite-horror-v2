@@ -2994,6 +2994,108 @@ function checkNarrativeEvent() {
   });
 }
 
+
+// ── 战斗装备掉落弹窗 ──
+function _showEquipDropPanel(equipDrop) {
+  const p = gameState.player;
+  const slot = equipDrop.equipment?.slot || equipDrop.slot || 'weapon';
+  const newEquip = equipDrop.equipment || equipDrop;
+  const currentEquip = p[slot];
+  
+  // 计算属性对比
+  const newStats = { atk: newEquip.baseAtk || 0, def: newEquip.baseDef || 0, spd: newEquip.baseSpd || 0, hp: newEquip.baseHp || 0, crt: newEquip.baseCrt || 0 };
+  const curStats = currentEquip ? { atk: currentEquip.baseAtk || 0, def: currentEquip.baseDef || 0, spd: currentEquip.baseSpd || 0, hp: currentEquip.baseHp || 0, crt: currentEquip.baseCrt || 0 } : { atk: 0, def: 0, spd: 0, hp: 0, crt: 0 };
+  
+  const rarityColor = newEquip.rarity?.color || '#aaa';
+  const rarityName = newEquip.rarity?.name || '普通';
+  
+  function diffStr(key) {
+    const d = newStats[key] - curStats[key];
+    if (d > 0) return '<span style="color:#44ff88">+' + d + '</span>';
+    if (d < 0) return '<span style="color:#ff4444">' + d + '</span>';
+    return '<span style="color:#666">±0</span>';
+  }
+  
+  const overlay = document.getElementById('ui-overlay');
+  const panel = document.createElement('div');
+  panel.id = 'equip-drop-panel';
+  panel.style.cssText = 'position:absolute;top:0;left:0;right:0;bottom:0;z-index:260;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.75);animation:fadeIn 0.3s;';
+  panel.innerHTML = `
+    <div style="background:linear-gradient(180deg,rgba(10,10,25,0.98),rgba(5,5,15,0.98));border:1px solid ${rarityColor}44;border-radius:16px;padding:24px;max-width:420px;width:92%;box-shadow:0 0 40px ${rarityColor}22;">
+      <p style="text-align:center;color:${rarityColor};font-size:12px;letter-spacing:4px;margin-bottom:2px;">⚔ 装备掉落 ⚔</p>
+      <p style="text-align:center;color:${rarityColor};font-size:18px;font-weight:bold;margin-bottom:4px;text-shadow:0 0 8px ${rarityColor}44;">${newEquip.displayName || newEquip.name}</p>
+      <p style="text-align:center;color:#888;font-size:10px;margin-bottom:16px;">[${rarityName}] ${slot === 'weapon' ? '武器' : slot === 'armor' ? '护甲' : '饰品'}</p>
+      
+      <div style="display:flex;gap:12px;margin-bottom:16px;">
+        <div style="flex:1;background:rgba(255,255,255,0.02);border:1px solid ${rarityColor}22;border-radius:8px;padding:12px;">
+          <p style="color:${rarityColor};font-size:11px;margin-bottom:8px;text-align:center;">🆕 新装备</p>
+          ${newStats.atk ? '<p style="color:#ccc;font-size:12px;">⚔ ATK: ' + newStats.atk + '</p>' : ''}
+          ${newStats.def ? '<p style="color:#ccc;font-size:12px;">🛡 DEF: ' + newStats.def + '</p>' : ''}
+          ${newStats.spd ? '<p style="color:#ccc;font-size:12px;">💨 SPD: ' + newStats.spd + '</p>' : ''}
+          ${newStats.crt ? '<p style="color:#ccc;font-size:12px;">✦ CRT: ' + newStats.crt + '%</p>' : ''}
+          ${newStats.hp ? '<p style="color:#ccc;font-size:12px;">❤ HP: ' + newStats.hp + '</p>' : ''}
+        </div>
+        <div style="flex:0 0 60px;display:flex;flex-direction:column;align-items:center;justify-content:center;">
+          <p style="color:#555;font-size:10px;">对比</p>
+          ${newStats.atk || curStats.atk ? '<p style="font-size:11px;">ATK ' + diffStr('atk') + '</p>' : ''}
+          ${newStats.def || curStats.def ? '<p style="font-size:11px;">DEF ' + diffStr('def') + '</p>' : ''}
+          ${newStats.spd || curStats.spd ? '<p style="font-size:11px;">SPD ' + diffStr('spd') + '</p>' : ''}
+        </div>
+        <div style="flex:1;background:rgba(255,255,255,0.02);border:1px solid #33333366;border-radius:8px;padding:12px;">
+          <p style="color:#888;font-size:11px;margin-bottom:8px;text-align:center;">📌 当前装备</p>
+          ${currentEquip ? `
+            <p style="color:#aaa;font-size:13px;margin-bottom:4px;">${currentEquip.displayName || currentEquip.name}</p>
+            ${curStats.atk ? '<p style="color:#888;font-size:12px;">⚔ ATK: ' + curStats.atk + '</p>' : ''}
+            ${curStats.def ? '<p style="color:#888;font-size:12px;">🛡 DEF: ' + curStats.def + '</p>' : ''}
+            ${curStats.spd ? '<p style="color:#888;font-size:12px;">💨 SPD: ' + curStats.spd + '</p>' : ''}
+          ` : '<p style="color:#555;font-size:12px;">— 空 —</p>'}
+        </div>
+      </div>
+      
+      <div style="display:flex;gap:8px;justify-content:center;">
+        <button id="edp-equip" style="background:rgba(68,255,100,0.12);border:1px solid #44ff6644;color:#44ff66;padding:10px 20px;cursor:pointer;font-size:13px;font-family:inherit;border-radius:8px;">✓ 装备 (1)</button>
+        <button id="edp-stash" style="background:rgba(255,204,68,0.12);border:1px solid #ffcc4444;color:#ffcc44;padding:10px 20px;cursor:pointer;font-size:13px;font-family:inherit;border-radius:8px;">📦 仓库 (2)</button>
+        <button id="edp-discard" style="background:rgba(100,100,100,0.1);border:1px solid #555;color:#888;padding:10px 20px;cursor:pointer;font-size:13px;font-family:inherit;border-radius:8px;">✗ 丢弃 (3)</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(panel);
+  
+  const close = () => { panel.remove(); document.removeEventListener('keydown', edpKey); };
+  
+  const doEquip = () => {
+    if (currentEquip && !isStashFull()) addToStash(currentEquip);
+    p[slot] = newEquip;
+    renderer.addFloatText('✓ 已装备 ' + (newEquip.displayName || newEquip.name), p.x, p.y - 1, rarityColor);
+    renderer.notify('装备了 ' + (newEquip.displayName || newEquip.name), rarityColor, 90);
+    close();
+  };
+  const doStash = () => {
+    if (!isStashFull()) {
+      addToStash(newEquip);
+      renderer.notify('📦 已存入仓库', '#ffcc44', 60);
+    } else {
+      renderer.notify('⚠ 仓库已满，已自动丢弃', '#ff4444', 60);
+    }
+    close();
+  };
+  const doDiscard = () => {
+    renderer.notify('已丢弃 ' + (newEquip.displayName || newEquip.name), '#888', 60);
+    close();
+  };
+  
+  document.getElementById('edp-equip')?.addEventListener('click', doEquip);
+  document.getElementById('edp-stash')?.addEventListener('click', doStash);
+  document.getElementById('edp-discard')?.addEventListener('click', doDiscard);
+  
+  const edpKey = (e) => {
+    if (e.key === '1') doEquip();
+    else if (e.key === '2') doStash();
+    else if (e.key === '3' || e.key === 'Escape') doDiscard();
+  };
+  document.addEventListener('keydown', edpKey);
+}
+
 // ── 暂停菜单 (Esc) ──
 
 // ── 多存档槽管理面板 ──
@@ -3641,6 +3743,17 @@ function startCombat(enemy, preScaledEnemy) {
       } catch (e) { console.warn('RewardChoice:', e); }
     }
     combatResult = result;
+    
+    // ── 装备掉落弹窗（胜利时有装备掉落） ──
+    if (result.victory && result.drops) {
+      const equipDrops = result.drops.filter(d => d.type === 'equipment');
+      if (equipDrops.length > 0) {
+        setTimeout(() => {
+          for (const ed of equipDrops) _showEquipDropPanel(ed);
+        }, 500);
+      }
+    }
+    
     // 记录图鉴（含战败）
     if (!result.victory) { try { bestiary.record(scaledEnemy || enemy, { victory: false }); localStorage.setItem("ih_bestiary", JSON.stringify(bestiary.toJSON())); } catch {} }
     

@@ -338,6 +338,7 @@ export function executeBattle(enemy) {
   let playerMana = p.mana || 0;
   let round = 0;
   let _totalDmgDealt = 0, _totalDmgTaken = 0, _critHits = 0;
+  let _lootDrops = [];
   // 应用战斗姿态修正
   const _rawAtk = getEffectiveAtk(p);
   const _rawDef = getEffectiveDef(p);
@@ -1252,6 +1253,7 @@ if (chipFx.hasIceChip && enemy.atk !== enemyEffAtk) {
     try {
       const loot = generateLoot(enemy, gameState.chapter || 1);
       if (loot.length > 0) {
+        _lootDrops = loot;
         const lootLogs = formatLootLog(loot);
         for (const ll of lootLogs) log.push(ll);
         applyLoot(loot, p, gameState);
@@ -1432,7 +1434,7 @@ if (chipFx.hasIceChip && enemy.atk !== enemyEffAtk) {
     } catch {}
   }
 
-  return { victory: enemyHp <= 0, log, rounds: round, totalDamageDealt: _totalDmgDealt, totalDamageTaken: _totalDmgTaken, critCount: _critHits };
+  return { victory: enemyHp <= 0, log, rounds: round, totalDamageDealt: _totalDmgDealt, totalDamageTaken: _totalDmgTaken, critCount: _critHits, drops: _lootDrops };
 }
 
 // ── 有效属性计算 ──
