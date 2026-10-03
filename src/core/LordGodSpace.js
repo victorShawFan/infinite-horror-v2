@@ -25,6 +25,7 @@ import { renderJournalPanel } from './StoryJournal.js';
 import { renderIntelPanel } from './EnemyIntelSystem.js';
 import { renderWorldMap } from './WorldMap.js';
 import { renderProgressDashboard } from './ProgressDashboard.js';
+import { renderAwakeningPanel, canAwaken, performAwakening, getAwakeningLevel } from './AwakeningSystem.js';
 
 /** 主神空间商店/强化项目 */
 // 每次回到主神空间，每人只可替另一名队员承担一次强化
@@ -278,6 +279,7 @@ export function renderLordGodSpace(onClose) {
       { key: 'intel', name: '📋 敌人情报', color: '#44aaff' },
       { key: 'worldmap', name: '🌍 轮回之路', color: '#ff4444' },
       { key: 'progress', name: '📊 成长面板', color: '#aa88ff' },
+      { key: 'awakening', name: '⚡ 觉醒', color: '#ff4444' },
     ];
 
     overlay.innerHTML = `
@@ -396,6 +398,23 @@ export function renderLordGodSpace(onClose) {
         contentEl.innerHTML = renderProgressDashboard();
       } catch (e) {
         contentEl.innerHTML = '<p style="color:#666;text-align:center;padding:20px;">成长面板加载中…</p>';
+      }
+      return;
+    }
+
+    // ── 觉醒系统 ──
+    if (cat === 'awakening') {
+      try {
+        contentEl.innerHTML = renderAwakeningPanel(gameState.player, gameState.chapter);
+        window._performAwakening = () => {
+          const result = performAwakening(gameState.player);
+          if (result.success) {
+            contentEl.innerHTML = renderAwakeningPanel(gameState.player, gameState.chapter);
+          }
+          return result;
+        };
+      } catch (e) {
+        contentEl.innerHTML = '<p style="color:#666;text-align:center;padding:20px;">觉醒系统加载中…</p>';
       }
       return;
     }

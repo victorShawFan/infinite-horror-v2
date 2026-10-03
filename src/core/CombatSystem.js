@@ -44,6 +44,7 @@ import { addSyncGauge, getSyncGauge, executeSyncAttack, resetSyncGauge } from '.
 import { getIntelCombatBonus, recordDiscovery } from './EnemyIntelSystem.js';
 import { resetChainState, recordElementHit, recordStatusApplied, applyChainDamage, formatChainLog, getChainStats } from './ChainReaction.js';
 import { resetTactics, recordTacticalAction, onDefendChosen, consumeCharge, addCharge, getPositionModifier, switchPosition, isCounterWindow } from './CombatTactics.js';
+import { getAwakeningCombatBonuses, getAwakeningLevel } from './AwakeningSystem.js';
 
 // ── 伤害计算 ──
 export function calcDamage(attacker, defender, damageType = DAMAGE_TYPE.PHYSICAL, minDmg = 1) {
@@ -429,6 +430,17 @@ export async function executeBattle(enemy) {
   // ── 天赋觉醒战斗效果 ──
   let perkFx = {};
   try { perkFx = getPerkCombatEffects(); } catch {}
+  // ── 觉醒系统战斗加成 ──
+  let awakeningFx = {};
+  try { awakeningFx = getAwakeningCombatBonuses(); } catch {}
+  if (awakeningFx.atk) stanceMod.atk += awakeningFx.atk;
+  if (awakeningFx.def) stanceMod.def += awakeningFx.def;
+  if (awakeningFx.spd) stanceMod.spd = (stanceMod.spd || pSpd) + awakeningFx.spd;
+  if (awakeningFx.crt) stanceMod.crt = (stanceMod.crt || pCrt) + awakeningFx.crt;
+  if (awakeningFx.atk || awakeningFx.def) {
+    const aLv = getAwakeningLevel();
+    if (aLv > 0) log.push({ text: '⚡ 觉醒力量激活 (阶段' + aLv + ')', type: 'awakening' });
+  }
   let perkKillBonusAtk = 0; // 嗜血本能叠加
   let perkConsecutiveHits = 0; // 势不可挡连击计数
   let perkDeathResistUsed = false;

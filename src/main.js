@@ -160,6 +160,7 @@ import { setAtmosphere, removeAtmosphere } from './core/AtmosphereOverlay.js';
 import { getCompanionReaction, showCompanionReaction } from './core/CompanionBattleReaction.js';
 import { initFloorMastery, recordFloorKill, recordFloorCollect, recordFloorEvent, getFloorMasteryRewards, renderMasteryPopup, serializeFloorMastery, deserializeFloorMastery } from './core/FloorMastery.js';
 import { initBattleScene, startBattleScene, stopBattleScene, updateBattleState, playBattleResult, isBattleSceneActive } from './core/BattleScene.js';
+import { initAwakeningState, getAwakeningStage, getAwakeningLevel, canAwaken, performAwakening, getAwakeningCombatBonuses, getAwakeningSkills, renderAwakeningPanel, serializeAwakening, deserializeAwakening } from './core/AwakeningSystem.js';
 import { addJournalEntry, triggerChapterJournals, triggerChapterCompleteJournal, serializeJournal, deserializeJournal, renderJournalPanel } from './core/StoryJournal.js';
 import { getCanonState, resetCanonState } from './core/CanonState.js';
 import { announce, autoAnnounce, clearAnnouncements } from './core/CombatAnnouncer.js';
@@ -309,6 +310,7 @@ function autoSave(reason = '') {
     localStorage.setItem('ih_training', JSON.stringify(serializeTrainingRoom()));
     localStorage.setItem('ih_subplot', JSON.stringify(getSubplotSystem().toJSON()));
     localStorage.setItem('ih_mastery', JSON.stringify(serializeFloorMastery()));
+    try { localStorage.setItem('ih_awakening', JSON.stringify(serializeAwakening())); } catch {}
     localStorage.setItem('ih_journal', JSON.stringify(serializeJournal()));
     localStorage.setItem('ih_intel', JSON.stringify(serializeIntel()));
     localStorage.setItem('ih_sync', JSON.stringify(serializeSync()));
@@ -951,6 +953,7 @@ document.getElementById('btn-new-game').addEventListener('click', () => {
     try { const _ilData = localStorage.getItem('ih_intel'); if (_ilData) deserializeIntel(JSON.parse(_ilData)); } catch {}
     try { const _syData = localStorage.getItem('ih_sync'); if (_syData) deserializeSync(JSON.parse(_syData)); } catch {}
     try { const _msData = localStorage.getItem('ih_mastery'); if (_msData) deserializeFloorMastery(JSON.parse(_msData)); } catch {}
+    try { const _awkData = localStorage.getItem('ih_awakening'); if (_awkData) deserializeAwakening(JSON.parse(_awkData)); } catch {}
     try { const _dlData = localStorage.getItem('ih_daily'); if (_dlData) deserializeDaily(JSON.parse(_dlData));    } catch {}
       } catch {}
       const chapterGens = { 1: generateChapter1, 2: generateChapter2, 3: generateChapter3, 4: generateChapter4, 5: generateChapter5, 6: generateChapter6, 7: generateChapter7, 8: generateChapter8, 9: generateChapter9, 10: generateChapter10, 11: generateChapter11, 12: generateChapter12 };
@@ -4610,6 +4613,20 @@ async function startCombat(enemy, preScaledEnemy) {
   // 暴露玩家位置给战斗动画
   window._gamePlayerX = gameState.player.x;
     window._screenEffects = screenEffects;
+    // 觉醒系统面板
+    window._renderAwakeningPanel = () => renderAwakeningPanel(gameState.player, gameState.chapter);
+    window._canAwaken = () => canAwaken(gameState.player, gameState.chapter);
+    window._performAwakening = () => {
+      const result = performAwakening(gameState.player);
+      if (result.success) {
+        try { renderer.flash('#ffffff', 500); renderer.shake(5, 300); } catch {}
+        try { audioEngine.playLevelUp(); } catch {}
+        autoSave('觉醒');
+      }
+      return result;
+    };
+    window._getAwakeningLevel = getAwakeningLevel;
+    window._getAwakeningSkills = getAwakeningSkills;
   window._gamePlayerY = gameState.player.y;
 
   // 显示战斗HUD
