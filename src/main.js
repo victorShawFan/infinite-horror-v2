@@ -3905,6 +3905,18 @@ function startCombat(enemy, preScaledEnemy) {
       renderer.addFloatText(battleRating.icon + ' ' + battleRating.grade, gameState.player.x, gameState.player.y - 2.5, battleRating.color);
       renderer.addFloatText(`+${scaledEnemy.rewards?.exp || 0} EXP`, enemy.x, enemy.y - 1, 'rgb(170, 136, 255)');
       if (scaledEnemy.rewards?.gold) renderer.addFloatText(`+${scaledEnemy.rewards.gold}G`, enemy.x, enemy.y - 0.4, 'rgb(255, 204, 68)');
+      // 奖励飞行动画 — 经验和金币从敌人飞向HUD
+      try {
+        const TILE = 48;
+        const eScreenX = enemy.x * TILE + TILE / 2;
+        const eScreenY = enemy.y * TILE + TILE / 2;
+        renderer.addRewardFly('+' + (scaledEnemy.rewards?.exp || 0) + ' EXP', eScreenX, eScreenY, 130, 28, '#aa88ff', 900);
+        if (scaledEnemy.rewards?.gold) {
+          setTimeout(() => {
+            renderer.addRewardFly('+' + scaledEnemy.rewards.gold + 'G', eScreenX, eScreenY + 15, 130, 28, '#ffcc44', 900);
+          }, 200);
+        }
+      } catch {}
       // 词缀金币/经验加成
       const affixBonus = getAllAffixEffects(gameState.player);
       if (affixBonus.goldBonus > 0 && scaledEnemy.rewards?.gold) {

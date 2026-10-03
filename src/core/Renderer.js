@@ -96,6 +96,44 @@ export class Renderer {
     });
   }
 
+
+  // ── 奖励飞行动画 ──
+  addRewardFly(text, fromX, fromY, toX, toY, color = '#ffcc44', duration = 800) {
+    this._rewardFlies = this._rewardFlies || [];
+    this._rewardFlies.push({
+      text, fromX, fromY, toX, toY, color,
+      start: performance.now(),
+      duration,
+    });
+  }
+  
+  _drawRewardFlies(ctx) {
+    if (!this._rewardFlies || this._rewardFlies.length === 0) return;
+    const now = performance.now();
+    this._rewardFlies = this._rewardFlies.filter(r => {
+      const t = Math.min(1, (now - r.start) / r.duration);
+      if (t >= 1) return false;
+      
+      // Ease-out cubic
+      const ease = 1 - Math.pow(1 - t, 3);
+      const x = r.fromX + (r.toX - r.fromX) * ease;
+      const y = r.fromY + (r.toY - r.fromY) * ease - Math.sin(t * Math.PI) * 30;
+      const alpha = t < 0.8 ? 1 : 1 - (t - 0.8) / 0.2;
+      const scale = 0.8 + Math.sin(t * Math.PI * 0.5) * 0.4;
+      
+      ctx.save();
+      ctx.globalAlpha = alpha;
+      ctx.font = `bold ${Math.round(11 * scale)}px "Microsoft YaHei"`;
+      ctx.textAlign = 'center';
+      ctx.fillStyle = 'rgba(0,0,0,0.5)';
+      ctx.fillText(r.text, x + 1, y + 1);
+      ctx.fillStyle = r.color;
+      ctx.fillText(r.text, x, y);
+      ctx.restore();
+      return true;
+    });
+  }
+
   addParticle(x, y, color, count = 5) {
     for (let i = 0; i < count; i++) {
       this._particles.push({
@@ -186,6 +224,7 @@ export class Renderer {
 
     // ── 粒子 ──
     this._drawParticles(ctx);
+    this._drawRewardFlies(ctx);
     this._updateAmbientParticles(ctx, floor);
 
     ctx.restore();
