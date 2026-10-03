@@ -340,23 +340,23 @@ export function deserializeExplorationEvents(data) {
 EXPLORATION_EVENTS[3] = [
   {
     id: 'cursed_apartment',
-    title: '古代机关',
-    text: '墙壁上的浮雕开始缓缓移动，似乎触发了某种古代防御机制。沙子从天花板的缝隙中倾泻而下。',
+    title: '诅咒的公寓',
+    text: '推开门的瞬间温度骤降十度。传统和室中，茶杯里的茶还是温的。角落的电视机自动开启，画面是一个黑发女人……',
     choices: [
-      { text: '🔍 研究机关原理', result: { type: 'info', text: '你发现了机关的精妙之处。这种设计思路对战斗也有启发。CRT+8%', effect: { nextBattleCritBonus: 8, exp: 5 } } },
-      { text: '⚡ 快速通过', result: { type: 'risk', text: '成功冲了过去！肾上腺素让你的反应更快。', effect: { nextBattleCritBonus: 5 } } },
-      { text: '🔧 尝试解除', result: { type: 'gold', text: '机关解除后露出一个暗格，里面有金币和宝石。', effect: { gold: 50, exp: 8 } } },
+      { text: '📺 仔细观察', result: { type: 'info', text: '画面中隐约出现了逃生路线图。获得 +8% 暴击', effect: { nextBattleCritBonus: 8, exp: 5 } } },
+      { text: '🔇 关掉电视', result: { type: 'risk', text: '及时切断了诅咒传播。避免了精神伤害。', effect: { nextBattleCritBonus: 5 } } },
+      { text: '🏃 立刻离开', result: { type: 'gold', text: '直觉救了你。身后传来指甲抓地板的声音。但你发现了一个护符。', effect: { gold: 50, exp: 8 } } },
     ],
     weight: 8,
   },
   {
     id: 'ghost_child_stairs',
-    title: '壁画上的警告',
-    text: '一面保存完好的壁画描述着守墓者的力量。最后一幅画中，入侵者被吞噬在金色的光芒中。',
+    title: '楼梯间的孩子',
+    text: '一个苍白的小男孩蜷缩在楼梯角。他抬头看着你，嘴巴张开又闭上，像是想说什么。冰冷的气息笼罩着周围。',
     choices: [
-      { text: '📖 仔细研读', result: { type: 'info', text: '你理解了守墓者的弱点——他们依赖共鸣能量。下场Boss战+5%伤害', effect: { nextBattleBossDmgBonus: 5 } } },
-      { text: '🎨 临摹符文', result: { type: 'buff', text: '符文散发微弱光芒，似乎给了你某种防护。DEF+2', effect: { nextBattleAtkBonus: 2 } } },
-      { text: '🚶 继续前进', result: { type: 'safe', text: '你记住了壁画的位置。', effect: { exp: 3 } } },
+      { text: '🗣 蹲下问他', result: { type: 'info', text: '"妈妈……在阁楼……不要……去……" 他消失了。获得Boss情报。', effect: { nextBattleBossDmgBonus: 5 } } },
+      { text: '🤲 递出食物', result: { type: 'buff', text: '孩子眼中闪过一丝温暖，随后化为光点消散。业力上升。', effect: { nextBattleAtkBonus: 2, karma: 8 } } },
+      { text: '🚶 无视通过', result: { type: 'safe', text: '你选择不与未知交互。安全但错过了什么。', effect: { exp: 3 } } },
     ],
     weight: 7,
   },
@@ -365,56 +365,78 @@ EXPLORATION_EVENTS[3] = [
 // 第4章: 死神绝境
 EXPLORATION_EVENTS[4] = [
   {
-    id: 'death_note_page',
-    title: '黑色笔记本残页',
-    text: '地上散落着几页黑色纸张，上面写满了名字。你能感受到其中蕴含的不祥力量。',
+    id: 'ancient_mechanism',
+    title: '古墓机关',
+    text: '墙壁上的浮雕开始缓缓移动，触发了某种古代防御机制。沙子从天花板的缝隙中倾泻而下。',
     choices: [
-      { text: '📜 阅读内容', result: { type: 'info', text: '名字旁边标注了死因规则。这是极其珍贵的情报。下场战斗CRT+12%', effect: { nextBattleCritBonus: 12, karma: -3 } } },
-      { text: '🔥 立刻烧毁', result: { type: 'karma', text: '火焰将纸页化为灰烬。你做了正确的事。业力大幅上升。', effect: { karma: 15, heal: 10 } } },
-      { text: '📦 收入背包', result: { type: 'loot', text: '也许以后用得上……但你感到一阵寒意。', effect: { nextBattleAtkBonus: 5, karma: -8 } } },
+      { text: '🔍 研究机关原理', result: { type: 'info', text: '你发现了法老防御体系的精妙之处。CRT+8%', effect: { nextBattleCritBonus: 8, exp: 5 } } },
+      { text: '⚡ 快速通过', result: { type: 'risk', text: '成功冲了过去！肾上腺素让你的反应更快。', effect: { nextBattleCritBonus: 5 } } },
+      { text: '🔧 尝试解除', result: { type: 'gold', text: '机关解除后露出一个暗格，里面有金币和宝石。', effect: { gold: 50, exp: 8 } } },
     ],
-    weight: 10,
+    weight: 8,
   },
   {
-    id: 'shinigami_glimpse',
-    title: '模糊的身影',
-    text: '角落里，一个苍白的身影一闪而过。空气中传来沙沙的写字声，然后一切归于寂静。',
+    id: 'pharaoh_mural',
+    title: '法老壁画',
+    text: '一面保存完好的壁画描述着伊莫顿的复活仪式。最后一幅画中，入侵者被吞噬在黑色沙暴中。',
     choices: [
-      { text: '🔍 追上去看看', result: { type: 'risk', text: '你什么都没追到，但在墙角发现了一些金币。', effect: { gold: 25 } } },
-      { text: '🧘 保持冷静', result: { type: 'safe', text: '你控制住了恐惧。精神力得到了锻炼。', effect: { exp: 10, healPercent: 0.05 } } },
-      { text: '🏃 反方向逃', result: { type: 'escape', text: '明智的选择。有些东西不该去招惹。', effect: {} } },
+      { text: '📖 仔细研读', result: { type: 'info', text: '你理解了伊莫顿的弱点——他依赖太阳金经的反面。下场Boss战+5%伤害', effect: { nextBattleBossDmgBonus: 5 } } },
+      { text: '🎨 临摹象形文字', result: { type: 'buff', text: '古老符文散发微弱光芒，给了你某种防护。DEF+2', effect: { nextBattleDefBonus: 2 } } },
+      { text: '🚶 继续深入', result: { type: 'safe', text: '你记住了壁画的位置。', effect: { exp: 3 } } },
     ],
-    weight: 6,
+    weight: 7,
   },
 ];
 
 // 第5章: 异形再临
 EXPLORATION_EVENTS[5] = [
   {
-    id: 'xenomorph_molt',
-    title: '脱落的外骨骼',
-    text: '一具完整的异形外骨骼躺在走廊中央。它的主人在某处进化成了更危险的形态。',
+    id: 'death_omen',
+    title: '死神的征兆',
+    text: '街道上一切看起来正常——直到你注意到一只鸽子撞上了玻璃，水管在微微渗漏，电线在风中晃动。这些都不是巧合。',
     choices: [
-      { text: '🔬 分析弱点', result: { type: 'info', text: '外骨骼的关节处最薄弱。针对性攻击可以更有效。ATK+3', effect: { nextBattleAtkBonus: 3, exp: 8 } } },
-      { text: '🛡 制作护甲', result: { type: 'buff', text: '用外骨骼碎片加固了你的装备。DEF临时+2', effect: { nextBattleAtkBonus: 2, def: 1 } } },
-      { text: '🧪 提取酸液', result: { type: 'loot', text: '小心翼翼地提取了一瓶异形酸血。可用作攻击增强。', effect: { nextBattleAtkBonus: 4 } } },
+      { text: '🔍 分析因果链', result: { type: 'info', text: '你推演出死神的下一步设计：水+电=连锁。预知让你提前准备。', effect: { nextBattleCritBonus: 10, exp: 8 } } },
+      { text: '⚠ 警告同伴', result: { type: 'buff', text: '队友们提高了警觉。全队DEF临时提升。', effect: { nextBattleDefBonus: 4, karma: 5 } } },
+      { text: '🏃 快速离开', result: { type: 'safe', text: '你选择远离这个区域。安全，但也许错过了线索。', effect: { exp: 5 } } },
     ],
-    weight: 9,
+    weight: 8,
+  },
+  {
+    id: 'chain_accident',
+    title: '连锁事故现场',
+    text: '前方道路上发生了一起离奇的交通事故。碎玻璃、漏油、断裂的电缆……死神的设计链正在展开。',
+    choices: [
+      { text: '🛑 阻止连锁', result: { type: 'info', text: '你切断了电缆，阻止了连锁反应。张杰投来赞许的目光。', effect: { nextBattleBossDmgBonus: 5, karma: 10 } } },
+      { text: '🔧 收集材料', result: { type: 'gold', text: '事故现场的残骸中有些材料可以利用。', effect: { gold: 40, exp: 5 } } },
+      { text: '↩ 绕路走', result: { type: 'safe', text: '小心绕过了危险区域。', effect: { heal: 10 } } },
+    ],
+    weight: 7,
   },
 ];
 
 // 第6章: 恶魔初临
 EXPLORATION_EVENTS[6] = [
   {
-    id: 'demonic_altar',
-    title: '恶魔祭坛',
-    text: '房间中央是一座黑石祭坛，上面放着一颗跳动的暗红色宝石。空气中弥漫着硫磺的气味。',
+    id: 'evolved_xenomorph',
+    title: '进化异形残骸',
+    text: '实验船的走廊里，一具新型异形的残骸靠在墙边。它的外骨骼比你之前见过的更厚，形态也不同——更接近人类。',
     choices: [
-      { text: '💎 触碰宝石', result: { type: 'risk', text: '黑暗能量涌入你的身体！力量暴增但精神受创。', effect: { nextBattleAtkBonus: 8, damage: 15, karma: -10 } } },
-      { text: '🔥 摧毁祭坛', result: { type: 'karma', text: '祭坛崩塌，邪恶的气息消散。你感到一阵轻松。', effect: { karma: 12, healPercent: 0.1 } } },
-      { text: '📖 研究铭文', result: { type: 'info', text: '铭文记载了恶魔的召唤规则和弱点。知识就是力量。', effect: { nextBattleCritBonus: 10, exp: 12 } } },
+      { text: '🔍 分析进化体', result: { type: 'info', text: '你发现了新型异形的弱点：进化让它们的酸血浓度降低了。CRT+8%', effect: { nextBattleCritBonus: 8, exp: 8 } } },
+      { text: '🧪 提取样本', result: { type: 'buff', text: '楚轩说这些数据对制定战术很有帮助。ATK+3', effect: { nextBattleAtkBonus: 3 } } },
+      { text: '🔥 焚烧残骸', result: { type: 'safe', text: '确保它不会再动。安全第一。', effect: { karma: 3, exp: 3 } } },
     ],
     weight: 8,
+  },
+  {
+    id: 'sealed_lab',
+    title: '封锁的实验舱',
+    text: '一扇厚重的隔离门上贴着"生物危害 IV级"的标识。门缝中渗出绿色的液体。里面传来异形幼体的嘶嘶声。',
+    choices: [
+      { text: '💣 炸开入口', result: { type: 'info', text: '实验舱中发现了异形皇后的进化数据。Boss战伤害+5%', effect: { nextBattleBossDmgBonus: 5 } } },
+      { text: '🔒 加固封锁', result: { type: 'buff', text: '你用焊枪加固了隔离门，阻止了异形扩散。DEF+3', effect: { nextBattleDefBonus: 3, karma: 5 } } },
+      { text: '🚶 标记后离开', result: { type: 'safe', text: '标记了位置，留给后续处理。', effect: { exp: 5 } } },
+    ],
+    weight: 7,
   },
 ];
 
@@ -424,25 +446,25 @@ for (let ch = 7; ch <= 12; ch++) {
 }
 
 EXPLORATION_EVENTS[7].push({
-  id: 'middle_earth_ruins',
-  title: '中洲废墟',
-  text: '断壁残垣中，一面完整的浮雕讲述着远古的战争。这里曾是人类最辉煌的文明中心。',
+  id: 'raccoon_city_ruins',
+  title: '浣熊市废墟',
+  text: '浣熊市已经是一片废墟。追踪者的脚步声在远处回荡。墙上用血写着"恶魔队已至"。',
   choices: [
-    { text: '📖 铭记历史', result: { type: 'info', text: '历史的教训让你更加坚定。意志增强。', effect: { exp: 15, karma: 5 } } },
-    { text: '🔍 搜索遗物', result: { type: 'loot', text: '在废墟中找到了一些有价值的文明碎片。', effect: { gold: 60 } } },
-    { text: '🧘 默祷', result: { type: 'heal', text: '在这片土地上的冥想带来了内心的平静。', effect: { healPercent: 0.15, karma: 8 } } },
+    { text: '🔍 分析血迹', result: { type: 'info', text: '血迹的方向暴露了恶魔队的行军路线。', effect: { exp: 15, karma: 5 } } },
+    { text: '⚔ 搜索武器', result: { type: 'loot', text: '在警察局废墟中找到了一些弹药和装备。', effect: { gold: 60 } } },
+    { text: '🛡 设置陷阱', result: { type: 'heal', text: '为可能的追踪者设下了警戒。短暂安心。', effect: { healPercent: 0.15, karma: 8 } } },
   ],
   weight: 7,
 });
 
 EXPLORATION_EVENTS[8].push({
-  id: 'star_map',
-  title: '星际航图',
-  text: '控制台上显示着错综复杂的星际航线。部分路线标记着"危险"和"未知"。',
+  id: 'dinosaur_trail',
+  title: '恐龙足迹',
+  text: '巨大的三趾足迹深深印在泥地上，间距超过两米。空气中弥漫着原始丛林的潮湿气息。远处传来低沉的咆哮。',
   choices: [
-    { text: '📡 下载数据', result: { type: 'info', text: '航线数据暗示了前方敌人的部署位置。', effect: { nextBattleCritBonus: 10 } } },
-    { text: '⚡ 修改航线', result: { type: 'buff', text: '调整后的航线避开了最危险的区域。', effect: { healPercent: 0.1, exp: 10 } } },
-    { text: '🔌 取走零件', result: { type: 'gold', text: '控制台的精密零件价值不菲。', effect: { gold: 45 } } },
+    { text: '🔍 追踪足迹', result: { type: 'info', text: '足迹指向巨龙巢穴。你标记了安全路线。', effect: { nextBattleCritBonus: 10 } } },
+    { text: '🌿 隐蔽观察', result: { type: 'buff', text: '你观察到恐龙的行为规律，找到了行动间隙。', effect: { healPercent: 0.1, exp: 10 } } },
+    { text: '🦴 收集骨骼', result: { type: 'gold', text: '龙族骨骼蕴含着古老的力量，可以换取奖励点。', effect: { gold: 45 } } },
   ],
   weight: 7,
 });
@@ -460,21 +482,21 @@ EXPLORATION_EVENTS[9].push({
 });
 
 EXPLORATION_EVENTS[10].push({
-  id: 'inner_demon',
-  title: '镜中的自己',
-  text: '一面完整的镜子立在走廊中央。镜中的你，表情冰冷，眼中没有任何情感。',
+  id: 'alliance_meeting',
+  title: '联盟会议遗址',
+  text: '一处临时营地的残迹。桌上散落着五队的旗帜——天神队的金色、恶魔队的黑色……联盟已经破裂。',
   choices: [
-    { text: '🗡 打碎镜子', result: { type: 'buff', text: '碎片散落，心魔暂时退却。攻击力暴增。', effect: { nextBattleAtkBonus: 6, karma: -3 } } },
-    { text: '🧘 直面心魔', result: { type: 'karma', text: '"我不会成为你。" 内心的力量在觉醒。', effect: { karma: 15, exp: 20, healPercent: 0.1 } } },
-    { text: '🚶 别过头走过', result: { type: 'safe', text: '有些东西等你准备好了再面对。', effect: { exp: 5 } } },
+    { text: '🔍 分析局势', result: { type: 'buff', text: '从残留物推断出各队的实力和意图。知己知彼。', effect: { nextBattleAtkBonus: 6, karma: -3 } } },
+    { text: '📜 收集情报', result: { type: 'karma', text: '天神队的作战笔记揭示了他们基因锁的弱点。', effect: { karma: 15, exp: 20, healPercent: 0.1 } } },
+    { text: '🚶 保持中立', result: { type: 'safe', text: '不留任何痕迹地离开。在混战中保持灵活。', effect: { exp: 5 } } },
   ],
   weight: 10,
 });
 
 EXPLORATION_EVENTS[11].push({
-  id: 'biochem_lab',
-  title: '生化实验室',
-  text: '残破的实验室里，试管中还有残留的各色液体。有些在发出诡异的荧光。',
+  id: 'nightmare_gate',
+  title: '噩梦之门',
+  text: '一扇半开的门后面，空间扭曲变形。现实和梦境的边界在此模糊——弗莱迪的领域近在咫尺。',
   choices: [
     { text: '🧪 分析样本', result: { type: 'info', text: '这是病毒的弱点样本！对最终Boss可能有用。', effect: { nextBattleBossDmgBonus: 8, exp: 15 } } },
     { text: '💉 注射强化剂', result: { type: 'risk', text: '身体短暂强化，但有副作用。', effect: { nextBattleAtkBonus: 6, nextBattleCritBonus: 8, damage: 10 } } },
