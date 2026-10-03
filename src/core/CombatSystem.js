@@ -33,6 +33,7 @@ import { processEnvironmentEffect } from './BattleEnvironment.js';
 import { getBossIntro, getBossPhaseDialogue, getBossLowHpLine, getBossDefeatLines, getBossKillPlayerLine, getBossPlayerLowHpLine } from './BossDialogue.js';
 import { getEnchantCombatBonus } from './EnchantSystem.js';
 import { initCombatAbilities, getAvailableAbilities, useCompanionAbility, tickAbilityCooldowns } from './CompanionAbilities.js';
+import { initComboState, recordCrit, recordElementalHit, recordWeaknessHit, recordCompanionAction, recordBlock, getComboBonus, formatComboLog } from './ComboSystem.js';
 import { getKarmaCombatModifiers, getKarmaLevel } from './KarmaSystem.js';
 
 // ── 伤害计算 ──
@@ -308,6 +309,7 @@ export function executeBattle(enemy) {
   
   // 初始化同伴技能
   try { initCombatAbilities(); } catch {}
+  try { initComboState(); } catch {}
 
   // ── 业力系统战斗修正 ──
   let karmaHealBonus = 0;
@@ -412,6 +414,8 @@ if (chipFx.hasIceChip && enemy.atk !== enemyEffAtk) {
   try { talentFx = getTalentEffects(gameState.talents) || {}; } catch {}
   let deathSaveUsed = false;
   let lastCrit = false;  // 用于连锁暴击
+  let _companionStunLeft = 0;
+  let _companionDmgReduce = 0;
 
   // ── Boss 相位系统 ──
   const bossPhases = enemy.bossId ? getBossPhases(enemy.bossId) : null;
@@ -508,6 +512,27 @@ if (chipFx.hasIceChip && enemy.atk !== enemyEffAtk) {
       }
     }
   } catch {}
+    // ── 同伴技能自动触发（每3回合或低血量） ──
+    try {
+      const avail = getAvailableAbilities().filter(a => a.ready);
+      if (avail.length > 0 && (round % 3 === 1 || playerHp < p.maxHp * 0.3)) {
+        let chosen = avail[0];
+        if (playerHp < p.maxHp * 0.4) {
+          const healer = avail.find(a => a.type === 'support');
+          if (healer) chosen = healer;
+        }
+        const caResult = useCompanionAbility(chosen.companionId);
+        if (caResult.success) {
+          for (const l of caResult.log) log.push(l);
+          if (caResult.damage > 0) { enemyHp = Math.max(0, enemyHp - caResult.damage); _totalDmgDealt += caResult.damage; }
+          if (caResult.heal > 0) playerHp = Math.min(p.maxHp, playerHp + caResult.heal);
+          if (caResult.stun > 0) _companionStunLeft = caResult.stun;
+          _companionDmgReduce = caResult.damageReduce || 0;
+          try { recordCompanionAction(); } catch {}
+        }
+      }
+    } catch {}
+
 
   let envCritBonus = 0;
   let envAtkMod = 0;
@@ -516,6 +541,8 @@ if (chipFx.hasIceChip && enemy.atk !== enemyEffAtk) {
   let playerLowHpBossLineTriggered = false;
   while (enemyHp > 0 && playerHp > 0) {
     round++;
+    // 同伴技能冷却
+    try { tickAbilityCooldowns(); } catch {}
     // 每回合重置环境修正
     envCritBonus = 0;
     envAtkMod = 0;
@@ -798,6 +825,7 @@ if (chipFx.hasIceChip && enemy.atk !== enemyEffAtk) {
       const hitLabel = isDouble ? `[${i + 1}击] ` : '';
       const multiLabel = atkMultiplier > 1 ? ' 💪强化！' : '';
       if (pHit.isCrit) { lastCrit = true; gameState.stats.criticalHits++; }
+      try { recordCrit(pHit.isCrit); } catch {}
       // 天赋：暴击伤害加成
       let finalDmg = pHit.damage;
       if (pHit.isCrit && (talentFx.critDmgBonus > 0 || stanceCritDmgBonus > 0)) {
@@ -855,7 +883,20 @@ if (chipFx.hasIceChip && enemy.atk !== enemyEffAtk) {
         playerHp, enemyHp, round,
       });
       _totalDmgDealt += finalDmg;
+      // 连击加成
+      try {
+        const combo = getComboBonus();
+        if (combo && combo.bonus > 0 && i === 0) {
+          const comboDmgBonus = Math.floor(finalDmg * combo.bonus);
+          if (comboDmgBonus > 0) {
+            enemyHp -= comboDmgBonus;
+            _totalDmgDealt += comboDmgBonus;
+            for (const cl of formatComboLog(combo)) log.push(cl);
+          }
+        }
+      } catch {};
       if (pHit.isCrit) _critHits++;
+      try { recordCrit(true); } catch {}
       if (finalDmg > gameState.stats.maxSingleHit) gameState.stats.maxSingleHit = finalDmg;
 
       // 装备吸血
@@ -1355,6 +1396,7 @@ if (chipFx.hasIceChip && enemy.atk !== enemyEffAtk) {
       }
       if (entry.type === 'enemy_attack' || entry.type === 'damage_taken') {
         _totalDmgTaken += (entry.damage || 0);
+      try { recordBlock(); } catch {}
       }
     }
   }
