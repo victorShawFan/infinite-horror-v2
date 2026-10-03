@@ -1058,7 +1058,7 @@ function startGame() {
     _showChallengePreBattle(overlay, enemy, challenge);
   });
 
-  // 实时战报更新 + HUD实时HP
+  // 实时战报更新 + HUD实时HP + 回合/MP
   eventBus.on('combat:log_update', (data) => {
     updateLiveBattleLog(data.log);
     // 同步更新战斗HUD的HP条
@@ -1068,6 +1068,23 @@ function startGame() {
       _updateCombatHUD(data.playerHp, pMax, Math.max(0, data.enemyHp / eMax));
       if (window._combatHUD.enemyText) {
         window._combatHUD.enemyText.textContent = 'HP ' + Math.max(0, data.enemyHp);
+      }
+    }
+    // 更新回合计数器
+    if (data.round !== undefined) {
+      const roundEl = document.getElementById('chud-round-counter');
+      if (roundEl) roundEl.textContent = '— 第 ' + (data.round + 1) + ' 回合 —';
+    }
+    // 更新法力条
+    if (data.playerMana !== undefined) {
+      const mpBar = document.getElementById('chud-player-mp');
+      const mpText = document.getElementById('chud-player-mp-text');
+      const pMaxMana = gameState.player.maxMana || 0;
+      if (mpBar && pMaxMana > 0) {
+        mpBar.style.width = Math.max(0, (data.playerMana / pMaxMana) * 100) + '%';
+      }
+      if (mpText && pMaxMana > 0) {
+        mpText.textContent = 'MP ' + data.playerMana + '/' + pMaxMana;
       }
     }
   });
@@ -3780,31 +3797,46 @@ function _showCombatHUD(player, enemy, scaledEnemy, initialPlayerHp) {
   const hud = document.createElement('div');
   hud.id = 'combat-hud';
   hud.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:150;pointer-events:none;' +
-    'display:flex;justify-content:center;gap:16px;padding:8px 20px;' +
-    'background:linear-gradient(180deg,rgba(0,0,0,0.7)0%,rgba(0,0,0,0)100%);' +
+    'display:flex;flex-direction:column;align-items:center;padding:6px 20px;' +
+    'background:linear-gradient(180deg,rgba(0,0,0,0.75)0%,rgba(0,0,0,0)100%);' +
     'animation:fadeIn 0.3s;';
   
   const _initHp = initialPlayerHp ?? player.hp;
   const pHpPct = Math.max(0, Math.min(100, (_initHp / player.maxHp) * 100));
-  const eHpPct = 100; // enemy starts at full
+  const eHpPct = 100;
+  const pMana = player.mana || 0;
+  const pMaxMana = player.maxMana || 0;
+  const pManaPct = pMaxMana > 0 ? Math.max(0, Math.min(100, (pMana / pMaxMana) * 100)) : 0;
+  const isBoss = !!(scaledEnemy.bossId || scaledEnemy.type === 'boss' || scaledEnemy.isBoss);
+  const enemyTierLabel = isBoss ? '<span style="color:#ff2244;font-size:9px;">💀 BOSS</span> ' : 
+    (scaledEnemy.affix ? '<span style="color:#cc44ff;font-size:9px;">⚡ ELITE</span> ' : '');
   
   hud.innerHTML = `
-    <div style="flex:1;max-width:220px;text-align:right;">
-      <p style="color:#44aaff;font-size:11px;letter-spacing:2px;margin-bottom:3px;">郑吒 Lv.${player.level}</p>
-      <div style="background:rgba(50,50,50,0.6);border-radius:4px;height:10px;overflow:hidden;position:relative;">
-        <div id="chud-player-hp" style="background:linear-gradient(90deg,#44ff88,#22cc66);width:${pHpPct}%;height:100%;transition:width 0.3s;border-radius:4px;"></div>
+    <div id="chud-round-counter" style="color:#888;font-size:9px;letter-spacing:3px;margin-bottom:3px;">— 战斗开始 —</div>
+    <div style="display:flex;justify-content:center;gap:16px;width:100%;">
+      <div style="flex:1;max-width:220px;text-align:right;">
+        <p style="color:#44aaff;font-size:11px;letter-spacing:2px;margin-bottom:2px;">郑吒 Lv.${player.level}</p>
+        <div style="background:rgba(50,50,50,0.6);border-radius:4px;height:10px;overflow:hidden;position:relative;">
+          <div id="chud-player-hp" style="background:linear-gradient(90deg,#44ff88,#22cc66);width:${pHpPct}%;height:100%;transition:width 0.3s;border-radius:4px;"></div>
+        </div>
+        <p id="chud-player-hp-text" style="color:#ccc;font-size:9px;margin-top:1px;">${_initHp}/${player.maxHp}</p>
+        ${pMaxMana > 0 ? `
+        <div style="background:rgba(50,50,50,0.4);border-radius:3px;height:5px;overflow:hidden;margin-top:2px;">
+          <div id="chud-player-mp" style="background:linear-gradient(90deg,#6688ff,#4466dd);width:${pManaPct}%;height:100%;transition:width 0.3s;border-radius:3px;"></div>
+        </div>
+        <p id="chud-player-mp-text" style="color:#8899cc;font-size:8px;margin-top:0px;">MP ${pMana}/${pMaxMana}</p>
+        ` : ''}
       </div>
-      <p id="chud-player-hp-text" style="color:#ccc;font-size:9px;margin-top:1px;">${_initHp}/${player.maxHp}</p>
-    </div>
-    <div style="display:flex;align-items:center;">
-      <span style="color:#ff4444;font-size:16px;font-weight:bold;text-shadow:0 0 8px rgba(255,68,68,0.4);">⚔</span>
-    </div>
-    <div style="flex:1;max-width:220px;">
-      <p style="color:#ff6644;font-size:11px;letter-spacing:2px;margin-bottom:3px;">${scaledEnemy.name}</p>
-      <div style="background:rgba(50,50,50,0.6);border-radius:4px;height:10px;overflow:hidden;position:relative;">
-        <div id="chud-enemy-hp" style="background:linear-gradient(90deg,#ff4444,#cc2222);width:100%;height:100%;transition:width 0.3s;border-radius:4px;"></div>
+      <div style="display:flex;align-items:center;">
+        <span style="color:#ff4444;font-size:16px;font-weight:bold;text-shadow:0 0 8px rgba(255,68,68,0.4);">⚔</span>
       </div>
-      <p id="chud-enemy-hp-text" style="color:#ccc;font-size:9px;margin-top:1px;">HP ${scaledEnemy.hp}</p>
+      <div style="flex:1;max-width:220px;">
+        <p style="color:#ff6644;font-size:11px;letter-spacing:2px;margin-bottom:2px;">${enemyTierLabel}${scaledEnemy.name}</p>
+        <div style="background:rgba(50,50,50,0.6);border-radius:4px;height:10px;overflow:hidden;position:relative;">
+          <div id="chud-enemy-hp" style="background:linear-gradient(90deg,#ff4444,#cc2222);width:100%;height:100%;transition:width 0.3s;border-radius:4px;"></div>
+        </div>
+        <p id="chud-enemy-hp-text" style="color:#ccc;font-size:9px;margin-top:1px;">HP ${scaledEnemy.hp}</p>
+      </div>
     </div>
   `;
   document.body.appendChild(hud);
