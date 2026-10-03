@@ -21,6 +21,7 @@ import { getEnemyIntent, renderIntentIndicator } from './EnemyIntentSystem.js';
 import { gameState } from './GameState.js';
 import { getAvailableSkills } from './SkillSystem.js';
 import { getCurrentOrder, setOrder, renderOrderSelector, ORDER_TYPE } from './TacticalOrders.js';
+import { getSyncGauge, executeSyncAttack, renderSyncGaugeHTML } from './SyncAttack.js';
 
 // ── 行动类型 ──
 export const ACTION_TYPE = {
@@ -29,6 +30,7 @@ export const ACTION_TYPE = {
   ITEM:     'item',
   DEFEND:   'defend',
   FLEE:     'flee',
+  SYNC:     'sync',
 };
 
 let _strategicMode = false;

@@ -163,6 +163,7 @@ import { addJournalEntry, triggerChapterJournals, triggerChapterCompleteJournal,
 import { getCanonState, resetCanonState } from './core/CanonState.js';
 import { announce, autoAnnounce, clearAnnouncements } from './core/CombatAnnouncer.js';
 import { showBossVictoryScreen } from './core/VictoryScreen.js';
+import { addSyncGauge, getSyncGauge, executeSyncAttack, renderSyncGaugeHTML, resetSyncGauge, serializeSync, deserializeSync } from './core/SyncAttack.js';
 import { recordEncounter, recordKill, recordDiscovery, getIntelCombatBonus, getEnemyIntel, getPreBattleIntelHTML, renderIntelPanel, serializeIntel, deserializeIntel, INTEL_LEVEL } from './core/EnemyIntelSystem.js';
 import { showChapterBriefing } from './core/ChapterBriefing.js';
 import { initCombatFXListeners, drawAllCombatFX, isHitStopped, updateAndDrawGhosts } from './core/CombatFX.js';
@@ -307,6 +308,7 @@ function autoSave(reason = '') {
     localStorage.setItem('ih_mastery', JSON.stringify(serializeFloorMastery()));
     localStorage.setItem('ih_journal', JSON.stringify(serializeJournal()));
     localStorage.setItem('ih_intel', JSON.stringify(serializeIntel()));
+    localStorage.setItem('ih_sync', JSON.stringify(serializeSync()));
     localStorage.setItem('ih_growth', JSON.stringify(serializeGrowth()));
     localStorage.setItem('ih_statalloc', JSON.stringify(serializeStatAllocation()));
     localStorage.setItem('ih_abyss', JSON.stringify(serializeAbyss()));
@@ -944,6 +946,7 @@ document.getElementById('btn-new-game').addEventListener('click', () => {
     try { const _abData = localStorage.getItem('ih_abyss'); if (_abData) deserializeAbyss(JSON.parse(_abData)); } catch {}
     try { const _jlData = localStorage.getItem('ih_journal'); if (_jlData) deserializeJournal(JSON.parse(_jlData)); } catch {}
     try { const _ilData = localStorage.getItem('ih_intel'); if (_ilData) deserializeIntel(JSON.parse(_ilData)); } catch {}
+    try { const _syData = localStorage.getItem('ih_sync'); if (_syData) deserializeSync(JSON.parse(_syData)); } catch {}
     try { const _msData = localStorage.getItem('ih_mastery'); if (_msData) deserializeFloorMastery(JSON.parse(_msData)); } catch {}
     try { const _dlData = localStorage.getItem('ih_daily'); if (_dlData) deserializeDaily(JSON.parse(_dlData));    } catch {}
       } catch {}
