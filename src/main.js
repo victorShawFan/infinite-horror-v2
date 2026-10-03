@@ -158,6 +158,7 @@ import { playEncounterIntro, shouldPlayEncounterIntro } from './core/CombatEncou
 import './core/DamagePopup.js'; // 伤害飘字（自动监听combat:log_update）
 import { setAtmosphere, removeAtmosphere } from './core/AtmosphereOverlay.js';
 import { getCompanionReaction, showCompanionReaction } from './core/CompanionBattleReaction.js';
+import { initFloorMastery, recordFloorKill, recordFloorCollect, recordFloorEvent, getFloorMasteryRewards, renderMasteryPopup, serializeFloorMastery, deserializeFloorMastery } from './core/FloorMastery.js';
 import { getCanonState, resetCanonState } from './core/CanonState.js';
 import { showChapterBriefing } from './core/ChapterBriefing.js';
 import { initCombatFXListeners, drawAllCombatFX, isHitStopped, updateAndDrawGhosts } from './core/CombatFX.js';
@@ -219,6 +220,7 @@ function autoSave(reason = '') {
     localStorage.setItem('ih_canon', JSON.stringify(getCanonState().toJSON()));
     localStorage.setItem('ih_training', JSON.stringify(serializeTrainingRoom()));
     localStorage.setItem('ih_subplot', JSON.stringify(getSubplotSystem().toJSON()));
+    localStorage.setItem('ih_mastery', JSON.stringify(serializeFloorMastery()));
     localStorage.setItem('ih_growth', JSON.stringify(serializeGrowth()));
     localStorage.setItem('ih_statalloc', JSON.stringify(serializeStatAllocation()));
     localStorage.setItem('ih_abyss', JSON.stringify(serializeAbyss()));
@@ -1506,6 +1508,8 @@ function loadFloor(index, isAdvancing) {
 function showFloorTitle(floor) {
   // 设置章节氛围效果
   try { setAtmosphere(gameState.chapter); } catch {}
+  // 初始化楼层精通追踪
+  try { initFloorMastery(floor.id, floor.entities || entities || []); } catch {}
   const sceneBgMap = {
     '1-1': '/assets/scenes/1-1_列车醒来_背景.jpg',
     '1-2': '/assets/scenes/1-2_蜂巢入口_背景.jpg',
@@ -4282,6 +4286,7 @@ async function startCombat(enemy, preScaledEnemy) {
     const idx = entities.indexOf(enemy);
     if (idx >= 0) entities.splice(idx, 1);
     gameState.markEntityRemoved(currentFloorIndex, enemy.id);
+    try { recordFloorKill(chapter.floors[currentFloorIndex]?.id); } catch {}
     
         // 记录怪物图鉴
     try { const actualDamageTaken = Math.max(0, hpBeforeCombat - gameState.player.hp); bestiary.record(scaledEnemy, { victory: true, damageDealt: scaledEnemy.hp, damageTaken: actualDamageTaken }); } catch {}
@@ -4847,6 +4852,7 @@ function pickupItem(item) {
   const idx = entities.indexOf(item);
   if (idx >= 0) entities.splice(idx, 1);
   gameState.markEntityRemoved(currentFloorIndex, item.id);
+  try { recordFloorCollect(chapter.floors[currentFloorIndex]?.id); } catch {}
 
   eventBus.emit('item:pickup', item);
   return true;
@@ -5426,6 +5432,17 @@ function toggleGeneLock() {
 // ── 章节完成 ──
 function showChapterComplete() {
   autoSave('章节完成');
+  // 显示楼层精通
+  try {
+    const floorId = chapter.floors[currentFloorIndex]?.id;
+    const masteryRewards = getFloorMasteryRewards(floorId, gameState.chapter);
+    if (masteryRewards.stars > 0) {
+      const p = gameState.player;
+      p.exp = (p.exp || 0) + masteryRewards.exp;
+      p.gold = (p.gold || 0) + masteryRewards.gold;
+      if (masteryRewards.rewardPoints > 0) p.rewardPoints = (p.rewardPoints || 0) + masteryRewards.rewardPoints;
+    }
+  } catch {}
   // 记录本章敌人供训练房使用
   try { recordChapterEnemies(entities.filter(e => e.type === 'enemy' || e.type === 'boss')); } catch {}
   // 章节通关支线奖励
