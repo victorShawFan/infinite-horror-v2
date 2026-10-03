@@ -12,6 +12,7 @@
 import { eventBus } from './EventBus.js';
 import { random as seededRandom } from './RandomSystem.js';
 import { gameState } from './GameState.js';
+import { getSubplotSystem } from './SubplotSystem.js';
 
 const EXPLORATION_EVENTS = {
   // ── 第1章：生化危机 ──
@@ -23,7 +24,7 @@ const EXPLORATION_EVENTS = {
       choices: [
         { text: '📋 检查记录', result: { type: 'info', text: '"T-病毒变异体对火焰有明显弱点。红后安保系统可通过C-2走廊绕过。" — 获得战术情报', effect: { nextBattleCritBonus: 10 } } },
         { text: '🔍 搜索装备', result: { type: 'loot', text: '在研究员的口袋里找到一支急救针和安保卡。', effect: { heal: 15 } } },
-        { text: '🚶 默哀后离开', result: { type: 'karma', text: '"愿你安息。" 你为这位无辜的牺牲者合上了眼睛。', effect: { karma: 5 } } },
+        { text: '🚶 默哀后离开', result: { type: 'karma', text: '"愿你安息。" 你为这位无辜的牺牲者合上了眼睛。', effect: { karma: 5, subplot: 'D', subplotId: 'ch1_corpse_respect' } } },
       ],
       weight: 10,
     },
@@ -69,7 +70,7 @@ const EXPLORATION_EVENTS = {
       text: '通风管尽头是一个闷热潮湿的空间。地面排列着数十个半透明的异形卵，卵顶在微微张合。',
       choices: [
         { text: '🔥 焚烧虫卵', result: { type: 'info', text: '你用火焰将卵室烧成焦炭。减少了后续遭遇抱脸虫的风险。', effect: { nextBattleBossDmgBonus: 5 } } },
-        { text: '🔍 小心取样', result: { type: 'karma', text: '楚轩说样本也许对分析异形弱点有用。你冒险取了一份。', effect: { karma: 10, heal: 5 } } },
+        { text: '🔍 小心取样', result: { type: 'karma', text: '楚轩说样本也许对分析异形弱点有用。你冒险取了一份。', effect: { karma: 10, heal: 5, subplot: 'D', subplotId: 'ch2_sample_collect' } } },
         { text: '⚡ 全力破坏', result: { type: 'neutral', text: '你暴力摧毁了整个卵室，在废墟中发现了士兵装备。', effect: { nextBattleAtkBonus: 5 } } },
       ],
       weight: 8,
@@ -274,6 +275,12 @@ export function applyEventEffect(effect, player) {
   if (effect.nextBattleAtkBonus) { gameState._tempCombatBuffs = gameState._tempCombatBuffs || {}; gameState._tempCombatBuffs.atkBonus = (gameState._tempCombatBuffs.atkBonus || 0) + effect.nextBattleAtkBonus; }
   if (effect.nextBattleEnemyAtkReduce) { gameState._tempCombatBuffs = gameState._tempCombatBuffs || {}; gameState._tempCombatBuffs.enemyAtkReduce = (gameState._tempCombatBuffs.enemyAtkReduce || 0) + effect.nextBattleEnemyAtkReduce; }
   if (effect.nextBattleBossDmgBonus) { gameState._tempCombatBuffs = gameState._tempCombatBuffs || {}; gameState._tempCombatBuffs.bossDmgBonus = (gameState._tempCombatBuffs.bossDmgBonus || 0) + effect.nextBattleBossDmgBonus; }
+  // 支线剧情奖励
+  if (effect.subplot) {
+    const ss = getSubplotSystem();
+    ss.earn(effect.subplot, effect.subplotId);
+  }
+
   if (effect.companionBonus) {
     // 随机增加一个同伴关系
     const comps = (gameState.companions || []).filter(c => c.alive);

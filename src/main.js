@@ -5324,6 +5324,14 @@ function toggleGeneLock() {
 // ── 章节完成 ──
 function showChapterComplete() {
   autoSave('章节完成');
+  // 章节通关支线奖励
+  try {
+    const ss = getSubplotSystem();
+    const rating = gameState.stats.lastBattleRating || 'C';
+    const subplotRank = rating === 'SS' || rating === 'S' ? 'B' : rating === 'A' ? 'C' : 'D';
+    ss.earn(subplotRank, 'ch' + gameState.chapter + '_clear');
+    if (gameState.stats.deathCount === 0) ss.earn('C', 'ch' + gameState.chapter + '_deathless');
+  } catch {}
   // 记录成长快照
   try { const _p = gameState.player; const _s = gameState.stats; recordChapterSnapshot(gameState.chapter, { level: _p.level, maxHp: _p.maxHp, atk: _p.atk, def: _p.def, spd: _p.spd || 5, crt: _p.crt || 0, gold: _p.gold || 0, geneLock: _p.geneLock || 0, activeBloodline: _p.activeBloodline, _totalKills: _s.enemiesKilled, _totalDeaths: _s.deathCount, weapon: _p.weapon, armor: _p.armor }); } catch {}
   // Save max unlocked chapter
