@@ -39,12 +39,13 @@ import { shouldPauseForAction, showBattleActionMenu, applyDefendAction, attemptF
 import { getRelicCombatEffects, hasRelic } from './RelicSystem.js';
 import { getPerkCombatEffects } from './PerkSystem.js';
 import { getEnemyIntent } from './EnemyIntentSystem.js';
+import { random as seededRandom, chance as seededChance } from './RandomSystem.js';
 
 // ── 伤害计算 ──
 export function calcDamage(attacker, defender, damageType = DAMAGE_TYPE.PHYSICAL, minDmg = 1) {
   let baseDmg = Math.max(minDmg, attacker.atk - defender.def);
   // 伤害浮动 ±15%，增加战斗不确定性
-  const variance = 0.85 + Math.random() * 0.30;
+  const variance = 0.85 + seededRandom() * 0.30;
   baseDmg = Math.max(minDmg, Math.floor(baseDmg * variance));
 
   const isWeak = defender.weaknesses?.includes(damageType) || false;
@@ -61,7 +62,7 @@ export function calcDamage(attacker, defender, damageType = DAMAGE_TYPE.PHYSICAL
     baseDmg = Math.max(minDmg, Math.floor(baseDmg * (1 - defender.physicalResist)));
   }
 
-  const critRoll = Math.random() * 100;
+  const critRoll = seededRandom() * 100;
   const isCrit = critRoll < (attacker.crt || 0);
   if (isCrit) baseDmg = Math.floor(baseDmg * 1.8);
 
@@ -843,7 +844,7 @@ if (chipFx.hasIceChip && enemy.atk !== enemyEffAtk) {
     let _defendActive = false;
     if (shouldPauseForAction(round, enemy, playerHp, p.maxHp, combatState)) {
       // 更新实时战报
-      eventBus.emit('combat:log_update', { log: [...log], round, playerHp, enemyHp, playerMaxHp: p.maxHp, enemyMaxHp, playerMana });
+      eventBus.emit('combat:log_update', { log: [...log], round, playerHp, enemyHp, playerMaxHp: p.maxHp, enemyMaxHp, playerMana, statusEffects: combatState.statusEffects, relicFx: relicFx || {}, perkFx: perkFx || {} });
       _actionChoice = await showBattleActionMenu(
         { ...p, hp: playerHp, mana: playerMana },
         { ...enemy, hp: enemyHp },
@@ -901,7 +902,7 @@ if (chipFx.hasIceChip && enemy.atk !== enemyEffAtk) {
             log.push({ text: '📦 ' + usedItem.name + ' 清除负面状态！', type: 'buff' });
           }
           // 更新ConsumableSystem统计
-          try { if (typeof _stats !== 'undefined') _stats.consumablesUsed++; } catch {}
+          try { gameState.stats.consumablesUsed = (gameState.stats.consumablesUsed || 0) + 1; } catch {}
           inv.splice(itemIdx, 1);
         }
         // 使用道具后仍可正常攻击，不跳过
@@ -1630,7 +1631,7 @@ if (chipFx.hasIceChip && enemy.atk !== enemyEffAtk) {
   }
 
   // 最终战报更新
-  eventBus.emit('combat:log_update', { log: [...log], round, playerHp, enemyHp, playerMaxHp: p.maxHp, enemyMaxHp, playerMana, final: true });
+  eventBus.emit('combat:log_update', { log: [...log], round, playerHp, enemyHp, playerMaxHp: p.maxHp, enemyMaxHp, playerMana, final: true, statusEffects: combatState.statusEffects, relicFx: relicFx || {}, perkFx: perkFx || {} });
   return { victory: enemyHp <= 0, log, rounds: round, totalDamageDealt: _totalDmgDealt, totalDamageTaken: _totalDmgTaken, critCount: _critHits, drops: _lootDrops };
 }
 

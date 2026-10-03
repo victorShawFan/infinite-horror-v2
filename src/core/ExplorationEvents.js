@@ -10,6 +10,7 @@
 // ═══════════════════════════════════════════════════════════════
 
 import { eventBus } from './EventBus.js';
+import { random as seededRandom } from './RandomSystem.js';
 import { gameState } from './GameState.js';
 
 const EXPLORATION_EVENTS = {
@@ -83,7 +84,7 @@ const EXPLORATION_EVENTS = {
       choices: [
         { text: '🧘 冥想恢复', result: { type: 'heal', text: '静下心来，伤口在缓慢愈合。', effect: { healPercent: 0.15 } } },
         { text: '⚔ 练习技巧', result: { type: 'buff', text: '对战斗技巧的理解更深了。获得少量经验。', effect: { exp: 10 } } },
-        { text: '🔍 搜索周围', result: { type: 'loot', text: '运气不错，找到了一些金币。', effect: { gold: 15 + Math.floor(Math.random() * 20) } } },
+        { text: '🔍 搜索周围', result: { type: 'loot', text: '运气不错，找到了一些金币。', effect: { gold: 15 + Math.floor(seededRandom() * 20) } } },
       ],
       weight: 5,
     },
@@ -115,7 +116,7 @@ const EXPLORATION_EVENTS = {
       text: '前方地面有规律的裂缝，墙壁上有些不自然的小孔。这看起来像是某种机关。',
       choices: [
         { text: '🔍 仔细观察后通过', result: { type: 'safe', text: '你发现了机关的触发规律，安全通过。获得经验。', effect: { exp: 8 } } },
-        { text: '⚡ 快速冲过', result: { type: 'risk', text: Math.random() > 0.4 ? '运气不错，安全通过！' : '触发了陷阱！', effect: Math.random() > 0.4 ? { exp: 5 } : { damage: 10 } } },
+        { text: '⚡ 快速冲过', result: { type: 'risk', text: seededRandom() > 0.4 ? '运气不错，安全通过！' : '触发了陷阱！', effect: seededRandom() > 0.4 ? { exp: 5 } : { damage: 10 } } },
         { text: '↩ 寻找其他路径', result: { type: 'safe', text: '绕道但安全。', effect: {} } },
       ],
       weight: 5,
@@ -140,7 +141,7 @@ export function tryExplorationEvent() {
   
   // 概率判定
   const chance = BASE_EVENT_CHANCE + (turn - _lastEventTurn - 5) * 0.02; // 越久越可能
-  if (Math.random() > chance) return null;
+  if (seededRandom() > chance) return null;
   
   // 获取可用事件池
   const chapter = gameState.chapter || 1;
@@ -156,7 +157,7 @@ export function tryExplorationEvent() {
   
   // 加权随机选择
   const totalWeight = allEvents.reduce((sum, e) => sum + (e.weight || 1), 0);
-  let roll = Math.random() * totalWeight;
+  let roll = seededRandom() * totalWeight;
   let selected = allEvents[0];
   for (const evt of allEvents) {
     roll -= evt.weight || 1;
@@ -277,7 +278,7 @@ export function applyEventEffect(effect, player) {
     // 随机增加一个同伴关系
     const comps = (gameState.companions || []).filter(c => c.alive);
     if (comps.length > 0) {
-      const c = comps[Math.floor(Math.random() * comps.length)];
+      const c = comps[Math.floor(seededRandom() * comps.length)];
       const rels = gameState.relationships || {};
       if (rels[c.id]) rels[c.id] = Math.min(100, (rels[c.id] || 0) + 5);
     }
@@ -643,5 +644,163 @@ EXPLORATION_EVENTS[12].push(
       { text: '🌙 默默看星空', result: { type: 'heal', text: '也许这是最后一次仰望星空了。但活着的每一刻都值得珍惜。', effect: { healPercent: 0.2, karma: 8, exp: 10 } } },
     ],
     weight: 10,
+  }
+);
+
+// ═══ 补充探索事件 — Ch1-Ch6各增2个，提升前期体验 ═══
+
+// ── 第1章补充 ──
+EXPLORATION_EVENTS[1].push(
+  {
+    id: 'distress_signal',
+    title: '求救信号',
+    text: '通讯器突然收到一段微弱的求救信号。"……被困在……C区……还有幸存者……"信号时断时续。',
+    choices: [
+      { text: '📡 追踪信号源', result: { type: 'info', text: '循着信号找到了一间密室，墙上刻着异形巢穴的弱点。', effect: { nextBattleCritBonus: 12, exp: 8 } } },
+      { text: '⚠ 这可能是陷阱', result: { type: 'safe', text: '保持警惕是明智的。你绕过了那个区域。', effect: { karma: 3, exp: 3 } } },
+      { text: '📢 回复信号', result: { type: 'karma', text: '"我们来了，坚持住！" 即使无人回应，你知道自己做了该做的事。', effect: { karma: 8, healPercent: 0.05 } } },
+    ],
+    weight: 7,
+  },
+  {
+    id: 'acid_pool',
+    title: '酸液积洼',
+    text: '走廊尽头，地面被腐蚀出一个巨大的凹坑，里面满是异形的酸血。浓烈的酸味刺激着鼻腔。',
+    choices: [
+      { text: '🧪 收集酸液样本', result: { type: 'buff', text: '小心翼翼地收集了一些。这些酸液可以腐蚀敌人的护甲。', effect: { nextBattleAtkBonus: 4, exp: 5 } } },
+      { text: '🔍 查看被腐蚀的物品', result: { type: 'loot', text: '在酸液边缘发现了半溶解的军用装备，还有些可用的零件。', effect: { gold: 40 } } },
+      { text: '🚶 绕道而行', result: { type: 'safe', text: '不值得冒险。你找到了另一条更安全的路线。', effect: { exp: 3 } } },
+    ],
+    weight: 6,
+  }
+);
+
+// ── 第2章补充 ──
+EXPLORATION_EVENTS[2].push(
+  {
+    id: 'cursed_mirror',
+    title: '诅咒之镜',
+    text: '一面落满灰尘的镜子。当你走过时，镜中映出的不是你——而是一个苍白的、黑发遮面的女人。',
+    choices: [
+      { text: '🔍 直视镜中', result: { type: 'info', text: '女人的影像消散了。在她消失的位置，镜面上浮现出一行字——是守护符文。', effect: { nextBattleEnemyAtkReduce: 3, exp: 6 } } },
+      { text: '🔨 打碎镜子', result: { type: 'risk', text: '碎裂的镜片中传出一声尖叫。诅咒似乎减弱了。', effect: { karma: -2, nextBattleAtkBonus: 3 } } },
+      { text: '🙏 背诵经文', result: { type: 'karma', text: '"南无阿弥陀佛……" 古老的经文在空气中回荡，驱散了阴冷。', effect: { karma: 10, healPercent: 0.08 } } },
+    ],
+    weight: 8,
+  },
+  {
+    id: 'childs_drawing',
+    title: '孩子的画',
+    text: '墙上贴着一幅蜡笔画——画着一个快乐的家庭。但画中父亲的位置被黑色涂鸦覆盖了。',
+    choices: [
+      { text: '📖 仔细研究', result: { type: 'info', text: '画的背面写着这栋房子的平面图。你发现了一条隐藏通道的标记。', effect: { gold: 35, exp: 5 } } },
+      { text: '🖐 触碰黑色涂鸦', result: { type: 'risk', text: '手指触碰的瞬间，一股寒意穿过全身。但你似乎获得了短暂的灵觉。', effect: { nextBattleCritBonus: 10, damage: 8 } } },
+      { text: '🙏 为这个家庭默哀', result: { type: 'karma', text: '在这个被诅咒的空间里，唯有人心的温度不变。', effect: { karma: 6, healPercent: 0.05 } } },
+    ],
+    weight: 7,
+  }
+);
+
+// ── 第3章补充 ──
+EXPLORATION_EVENTS[3].push(
+  {
+    id: 'hidden_passage',
+    title: '隐秘甬道',
+    text: '一块松动的地砖。推开后露出一条通往地下的窄道，空气中弥漫着某种植物的香气。',
+    choices: [
+      { text: '🔦 探索甬道', result: { type: 'loot', text: '甬道尽头是一个小型祭室，摆放着古埃及的护身符和几枚金币。', effect: { gold: 65, exp: 10, karma: 3 } } },
+      { text: '📖 研究壁画', result: { type: 'info', text: '壁画描绘了击败木乃伊的仪式。知识就是力量。', effect: { nextBattleBossDmgBonus: 6, exp: 8 } } },
+      { text: '🚶 记下位置离开', result: { type: 'safe', text: '也许以后再来探索。你在地图上标注了位置。', effect: { exp: 3 } } },
+    ],
+    weight: 7,
+  },
+  {
+    id: 'sand_storm_warning',
+    title: '沙暴预兆',
+    text: '天空突然暗了下来，远处的沙丘开始移动。一场沙暴正在逼近。',
+    choices: [
+      { text: '🏃 寻找掩体', result: { type: 'safe', text: '及时找到了一处岩石下的庇护所。沙暴过后，你精神焕发地继续前进。', effect: { healPercent: 0.1, exp: 5 } } },
+      { text: '⚡ 冲过沙暴', result: { type: 'risk', text: '沙砾割伤了皮肤，但你看到了沙暴中隐藏的遗迹入口。', effect: { damage: 12, gold: 50, nextBattleAtkBonus: 3 } } },
+      { text: '🧘 原地冥想', result: { type: 'buff', text: '在风沙中冥想，感受自然的力量。精神变得更加锐利。', effect: { nextBattleCritBonus: 8, karma: 5 } } },
+    ],
+    weight: 6,
+  }
+);
+
+// ── 第4章补充 ──
+EXPLORATION_EVENTS[4].push(
+  {
+    id: 'apple_of_death',
+    title: '死亡之苹果',
+    text: '桌上摆着一颗完美的红苹果。在这个与死神相关的世界里，一切看起来正常的东西都可疑。',
+    choices: [
+      { text: '🍎 吃掉苹果', result: { type: 'risk', text: '苹果入口瞬间，身体感到一阵灼热。HP略有损失，但感觉力量在增长。', effect: { damage: 15, nextBattleAtkBonus: 6, nextBattleCritBonus: 8 } } },
+      { text: '🔍 检查苹果', result: { type: 'info', text: '苹果表面有极微小的文字——是死神的规则漏洞！下次被攻击时自动闪避一次。', effect: { exp: 12, nextBattleCritBonus: 5 } } },
+      { text: '🚫 不碰它', result: { type: 'safe', text: '在这个世界里，谨慎永远不过分。', effect: { karma: 5 } } },
+    ],
+    weight: 9,
+  },
+  {
+    id: 'notebook_remnant',
+    title: '残缺的笔记本',
+    text: '角落里有一本破旧的笔记本，上面记录着某个轮回者的心路历程和战斗经验。',
+    choices: [
+      { text: '📖 通读笔记', result: { type: 'info', text: '前辈的经验弥足珍贵。你学到了一些对抗超自然存在的技巧。', effect: { exp: 15, nextBattleCritBonus: 6 } } },
+      { text: '📝 撕下有用的页面', result: { type: 'loot', text: '几页记录了死神规则的细节，这些信息非常有价值。', effect: { gold: 30, nextBattleBossDmgBonus: 4 } } },
+      { text: '🕯 为前辈点一根蜡烛', result: { type: 'karma', text: '笔记最后一页写着："如果有人看到这本笔记，请替我活下去。"', effect: { karma: 12, healPercent: 0.05 } } },
+    ],
+    weight: 8,
+  }
+);
+
+// ── 第5章补充 ──
+EXPLORATION_EVENTS[5].push(
+  {
+    id: 'egg_chamber',
+    title: '异形卵室',
+    text: '一间巨大的房间里摆满了异形卵。大多数已经孵化了，但还有几颗在微微颤动。',
+    choices: [
+      { text: '🔥 全部烧掉', result: { type: 'karma', text: '火焰吞噬了卵室。这些怪物不会再伤害任何人了。', effect: { karma: 8, exp: 10 } } },
+      { text: '🔬 研究未孵化的卵', result: { type: 'info', text: '通过观察卵的结构，你发现了幼体阶段的弱点。', effect: { nextBattleCritBonus: 10, nextBattleAtkBonus: 3 } } },
+      { text: '🧪 提取基因样本', result: { type: 'buff', text: '异形的基因样本蕴含着强大的适应力。这对基因锁研究有帮助。', effect: { exp: 8, gold: 35 } } },
+    ],
+    weight: 8,
+  },
+  {
+    id: 'derelict_mech',
+    title: '废弃的机甲',
+    text: '一台半毁的战斗机甲倚靠在墙边。驾驶舱还能打开，控制台上闪着微弱的灯光。',
+    choices: [
+      { text: '🔧 拆卸零件', result: { type: 'loot', text: '从机甲上拆下了一些高品质零件，可以用来强化装备。', effect: { gold: 55, exp: 5 } } },
+      { text: '⚡ 尝试启动', result: { type: 'risk', text: '机甲发出轰鸣后再次熄灭。但在短暂的启动中，武器系统扫描了周边区域。', effect: { nextBattleCritBonus: 12, damage: 5 } } },
+      { text: '💾 下载数据', result: { type: 'info', text: '机甲的战斗记录包含了异形的移动模式和攻击规律。', effect: { exp: 12, nextBattleEnemyAtkReduce: 2 } } },
+    ],
+    weight: 7,
+  }
+);
+
+// ── 第6章补充 ──
+EXPLORATION_EVENTS[6].push(
+  {
+    id: 'demon_merchant',
+    title: '恶魔商人',
+    text: '"想要力量吗？" 一个戴着面具的身影从阴影中走出。"一切都有代价，但保证公平交易。"',
+    choices: [
+      { text: '💰 购买信息', result: { type: 'info', text: '商人告诉了你这层Boss的弱点和攻击模式。', effect: { gold: -30, nextBattleBossDmgBonus: 8, nextBattleCritBonus: 6 } } },
+      { text: '🗡 以血换力', result: { type: 'risk', text: '商人取走了你的一些生命力，但注入了强大的恶魔能量。', effect: { damage: 20, nextBattleAtkBonus: 8, nextBattleCritBonus: 10 } } },
+      { text: '🚶 谢绝离开', result: { type: 'safe', text: '"也好，我们下次再见。" 商人消失在阴影中。', effect: { karma: 5, exp: 3 } } },
+    ],
+    weight: 9,
+  },
+  {
+    id: 'hellfire_spring',
+    title: '地狱温泉',
+    text: '一池发着暗红色光芒的温泉水。水面上升腾着硫磺蒸汽，但水温令人惊讶地舒适。',
+    choices: [
+      { text: '♨ 泡温泉休息', result: { type: 'heal', text: '地狱的温泉水意外地有治愈效果。伤口在愈合，疲劳在消退。', effect: { healPercent: 0.2, exp: 5 } } },
+      { text: '🧪 收集温泉水', result: { type: 'buff', text: '装了一瓶地狱温泉水。下场战斗可以用来灼伤敌人。', effect: { nextBattleAtkBonus: 5, gold: 20 } } },
+      { text: '🔮 研究水源', result: { type: 'info', text: '温泉水中含有微量恶魔能量。你学会了如何利用这种能量。', effect: { exp: 10, nextBattleCritBonus: 5 } } },
+    ],
+    weight: 7,
   }
 );
