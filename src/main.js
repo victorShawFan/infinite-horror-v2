@@ -161,6 +161,7 @@ import { getCompanionReaction, showCompanionReaction } from './core/CompanionBat
 import { initFloorMastery, recordFloorKill, recordFloorCollect, recordFloorEvent, getFloorMasteryRewards, renderMasteryPopup, serializeFloorMastery, deserializeFloorMastery } from './core/FloorMastery.js';
 import { addJournalEntry, triggerChapterJournals, triggerChapterCompleteJournal, serializeJournal, deserializeJournal, renderJournalPanel } from './core/StoryJournal.js';
 import { getCanonState, resetCanonState } from './core/CanonState.js';
+import { recordEncounter, recordKill, recordDiscovery, getIntelCombatBonus, getEnemyIntel, getPreBattleIntelHTML, renderIntelPanel, serializeIntel, deserializeIntel, INTEL_LEVEL } from './core/EnemyIntelSystem.js';
 import { showChapterBriefing } from './core/ChapterBriefing.js';
 import { initCombatFXListeners, drawAllCombatFX, isHitStopped, updateAndDrawGhosts } from './core/CombatFX.js';
 
@@ -198,6 +199,22 @@ eventBus.on('journal:new_entry', ({ title }) => {
 });
 
 
+
+// 情报发现通知
+eventBus.on('intel:level_up', ({ name, newLevel }) => {
+  try {
+    const labels = ['', '★ 初识', '★★ 熟悉', '★★★ 精通'];
+    const colors = ['', '#ffcc44', '#44aaff', '#44ff88'];
+    const notif = document.createElement('div');
+    notif.style.cssText = 'position:fixed;top:100px;right:20px;z-index:9990;' +
+      'background:rgba(5,10,20,0.92);border:1px solid ' + colors[newLevel] + '40;border-radius:8px;' +
+      'padding:8px 16px;animation:fadeIn 0.4s;pointer-events:none;max-width:240px;';
+    notif.innerHTML = '<p style="color:' + colors[newLevel] + ';font-size:10px;letter-spacing:2px;">📋 情报升级</p>' +
+      '<p style="color:#aaa;font-size:12px;margin-top:2px;">' + name + ' → ' + labels[newLevel] + '</p>';
+    document.body.appendChild(notif);
+    setTimeout(() => { notif.style.transition='opacity 0.5s'; notif.style.opacity='0'; setTimeout(()=>notif.remove(),500); }, 2500);
+  } catch {}
+});
 // 精通弹窗通知
 eventBus.on('ui:show_mastery_popup', ({ html }) => {
   try {
@@ -282,6 +299,7 @@ function autoSave(reason = '') {
     localStorage.setItem('ih_subplot', JSON.stringify(getSubplotSystem().toJSON()));
     localStorage.setItem('ih_mastery', JSON.stringify(serializeFloorMastery()));
     localStorage.setItem('ih_journal', JSON.stringify(serializeJournal()));
+    localStorage.setItem('ih_intel', JSON.stringify(serializeIntel()));
     localStorage.setItem('ih_growth', JSON.stringify(serializeGrowth()));
     localStorage.setItem('ih_statalloc', JSON.stringify(serializeStatAllocation()));
     localStorage.setItem('ih_abyss', JSON.stringify(serializeAbyss()));
@@ -918,6 +936,7 @@ document.getElementById('btn-new-game').addEventListener('click', () => {
     try { const _naData = localStorage.getItem('ih_narratives'); if (_naData) deserializeNarratives(JSON.parse(_naData)); } catch {}
     try { const _abData = localStorage.getItem('ih_abyss'); if (_abData) deserializeAbyss(JSON.parse(_abData)); } catch {}
     try { const _jlData = localStorage.getItem('ih_journal'); if (_jlData) deserializeJournal(JSON.parse(_jlData)); } catch {}
+    try { const _ilData = localStorage.getItem('ih_intel'); if (_ilData) deserializeIntel(JSON.parse(_ilData)); } catch {}
     try { const _msData = localStorage.getItem('ih_mastery'); if (_msData) deserializeFloorMastery(JSON.parse(_msData)); } catch {}
     try { const _dlData = localStorage.getItem('ih_daily'); if (_dlData) deserializeDaily(JSON.parse(_dlData));    } catch {}
       } catch {}
@@ -1774,6 +1793,7 @@ eventBus.on('player:death', () => {
       try { const _cd = localStorage.getItem('ih_canon'); if (_cd) getCanonState().fromJSON(JSON.parse(_cd)); } catch {}
       try { const _td = localStorage.getItem('ih_training'); if (_td) deserializeTrainingRoom(JSON.parse(_td)); } catch {}
       try { const _jd = localStorage.getItem('ih_journal'); if (_jd) deserializeJournal(JSON.parse(_jd)); } catch {}
+      try { const _id = localStorage.getItem('ih_intel'); if (_id) deserializeIntel(JSON.parse(_id)); } catch {}
       try { const _sd = localStorage.getItem('ih_subplot'); if (_sd) getSubplotSystem().fromJSON(JSON.parse(_sd)); } catch {}
             renderer.notify('💾 存档已加载', '#44aaff', 90);
       } else {
@@ -3753,6 +3773,10 @@ function _showPauseMenu() {
             background:rgba(136,102,68,0.08);border:1px solid #88664433;color:#886644;
             padding:10px;cursor:pointer;font-size:13px;font-family:inherit;
             border-radius:8px;letter-spacing:2px;">📖 轮回手记</button>
+          <button class="pause-btn" id="pause-intel" style="
+            background:rgba(68,170,255,0.08);border:1px solid #44aaff33;color:#44aaff;
+            padding:10px;cursor:pointer;font-size:13px;font-family:inherit;
+            border-radius:8px;letter-spacing:2px;">📋 敌人情报</button>
           <button class="pause-btn" id="pause-help" style="
             background:rgba(100,100,100,0.08);border:1px solid #55555533;color:#888;
             padding:10px;cursor:pointer;font-size:13px;font-family:inherit;
@@ -3777,7 +3801,19 @@ function _showPauseMenu() {
     close();
     showSettingsPanel();
   });
-  document.getElementById('pause-journal')?.addEventListener('click', () => {
+  document.getElementById('pause-intel')?.addEventListener('click', () => {
+    const ihtml = renderIntelPanel();
+    overlay.innerHTML = '<div style="position:absolute;top:0;left:0;right:0;bottom:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.85);" id="intel-backdrop">' +
+      '<div style="background:rgba(5,8,15,0.98);border:1px solid #44aaff;border-radius:12px;padding:24px;max-width:460px;width:92%;max-height:80vh;overflow-y:auto;">' +
+      ihtml +
+      '<p style="color:#555;font-size:10px;text-align:center;margin-top:12px;">Esc / 点击空白关闭</p>' +
+      '</div></div>';
+    const closeI = () => { _showPauseMenu(); document.removeEventListener('keydown', ikh); };
+    const ikh = (e) => { if (e.key === 'Escape') closeI(); };
+    document.addEventListener('keydown', ikh);
+    document.getElementById('intel-backdrop')?.addEventListener('click', (e) => { if (e.target.id === 'intel-backdrop') closeI(); });
+  });
+    document.getElementById('pause-journal')?.addEventListener('click', () => {
     // Show journal panel overlay
     const jhtml = renderJournalPanel();
     overlay.innerHTML = '<div style="position:absolute;top:0;left:0;right:0;bottom:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.85);" id="journal-backdrop">' +
