@@ -118,6 +118,29 @@
       pointer-events: none;
       z-index: 20;
     }
+    /* ── 全局动画关键帧 ── */
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    @keyframes fadeOut { from { opacity: 1; } to { opacity: 0; } }
+    @keyframes pulse { 0%, 100% { opacity: 0.6; } 50% { opacity: 1; } }
+    @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes slideDown { from { opacity: 0; transform: translateY(-20px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes scaleIn { from { opacity: 0; transform: scale(0.5); } to { opacity: 1; transform: scale(1); } }
+    @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-4px); } 75% { transform: translateX(4px); } }
+    @keyframes glow { 0%, 100% { text-shadow: 0 0 10px currentColor; } 50% { text-shadow: 0 0 20px currentColor, 0 0 40px currentColor; } }
+    @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
+    .title-fx-glow { animation: glow 2s infinite; }
+    .title-fx-subtitle { animation: fadeIn 2s ease; }
+    /* ── 滚动条美化 ── */
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: rgba(0,0,0,0.2); border-radius: 3px; }
+    ::-webkit-scrollbar-thumb { background: rgba(255,68,68,0.2); border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: rgba(255,68,68,0.4); }
+    /* ── 按钮通用样式 ── */
+    .bam-btn { transition: all 0.15s; border-radius: 6px; font-family: inherit; }
+    .bam-btn:hover { filter: brightness(1.2); transform: scale(1.02); }
+    .bam-btn:active { transform: scale(0.98); }
+    .pause-btn { transition: all 0.15s; }
+    .pause-btn:hover { filter: brightness(1.15); transform: translateX(2px); }
   </style>
 </head>
 <body>
