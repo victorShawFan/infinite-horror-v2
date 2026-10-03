@@ -45,6 +45,7 @@ function generateFloor_2_1() {
   return {
     id: '2-1', name: '飞船封锁', subtitle: '苏拉科号的走廊一片死寂。唯一的声音是头顶日光灯管的嗡嗡声。', bgColor: '#080812', theme: 'alien_ship',
     tiles: grid, width: W, height: H, playerStart: { x: 2, y: 8 },
+    onClear: { message: '前方通道已开启。飞船深处还有更多异形在等待...' }, // stairs for generateFloor_2_1
     entities: [
       // 开场对话
       { type: ENTITY_TYPE.EVENT, id: 'ch2_intro', name: '异形世界传送',
@@ -141,6 +142,7 @@ function generateFloor_2_2() {
   return {
     id: '2-2', name: '新人分队', subtitle: '走廊在这里分叉。每条路线都有它的代价和收获。', bgColor: '#080812', theme: 'alien_ship',
     tiles: grid, width: W, height: H, playerStart: { x: 2, y: 8 },
+    onClear: { message: '通道尽头的密封门缓缓打开...' }, // stairs for generateFloor_2_2
     entities: [
       // 分路选择事件
       { type: ENTITY_TYPE.EVENT, id: 'split_choice', name: '路线选择',
@@ -236,6 +238,7 @@ function generateFloor_2_3() {
   return {
     id: '2-3', name: '通风管潜行', subtitle: '通风管道内伸手不见五指。金属管壁上传来异形爬行的刮擦声。', bgColor: '#060610', theme: 'alien_vent',
     tiles: grid, width: W, height: H, playerStart: { x: 2, y: 2 },
+    onClear: { message: '通风管道通向更深的甲板...' }, // stairs for generateFloor_2_3
     entities: [
       { type: ENTITY_TYPE.EVENT, id: 'stealth_tutorial', name: '潜行提示',
         x: 3, y: 2, sprite: '?', color: '#ffcc44',
@@ -316,6 +319,7 @@ function generateFloor_2_4() {
   return {
     id: '2-4', name: '抱脸虫隔离', subtitle: '隔离实验室充满了未知的恐惧。那些卵囊……似乎在呼吸。', bgColor: '#0a0810', theme: 'alien_lab',
     tiles: grid, width: W, height: H, playerStart: { x: 3, y: 8 },
+    onClear: { message: '隔离舱后的通道延伸向巢穴深处...' }, // stairs for generateFloor_2_4
     entities: [
       // 卵囊群
       { type: ENTITY_TYPE.ENEMY, id: 'egg_cluster_1', name: '异形卵囊群',
@@ -400,6 +404,7 @@ function generateFloor_2_5() {
   return {
     id: '2-5', name: '巢穴救援', subtitle: '有机质覆盖了一切。这里是异形的王国。人类的残骸散落在粘液之间。', bgColor: '#0c0808', theme: 'alien_hive',
     tiles: grid, width: W, height: H, playerStart: { x: 2, y: 8 },
+    onClear: { message: '最终密封门后就是皇后的巢穴...' }, // stairs for generateFloor_2_5
     entities: [
       // 异形战士群
       { type: ENTITY_TYPE.ENEMY, id: 'xeno_warrior_1', name: '异形战士',
@@ -567,17 +572,43 @@ function generateFloor_2_6() {
 }
 
 // ── 导出 ──
+
+// ── 在楼层放置楼梯（避开已有实体，寻找最远可达位置） ──
+function placeStairsAvoid(grid, prefX, prefY, entities = []) {
+  const rows = grid.length;
+  const cols = grid[0]?.length || 0;
+  const occupied = new Set();
+  for (const e of entities) occupied.add(e.x + ',' + e.y);
+  
+  // 收集所有可用的地面格（非墙非实体），按距离首选位置排序
+  const candidates = [];
+  for (let y = 1; y < rows - 1; y++) {
+    for (let x = 1; x < cols - 1; x++) {
+      if (grid[y][x] !== 1) continue;
+      if (occupied.has(x + ',' + y)) continue;
+      const dist = Math.abs(x - prefX) + Math.abs(y - prefY);
+      candidates.push({ x, y, dist });
+    }
+  }
+  candidates.sort((a, b) => a.dist - b.dist);
+  if (candidates.length > 0) {
+    grid[candidates[0].y][candidates[0].x] = 4;
+  }
+}
+
 export function generateChapter2() {
-  return {
-    name: '第二章 · 异形杀戮',
-    world: '异形一',
-    floors: [
-      generateFloor_2_1(), // 飞船封锁
-      generateFloor_2_2(), // 新人分队
-      generateFloor_2_3(), // 通风管潜行
-      generateFloor_2_4(), // 抱脸虫隔离
-      generateFloor_2_5(), // 巢穴救援
-      generateFloor_2_6(), // 皇后与撤离
-    ],
-  };
+  const floors = [
+    generateFloor_2_1(), // 飞船封锁
+    generateFloor_2_2(), // 新人分队
+    generateFloor_2_3(), // 通风管潜行
+    generateFloor_2_4(), // 抱脸虫隔离
+    generateFloor_2_5(), // 巢穴救援
+    generateFloor_2_6(), // 皇后与撤离
+  ];
+  // 为非终章楼层添加楼梯（避开已有实体）
+  for (let i = 0; i < floors.length - 1; i++) {
+    const f = floors[i];
+    placeStairsAvoid(f.tiles, f.width - 3, f.height - 3, f.entities);
+  }
+  return { name: '第二章 · 异形杀戮', world: '异形一', floors };
 }
