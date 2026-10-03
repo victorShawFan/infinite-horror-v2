@@ -222,13 +222,66 @@ export const BOSS_DIALOGUES = {
     killPlayer: ['这就是违抗规则的代价。回到原点吧。'],
     playerLowHp: ['挣扎吧，轮回者。但你改变不了命运。'],
   },
+
+  // ── Ch10: 天神队先锋 ──
+  divine_vanguard: {
+    name: '天神队先锋',
+    icon: '⚡',
+    intro: [
+      '又一个轮回者……你们中洲队还真是顽强。',
+      '天神队的铁律：弱者没有活下去的权利。',
+      '让我看看，你到底有没有资格站在这里。',
+    ],
+    phase: {
+      2: '（先锋释放基因锁三阶的压迫感）\n这才是真正的力量……感受到了吗？',
+      3: '（先锋开始认真起来）\n你比预想中强……但这不够。',
+    },
+    lowHp: '不可能……你怎么能压制天神队的战士！？',
+    playerLowHp: '果然……中洲队不过如此。',
+    defeat: ['（先锋单膝跪地）\n你……通过了考验。也许……你们中洲队确实有存在的价值。'],
+    killPlayer: '抱歉……弱者的结局只有一个。',
+  },
+  // ── Ch11: 弗莱迪·克鲁格 ──
+  freddy_krueger: {
+    name: '弗莱迪',
+    icon: '🔪',
+    intro: [
+      '欢迎来到……我的噩梦。（金属爪在空气中刮出火花）',
+      '一、二，弗莱迪来找你……（阴暗的童谣在四周回荡）',
+      '在这里，我就是神。你的恐惧……就是我的力量。',
+    ],
+    phase: {
+      2: '（弗莱迪的身影在梦境中扭曲变形）\n哈哈哈……害怕了吗？这才刚开始！',
+      3: '（噩梦空间开始崩塌）\n你……你居然不怕我？不可能！',
+    },
+    lowHp: '不……不！梦境不会被打破！我才是这里的主宰！',
+    playerLowHp: '闭上眼睛吧……永远不用再醒来了。',
+    defeat: ['（弗莱迪在梦境消散中挣扎）\n不！我会回来的……在你的每一个噩梦里……我永远都在……'],
+    killPlayer: '甜蜜的梦……永远的梦。哈哈哈哈……',
+  },
 };
+
+// ── Boss ID 别名映射 ──
+// 地图生成器使用的bossId → 对话库ID映射
+const BOSS_ALIASES = {
+  evolved_queen: 'alien_hybrid',        // Ch6新生异形 → 进化体
+  clone_zhengzha: 'demon_vanguard',     // Ch7复制体郑吒 → 恶魔队先锋
+  ancient_dragon: 'dragon_lord',        // Ch8远古巨龙 → 巨龙领主
+  clone_chuxuan: 'chuxuan_shadow',      // Ch12复制体楚轩 → 楚轩之影
+  clone_zhengzha_final: 'demon_captain',// Ch12复制体郑吒终极 → 恶魔队队长
+  lord_god_fragment: 'lord_god_core',   // Ch12主神碎片 → 主神核心
+};
+
+function _resolve(bossId) {
+  return BOSS_DIALOGUES[bossId] ? bossId : (BOSS_ALIASES[bossId] || bossId);
+}
+
 
 /**
  * 获取Boss开场白
  */
 export function getBossIntro(bossId) {
-  const dialogues = BOSS_DIALOGUES[bossId];
+  const dialogues = BOSS_DIALOGUES[_resolve(bossId)];
   if (!dialogues?.intro) return null;
   return dialogues.intro;
 }
@@ -237,7 +290,7 @@ export function getBossIntro(bossId) {
  * 获取Boss相位转换对话
  */
 export function getBossPhaseDialogue(bossId, phaseName) {
-  const dialogues = BOSS_DIALOGUES[bossId];
+  const dialogues = BOSS_DIALOGUES[_resolve(bossId)];
   if (!dialogues?.phase?.[phaseName]) return null;
   const lines = dialogues.phase[phaseName];
   return lines[Math.floor(Math.random() * lines.length)];
@@ -247,7 +300,7 @@ export function getBossPhaseDialogue(bossId, phaseName) {
  * 获取Boss低血量台词
  */
 export function getBossLowHpLine(bossId) {
-  const dialogues = BOSS_DIALOGUES[bossId];
+  const dialogues = BOSS_DIALOGUES[_resolve(bossId)];
   if (!dialogues?.lowHp) return null;
   const lines = dialogues.lowHp;
   return lines[Math.floor(Math.random() * lines.length)];
@@ -257,7 +310,7 @@ export function getBossLowHpLine(bossId) {
  * 获取Boss被击败遗言
  */
 export function getBossDefeatLines(bossId) {
-  const dialogues = BOSS_DIALOGUES[bossId];
+  const dialogues = BOSS_DIALOGUES[_resolve(bossId)];
   if (!dialogues?.defeat) return null;
   return dialogues.defeat;
 }
@@ -266,7 +319,7 @@ export function getBossDefeatLines(bossId) {
  * 获取Boss击杀玩家台词
  */
 export function getBossKillPlayerLine(bossId) {
-  const dialogues = BOSS_DIALOGUES[bossId];
+  const dialogues = BOSS_DIALOGUES[_resolve(bossId)];
   if (!dialogues?.killPlayer) return null;
   const lines = Array.isArray(dialogues.killPlayer) ? dialogues.killPlayer : [dialogues.killPlayer];
   return lines[Math.floor(Math.random() * lines.length)];
@@ -276,7 +329,7 @@ export function getBossKillPlayerLine(bossId) {
  * 获取Boss对濒死玩家的台词
  */
 export function getBossPlayerLowHpLine(bossId) {
-  const dialogues = BOSS_DIALOGUES[bossId];
+  const dialogues = BOSS_DIALOGUES[_resolve(bossId)];
   if (!dialogues?.playerLowHp) return null;
   const lines = Array.isArray(dialogues.playerLowHp) ? dialogues.playerLowHp : [dialogues.playerLowHp];
   return lines[Math.floor(Math.random() * lines.length)];
