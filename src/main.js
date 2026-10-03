@@ -1055,7 +1055,6 @@ function startGame() {
   eventBus.on('challenge:end', (data) => {
     // 结算奖励
     const p = gameState.player;
-    p.exp += data.rewards.exp;
     p.rewardPoints = (p.rewardPoints || 0) + data.rewards.rewardPoints;
     gameState.player.gold = (gameState.player.gold || 0) + data.rewards.gold;
     // 灵魂碎片掉落（每次战斗1-3个）
@@ -1063,28 +1062,13 @@ function startGame() {
     gameState.soulShards = (gameState.soulShards || 0) + shardDrop;
     gameState.stats.goldEarned = (gameState.stats.goldEarned || 0) + data.rewards.gold;
 
-    // 检查升级
-    let _levelsGained = 0;
-    let _firstLevelOldStats = null;
-    while (p.exp >= p.expToNext) {
-      if (!_firstLevelOldStats) {
-        _firstLevelOldStats = { maxHp: p.maxHp, atk: p.atk, def: p.def, spd: p.spd || 5, crt: p.crt || 0 };
-      }
-      p.exp -= p.expToNext;
-      p.level++;
-      _levelsGained++;
-      p.expToNext = 20 + (p.level - 1) * 15;
-      // 基础成长（每级固定获得）
-      p.maxHp += 5;
-      p.hp = Math.min(p.hp + 5, p.maxHp);
-      p.atk += 1;
-      // 每偶数级额外加1 DEF
-      if (p.level % 2 === 0) { p.def = (p.def || 0) + 1; }
-      // 每5级加1 SPD
-      if (p.level % 5 === 0) { p.spd = (p.spd || 5) + 1; }
-      // 授予3属性点供手动分配
-      grantStatPoints(3);
-    }
+    // 统一使用 gameState.addExp() 升级（与主战斗一致）
+    const _levelBefore = p.level;
+    const _firstLevelOldStats = { maxHp: p.maxHp, atk: p.atk, def: p.def, spd: p.spd || 5, crt: p.crt || 0 };
+    if (data.rewards.exp) gameState.addExp(data.rewards.exp);
+    const _levelsGained = p.level - _levelBefore;
+    // 每次升级授予属性点
+    for (let i = 0; i < _levelsGained; i++) grantStatPoints(3);
     // 升级庆典 — 通过 ModalQueue 排队（最高优先级）
     if (_levelsGained > 0 && _firstLevelOldStats) {
       try {

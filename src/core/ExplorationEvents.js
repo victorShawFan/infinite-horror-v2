@@ -261,6 +261,9 @@ export function applyEventEffect(effect, player) {
   if (effect.healPercent) player.hp = Math.min(player.maxHp, player.hp + Math.floor(player.maxHp * effect.healPercent));
   if (effect.damage) player.hp = Math.max(1, player.hp - effect.damage);
   if (effect.gold) player.gold = Math.max(0, (player.gold || 0) + effect.gold);
+  if (effect.def) player.def = Math.max(1, (player.def || 0) + effect.def);
+  if (effect.atk) player.atk = Math.max(1, (player.atk || 0) + effect.atk);
+  if (effect.mana) player.mana = Math.min(player.maxMana || 0, Math.max(0, (player.mana || 0) + effect.mana));
   if (effect.exp) gameState.addExp(effect.exp);
   if (effect.karma) gameState.karma = (gameState.karma || 0) + effect.karma;
   
