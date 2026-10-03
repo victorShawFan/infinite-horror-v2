@@ -826,6 +826,7 @@ document.getElementById('btn-new-game').addEventListener('click', () => {
     try { const _ddData = localStorage.getItem('ih_dynamic_diff'); if (_ddData) deserializeDynamicDifficulty(JSON.parse(_ddData)); } catch {}
     try { const _grData = localStorage.getItem('ih_growth'); if (_grData) deserializeGrowth(JSON.parse(_grData)); } catch {}
     try { const _saData = localStorage.getItem('ih_statalloc'); if (_saData) deserializeStatAllocation(JSON.parse(_saData)); } catch {}
+    try { const _psData = localStorage.getItem('ih_player_stats'); if (_psData) deserializePlayerStats(JSON.parse(_psData)); } catch {}
     initStatAllocation();
     try { const _eeData = localStorage.getItem('ih_exploration_events'); if (_eeData) deserializeExplorationEvents(JSON.parse(_eeData)); } catch {}
     initKeys();
@@ -1101,7 +1102,8 @@ function startGame() {
     localStorage.setItem('ih_status_effects', JSON.stringify(serializeEffects()));
     localStorage.setItem('ih_dynamic_diff', JSON.stringify(serializeDynamicDifficulty()));
     localStorage.setItem('ih_growth', JSON.stringify(serializeGrowth()));
-    localStorage.setItem('ih_statalloc', JSON.stringify(serializeStatAllocation())); } catch {}
+    localStorage.setItem('ih_statalloc', JSON.stringify(serializeStatAllocation()));
+    localStorage.setItem('ih_player_stats', JSON.stringify(serializePlayerStats())); } catch {}
     try { localStorage.setItem('ih_streak', JSON.stringify(killStreak.toJSON())); } catch {}
     localStorage.setItem('ih_abyss', JSON.stringify(serializeAbyss()));
     localStorage.setItem('ih_daily', JSON.stringify(serializeDaily()));    try { localStorage.setItem('ih_fog', JSON.stringify(fogOfWar.toJSON())); } catch {}
@@ -1691,6 +1693,10 @@ case 'h': case '?':
       case 'l':
         // 战斗日志
         showCombatLog();
+        return;
+      case 'P':
+        // 玩家统计面板 (Shift+P)
+        showPlayerStatsPanel();
         return;
       case 'm':
         // 全地图视图
