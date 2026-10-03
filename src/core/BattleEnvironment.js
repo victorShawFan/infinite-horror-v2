@@ -164,79 +164,142 @@ export function getBattleEnvironment(chapter) {
  * @param {number} round - 当前回合
  * @returns {Array} 触发的效果日志
  */
+/**
+ * 处理回合环境效果 — 返回结构化数值变化
+ * @param {number} chapter - 章节号
+ * @param {Object} player - { hp, maxHp, mana, maxMana }
+ * @param {Object} enemy - { hp }
+ * @param {number} round - 当前回合
+ * @returns {Object} { logs, playerHpDelta, enemyHpDelta, manaDelta, playerAtkMod, playerDefMod, enemyAtkMod, enemyDefMod, playerSpdMod, playerCritMod, skipPlayerTurn, skipEnemyTurn }
+ */
 export function processEnvironmentEffect(chapter, player, enemy, round) {
   const env = getBattleEnvironment(chapter);
   const logs = [];
+  const result = {
+    logs,
+    playerHpDelta: 0,
+    enemyHpDelta: 0,
+    manaDelta: 0,
+    playerAtkMod: 0,    // 本回合临时攻击力加减
+    playerDefMod: 0,    // 本回合临时防御加减
+    enemyAtkMod: 0,
+    enemyDefMod: 0,
+    playerSpdMod: 0,
+    enemySpdMod: 0,
+    playerCritMod: 0,   // 暴击率加成（百分比）
+    skipPlayerTurn: false,
+    skipEnemyTurn: false,
+  };
   
   for (const effect of env.effects) {
     if (Math.random() > effect.chance) continue;
     
     switch (effect.type) {
-      case 'dot':
-        player.hp = Math.max(1, player.hp - effect.damage);
-        logs.push({ text: `${effect.icon} ${effect.name}！受到 ${effect.damage} 点环境伤害`, type: 'environment' });
+      case 'dot': {
+        // Ch1 病毒：仅伤害玩家
+        const dmg = effect.damage;
+        const actualDmg = Math.min(dmg, player.hp + result.playerHpDelta - 1); // 保底1HP
+        if (actualDmg > 0) result.playerHpDelta -= actualDmg;
+        logs.push({ text: `${effect.icon} ${effect.name}！受到 ${actualDmg} 点环境伤害`, type: 'environment' });
         break;
-        
-      case 'acid_floor':
-        player.hp = Math.max(1, player.hp - effect.damage);
-        enemy.hp = Math.max(1, enemy.hp - effect.damage);
-        logs.push({ text: `${effect.icon} ${effect.name}！双方各受 ${effect.damage} 点伤害`, type: 'environment' });
+      }
+      case 'acid_floor': {
+        // Ch2 酸液：双方受伤
+        const dmg = effect.damage;
+        const pDmg = Math.min(dmg, player.hp + result.playerHpDelta - 1);
+        const eDmg = Math.min(dmg, enemy.hp + result.enemyHpDelta - 1);
+        if (pDmg > 0) result.playerHpDelta -= pDmg;
+        if (eDmg > 0) result.enemyHpDelta -= eDmg;
+        logs.push({ text: `${effect.icon} ${effect.name}！双方各受 ${dmg} 点伤害`, type: 'environment' });
         break;
-        
-      case 'fear':
-        logs.push({ text: `${effect.icon} ${effect.name}！攻击力暂时下降`, type: 'environment_debuff' });
+      }
+      case 'fear': {
+        // Ch3 恐惧：降低玩家攻击力
+        result.playerAtkMod -= effect.atkReduction;
+        logs.push({ text: `${effect.icon} ${effect.name}！攻击力 -${effect.atkReduction}`, type: 'environment_debuff' });
         break;
-        
-      case 'sandstorm':
-        logs.push({ text: `${effect.icon} ${effect.name}！速度暂时下降`, type: 'environment_debuff' });
+      }
+      case 'sandstorm': {
+        // Ch4 沙暴：降低双方速度
+        result.playerSpdMod -= effect.spdReduction;
+        result.enemySpdMod -= effect.spdReduction;
+        logs.push({ text: `${effect.icon} ${effect.name}！双方速度 -${effect.spdReduction}`, type: 'environment_debuff' });
         break;
-        
-      case 'fate':
-        logs.push({ text: `${effect.icon} ${effect.name}！暴击率暂时提升`, type: 'environment_buff' });
+      }
+      case 'fate': {
+        // Ch5 命运之眼：暴击率提升
+        result.playerCritMod += effect.critBonus;
+        logs.push({ text: `${effect.icon} ${effect.name}！暴击率 +${effect.critBonus}%`, type: 'environment_buff' });
         break;
-        
-      case 'corrosion':
-        logs.push({ text: `${effect.icon} ${effect.name}！防御暂时下降`, type: 'environment_debuff' });
+      }
+      case 'corrosion': {
+        // Ch6 腐蚀：降低双方防御
+        result.playerDefMod -= effect.defReduction;
+        result.enemyDefMod -= effect.defReduction;
+        logs.push({ text: `${effect.icon} ${effect.name}！双方防御 -${effect.defReduction}`, type: 'environment_debuff' });
         break;
-        
-      case 'killing_intent':
-        logs.push({ text: `${effect.icon} ${effect.name}！攻击力暂时提升`, type: 'environment_buff' });
+      }
+      case 'killing_intent': {
+        // Ch7 杀意共鸣：双方攻击力提升
+        result.playerAtkMod += effect.atkBonus;
+        result.enemyAtkMod += effect.atkBonus;
+        logs.push({ text: `${effect.icon} ${effect.name}！双方攻击力 +${effect.atkBonus}`, type: 'environment_buff' });
         break;
-        
-      case 'nature_healing':
-        player.hp = Math.min(player.maxHp || 999, player.hp + effect.heal);
-        logs.push({ text: `${effect.icon} ${effect.name}！恢复 ${effect.heal} HP`, type: 'environment_heal' });
+      }
+      case 'nature_healing': {
+        // Ch8 自然之力：双方恢复HP
+        const pHeal = Math.min(effect.heal, (player.maxHp || 999) - player.hp - result.playerHpDelta);
+        if (pHeal > 0) result.playerHpDelta += pHeal;
+        // 也治疗敌人
+        result.enemyHpDelta += effect.heal;
+        logs.push({ text: `${effect.icon} ${effect.name}！双方恢复 ${effect.heal} HP`, type: 'environment_heal' });
         break;
-        
-      case 'tremor':
+      }
+      case 'tremor': {
+        // Ch9 虫巢震颤：有概率眩晕玩家（跳过回合）
         if (Math.random() < effect.stunChance) {
-          logs.push({ text: `${effect.icon} ${effect.name}！地面剧烈震动！`, type: 'environment_debuff' });
+          result.skipPlayerTurn = true;
+          logs.push({ text: `${effect.icon} ${effect.name}！你被震倒，本回合无法行动！`, type: 'environment_debuff' });
+        } else {
+          logs.push({ text: `${effect.icon} ${effect.name}！地面轻微颤动`, type: 'environment' });
         }
         break;
-        
-      case 'pressure':
-        logs.push({ text: `${effect.icon} ${effect.name}！战场气势提升！`, type: 'environment_buff' });
+      }
+      case 'pressure': {
+        // Ch10 多队压力：双方攻击和暴击上升
+        result.playerAtkMod += effect.atkBonus || 2;
+        result.enemyAtkMod += effect.atkBonus || 2;
+        result.playerCritMod += 5;
+        logs.push({ text: `${effect.icon} ${effect.name}！战场气势提升，双方攻击力 +${effect.atkBonus || 2}`, type: 'environment_buff' });
         break;
-        
-      case 'psychic_field':
-        if (player.mana !== undefined) {
-          player.mana = Math.min(player.maxMana || 0, (player.mana || 0) + effect.manaRegen);
+      }
+      case 'psychic_field': {
+        // Ch11 精神力场：恢复法力
+        if (player.maxMana > 0) {
+          const manaGain = Math.min(effect.manaRegen, player.maxMana - (player.mana || 0) - result.manaDelta);
+          if (manaGain > 0) result.manaDelta += manaGain;
         }
-        logs.push({ text: `${effect.icon} ${effect.name}！精神力恢复`, type: 'environment_buff' });
+        logs.push({ text: `${effect.icon} ${effect.name}！精神力恢复 +${effect.manaRegen}`, type: 'environment_buff' });
         break;
-        
-      case 'lord_god_will':
+      }
+      case 'lord_god_will': {
+        // Ch12 主神意志：随机强化或削弱
         const isPositive = Math.random() > 0.5;
         if (isPositive) {
-          logs.push({ text: `${effect.icon} 主神意志：战斗者获得祝福！`, type: 'environment_buff' });
+          result.playerAtkMod += 3;
+          result.playerDefMod += 2;
+          logs.push({ text: `${effect.icon} 主神意志：获得祝福！攻击+3 防御+2`, type: 'environment_buff' });
         } else {
-          logs.push({ text: `${effect.icon} 主神意志：战斗者受到诅咒！`, type: 'environment_debuff' });
+          result.playerAtkMod -= 2;
+          result.enemyAtkMod += 3;
+          logs.push({ text: `${effect.icon} 主神意志：受到诅咒！攻击-2 敌人攻击+3`, type: 'environment_debuff' });
         }
         break;
+      }
     }
   }
   
-  return logs;
+  return result;
 }
 
 /**

@@ -462,20 +462,54 @@ if (chipFx.hasIceChip && enemy.atk !== enemyEffAtk) {
     }
   } catch {}
 
+  let envCritBonus = 0;
+  let envAtkMod = 0;
+  let envDefMod = 0;
   while (enemyHp > 0 && playerHp > 0) {
     round++;
+    // 每回合重置环境修正
+    envCritBonus = 0;
+    envAtkMod = 0;
+    envDefMod = 0;
 
-    // ── 战场环境效果 ──
+    // ── 战场环境效果（结构化数值同步）──
+    let envSkipPlayer = false;
     try {
-      const envLogs = processEnvironmentEffect(gameState.chapter, { hp: playerHp, maxHp: p.maxHp, mana: playerMana, maxMana: p.maxMana || 0 }, { hp: enemyHp }, round);
-      for (const envLog of envLogs) {
-        if (round <= 6) log.push(envLog);
-        // Apply actual HP changes from environment
-        if (envLog.type === 'environment' && envLog.text.includes('环境伤害')) {
-          // Already applied in processEnvironmentEffect to the mock objects
-        }
+      const envResult = processEnvironmentEffect(
+        gameState.chapter,
+        { hp: playerHp, maxHp: p.maxHp, mana: playerMana, maxMana: p.maxMana || 0 },
+        { hp: enemyHp },
+        round
+      );
+      // 同步HP/法力变化
+      if (envResult.playerHpDelta) {
+        playerHp = Math.max(1, Math.min(p.maxHp, playerHp + envResult.playerHpDelta));
       }
-    } catch {}
+      if (envResult.enemyHpDelta) {
+        enemyHp = Math.max(1, enemyHp + envResult.enemyHpDelta);
+      }
+      if (envResult.manaDelta) {
+        playerMana = Math.min(p.maxMana || 0, Math.max(0, playerMana + envResult.manaDelta));
+      }
+      // 同步临时属性修正（每回合环境效果，叠加到有效值）
+      if (envResult.enemyAtkMod) {
+        effectiveEnemyAtk = Math.max(1, effectiveEnemyAtk + envResult.enemyAtkMod);
+      }
+      if (envResult.enemyDefMod) {
+        effectiveEnemyDef = Math.max(0, effectiveEnemyDef + envResult.enemyDefMod);
+      }
+      // 环境暴击加成存入本回合变量
+      envCritBonus = envResult.playerCritMod || 0;
+      envAtkMod = envResult.playerAtkMod || 0;
+      envDefMod = envResult.playerDefMod || 0;
+      // 眩晕跳过标记
+      if (envResult.skipPlayerTurn) envSkipPlayer = true;
+      // 日志
+      for (const envLog of envResult.logs) {
+        if (round <= 6) log.push(envLog);
+      }
+      if (playerHp <= 0 || enemyHp <= 0) { break; }
+    } catch(e) { /* environment is non-critical */ }
 
     // ── 精英词缀: 每回合效果 ──
     if (affix) {
@@ -645,14 +679,18 @@ if (chipFx.hasIceChip && enemy.atk !== enemyEffAtk) {
     let chainCritBonus = lastCrit ? (talentFx.chainCrit || 0) : 0;
     lastCrit = false;
 
-    const attackCount = isDouble ? 2 : 1;
+    // ── 环境眩晕：跳过玩家回合 ──
+    if (envSkipPlayer) {
+      if (round <= 6) log.push({ text: '⚡ 你被环境效果击晕，本回合无法行动！', type: 'environment_debuff' });
+    }
+    const attackCount = envSkipPlayer ? 0 : (isDouble ? 2 : 1);
     for (let i = 0; i < attackCount && enemyHp > 0; i++) {
       // 应用破甲（天赋 + 装备 + 共鸣叠加）
       let totalArmorPen = (talentFx.armorPen || 0) + (equipArmorPenPct / 100) + resonanceArmorIgnore + (affixFx.ignoreDefPct / 100);
       totalArmorPen = Math.min(totalArmorPen, 0.80); // 上限80%
       const armorPenDef = totalArmorPen > 0 ? Math.floor(enemy.def * (1 - totalArmorPen)) : enemy.def;
       const pHit = calcDamage(
-        { atk: Math.floor(pAtk * atkMultiplier * berserkMult), crt: pCrt + chainCritBonus, geneLock: p.geneLock },
+        { atk: Math.max(1, Math.floor(pAtk * atkMultiplier * berserkMult) + envAtkMod), crt: pCrt + chainCritBonus + envCritBonus, geneLock: p.geneLock },
         { ...enemy, def: bossPhases ? effectiveEnemyDef : armorPenDef },
         p.weapon?.damageType || DAMAGE_TYPE.PHYSICAL
       );

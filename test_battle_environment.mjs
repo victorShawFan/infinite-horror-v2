@@ -36,8 +36,14 @@ const mockPlayer = { hp: 100, maxHp: 100, mana: 10, maxMana: 20 };
 const mockEnemy = { hp: 80 };
 for (let ch = 1; ch <= 12; ch++) {
   for (let round = 1; round <= 10; round++) {
-    const logs = processEnvironmentEffect(ch, { ...mockPlayer }, { ...mockEnemy }, round);
-    assert(Array.isArray(logs), `Ch${ch} R${round}: processEnvironmentEffect should return array`);
+    const result = processEnvironmentEffect(ch, { ...mockPlayer }, { ...mockEnemy }, round);
+    // 新API返回结构化对象，logs在result.logs中
+    assert(typeof result === 'object' && result !== null, `Ch${ch} R${round}: processEnvironmentEffect should return object`);
+    assert(Array.isArray(result.logs), `Ch${ch} R${round}: result.logs should be array`);
+    assert(typeof result.playerHpDelta === 'number', `Ch${ch} R${round}: playerHpDelta should be number`);
+    assert(typeof result.enemyHpDelta === 'number', `Ch${ch} R${round}: enemyHpDelta should be number`);
+    assert(typeof result.playerAtkMod === 'number', `Ch${ch} R${round}: playerAtkMod should be number`);
+    assert(typeof result.enemyAtkMod === 'number', `Ch${ch} R${round}: enemyAtkMod should be number`);
   }
 }
 
