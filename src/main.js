@@ -161,6 +161,7 @@ import { getCompanionReaction, showCompanionReaction } from './core/CompanionBat
 import { initFloorMastery, recordFloorKill, recordFloorCollect, recordFloorEvent, getFloorMasteryRewards, renderMasteryPopup, serializeFloorMastery, deserializeFloorMastery } from './core/FloorMastery.js';
 import { initBattleScene, startBattleScene, stopBattleScene, updateBattleState, playBattleResult, isBattleSceneActive } from './core/BattleScene.js';
 import { initAwakeningState, getAwakeningStage, getAwakeningLevel, canAwaken, performAwakening, getAwakeningCombatBonuses, getAwakeningSkills, renderAwakeningPanel, serializeAwakening, deserializeAwakening } from './core/AwakeningSystem.js';
+import { checkFateChoice, makeFateChoice, applyFateConsequence, renderFateChoiceUI, renderFateHistoryPanel, serializeFateChoices, deserializeFateChoices, getFateStats, resetFateChoices } from './core/FateChoiceSystem.js';
 import { addJournalEntry, triggerChapterJournals, triggerChapterCompleteJournal, serializeJournal, deserializeJournal, renderJournalPanel } from './core/StoryJournal.js';
 import { getCanonState, resetCanonState } from './core/CanonState.js';
 import { announce, autoAnnounce, clearAnnouncements } from './core/CombatAnnouncer.js';
@@ -311,6 +312,7 @@ function autoSave(reason = '') {
     localStorage.setItem('ih_subplot', JSON.stringify(getSubplotSystem().toJSON()));
     localStorage.setItem('ih_mastery', JSON.stringify(serializeFloorMastery()));
     try { localStorage.setItem('ih_awakening', JSON.stringify(serializeAwakening())); } catch {}
+    try { localStorage.setItem('ih_fate', JSON.stringify(serializeFateChoices())); } catch {}
     localStorage.setItem('ih_journal', JSON.stringify(serializeJournal()));
     localStorage.setItem('ih_intel', JSON.stringify(serializeIntel()));
     localStorage.setItem('ih_sync', JSON.stringify(serializeSync()));
@@ -954,6 +956,7 @@ document.getElementById('btn-new-game').addEventListener('click', () => {
     try { const _syData = localStorage.getItem('ih_sync'); if (_syData) deserializeSync(JSON.parse(_syData)); } catch {}
     try { const _msData = localStorage.getItem('ih_mastery'); if (_msData) deserializeFloorMastery(JSON.parse(_msData)); } catch {}
     try { const _awkData = localStorage.getItem('ih_awakening'); if (_awkData) deserializeAwakening(JSON.parse(_awkData)); } catch {}
+    try { const _fateData = localStorage.getItem('ih_fate'); if (_fateData) deserializeFateChoices(JSON.parse(_fateData)); } catch {}
     try { const _dlData = localStorage.getItem('ih_daily'); if (_dlData) deserializeDaily(JSON.parse(_dlData));    } catch {}
       } catch {}
       const chapterGens = { 1: generateChapter1, 2: generateChapter2, 3: generateChapter3, 4: generateChapter4, 5: generateChapter5, 6: generateChapter6, 7: generateChapter7, 8: generateChapter8, 9: generateChapter9, 10: generateChapter10, 11: generateChapter11, 12: generateChapter12 };
@@ -1694,6 +1697,18 @@ function showFloorTitle(floor) {
   try { setAtmosphere(gameState.chapter); } catch {}
   // 初始化楼层精通追踪
   try { initFloorMastery(floor.id, floor.entities || entities || []); } catch {}
+  // ── 命运抉择检查 ──
+  try {
+    const fateChoices = checkFateChoice(gameState.chapter, currentFloorIndex);
+    if (fateChoices.length > 0) {
+      // 延迟显示，等楼层加载完成
+      setTimeout(() => {
+        for (const fc of fateChoices) {
+          _showFateChoice(fc);
+        }
+      }, 800);
+    }
+  } catch(e) { console.warn('FateChoice check:', e); }
   // 触发章节日志
   try { triggerChapterJournals(gameState.chapter); } catch {}
   const sceneBgMap = {
@@ -5748,6 +5763,48 @@ function toggleGeneLock() {
   } else {
     renderer.addFloatText('基因锁 · 解除', p.x, p.y - 1, 'rgb(180, 180, 180)');
   }
+}
+
+// ── 命运抉择显示 ──
+function _showFateChoice(choice) {
+  if (typeof document === 'undefined') return;
+  const overlay = document.createElement('div');
+  overlay.id = 'fate-choice-overlay';
+  overlay.style.cssText = 'position:fixed;inset:0;z-index:300;background:rgba(0,0,0,0.85);display:flex;align-items:center;justify-content:center;animation:fadeIn 0.5s;';
+  overlay.innerHTML = renderFateChoiceUI(choice, gameState.player);
+  document.body.appendChild(overlay);
+  
+  overlay.querySelectorAll('.fate-choice-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const optionId = btn.dataset.optionId;
+      const result = makeFateChoice(choice.id, optionId);
+      if (result.success) {
+        const applied = applyFateConsequence(result.consequence, gameState.player);
+        // 显示结果叙事
+        overlay.innerHTML = '<div style="max-width:450px;padding:24px;text-align:center;">' +
+          '<div style="font-size:24px;margin-bottom:12px;">' + result.option.icon + '</div>' +
+          '<div style="color:#ffcc44;font-size:16px;font-weight:bold;margin-bottom:12px;">' + result.option.text + '</div>' +
+          '<p style="color:#ccc;font-size:12px;line-height:1.8;margin-bottom:16px;font-style:italic;">' + applied.narrative + '</p>' +
+          (applied.changes.length > 0 ? '<div style="display:flex;flex-wrap:wrap;gap:4px;justify-content:center;margin-bottom:12px;">' + applied.changes.map(c => '<span style="padding:2px 8px;background:#ffffff11;border-radius:4px;color:#88cc88;font-size:11px;">' + c + '</span>').join('') + '</div>' : '') +
+          (applied.item ? '<div style="color:#ffaa44;font-size:11px;">获得物品: ' + applied.item.name + '</div>' : '') +
+          '<button onclick="this.closest(\'#fate-choice-overlay\').remove()" style="margin-top:16px;padding:8px 24px;background:#ffcc4433;border:1px solid #ffcc44;color:#ffcc44;border-radius:6px;cursor:pointer;font-size:12px;font-family:inherit;">继续</button>' +
+          '</div>';
+        // 如果有物品奖励，加入背包
+        if (applied.item) {
+          try {
+            const inv = gameState.player.inventory || [];
+            inv.push(applied.item);
+            gameState.player.inventory = inv;
+          } catch {}
+        }
+        // 业力变化
+        if (applied.karma) {
+          try { gameState.player.karma = (gameState.player.karma || 0) + applied.karma; } catch {}
+        }
+        try { autoSave('命运抉择'); } catch {}
+      }
+    });
+  });
 }
 
 // ── 章节完成 ──
