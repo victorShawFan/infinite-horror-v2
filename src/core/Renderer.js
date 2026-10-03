@@ -19,6 +19,7 @@ import { dynamicLighting } from './DynamicLighting.js';
 import { getPendingPoints } from './StatAllocation.js';
 import { getKarmaLevel } from './KarmaSystem.js';
 import { renderKeyHUD } from './KeyDoorSystem.js';
+import { assessThreat, getEnemyMapColor } from './EnemyPowerIndicator.js';
 
 export class Renderer {
   constructor(canvas) {
@@ -992,7 +993,13 @@ export class Renderer {
     if (e.type === ENTITY_TYPE.ENEMY || e.type === ENTITY_TYPE.BOSS) {
       const scaledE = scaleEnemy(e, (gameState.chapter || 1));
       const preview = previewBattle(p, scaledE);
-      lines.push(`HP: ${e.hp}  ATK: ${e.atk}  DEF: ${e.def}`);
+      // 威胁等级标签
+      try {
+        const threat = assessThreat(scaledE, p);
+        lines.push(`[${threat.config.label}] HP: ${e.hp}  ATK: ${e.atk}  DEF: ${e.def}`);
+      } catch {
+        lines.push(`HP: ${e.hp}  ATK: ${e.atk}  DEF: ${e.def}`);
+      }
       if (e.weaknesses?.length) {
         const wMap = { fire: '🔥火', ice: '❄冰', poison: '☠毒', psychic: '🧠念', dark: '🌑暗', holy: '✦圣' };
         lines.push('弱点: ' + e.weaknesses.map(w => wMap[w] || w).join(' '));
@@ -1601,7 +1608,9 @@ export class Renderer {
     }
     const pulse = 0.5 + 0.5 * Math.sin(this._time * 0.08);
     for (const e of entities) {
-      if (e.type === ENTITY_TYPE.ENEMY || e.type === ENTITY_TYPE.BOSS) ctx.fillStyle = '#ff4444';
+      if (e.type === ENTITY_TYPE.ENEMY || e.type === ENTITY_TYPE.BOSS) {
+        try { ctx.fillStyle = getEnemyMapColor(e, gameState.player); } catch { ctx.fillStyle = '#ff4444'; }
+      }
       else if (e.type === ENTITY_TYPE.TRAP) { 
         // 隐藏陷阱在小地图不显示(除非已可见)
         if (!e.visible) continue;
