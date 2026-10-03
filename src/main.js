@@ -154,6 +154,9 @@ import { getChapterNarrative, markNarrativeTriggered, applyNarrativeResult, seri
 import { getSubplotSystem, resetSubplotSystem } from './core/SubplotSystem.js';
 import { getCurrentOrder, setOrder, tickOrderCooldown, getOrderCombatEffect, resetOrders, ORDER_TYPE, renderOrderSelector } from './core/TacticalOrders.js';
 import { recordChapterEnemies, recordEncounteredEnemy, serializeTrainingRoom, deserializeTrainingRoom, createTrainingEnemy, recordTrainingResult } from './core/TrainingRoom.js';
+import { playEncounterIntro, shouldPlayEncounterIntro } from './core/CombatEncounterIntro.js';
+import './core/DamagePopup.js'; // 伤害飘字（自动监听combat:log_update）
+import { setAtmosphere, removeAtmosphere } from './core/AtmosphereOverlay.js';
 import { getCanonState, resetCanonState } from './core/CanonState.js';
 import { showChapterBriefing } from './core/ChapterBriefing.js';
 import { initCombatFXListeners, drawAllCombatFX, isHitStopped, updateAndDrawGhosts } from './core/CombatFX.js';
@@ -1500,6 +1503,8 @@ function loadFloor(index, isAdvancing) {
 }
 
 function showFloorTitle(floor) {
+  // 设置章节氛围效果
+  try { setAtmosphere(gameState.chapter); } catch {}
   const sceneBgMap = {
     '1-1': '/assets/scenes/1-1_列车醒来_背景.jpg',
     '1-2': '/assets/scenes/1-2_蜂巢入口_背景.jpg',
@@ -3253,6 +3258,7 @@ function _updatePendingBuffsPreview() {
 
 // ── 制作信息 ──
 function _showCredits() {
+  try { removeAtmosphere(); } catch {}
   const overlay = document.getElementById('ui-overlay');
   overlay.innerHTML = `
     <div style="position:absolute;top:0;left:0;right:0;bottom:0;
@@ -4222,6 +4228,12 @@ async function startCombat(enemy, preScaledEnemy) {
   _showCombatHUD(gameState.player, enemy, scaledEnemy, hpBeforeCombat);
   // 记录遭遇的敌人供训练房使用（在战斗前记录，避免死亡后被移除）
   try { recordEncounteredEnemy(scaledEnemy); } catch {}
+  // 战斗入场特写
+  try {
+    if (shouldPlayEncounterIntro(scaledEnemy)) {
+      await playEncounterIntro(scaledEnemy, gameState.player);
+    }
+  } catch {}
   const result = await executeBattle(scaledEnemy);
   result._isBoss = !!(enemy.type === 'boss' || enemy.isBoss || enemy.bossId);
   // 确保实时战报显示完整战斗日志（非暂停战斗可能没有中间更新）
