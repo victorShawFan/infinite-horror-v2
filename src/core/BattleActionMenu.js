@@ -67,7 +67,7 @@ export function shouldPauseForAction(round, enemy, playerHp, playerMaxHp, combat
 export function showBattleActionMenu(player, enemy, round, combatState) {
   return new Promise((resolve) => {
     // Node.js 测试环境无 DOM，自动选择攻击
-    if (typeof document === 'undefined' || typeof document.createElement !== 'function') {
+    if (typeof document === 'undefined' || typeof document.createElement !== 'function' || !document.body?.isConnected) {
       resolve({ type: ACTION_TYPE.ATTACK });
       return;
     }
