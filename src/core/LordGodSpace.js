@@ -20,6 +20,13 @@ import { getAvailableEnchants, applyEnchant, removeEnchant, renderEnchantPanel, 
 import { generateRelicChoices, addRelic, hasRelic, getOwnedRelics, getRelicDef, RELIC_DEFINITIONS, renderRelicInventoryPanel } from './RelicSystem.js';
 
 /** 主神空间商店/强化项目 */
+// 每次回到主神空间，每人只可替另一名队员承担一次强化
+let _companionEnhanceUsed = new Set(); // 记录本次已被强化的队员ID
+export function resetCompanionEnhanceLimit() { _companionEnhanceUsed.clear(); }
+export function canEnhanceCompanion(compId) { return !_companionEnhanceUsed.has(compId); }
+export function markCompanionEnhanced(compId) { _companionEnhanceUsed.add(compId); }
+export function getEnhancedCompanions() { return [..._companionEnhanceUsed]; }
+
 export const SHOP_ITEMS = {
   // ── 修复 ──
   repair: [
@@ -238,6 +245,7 @@ export function purchaseItem(item) {
  * 渲染主神空间UI
  */
 export function renderLordGodSpace(onClose) {
+  resetCompanionEnhanceLimit(); // 每次进入主神空间重置强化次数
   const overlay = document.getElementById('ui-overlay');
   const p = gameState.player;
 
