@@ -16,6 +16,7 @@ import { allocateTalentPoint, resetTalents, getTalentEffects,
 import { getAvailableChallenges, challengeState } from './ChallengeDungeon.js';
 import { getAvailableRecipes, QUALITY } from './ForgeSystem.js';
 import { openEquipmentStash } from './EquipmentStash.js';
+import { getAvailableEnchants, applyEnchant, removeEnchant, renderEnchantPanel, ENCHANT_CORES } from './EnchantSystem.js';
 
 /** 主神空间商店/强化项目 */
 export const SHOP_ITEMS = {
@@ -221,6 +222,7 @@ export function renderLordGodSpace(onClose) {
       { key: 'geneLock', name: '🧬 基因锁', color: '#ff6600' },
       { key: 'consumables', name: '🧪 消耗品', color: '#44cc88' },
       { key: 'challenge', name: '⚔ 挑战副本', color: '#ff4444' },
+      { key: 'enchant', name: '✨ 附魔', color: '#aa88ff' },
       { key: 'stash', name: '📦 仓库', color: '#cc8844' },
     ];
 
@@ -304,7 +306,88 @@ export function renderLordGodSpace(onClose) {
     const container = document.getElementById('shop-items');
 
     // ── 基因锁特殊页面 ──
-    // ── 锻造（装备强化 + 宝石镶嵌） ──
+    
+    // ── 附魔（元素附魔系统） ──
+    if (cat === 'enchant') {
+      const p = gameState.player;
+      const shards = gameState.soulShards || 0;
+      const cores = gameState.enchantCores || {};
+      const coreList = Object.entries(cores).filter(([, v]) => v > 0);
+      
+      contentEl.innerHTML = `
+        <h3 style="color:#aa88ff;text-align:center;margin-bottom:12px;">✨ 装备附魔</h3>
+        <p style="color:#666;text-align:center;font-size:11px;margin-bottom:8px;">
+          为装备注入元素力量。消耗灵魂碎片和元素核心。
+        </p>
+        <div style="display:flex;justify-content:center;gap:12px;margin-bottom:14px;flex-wrap:wrap;">
+          <span style="color:#ffcc44;font-size:12px;">💎 碎片: ${shards}</span>
+          ${coreList.map(([id, cnt]) => {
+            const core = ENCHANT_CORES[id];
+            return core ? '<span style="color:' + core.color + ';font-size:11px;">' + core.icon + ' ' + core.name + ': ' + cnt + '</span>' : '';
+          }).join(' ')}
+          ${coreList.length === 0 ? '<span style="color:#444;font-size:11px;">暂无元素核心（击败Boss获得）</span>' : ''}
+        </div>
+        <p style="color:#888;font-size:11px;text-align:center;margin-bottom:10px;">选择要附魔的装备:</p>
+        <div style="display:flex;flex-direction:column;gap:6px;" id="enchant-slots">
+          ${['weapon', 'armor', 'accessory'].map(slot => {
+            const equip = p[slot];
+            if (!equip) return '<div style="padding:8px;color:#444;font-size:11px;border:1px dashed #333;border-radius:8px;">无' + (slot === 'weapon' ? '武器' : slot === 'armor' ? '护甲' : '饰品') + '</div>';
+            const enchText = equip.enchant ? '<span style="color:#ffcc44;"> ' + equip.enchant.icon + ' ' + equip.enchant.name + '</span>' : '<span style="color:#555;">未附魔</span>';
+            return '<button class="enchant-slot-btn" data-enchant-slot="' + slot + '" style="' +
+              'display:flex;justify-content:space-between;align-items:center;' +
+              'padding:10px 14px;background:rgba(255,255,255,0.04);' +
+              'border:1px solid #444;border-radius:8px;cursor:pointer;' +
+              'color:#ddd;font-size:12px;font-family:inherit;">' +
+              '<span>' + equip.name + '</span>' + enchText + '</button>';
+          }).join('')}
+        </div>
+        <div id="enchant-detail" style="margin-top:14px;"></div>
+      `;
+      
+      // 点击装备槽 → 显示附魔选项
+      contentEl.querySelectorAll('.enchant-slot-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const slot = btn.dataset.enchantSlot;
+          const equip = p[slot];
+          if (!equip) return;
+          const detailEl = document.getElementById('enchant-detail');
+          detailEl.innerHTML = renderEnchantPanel(equip);
+          
+          // 绑定附魔按钮
+          detailEl.querySelectorAll('[data-enchant-id]').forEach(enchBtn => {
+            enchBtn.addEventListener('click', () => {
+              const enchId = enchBtn.dataset.enchantId;
+              const result = applyEnchant(equip, enchId);
+              if (result.success) {
+                try { audioEngine.play('pickup'); } catch {}
+              }
+              // 刷新整个面板
+              showCategory('enchant');
+              // 显示结果通知
+              const notifDiv = document.createElement('div');
+              notifDiv.style.cssText = 'position:fixed;top:20px;left:50%;transform:translateX(-50%);z-index:9999;' +
+                'background:rgba(10,10,20,0.95);border:1px solid ' + (result.success ? '#44ff88' : '#ff4444') + ';' +
+                'border-radius:8px;padding:10px 20px;color:' + (result.success ? '#44ff88' : '#ff4444') + ';font-size:13px;';
+              notifDiv.textContent = result.message;
+              document.body.appendChild(notifDiv);
+              setTimeout(() => notifDiv.remove(), 2000);
+            });
+          });
+          
+          // 移除附魔按钮
+          const removeBtn = detailEl.querySelector('[data-remove-enchant]');
+          if (removeBtn) {
+            removeBtn.addEventListener('click', () => {
+              const result = removeEnchant(equip);
+              showCategory('enchant');
+            });
+          }
+        });
+      });
+      return;
+    }
+
+// ── 锻造（装备强化 + 宝石镶嵌） ──
     if (cat === 'forge') {
       const p = gameState.player;
       const slots = [

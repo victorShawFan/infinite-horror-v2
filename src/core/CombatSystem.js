@@ -30,6 +30,7 @@ import { getEliteCombatEffects, recordEliteKill } from './EliteMonsterSystem.js'
 import { generateCombatDialogue, getVictoryComment } from './CompanionDialogue.js';
 import { COMPANION_PROFILES } from './RelationshipSystem.js';
 import { processEnvironmentEffect } from './BattleEnvironment.js';
+import { getEnchantCombatBonus } from './EnchantSystem.js';
 
 // ── 伤害计算 ──
 export function calcDamage(attacker, defender, damageType = DAMAGE_TYPE.PHYSICAL, minDmg = 1) {
@@ -335,7 +336,17 @@ export function executeBattle(enemy) {
     stanceMod.crt = stanceMod.crt + (streakBonus.crt || 0);
   }
   const chipFx = getChipEffects(p);
-  const isDouble = canDoubleAttack(pSpd, enemy.spd || 5);
+  // ── 附魔战斗加成 ──
+  let enchantFx = { bonusDmg: 0, bonusAtk: 0, bonusDef: 0, bonusSpd: 0, bonusCrt: 0, lifeStealPct: 0, reflectPct: 0, dotDmg: 0, dotChance: 0, manaGain: 0, healPct: 0, armorPenPct: 0, dodgeBonus: 0, regenBonus: 0, manaRegenBonus: 0, skillBoost: 0 };
+  try { enchantFx = getEnchantCombatBonus(p); } catch {}
+  if (enchantFx.bonusAtk) stanceMod.atk += enchantFx.bonusAtk;
+  if (enchantFx.bonusDef) stanceMod.def += enchantFx.bonusDef;
+  if (enchantFx.bonusCrt) stanceMod.crt += enchantFx.bonusCrt;
+  if (enchantFx.bonusSpd) stanceMod.spd = (stanceMod.spd || pSpd) + enchantFx.bonusSpd;
+  if (enchantFx.bonusAtk || enchantFx.bonusDef || enchantFx.bonusCrt) {
+    log.push({ text: '✨ 附魔效果激活', type: 'buff' });
+  }
+  const isDouble = canDoubleAttack(pSpd + (enchantFx.bonusSpd || 0), enemy.spd || 5);
   const isDaoist = p.activeBloodline === BLOODLINE.DAOIST;
   const isVampire = p.activeBloodline === BLOODLINE.VAMPIRE;
   const isMartial = p.activeBloodline === BLOODLINE.MARTIAL;
@@ -566,6 +577,16 @@ if (chipFx.hasIceChip && enemy.atk !== enemyEffAtk) {
     combatState.turn = round;
 
     // ── 天赋：每回合生命恢复 ──
+    // 附魔回血
+    if (enchantFx.regenBonus > 0 && playerHp > 0) {
+      const enchRegen = Math.max(1, Math.floor(p.maxHp * enchantFx.regenBonus / 100));
+      playerHp = Math.min(p.maxHp, playerHp + enchRegen);
+      if (round <= 4) log.push({ text: '✨ 附魔恢复 +' + enchRegen + ' HP', type: 'heal' });
+    }
+    // 附魔法力回复(每回合)
+    if (enchantFx.manaRegenBonus > 0 && playerMana < (p.maxMana || 0)) {
+      playerMana = Math.min(p.maxMana || 0, playerMana + enchantFx.manaRegenBonus);
+    }
     if (talentFx.regenPercent && playerHp > 0) {
       const regenAmt = Math.max(1, Math.floor(p.maxHp * talentFx.regenPercent));
       playerHp = Math.min(p.maxHp, playerHp + regenAmt);
@@ -723,7 +744,23 @@ if (chipFx.hasIceChip && enemy.atk !== enemyEffAtk) {
         finalDmg += resBonus;
         enemyHp -= resBonus;
       }
-      // 装备词缀额外伤害
+            // 附魔额外伤害
+      if (enchantFx.bonusDmg > 0 && i === 0) {
+        enemyHp -= enchantFx.bonusDmg;
+        _totalDmgDealt += enchantFx.bonusDmg;
+        if (round <= 4) log.push({ text: '✨ 附魔伤害 +' + enchantFx.bonusDmg, type: 'buff' });
+      }
+      // 附魔吸血
+      if (enchantFx.healPct > 0 && pHit.damage > 0) {
+        const enchHeal = Math.max(1, Math.floor(pHit.damage * enchantFx.healPct / 100));
+        playerHp = Math.min(p.maxHp, playerHp + enchHeal);
+        if (round <= 3) log.push({ text: '✨ 附魔回复 +' + enchHeal + ' HP', type: 'heal' });
+      }
+      // 附魔法力回复
+      if (enchantFx.manaGain > 0 && i === 0) {
+        playerMana = Math.min(p.maxMana || 0, playerMana + enchantFx.manaGain);
+      }
+// 装备词缀额外伤害
       const affixExtraDmg = (affixFx.fireDmg || 0) + (affixFx.iceDmg || 0) + (affixFx.poisonDmg || 0) + (affixFx.holyDmg || 0);
       if (affixExtraDmg > 0 && i === 0) {
         finalDmg += affixExtraDmg;
@@ -913,6 +950,12 @@ if (chipFx.hasIceChip && enemy.atk !== enemyEffAtk) {
             text: `${enemy.name} → 郑吒 ${eHit.damage}${eHit.isCrit ? ' 暴击！' : ''}`,
             type: 'enemy_attack',
           });
+          // 附魔反伤
+          if (enchantFx.reflectPct > 0 && eHit.damage > 0) {
+            const enchReflectDmg = Math.max(1, Math.floor(eHit.damage * enchantFx.reflectPct / 100));
+            enemyHp -= enchReflectDmg;
+            if (round <= 4) log.push({ text: '✨ 附魔反弹 ' + enchReflectDmg, type: 'buff' });
+          }
           // ── NG+ 变异器: 幻痛 ──
           if (getActiveMutators().some(m => m.id === 'phantom_pain') && Math.random() < 0.10) {
             const phantomDmg = eHit.damage;
