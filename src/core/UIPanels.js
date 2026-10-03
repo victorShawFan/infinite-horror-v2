@@ -7,6 +7,7 @@
 import { GAME_STATE } from './constants.js';
 import { getKarmaLevel, renderKarmaDisplay } from './KarmaSystem.js';
 import { gameState } from './GameState.js';
+import { isStrategicMode, setStrategicMode } from './BattleActionMenu.js';
 import { getEffectiveAtk, getEffectiveDef, getEffectiveSpd, getEffectiveCrt } from './CombatSystem.js';
 import { getDifficultyConfig, getDifficulty, setDifficulty, formatBestiaryPanel, DIFFICULTY } from './DifficultySystem.js';
 import { getRelationshipLevel, COMPANION_PROFILES } from './RelationshipSystem.js';
@@ -1133,6 +1134,21 @@ export function showSettingsPanel() {
             ">${(() => { try { return getDynamicDifficultyInfo().enabled ? '✓ 开启' : '✗ 关闭'; } catch { return '---'; } })()}</button>
           </div>
           
+          <!-- 策略战斗模式 -->
+          <div style="margin-bottom: 20px; display:flex; justify-content:space-between; align-items:center;">
+            <div>
+              <span style="color:#aaa;font-size:13px;">🎯 策略战斗模式</span>
+              <p style="color:#555;font-size:10px;margin:2px 0 0 0;">每回合都暂停选择行动（类 Slay the Spire）</p>
+            </div>
+            <button id="strategic-toggle" style="
+              background:${isStrategicMode() ? 'rgba(68,255,136,0.15)' : 'rgba(255,68,68,0.15)'};
+              border:1px solid ${isStrategicMode() ? '#44ff88' : '#ff4444'};
+              color:${isStrategicMode() ? '#44ff88' : '#ff4444'};
+              padding:6px 16px; cursor:pointer; font-size:12px;
+              font-family:inherit; border-radius:6px;
+            ">${isStrategicMode() ? '✓ 开启' : '✗ 关闭'}</button>
+          </div>
+          
           <!-- 快捷键提示 -->
           <div style="background:rgba(255,255,255,0.03);border:1px solid #222;border-radius:8px;padding:10px;margin-bottom:16px;">
             <p style="color:#555;font-size:11px;text-align:center;">
@@ -1157,6 +1173,12 @@ export function showSettingsPanel() {
       try { if (audioEngine.masterGain) audioEngine.masterGain.gain.value = v / 2; } catch {}
       const display = document.getElementById('vol-display');
       if (display) display.textContent = e.target.value + '%';
+    });
+    
+    // Strategic mode toggle
+    document.getElementById('strategic-toggle')?.addEventListener('click', () => {
+      setStrategicMode(!isStrategicMode());
+      _render();
     });
     
     // Dynamic Difficulty toggle
