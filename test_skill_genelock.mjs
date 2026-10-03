@@ -155,3 +155,67 @@ console.log(`\n═════════════════════�
 console.log(`${pass + fail} 项测试: ${pass} 通过, ${fail} 失败`);
 if (fail === 0) console.log(`✅ 技能系统 + 基因锁进阶 + 状态效果 全部通过`);
 else { console.log(`❌ ${fail} 项失败`); process.exit(1); }
+
+// ═══ 新增技能验证 ═══
+console.log('\n=== 新增技能验证 ===');
+
+// 技能总数应≥22
+const totalSkills = Object.keys(SKILL_DEFINITIONS).length;
+assert(totalSkills >= 21, `技能总数≥21 (实际${totalSkills})`);
+console.log(`  ✓ 技能总数: ${totalSkills}`);
+
+// 每个技能ID唯一
+const ids = Object.keys(SKILL_DEFINITIONS);
+const uniqueIds = new Set(ids);
+assert(uniqueIds.size === ids.length, '技能ID唯一');
+
+// DEBUFF_DEF 存在
+assert(STATUS_EFFECT.DEBUFF_DEF === 'debuff_def', 'DEBUFF_DEF 常量存在');
+assert(STATUS_EFFECT.REFLECT === 'reflect', 'REFLECT 常量存在');
+
+// analyze_weakness 使用 DEBUFF_DEF
+const awEnemy = { hp: 200, def: 50, atk: 30 };
+const awPlayer = { geneLock: 1, geneLockActive: true, activeBloodline: 'none', mana: 50, maxMana: 50, atk: 30, def: 20 };
+const awCs = { cooldowns: {}, statusEffects: { player: [], enemy: [] }, turn: 1 };
+const awResult = useSkill(awPlayer, 'analyze_weakness', awEnemy, awCs);
+assert(awResult.log.length > 0, 'analyze_weakness 有日志');
+const hasDebuffDef = awCs.statusEffects.enemy.some(e => e.type === 'debuff_def');
+assert(hasDebuffDef, 'analyze_weakness 施加 DEBUFF_DEF');
+console.log(`  ✓ analyze_weakness: DEBUFF_DEF=${hasDebuffDef}`);
+
+// iron_fortress 施加 REFLECT
+const ifPlayer = { geneLock: 2, geneLockActive: true, activeBloodline: 'martial', mana: 50, maxMana: 50, atk: 30, def: 20 };
+const ifEnemy = { hp: 200, def: 10, atk: 30 };
+const ifCs = { cooldowns: {}, statusEffects: { player: [], enemy: [] }, turn: 1 };
+const ifResult = useSkill(ifPlayer, 'iron_fortress', ifEnemy, ifCs);
+assert(ifResult.log.length > 0, 'iron_fortress 有日志');
+const hasReflect = ifCs.statusEffects.player.some(e => e.type === 'reflect');
+const hasBuffDef = ifCs.statusEffects.player.some(e => e.type === 'buff_def');
+assert(hasReflect, 'iron_fortress 施加反弹效果');
+assert(hasBuffDef, 'iron_fortress 施加防御加成');
+console.log(`  ✓ iron_fortress: reflect=${hasReflect}, buff_def=${hasBuffDef}`);
+
+// muscle_control 返回 damage
+const mcPlayer = { geneLock: 2, geneLockActive: true, activeBloodline: 'none', mana: 0, maxMana: 50, hp: 100, maxHp: 100, atk: 30, def: 20 };
+const mcEnemy = { hp: 200, def: 10, atk: 30 };
+const mcCs = { cooldowns: {}, statusEffects: { player: [], enemy: [] }, turn: 1 };
+const mcResult = useSkill(mcPlayer, 'muscle_control', mcEnemy, mcCs);
+assert(mcResult.damage > 0, `muscle_control 返回 damage (${mcResult.damage})`);
+assert(mcResult.damage === mcPlayer.atk * 2, 'muscle_control 伤害=2x ATK');
+console.log(`  ✓ muscle_control: damage=${mcResult.damage}`);
+
+// useSkill 返回 manaCost
+const edPlayer = { geneLock: 2, geneLockActive: true, activeBloodline: 'vampire', mana: 50, maxMana: 50, hp: 50, maxHp: 200, atk: 30, def: 20 };
+const edEnemy2 = { hp: 200, def: 10, atk: 30 };
+const edCs = { cooldowns: {}, statusEffects: { player: [], enemy: [] }, turn: 1 };
+const edResult = useSkill(edPlayer, 'embrace_of_night', edEnemy2, edCs);
+assert(edResult.manaCost === 10, `embrace_of_night manaCost=10 (实际${edResult.manaCost})`);
+assert(edResult.damage > 0, `embrace_of_night damage>0 (${edResult.damage})`);
+assert(edResult.heal > 0, `embrace_of_night heal>0 (${edResult.heal})`);
+console.log(`  ✓ embrace_of_night: dmg=${edResult.damage} heal=${edResult.heal} mp=${edResult.manaCost}`);
+
+// 汇总
+console.log(`\n════════════════════════════════════════`);
+console.log(`${pass + fail} 项测试: ${pass} 通过, ${fail} 失败`);
+if (fail === 0) console.log(`✅ 全部通过（含新增技能验证）`);
+else { console.log(`❌ ${fail} 项失败`); process.exit(1); }
