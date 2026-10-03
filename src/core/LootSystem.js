@@ -202,7 +202,7 @@ function generateEquipment(chapter, rarity) {
 }
 
 // ── 生成战利品 ──
-export function generateLoot(enemy, chapter) {
+export function generateLoot(enemy, chapter, options = {}) {
   const isBoss = enemy.type === 'boss' || enemy.bossId;
   const tier = isBoss ? 'boss' : getChapterTier(chapter);
   const rates = DROP_RATES[tier];
@@ -228,6 +228,12 @@ export function generateLoot(enemy, chapter) {
     drops.push({ type: 'equipment', equipment: equip });
   }
   
+  // 遗物效果：保底史诗掉落
+  if (options.guaranteeEpic && drops.every(d => d.type !== 'equipment')) {
+    const epicEquip = generateEquipment(chapter, RARITY.EPIC);
+    drops.push({ type: 'equipment', equipment: epicEquip });
+  }
+
   // Boss 保底：至少掉一个宝石
   if (isBoss && !drops.some(d => d.type === 'gem')) {
     const gemKeys = Object.keys(GEM_TYPES);

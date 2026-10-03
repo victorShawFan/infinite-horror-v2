@@ -425,8 +425,11 @@ export async function executeBattle(enemy) {
       combatState.cooldowns[sid] = Math.max(0, combatState.cooldowns[sid] - perkFx.cdReduce);
     }
   }
+  // ── 天赋：恐惧领域（初始 + 可叠加） ──
+  let _fearAuraReduction = 0;
   if (perkFx.fearAuraBase > 0) {
-    const fearReduce = Math.floor(enemy.atk * perkFx.fearAuraBase);
+    _fearAuraReduction = perkFx.fearAuraBase;
+    const fearReduce = Math.floor(enemy.atk * _fearAuraReduction);
     effectiveEnemyAtk = Math.max(1, (effectiveEnemyAtk || enemyEffAtk) - fearReduce);
     log.push({ text: '👁 恐惧领域：敌人ATK-' + fearReduce, type: 'debuff' });
   }
@@ -608,6 +611,14 @@ if (chipFx.hasIceChip && enemy.atk !== enemyEffAtk) {
   let playerLowHpBossLineTriggered = false;
   while (enemyHp > 0 && playerHp > 0) {
     round++;
+    // ── 天赋：恐惧领域叠加（每5回合） ──
+    if (perkFx.fearAuraStack > 0 && round > 0 && round % 5 === 0) {
+      const cap = perkFx.fearAuraCap || 0.25;
+      _fearAuraReduction = Math.min(cap, _fearAuraReduction + perkFx.fearAuraStack);
+      const stackReduce = Math.floor(enemy.atk * perkFx.fearAuraStack);
+      effectiveEnemyAtk = Math.max(1, effectiveEnemyAtk - stackReduce);
+      if (round <= 30) log.push({ text: '👁 恐惧领域叠加！敌人ATK再降' + stackReduce, type: 'debuff' });
+    }
     // 遗物狂战士效果：HP越低ATK越高
     let berserkerAtkMod = 0;
     if (relicFx.berserkerMaxBonus > 0) {
@@ -615,6 +626,11 @@ if (chipFx.hasIceChip && enemy.atk !== enemyEffAtk) {
       if (hpRatio < 0.5) {
         berserkerAtkMod = Math.floor(stanceMod.atk * relicFx.berserkerMaxBonus * (1 - hpRatio * 2));
       }
+    }
+    // ── 遗物：低血量攻击加成 ──
+    let relicLowHpAtkMod = 0;
+    if (relicFx.lowHpAtkBonus > 0 && (playerHp / p.maxHp) < (relicFx.lowHpThreshold || 0.3)) {
+      relicLowHpAtkMod = Math.floor(stanceMod.atk * relicFx.lowHpAtkBonus);
     }
     // 遗物低血量防御加成
     let relicLowHpDefMod = 0;
@@ -1001,7 +1017,16 @@ if (chipFx.hasIceChip && enemy.atk !== enemyEffAtk) {
       for (const entry of skillResult.log) log.push(entry);
 
       // 应用技能效果
-      if (skillResult.damage) enemyHp -= skillResult.damage;
+      if (skillResult.damage) {
+        // 遗物：基因锁效果增强
+        let finalSkillDmg = skillResult.damage;
+        if (relicFx.geneLockEffectBonus > 0 && skill.type === 'gene_lock') {
+          const bonus = Math.floor(finalSkillDmg * relicFx.geneLockEffectBonus);
+          finalSkillDmg += bonus;
+          if (round <= 8) log.push({ text: '🧬 基因锁增幅 +' + bonus + ' 伤害', type: 'relic_buff' });
+        }
+        enemyHp -= finalSkillDmg;
+      }
       if (skillResult.heal) {
         let skillHeal = skillResult.heal;
         if (karmaHealBonus > 0) skillHeal = Math.floor(skillHeal * (1 + karmaHealBonus / 100));
@@ -1076,14 +1101,14 @@ if (chipFx.hasIceChip && enemy.atk !== enemyEffAtk) {
         log.push({ text: '🛡 防御姿态：本回合不发动攻击', type: 'defend' });
       }
     } else {
-    const attackCount = envSkipPlayer ? 0 : (isDouble ? 2 : 1);
+    const attackCount = envSkipPlayer ? 0 : ((isDouble || relicFirstTurnDouble || (relicFx.doubleAttackBonus > 0 && seededRandom() * 100 < relicFx.doubleAttackBonus)) ? 2 : 1);
     for (let i = 0; i < attackCount && enemyHp > 0; i++) {
       // 应用破甲（天赋 + 装备 + 共鸣叠加）
       let totalArmorPen = (talentFx.armorPen || 0) + (equipArmorPenPct / 100) + resonanceArmorIgnore + (affixFx.ignoreDefPct / 100);
       totalArmorPen = Math.min(totalArmorPen, 0.80); // 上限80%
       const armorPenDef = totalArmorPen > 0 ? Math.floor(enemy.def * (1 - totalArmorPen)) : enemy.def;
       const pHit = calcDamage(
-        { atk: Math.max(1, Math.floor(pAtk * atkMultiplier * berserkMult) + envAtkMod + perkKillBonusAtk + (relicKillStreakAtk || 0) + (perkOverchargeAtk || 0)),
+        { atk: Math.max(1, Math.floor(pAtk * atkMultiplier * berserkMult) + envAtkMod + perkKillBonusAtk + (relicKillStreakAtk || 0) + (perkOverchargeAtk || 0) + (relicLowHpAtkMod || 0)),
           crt: pCrt + chainCritBonus + envCritBonus + (perkFx.guaranteedCritAfter > 0 && perkConsecutiveHits >= perkFx.guaranteedCritAfter ? 100 : 0),
           _critDmgBonus: (perkFx.critDmgBonus || 0) + (perkFx.guaranteedCritDmgBonus || 0) + (relicFx.critDmgBonus || 0),
           geneLock: p.geneLock },
@@ -1267,6 +1292,16 @@ if (chipFx.hasIceChip && enemy.atk !== enemyEffAtk) {
     }
 
     if (enemyHp <= 0) break;
+
+    // ── 遗物：敌人意图揭示 ──
+    if (relicFx.enemyIntentReveal && round <= 8) {
+      try {
+        const intent = getEnemyIntent(enemy, round, enemyHp, enemyMaxHp);
+        if (intent && intent.text) {
+          log.push({ text: '🔮 洞察之眼：' + intent.text, type: 'relic_buff' });
+        }
+      } catch {}
+    }
 
     // ── 敌人回合：检查眩晕/冻结 ──
     let enemyStunned = (combatState.statusEffects?.enemy || []).some(
@@ -1614,7 +1649,14 @@ if (chipFx.hasIceChip && enemy.atk !== enemyEffAtk) {
     gameState.stats.damageDealt += enemy.hp;
 
     const rewards = enemy.rewards || {};
-    if (rewards.exp) gameState.addExp(rewards.exp);
+    if (rewards.exp) {
+      // 天赋/遗物经验加成
+      const expMult = 1 + (perkFx.expMultiplier || 0) + (relicFx.expBonus || 0);
+      const boostedExp = Math.floor(rewards.exp * expMult);
+      gameState.addExp(boostedExp);
+      if (expMult > 1) rewards._expBoost = boostedExp - rewards.exp;
+      rewards.exp = boostedExp;
+    }
     if (rewards.gold) {
       // NG+ 变异器: 诅咒黄金 — 拾取战斗金币双倍但扣1HP
       if (getActiveMutators().some(m => m.id === 'cursed_gold')) {
@@ -1627,7 +1669,7 @@ if (chipFx.hasIceChip && enemy.atk !== enemyEffAtk) {
 
     // ── 战利品掉落系统 ──
     try {
-      const loot = generateLoot(enemy, gameState.chapter || 1);
+      const loot = generateLoot(enemy, gameState.chapter || 1, { guaranteeEpic: relicFx.guaranteeEpicReward || false });
       if (loot.length > 0) {
         _lootDrops = loot;
         const lootLogs = formatLootLog(loot);
@@ -1775,7 +1817,11 @@ if (chipFx.hasIceChip && enemy.atk !== enemyEffAtk) {
             p.hp = Math.max(1, playerHp);
             gameState.stats.enemiesKilled++;
             const rewards = enemy.rewards || {};
-            if (rewards.exp) gameState.addExp(rewards.exp);
+            if (rewards.exp) {
+      const expMult2 = 1 + (perkFx.expMultiplier || 0) + (relicFx.expBonus || 0);
+      const boostedExp2 = Math.floor(rewards.exp * expMult2);
+      gameState.addExp(boostedExp2);
+    }
             if (rewards.gold) {
               if (getActiveMutators().some(m => m.id === 'cursed_gold')) {
                 rewards.gold = Math.floor(rewards.gold * 2);

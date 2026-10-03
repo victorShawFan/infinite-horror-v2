@@ -6,6 +6,7 @@ import { GAME_STATE, GENE_LOCK, BLOODLINE } from './constants.js';
 import { initTalentState, getTalentEffects } from './TalentTree.js';
 import { getEquipmentTotalStats, getActiveSetBonuses } from './EquipmentSystem.js';
 import { eventBus } from './EventBus.js';
+import { getRelicCombatEffects } from './RelicSystem.js';
 
 class GameState {
   constructor() {
@@ -177,6 +178,15 @@ class GameState {
 
     // 每次升级获得1天赋点
     this.talents.points += 1;
+
+    // 遗物：额外属性点
+    try {
+      const relicFx = getRelicCombatEffects();
+      if (relicFx.bonusStatPoints > 0) {
+        p.atk += relicFx.bonusStatPoints;
+        p.def += relicFx.bonusStatPoints;
+      }
+    } catch {}
 
     // 天赋被动属性加成
     const te = getTalentEffects(this.talents);
