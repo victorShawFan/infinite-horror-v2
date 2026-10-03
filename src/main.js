@@ -1486,7 +1486,7 @@ function gameLoop(timestamp) {
   if (gameState.state === GAME_STATE.EXPLORING && !dialogueState && !combatResult) {
     try { drawQuestHUD(renderer.ctx, renderer.canvas.width, renderer.canvas.height); } catch {}
     try { renderAutoBattleIndicator(renderer.ctx, 12, renderer.canvas.height - 52); } catch {}
-    try { drawEnemyRadar(renderer.ctx, entities, gameState.player, gameState.chapter); } catch {}
+    try { drawEnemyRadar(renderer.ctx, entities, gameState.player, gameState.chapter, undefined, currentFloorIndex); } catch {}
     // FPS指示器（右下角小字）
     if (_fpsDisplay > 0) {
       const fpsCtx = renderer.ctx;
@@ -3714,7 +3714,7 @@ function startCombat(enemy, preScaledEnemy) {
               const idx = parseInt(card.dataset.idx);
               const chosen = choices[idx];
               if (chosen) {
-                const res = applyReward(chosen, gameState.player);
+                const res = applyReward(chosen, gameState.player, gameState);
                 renderer.addFloatText(chosen.icon + ' ' + chosen.name, gameState.player.x, gameState.player.y - 1, chosen.color);
                 renderer.notify(res.text, chosen.color, 120);
                 try { audioEngine.play('pickup'); } catch {}
@@ -3729,7 +3729,7 @@ function startCombat(enemy, preScaledEnemy) {
             if (num >= 1 && num <= choices.length) {
               const chosen = choices[num - 1];
               if (chosen) {
-                const res = applyReward(chosen, gameState.player);
+                const res = applyReward(chosen, gameState.player, gameState);
                 renderer.addFloatText(chosen.icon + ' ' + chosen.name, gameState.player.x, gameState.player.y - 1, chosen.color);
                 renderer.notify(res.text, chosen.color, 120);
                 try { audioEngine.play('pickup'); } catch {}

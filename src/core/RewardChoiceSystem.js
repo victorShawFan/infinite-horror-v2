@@ -82,9 +82,14 @@ export function generateRewardChoices(combatGrade, isBoss, chapter, player) {
  * @param {Object} player - 玩家数据
  * @returns {Object} 应用结果描述
  */
-export function applyReward(reward, player) {
+export function applyReward(reward, player, gameState) {
   try {
-    reward.apply(player);
+    reward.apply(player, gameState);
+    // 同步 karma/soulShards 到 gameState
+    if (gameState) {
+      if (player.karma !== undefined) gameState.karma = player.karma;
+      if (player.soulShards !== undefined) gameState.soulShards = player.soulShards;
+    }
     return { success: true, text: `获得 ${reward.name}：${reward.desc}` };
   } catch (e) {
     return { success: false, text: '奖励应用失败' };

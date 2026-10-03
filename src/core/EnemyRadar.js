@@ -5,6 +5,7 @@
 import { previewBattle, getEffectiveAtk, getEffectiveDef, getEffectiveCrt, getEffectiveSpd } from './CombatSystem.js';
 import { scaleEnemy } from './DifficultyScaler.js';
 import { TILE_SIZE } from './constants.js';
+import { fogOfWar } from './FogOfWar.js';
 
 /**
  * 在每个敌人头顶显示能否击败的指示器
@@ -17,7 +18,7 @@ import { TILE_SIZE } from './constants.js';
  * @param {number} chapter
  * @param {Object} camera - { offsetX, offsetY }
  */
-export function drawEnemyRadar(ctx, entities, player, chapter, camera = { offsetX: 0, offsetY: 0 }) {
+export function drawEnemyRadar(ctx, entities, player, chapter, camera = { offsetX: 0, offsetY: 0 }, floorIndex = 0) {
   const enemies = entities.filter(e => e.type === 'enemy' || e.type === 'boss');
   if (enemies.length === 0) return;
   
@@ -26,11 +27,22 @@ export function drawEnemyRadar(ctx, entities, player, chapter, camera = { offset
   ctx.textAlign = 'center';
   
   for (const enemy of enemies) {
+    // 迷雾中未探索的敌人不显示雷达信息
+    const fogState = fogOfWar.getTileState(floorIndex, enemy.x, enemy.y, player.x, player.y);
+    if (fogState === 'hidden') continue; // 完全未探索，不显示
+    
     const scaled = scaleEnemy(enemy, chapter);
     const preview = previewBattle(player, scaled);
     
     const px = enemy.x * TILE_SIZE + TILE_SIZE / 2 + camera.offsetX;
     const py = enemy.y * TILE_SIZE - 6 + camera.offsetY;
+    
+    // 已探索但不在视野内：显示灰色问号
+    if (fogState === 'explored') {
+      ctx.fillStyle = 'rgba(150, 150, 150, 0.5)';
+      ctx.fillText('?', px, py);
+      continue;
+    }
     
     if (preview.canWin) {
       const damageRatio = preview.totalDamage / player.maxHp;
