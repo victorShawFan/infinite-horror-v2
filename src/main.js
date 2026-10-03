@@ -117,6 +117,7 @@ import { openMerchantShop } from './core/FieldMerchant.js';
 import { injectKeyDoors, getDoorReward, initKeys, getKeyCount } from './core/KeyDoorSystem.js';
 import { injectInteractables, activateInteractable } from './core/FloorInteractables.js';
 import { getChapterLore, renderChapterIntroCard } from './core/ChapterWorldLore.js';
+import { scanFloor, renderFloorOverview } from './core/FloorScanner.js';
 import { renderAbilitiesPanel } from './core/CompanionAbilities.js';
 import { getKarmaLevel, getKarmaCombatModifiers, getEndingType, renderKarmaPanel, renderKarmaDisplay } from './core/KarmaSystem.js';
 import { getStash, addToStash, removeFromStash, isStashFull, openEquipmentStash, serializeStash, deserializeStash } from './core/EquipmentStash.js';
@@ -1157,6 +1158,15 @@ function loadFloor(index, isAdvancing) {
       return clone;
     });
 
+
+  // ── 注入魔塔式钥匙门和楼层交互物 ──
+  try {
+    entities = injectKeyDoors(gameState.chapter, index, entities, floor.tiles);
+  } catch (e) { console.warn('KeyDoor injection:', e); }
+  try {
+    entities = injectInteractables(gameState.chapter, index, entities, floor.tiles);
+  } catch (e) { console.warn('Interactable injection:', e); }
+
   // 恢复已破坏的密道状态（存档持久化）
   restoreBrokenSecrets(floor, gameState.chapter, index);
 
@@ -1170,6 +1180,34 @@ function loadFloor(index, isAdvancing) {
 
   // 显示楼层标题
   showFloorTitle(floor);
+
+  // ── 章节世界观介绍卡片（每章第一层） ──
+  if (index === 0 && gameState.chapter >= 2) {
+    try {
+      const loreHtml = renderChapterIntroCard(gameState.chapter);
+      if (loreHtml) {
+        setTimeout(() => {
+          const overlay = document.getElementById('ui-overlay');
+          if (overlay && !overlay.innerHTML.includes('chapter-lore')) {
+            const loreDiv = document.createElement('div');
+            loreDiv.id = 'chapter-lore-overlay';
+            loreDiv.innerHTML = loreHtml;
+            loreDiv.style.cssText = 'position:absolute;top:0;left:0;right:0;bottom:0;z-index:200;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.7);animation:fadeIn 0.5s';
+            loreDiv.addEventListener('click', () => loreDiv.remove());
+            document.addEventListener('keydown', function loreDismiss(e) {
+              if (e.key === 'Escape' || e.key === ' ' || e.key === 'Enter') {
+                loreDiv.remove();
+                document.removeEventListener('keydown', loreDismiss);
+              }
+            });
+            document.body.appendChild(loreDiv);
+            // 自动关闭8秒
+            setTimeout(() => { try { loreDiv.remove(); } catch {} }, 8000);
+          }
+        }, 2500); // 在楼层标题消失后显示
+      }
+    } catch (e) { console.warn('Chapter lore card:', e); }
+  }
 }
 
 function showFloorTitle(floor) {
@@ -1590,6 +1628,26 @@ case 'h': case '?':
       case 'k':
         // 业力面板
         _showKarmaPanel();
+        return;
+      case 'v':
+        // 楼层战略扫描
+        try {
+          const scanData = scanFloor(entities, gameState.player);
+          const scanHtml = renderFloorOverview(scanData);
+          const scanPanel = document.getElementById('floor-scanner-panel');
+          if (scanPanel) { scanPanel.remove(); return; }
+          const panel = document.createElement('div');
+          panel.id = 'floor-scanner-panel';
+          panel.innerHTML = scanHtml;
+          panel.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:200;max-height:80vh;overflow-y:auto;background:rgba(10,10,20,0.95);border:1px solid rgba(68,170,255,0.4);border-radius:12px;padding:20px;min-width:300px;color:#ccc;font-family:Microsoft YaHei,sans-serif;';
+          document.body.appendChild(panel);
+          const dismiss = (ev) => {
+            if (ev.key === 'v' || ev.key === 'V' || ev.key === 'Escape') {
+              panel.remove(); document.removeEventListener('keydown', dismiss);
+            }
+          };
+          document.addEventListener('keydown', dismiss);
+        } catch (e) { console.warn('FloorScanner:', e); }
         return;
       case 'escape':
         // 暂停菜单

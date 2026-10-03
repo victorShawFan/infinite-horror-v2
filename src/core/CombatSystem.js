@@ -62,7 +62,8 @@ export function calcDamage(attacker, defender, damageType = DAMAGE_TYPE.PHYSICAL
     baseDmg = Math.max(1, Math.floor(baseDmg * (100 - defender.res) / 100));
   }
 
-  return { damage: Math.max(minDmg, baseDmg), isCrit, isWeak };
+  const elemAdvantage = elemMod.multiplier > 1.0;
+  return { damage: Math.max(minDmg, baseDmg), isCrit, isWeak, elemAdvantage };
 }
 
 // ── 法术伤害（道法血统, 忽视物防, 走法抗） ──
@@ -826,6 +827,8 @@ if (chipFx.hasIceChip && enemy.atk !== enemyEffAtk) {
       const multiLabel = atkMultiplier > 1 ? ' 💪强化！' : '';
       if (pHit.isCrit) { lastCrit = true; gameState.stats.criticalHits++; }
       try { recordCrit(pHit.isCrit); } catch {}
+      try { if (pHit.isWeak) recordWeaknessHit(); } catch {}
+      try { if (pHit.elemAdvantage) recordElementalHit(); } catch {}
       // 天赋：暴击伤害加成
       let finalDmg = pHit.damage;
       if (pHit.isCrit && (talentFx.critDmgBonus > 0 || stanceCritDmgBonus > 0)) {
