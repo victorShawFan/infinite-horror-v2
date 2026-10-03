@@ -118,6 +118,7 @@ import { injectKeyDoors, getDoorReward, initKeys, getKeyCount } from './core/Key
 import { injectInteractables, activateInteractable } from './core/FloorInteractables.js';
 import { getChapterLore, renderChapterIntroCard } from './core/ChapterWorldLore.js';
 import { scanFloor, renderFloorOverview } from './core/FloorScanner.js';
+import { generateRewardChoices, applyReward, renderRewardChoicePanel } from './core/RewardChoiceSystem.js';
 import { renderAbilitiesPanel } from './core/CompanionAbilities.js';
 import { getKarmaLevel, getKarmaCombatModifiers, getEndingType, renderKarmaPanel, renderKarmaDisplay } from './core/KarmaSystem.js';
 import { getStash, addToStash, removeFromStash, isStashFull, openEquipmentStash, serializeStash, deserializeStash } from './core/EquipmentStash.js';
@@ -3352,6 +3353,7 @@ function startCombat(enemy, preScaledEnemy) {
   
   const hpBeforeCombat = p.hp;
   const result = executeBattle(scaledEnemy);
+  result._isBoss = !!(enemy.type === 'boss' || enemy.isBoss || enemy.bossId);
   
   // 恢复临时buff修改的基础属性
   if (pendingBuffs.length > 0) {
@@ -3410,6 +3412,56 @@ function startCombat(enemy, preScaledEnemy) {
 
   // 播放战斗动画序列
   combatAnimator.playCombatSequence(result, enemy, () => {
+    // ── 战后奖励选择（胜利时） ──
+    if (result.victory && !result._rewardShown) {
+      result._rewardShown = true;
+      try {
+        const grade = result.rating?.grade || 'C';
+        const isBoss = result._isBoss || false;
+        const choices = generateRewardChoices(grade, isBoss, gameState.chapter, gameState.player);
+        if (choices.length > 0) {
+          const overlay = document.getElementById('ui-overlay');
+          const rewardHtml = renderRewardChoicePanel(choices);
+          const rewardDiv = document.createElement('div');
+          rewardDiv.id = 'reward-choice-overlay';
+          rewardDiv.style.cssText = 'position:absolute;top:0;left:0;right:0;bottom:0;z-index:250;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.7);animation:fadeIn 0.4s';
+          rewardDiv.innerHTML = rewardHtml;
+          document.body.appendChild(rewardDiv);
+          
+          // 绑定选择事件
+          rewardDiv.querySelectorAll('.reward-choice').forEach(card => {
+            card.addEventListener('click', () => {
+              const idx = parseInt(card.dataset.idx);
+              const chosen = choices[idx];
+              if (chosen) {
+                const res = applyReward(chosen, gameState.player);
+                renderer.addFloatText(chosen.icon + ' ' + chosen.name, gameState.player.x, gameState.player.y - 1, chosen.color);
+                renderer.notify(res.text, chosen.color, 120);
+                try { audioEngine.play('pickup'); } catch {}
+              }
+              rewardDiv.remove();
+            });
+          });
+          
+          // 键盘选择 1/2/3
+          const rewardKeyHandler = (ev) => {
+            const num = parseInt(ev.key);
+            if (num >= 1 && num <= choices.length) {
+              const chosen = choices[num - 1];
+              if (chosen) {
+                const res = applyReward(chosen, gameState.player);
+                renderer.addFloatText(chosen.icon + ' ' + chosen.name, gameState.player.x, gameState.player.y - 1, chosen.color);
+                renderer.notify(res.text, chosen.color, 120);
+                try { audioEngine.play('pickup'); } catch {}
+              }
+              rewardDiv.remove();
+              document.removeEventListener('keydown', rewardKeyHandler);
+            }
+          };
+          document.addEventListener('keydown', rewardKeyHandler);
+        }
+      } catch (e) { console.warn('RewardChoice:', e); }
+    }
     combatResult = result;
     // 记录图鉴（含战败）
     if (!result.victory) { try { bestiary.record(scaledEnemy || enemy, { victory: false }); localStorage.setItem("ih_bestiary", JSON.stringify(bestiary.toJSON())); } catch {} }
