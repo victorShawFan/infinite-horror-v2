@@ -787,23 +787,89 @@ export class Renderer {
       }
     } catch {}
 
-    // ── 下方：楼层信息条 ──
+    // ── 下方：楼层信息条 + 章节进度 ──
     {
       const floorName = floor?.name || '';
       const floorEnemies = (this._entities || []).filter(e => e.type === 'enemy' || e.type === 'boss').length;
       const floorItems = (this._entities || []).filter(e => e.type === 'item' || e.type === 'stat_boost' || e.type === 'consumable' || e.type === 'key' || e.type === 'weapon' || e.type === 'armor').length;
       
-      if (floorName) {
-        ctx.save();
-        ctx.font = '11px "Microsoft YaHei"';
-        ctx.textAlign = 'center';
-        ctx.fillStyle = 'rgba(255,255,255,0.3)';
-        let infoText = floorName;
-        if (floorEnemies > 0) infoText += ` · ⚔${floorEnemies}`;
-        if (floorItems > 0) infoText += ` · ✦${floorItems}`;
-        ctx.fillText(infoText, CANVAS_W / 2, CANVAS_H - 8);
-        ctx.restore();
+      // 章节进度条背景
+      const chFloorCount = gameState?.chapterFloorCount || 6;
+      const curFloor = (gameState?.nodeIndex || 0) + 1;
+      const curChapter = gameState?.chapter || 1;
+      
+      ctx.save();
+      
+      // 底部半透明背景带
+      ctx.fillStyle = 'rgba(5,5,15,0.65)';
+      roundRect(ctx, pad, CANVAS_H - 36, CANVAS_W - pad * 2, 28, 6);
+      ctx.fill();
+      ctx.strokeStyle = 'rgba(100,100,130,0.15)';
+      roundRect(ctx, pad, CANVAS_H - 36, CANVAS_W - pad * 2, 28, 6);
+      ctx.stroke();
+      
+      // 楼层进度点
+      const dotSpacing = 20;
+      const dotsWidth = chFloorCount * dotSpacing;
+      const dotStartX = CANVAS_W / 2 - dotsWidth / 2 + dotSpacing / 2;
+      const dotY = CANVAS_H - 22;
+      
+      for (let i = 0; i < chFloorCount; i++) {
+        const dx = dotStartX + i * dotSpacing;
+        const isCompleted = (i + 1) < curFloor;
+        const isCurrent = (i + 1) === curFloor;
+        
+        // 连接线
+        if (i < chFloorCount - 1) {
+          ctx.strokeStyle = isCompleted ? 'rgba(68,170,255,0.4)' : 'rgba(80,80,100,0.2)';
+          ctx.lineWidth = 1;
+          ctx.beginPath();
+          ctx.moveTo(dx + 5, dotY);
+          ctx.lineTo(dx + dotSpacing - 5, dotY);
+          ctx.stroke();
+        }
+        
+        // 节点圆点
+        ctx.beginPath();
+        ctx.arc(dx, dotY, isCurrent ? 4 : 3, 0, Math.PI * 2);
+        if (isCurrent) {
+          ctx.fillStyle = '#44aaff';
+          ctx.fill();
+          ctx.strokeStyle = 'rgba(68,170,255,0.6)';
+          ctx.lineWidth = 1;
+          ctx.stroke();
+        } else if (isCompleted) {
+          ctx.fillStyle = 'rgba(68,170,255,0.5)';
+          ctx.fill();
+        } else {
+          ctx.fillStyle = 'rgba(80,80,100,0.3)';
+          ctx.fill();
+        }
       }
+      
+      // 左侧：章节信息
+      ctx.font = '10px "Microsoft YaHei"';
+      ctx.textAlign = 'left';
+      ctx.fillStyle = 'rgba(136,170,255,0.5)';
+      ctx.fillText('Ch.' + curChapter, pad + 10, CANVAS_H - 19);
+      
+      // 右侧：楼层名+剩余信息
+      ctx.textAlign = 'right';
+      ctx.fillStyle = 'rgba(255,255,255,0.35)';
+      let rightText = curFloor + '/' + chFloorCount + 'F';
+      if (floorEnemies > 0) rightText += ' · ⚔' + floorEnemies;
+      if (floorItems > 0) rightText += ' · ✦' + floorItems;
+      ctx.fillText(rightText, CANVAS_W - pad - 10, CANVAS_H - 19);
+      
+      // 中间上方：楼层名
+      if (floorName) {
+        ctx.textAlign = 'center';
+        ctx.fillStyle = 'rgba(255,255,255,0.25)';
+        ctx.font = '9px "Microsoft YaHei"';
+        ctx.fillText(floorName, CANVAS_W / 2, CANVAS_H - 11);
+      }
+      
+      ctx.restore();
     }
 
     // 存档指示器

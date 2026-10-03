@@ -1180,6 +1180,8 @@ function startGame() {
 }
 
 function loadFloor(index, isAdvancing) {
+  // 设置当前章节楼层总数（供HUD使用）
+  gameState.chapterFloorCount = chapter.floors?.length || 6;
   if (isAdvancing && index > 0) gameState.stats.floorsCleared++;
   if (index >= chapter.floors.length) {
     // 所有层完成 — 进入主神空间
