@@ -40,6 +40,7 @@ import { getRelicCombatEffects, hasRelic } from './RelicSystem.js';
 import { getPerkCombatEffects } from './PerkSystem.js';
 import { getEnemyIntent } from './EnemyIntentSystem.js';
 import { random as seededRandom, chance as seededChance } from './RandomSystem.js';
+import { getIntelCombatBonus, recordDiscovery } from './EnemyIntelSystem.js';
 
 // ── 伤害计算 ──
 export function calcDamage(attacker, defender, damageType = DAMAGE_TYPE.PHYSICAL, minDmg = 1) {
@@ -113,7 +114,7 @@ export function previewBattle(player, enemy) {
   const _rawSpd = getEffectiveSpd(player);
   const _rawCrt = getEffectiveCrt(player);
   const stanceMod = applyStanceModifiers(_rawAtk, _rawDef, _rawCrt, _rawSpd);
-  const pAtk = stanceMod.atk;
+  let pAtk = stanceMod.atk;
   const pDef = stanceMod.def;
   const pSpd = stanceMod.spd;
   const pCrt = stanceMod.crt;
@@ -354,7 +355,7 @@ export async function executeBattle(enemy) {
   const _rawCrt = getEffectiveCrt(p);
   const _rawSpd = getEffectiveSpd(p);
   const stanceMod = applyStanceModifiers(_rawAtk, _rawDef, _rawCrt, _rawSpd);
-  const pAtk = stanceMod.atk;
+  let pAtk = stanceMod.atk;
   const pDef = stanceMod.def;
   const pCrt = stanceMod.crt;
   const pSpd = stanceMod.spd;
@@ -378,6 +379,19 @@ export async function executeBattle(enemy) {
   if (enchantFx.bonusAtk) stanceMod.atk += enchantFx.bonusAtk;
   if (enchantFx.bonusDef) stanceMod.def += enchantFx.bonusDef;
   if (enchantFx.bonusCrt) stanceMod.crt += enchantFx.bonusCrt;
+  // ── 情报系统战斗加成 ──
+  let intelDmgMul = 1.0;
+  let intelDefMul = 1.0;
+  try {
+    const intelBonus = getIntelCombatBonus(enemy);
+    if (intelBonus.dmgBonus > 0) {
+      intelDmgMul = 1.0 + intelBonus.dmgBonus;
+      log.push({ text: `📋 ${intelBonus.label}`, type: 'intel_bonus' });
+    }
+    if (intelBonus.defBonus > 0) {
+      intelDefMul = 1.0 + intelBonus.defBonus;
+    }
+  } catch {}
   if (enchantFx.bonusSpd) stanceMod.spd = (stanceMod.spd || pSpd) + enchantFx.bonusSpd;
   if (enchantFx.bonusAtk || enchantFx.bonusDef || enchantFx.bonusCrt) {
     log.push({ text: '✨ 附魔效果激活', type: 'buff' });
