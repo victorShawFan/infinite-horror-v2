@@ -54,5 +54,11 @@ function f8_6(){const g=makeGrid();carveRoom(g,1,1,6,5);carveCorridor(g,6,3,10,3
 {type:ENTITY_TYPE.ITEM,id:'medkit_ch8_6',name:'高级急救包',x:6,y:3,sprite:'♥',color:'#ff4488',itemType:'consumable',effect:{heal:120}},
 {type:ENTITY_TYPE.EVENT,id:'luogandao_death',name:'罗甘道抹杀',x:13,y:12,sprite:'†',color:'#ff0000',event:{type:'fixed_death',lines:[{text:'结算开始。罗甘道的奖励点为负数。',speaker:'旁白'},{text:'等等……什么意思？负数？我不想——',speaker:'罗甘道'},{text:'罗甘道的身体开始消散。主神的规则不可违抗。',speaker:'旁白'},{text:'（罗甘道因负奖励点被主神抹杀。）',speaker:'主神'}],flag:'luogandao_erased',companionDeath:'luogandao'}},{type:ENTITY_TYPE.EVENT,id:'ch8_ending',name:'第八章结算',x:10,y:2,sprite:'✦',color:'#ffdd88',event:{type:'chapter_end',lines:[{text:'巨龙倒下了。郑吒的身体中融入了龙族细胞——一种前所未有的力量。',speaker:'旁白'},{text:'楚轩、霸王、王侠——三人已经复活。但还有更多人等着我们。',speaker:'郑吒'},{text:'第八关「重建中洲」通关。获得基础奖励1000点。',speaker:'主神'}],flag:'ch8_complete',rewards:{rewardPoints:1000}}}]};}
 
-export function generateChapter8(){return{name:'第8章 · 重建中洲',world:'侏罗纪公园',floors:[
-f8_1(),f8_2(),f8_3(),f8_4(),f8_5(),f8_6()]}};
+export function generateChapter8() {
+  const floors = [f8_1(), f8_2(), f8_3(), f8_4(), f8_5(), f8_6()];
+  const _msgs = ["陵墓的密道比记忆中更加复杂。","楚轩的意识正在回归。复活即将完成。","侏罗纪的恐龙比想象中更加凶猛。","新人罗甘道展现出了惊人的适应力。","暴龙的咆哮在身后回荡。撤离！"];
+  for (let i = 0; i < Math.min(floors.length - 1, _msgs.length); i++) {
+    if (!floors[i].onClear) floors[i].onClear = { message: _msgs[i] };
+  }
+  return { name: '第8章 · 重建中洲', world: '侏罗纪公园', floors };
+}

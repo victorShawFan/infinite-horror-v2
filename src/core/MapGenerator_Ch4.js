@@ -45,6 +45,7 @@ function generateFloor_4_1() {
     subtitle: '炙热的沙漠中，一支车队正在前往哈姆纳塔。空气中弥漫着古老而危险的气息。',
     bgColor: '#1a1408', theme: 'desert',
     tiles: grid, width: W, height: H, playerStart: { x: 3, y: 8 },
+    onClear: { message: '沙漠的热浪中，古墓的方向逐渐明确。' },
     entities: [
       { type: ENTITY_TYPE.EVENT, id: 'ch4_intro', name: '神鬼世界传送',
         x: 4, y: 8, sprite: '✦', color: '#ffffff',
@@ -129,6 +130,7 @@ function generateFloor_4_2() {
     subtitle: '开罗的市集人声鼎沸。但你注意到，有人在暗中跟踪你们。',
     bgColor: '#14120a', theme: 'desert_city',
     tiles: grid, width: W, height: H, playerStart: { x: 3, y: 3 },
+    onClear: { message: '情报已经收集够了。是时候深入陵墓了。' },
     entities: [
       { type: ENTITY_TYPE.EVENT, id: 'cairo_intel', name: '印洲队情报',
         x: 12, y: 10, sprite: '📜', color: '#ffdd88',
@@ -199,6 +201,7 @@ function generateFloor_4_3() {
     subtitle: '哈姆纳塔的入口在你面前展开。墙壁上的象形文字似乎在警告着什么。',
     bgColor: '#0c0a06', theme: 'tomb',
     tiles: grid, width: W, height: H, playerStart: { x: 2, y: 8 },
+    onClear: { message: '机关重重的甬道在身后关闭。只能继续前进。' },
     entities: [
       // 机关解谜事件
       { type: ENTITY_TYPE.EVENT, id: 'tomb_puzzle', name: '象形文字机关',
@@ -276,6 +279,7 @@ function generateFloor_4_4() {
     subtitle: '前方有人！是印洲队——他们已经在这里等着了！',
     bgColor: '#0e0806', theme: 'tomb',
     tiles: grid, width: W, height: H, playerStart: { x: 3, y: 8 },
+    onClear: { message: '印洲队的伏击被击退。但争夺真经的战斗才刚开始。' },
     entities: [
       // 印洲队伏击事件
       // ── 剧情选择：印洲队交涉 ──
@@ -384,6 +388,7 @@ function generateFloor_4_5() {
     subtitle: '黄金棺椁前，复活真经散发着古老的光芒。但争夺才刚刚开始。',
     bgColor: '#100a04', theme: 'tomb_inner',
     tiles: grid, width: W, height: H, playerStart: { x: 2, y: 8 },
+    onClear: { message: '复活之书的力量在召唤。最终的考验在前方。' },
     entities: [
       // 真经发现
       { type: ENTITY_TYPE.EVENT, id: 'scripture_found', name: '复活真经',

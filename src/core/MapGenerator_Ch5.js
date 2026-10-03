@@ -40,6 +40,7 @@ function generateFloor_5_1() {
     subtitle: '巴士在高速公路上急转弯的一瞬间，死神的气息笼罩了所有人。',
     bgColor: '#10100c', theme: 'modern_road',
     tiles: grid, width: W, height: H, playerStart: { x: 3, y: 8 },
+    onClear: { message: '巴士上的异变只是开始。死神的征兆随处可见。' },
     entities: [
       { type: ENTITY_TYPE.EVENT, id: 'ch5_intro', name: '死神世界传送',
         x: 4, y: 8, sprite: '✦', color: '#ffffff',
@@ -105,6 +106,7 @@ function generateFloor_5_2() {
     subtitle: '火灾、爆炸、坍塌——死神的因果链像多米诺骨牌一样展开。',
     bgColor: '#121008', theme: 'modern_city',
     tiles: grid, width: W, height: H, playerStart: { x: 4, y: 3 },
+    onClear: { message: '连锁反应在蔓延。必须找到规律才能活下去。' },
     entities: [
       { type: ENTITY_TYPE.EVENT, id: 'rescue_event', name: '连锁救援',
         x: 13, y: 3, sprite: '🆘', color: '#ff4444',
@@ -169,6 +171,7 @@ function generateFloor_5_3() {
     subtitle: '死亡前总有征兆——水渍、裂纹、温度变化。学会读懂它们，就能活下来。',
     bgColor: '#0e0e0a', theme: 'modern_indoor',
     tiles: grid, width: W, height: H, playerStart: { x: 3, y: 3 },
+    onClear: { message: '死神的规则已经被楚轩推演出来了。按计划行动。' },
     entities: [
       { type: ENTITY_TYPE.EVENT, id: 'omen_tutorial', name: '征兆分析教学',
         x: 12, y: 3, sprite: '📋', color: '#ffdd88',
@@ -228,6 +231,7 @@ function generateFloor_5_4() {
     subtitle: '张杰的眼神变了。那不是你认识的队长——死神的力量正在操纵他。',
     bgColor: '#0c0a0e', theme: 'modern_indoor',
     tiles: grid, width: W, height: H, playerStart: { x: 3, y: 8 },
+    onClear: { message: '队友的异常行为令人不安。但现在不能分心。' },
     entities: [
       { type: ENTITY_TYPE.EVENT, id: 'mind_control', name: '精神控制发动',
         x: 4, y: 8, sprite: '🧠', color: '#aa44cc',
@@ -290,6 +294,7 @@ function generateFloor_5_5() {
     subtitle: '张杰的精神压制不是攻击——而是考验。他要看看郑吒是否有资格成为队长。',
     bgColor: '#0a0a12', theme: 'mental_space',
     tiles: grid, width: W, height: H, playerStart: { x: 3, y: 3 },
+    onClear: { message: '最后的考验——证明你配活下去。' },
     entities: [
       // ── 剧情选择：张杰的请求 ──
       { type: ENTITY_TYPE.EVENT, id: 'zhangjie_request', name: '张杰的请求',

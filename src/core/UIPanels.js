@@ -771,10 +771,9 @@ export function showHelpPanel() {
           <tr><td style="color: #ffcc44;">Y</td><td>成长轨迹</td></tr>
           <tr><td style="color: #aa88ff;">U</td><td>属性分配（升级后有点数可分配）</td></tr>
           <tr><td style="color: #ffcc44;">K</td><td>业力面板（道德选择影响战斗与结局）</td></tr>
-          <li style='margin-bottom:4px;'><span style='color:#ffcc44;'>K</span> — 业力面板</li>
           <tr><td style="color: #66aaff;">X</td><td>详细统计</td></tr>
           <tr><td style="color: #ff88aa;">R</td><td>同伴关系</td></tr>
-          <tr><td style="color: #44ccaa;">V</td><td>迷雾开关</td></tr>
+          <tr><td style="color: #44ccaa;">V</td><td>楼层战略扫描</td></tr>
           <tr><td style="color: #44ffff;">M</td><td>全地图视图</td></tr>
           <tr><td style="color: #44cc88;">Q</td><td>道具背包</td></tr>
           <tr><td style="color: #888888;">P</td><td>设置 (音量/难度/迷雾)</td></tr>

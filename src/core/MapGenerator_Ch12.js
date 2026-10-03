@@ -60,4 +60,11 @@ function f12_6(){const g=makeGrid();carveRoom(g,4,4,16,12);carveRoom(g,1,7,3,10)
 {type:ENTITY_TYPE.ITEM,id:'medkit_12_final',name:'终极生命药剂',x:2,y:8,sprite:'♥',color:'#ff4488',itemType:'consumable',effect:{heal:500}},
 {type:ENTITY_TYPE.ITEM,id:'all_stat_final',name:'终极全属性结晶',x:18,y:8,sprite:'✦',color:'#ffdd44',itemType:'stat_boost',effect:{atk:8,def:8,spd:5,crt:8,maxHp:60}}]};}
 
-export function generateChapter12(){return{name:'第十二章 · 生化终战',world:'生化危机三·最终一战',floors:[f12_1(),f12_2(),f12_3(),f12_4(),f12_5(),f12_6()]};}
+export function generateChapter12() {
+  const floors = [f12_1(), f12_2(), f12_3(), f12_4(), f12_5(), f12_6()];
+  const _msgs = ["最终一战的序幕已经拉开。没有退路。","恶魔队的前哨被攻破。正面战场近在眼前。","楚轩的计划精密得令人窒息。","恶魔队的主力终于现身。这是命运的碰撞。","一切都将在这里结束。"];
+  for (let i = 0; i < Math.min(floors.length - 1, _msgs.length); i++) {
+    if (!floors[i].onClear) floors[i].onClear = { message: _msgs[i] };
+  }
+  return { name: '第十二章 · 生化终战', world: '生化危机三·最终一战', floors };
+}

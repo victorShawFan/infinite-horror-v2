@@ -126,7 +126,13 @@ function generateFloor_6_6() {
 }
 
 export function generateChapter6() {
-  return { name:'第六章 · 异形再临', world:'异形四', floors:[
+  const _ch = { name:'第六章 · 异形再临', world:'异形四', floors:[
     generateFloor_6_1(), generateFloor_6_2(), generateFloor_6_3(),
     generateFloor_6_4(), generateFloor_6_5(), generateFloor_6_6()]};
+  // 添加楼层过渡叙事
+  const _msgs = ["飞船的通风系统开始失控。必须继续深入。","新人中有人表现出了不一样的潜质。","感染隔离区的空气中弥漫着危险的味道。","水下通道是唯一的出路。深吸一口气，出发。","程啸的位置信号就在前方。快了。"];
+  for (let i = 0; i < Math.min(_ch.floors.length - 1, _msgs.length); i++) {
+    if (!_ch.floors[i].onClear) _ch.floors[i].onClear = { message: _msgs[i] };
+  }
+  return _ch;
 }

@@ -72,4 +72,11 @@ function f10_6(){const g=makeGrid();carveRoom(g,1,1,6,5);carveCorridor(g,6,3,10,
 {type:ENTITY_TYPE.EVENT,id:'ch10_ending',name:'第十章结算',x:13,y:12,sprite:'✦',color:'#ffdd88',event:{type:'chapter_end',lines:[{text:'天神队暂时撤退了。但所有人都知道——这只是开始。',speaker:'旁白'},{text:'中洲队全员归队。但最终的战争，还在前方。',speaker:'郑吒'},{text:'第十关「五队大战」通关。获得基础奖励1000点。',speaker:'主神'}],flag:'ch10_complete',rewards:{rewardPoints:1000}}},
 {type:ENTITY_TYPE.ITEM,id:'crt_ch10',name:'神射之眼',x:4,y:1,sprite:'◆',color:'#ffcc44',itemType:'stat_boost',effect:{crt:5}}]};}
 
-export function generateChapter10(){return{name:'第十章 · 五队大战',world:'魔戒',floors:[f10_1(),f10_2(),f10_3(),f10_4(),f10_5(),f10_6()]};}
+export function generateChapter10() {
+  const floors = [f10_1(), f10_2(), f10_3(), f10_4(), f10_5(), f10_6()];
+  const _msgs = ["生化世界的样本获取成功。但代价不小。","三人的复活改变了队伍的力量对比。","魔戒会议上的决策将影响一切。","五支轮回队的接触让气氛紧张到了极点。","魔多的战场上，最终的对决即将到来。"];
+  for (let i = 0; i < Math.min(floors.length - 1, _msgs.length); i++) {
+    if (!floors[i].onClear) floors[i].onClear = { message: _msgs[i] };
+  }
+  return { name: '第十章 · 五队大战', world: '魔戒', floors };
+}

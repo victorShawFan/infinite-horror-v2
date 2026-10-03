@@ -70,4 +70,11 @@ function f9_6(){const g=makeGrid();carveRoom(g,1,1,6,5);carveCorridor(g,6,3,10,3
 {type:ENTITY_TYPE.EVENT,id:'ch9_ending',name:'第九章结算',x:13,y:12,sprite:'✦',color:'#ffdd88',event:{type:'chapter_end',lines:[{text:'脑虫被成功捕获。虫群失去指挥，开始溃散。',speaker:'旁白'},{text:'撤离成功。队伍的配合越来越默契了。',speaker:'郑吒'},{text:'现在，中洲队已经回到了完整编制。是时候面对真正的战争了。',speaker:'楚轩'},{text:'第九关「星河远征」通关。获得基础奖励1000点。',speaker:'主神'}],flag:'ch9_complete',rewards:{rewardPoints:1000}}},
 {type:ENTITY_TYPE.ENEMY,id:'guard_elite',name:'精锐护卫虫',x:10,y:12,sprite:'🪲',color:'#993322',hp:135,atk:40,def:18,spd:13,rewards:{exp:95,gold:62}}]};}
 
-export function generateChapter9(){return{name:'第九章 · 星河远征',world:'星河战队',floors:[f9_1(),f9_2(),f9_3(),f9_4(),f9_5(),f9_6()]};}
+export function generateChapter9() {
+  const floors = [f9_1(), f9_2(), f9_3(), f9_4(), f9_5(), f9_6()];
+  const _msgs = ["复活仪式消耗了大量资源。但一切都是值得的。","十天的整备时间转瞬即逝。战争即将打响。","军事基地的武器库是翻盘的关键。","虫潮一波接一波。防线不能崩溃。","多支轮回队的博弈让局势更加复杂。"];
+  for (let i = 0; i < Math.min(floors.length - 1, _msgs.length); i++) {
+    if (!floors[i].onClear) floors[i].onClear = { message: _msgs[i] };
+  }
+  return { name: '第九章 · 星河远征', world: '星河战队', floors };
+}

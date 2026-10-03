@@ -50,4 +50,11 @@ function f7_6(){const g=makeGrid();carveRoom(g,1,1,6,5);carveCorridor(g,6,3,10,3
 {type:ENTITY_TYPE.EVENT,id:'ch7_ending',name:'第七章结算',x:13,y:12,sprite:'✦',color:'#ffdd88',event:{type:'chapter_end',lines:[{text:'复制体郑吒退走了。但战争远未结束。',speaker:'旁白'},{text:'郑吒独自一人站在废墟中。但他的眼中燃烧着前所未有的决意。',speaker:'旁白'},{text:'第七关「恶魔初临」通关。获得基础奖励1000点。',speaker:'主神'}],flag:'ch7_complete',rewards:{rewardPoints:1000}}},
 {type:ENTITY_TYPE.ITEM,id:'medkit_ch7_6',name:'高级急救包',x:4,y:11,sprite:'♥',color:'#ff4488',itemType:'consumable',effect:{heal:120}}]};}
 
-export function generateChapter7(){return{name:'第七章 · 恶魔初临',world:'生化危机二',floors:[f7_1(),f7_2(),f7_3(),f7_4(),f7_5(),f7_6()]};}
+export function generateChapter7() {
+  const floors = [f7_1(), f7_2(), f7_3(), f7_4(), f7_5(), f7_6()];
+  const _msgs = ["浣熊市的废墟中，T病毒的气息再次袭来。","剧情人物的安全关系到任务的完成。","恶魔队的信号意味着真正的威胁不是生化怪物。","分队撤离是正确的决定。但危机还远没有结束。","团灭的阴影笼罩着每个人。必须赌上一切。"];
+  for (let i = 0; i < Math.min(floors.length - 1, _msgs.length); i++) {
+    if (!floors[i].onClear) floors[i].onClear = { message: _msgs[i] };
+  }
+  return { name: '第七章 · 恶魔初临', world: '生化危机二', floors };
+}

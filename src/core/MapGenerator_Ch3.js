@@ -51,6 +51,7 @@ function generateFloor_3_1() {
     subtitle: '推开那扇门的瞬间，一股阴冷从脚底升起。这座日式宅邸已经等待你们很久了。',
     bgColor: '#0a0a14', theme: 'juon_house',
     tiles: grid, width: W, height: H, playerStart: { x: 3, y: 14 },
+    onClear: { message: '诅咒的气息越来越浓。必须在天亮前找到佛经……' },
     entities: [
       // 开场对话
       { type: ENTITY_TYPE.EVENT, id: 'ch3_intro', name: '咒怨世界传送',
@@ -155,6 +156,7 @@ function generateFloor_3_2() {
     subtitle: '夜幕降临。宅邸内的温度在下降。有什么东西……在移动。',
     bgColor: '#080810', theme: 'juon_house',
     tiles: grid, width: W, height: H, playerStart: { x: 3, y: 3 },
+    onClear: { message: '第一夜过去了。但诅咒不会停止。' },
     entities: [
       // 分散事件
       { type: ENTITY_TYPE.EVENT, id: 'night_scatter', name: '夜间分散',
@@ -242,6 +244,7 @@ function generateFloor_3_3() {
     subtitle: '地下室的墙壁上刻满了梵文。楚轩的眼神亮了起来——这是破解诅咒的关键。',
     bgColor: '#0a0810', theme: 'juon_basement',
     tiles: grid, width: W, height: H, playerStart: { x: 3, y: 2 },
+    onClear: { message: '佛经上的文字若隐若现，似乎在指引方向。' },
     entities: [
       // 佛经发现事件
       { type: ENTITY_TYPE.EVENT, id: 'sutra_discovery', name: '佛经发现',
@@ -337,6 +340,7 @@ function generateFloor_3_4() {
     subtitle: '恐惧让人失去理智。新人中有人开始互相猜疑，而铭烟薇成了牺牲品。',
     bgColor: '#0c0a10', theme: 'juon_house',
     tiles: grid, width: W, height: H, playerStart: { x: 4, y: 8 },
+    onClear: { message: '新人的恐惧快要失控了。必须稳住局面。' },
     entities: [
       // 新人冲突事件
       // ── 剧情选择：面对新人的态度 ──
@@ -457,6 +461,7 @@ function generateFloor_3_5() {
     subtitle: '楚轩已经做好了决定。录像带中记录着他最后的分析——也是给你们最后的礼物。',
     bgColor: '#0a0812', theme: 'juon_attic',
     tiles: grid, width: W, height: H, playerStart: { x: 3, y: 3 },
+    onClear: { message: '录像中的信息让一切变得清晰——该去面对伽椰子了。' },
     entities: [
       // 楚轩录像事件
       { type: ENTITY_TYPE.EVENT, id: 'chuxuan_video', name: '楚轩的录像',

@@ -68,4 +68,11 @@ function f11_6(){const g=makeGrid();carveRoom(g,3,3,17,13);carveRoom(g,1,7,2,10)
 {type:ENTITY_TYPE.ITEM,id:'medkit_11_6',name:'觉醒药剂',x:1,y:8,sprite:'♥',color:'#ffdd44',itemType:'consumable',effect:{heal:200}},
 {type:ENTITY_TYPE.ITEM,id:'res_ch11',name:'心灵屏障',x:19,y:8,sprite:'🛡',color:'#aa88ff',itemType:'stat_boost',effect:{res:10}}]};}
 
-export function generateChapter11(){return{name:'第十一章 · 心魔终破',world:'变形金刚/猛鬼街/天煞',floors:[f11_1(),f11_2(),f11_3(),f11_4(),f11_5(),f11_6()]};}
+export function generateChapter11() {
+  const floors = [f11_1(), f11_2(), f11_3(), f11_4(), f11_5(), f11_6()];
+  const _msgs = ["变形金刚的世界比想象中更加危险。","梦境入口已经找到。准备好面对内心的恐惧。","梦层深处的幻象越来越真实。","武者的试炼是对意志最严酷的考验。","心魔的面具终于被揭开了。"];
+  for (let i = 0; i < Math.min(floors.length - 1, _msgs.length); i++) {
+    if (!floors[i].onClear) floors[i].onClear = { message: _msgs[i] };
+  }
+  return { name: '第十一章 · 心魔终破', world: '变形金刚/猛鬼街/天煞', floors };
+}
