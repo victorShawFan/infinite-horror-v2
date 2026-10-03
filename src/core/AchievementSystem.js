@@ -208,3 +208,54 @@ class AchievementTracker {
 }
 
 export const achievementTracker = new AchievementTracker();
+
+// ═══════════════════════════════════════════════════════════════
+// 新系统关联成就（觉醒/连锁/战术/命运/战斗导演）
+// ═══════════════════════════════════════════════════════════════
+
+// 追加成就定义
+export const EXTENDED_ACHIEVEMENTS = [
+  // ── 觉醒成就 ──
+  { id: 'awakening_1', name: '力量觉醒', icon: '💫', desc: '完成第一次觉醒', category: 'awakening', hidden: false },
+  { id: 'awakening_3', name: '蜕变者', icon: '⚡', desc: '达到觉醒阶段三：蜕变', category: 'awakening', hidden: false },
+  { id: 'awakening_max', name: '超越极限', icon: '🌟', desc: '达到完全觉醒', category: 'awakening', hidden: true },
+  
+  // ── 连锁反应成就 ──
+  { id: 'chain_first', name: '初次连锁', icon: '🔗', desc: '首次触发元素连锁反应', category: 'combat', hidden: false },
+  { id: 'chain_3_battle', name: '连锁大师', icon: '⛓', desc: '单场战斗触发3次连锁反应', category: 'combat', hidden: false },
+  { id: 'chain_void', name: '虚无崩坏', icon: '✦', desc: '触发暗+光的虚无崩坏连锁', category: 'combat', hidden: true },
+  
+  // ── 战术成就 ──
+  { id: 'combo_first', name: '战术觉醒', icon: '🎯', desc: '首次触发战术连携', category: 'combat', hidden: false },
+  { id: 'charge_max', name: '蓄力大师', icon: '🔋', desc: '使用满蓄力攻击', category: 'combat', hidden: false },
+  { id: 'all_combos', name: '战术全才', icon: '📋', desc: '触发所有5种战术连携', category: 'combat', hidden: true },
+  
+  // ── 命运抉择成就 ──
+  { id: 'fate_first', name: '命运转折', icon: '🎭', desc: '做出第一个命运抉择', category: 'story', hidden: false },
+  { id: 'fate_all', name: '命运之子', icon: '🌌', desc: '完成所有命运抉择', category: 'story', hidden: true },
+  { id: 'karma_saint', name: '圣者之心', icon: '😇', desc: '业力值达到100以上', category: 'story', hidden: false },
+  { id: 'karma_demon', name: '恶魔之道', icon: '😈', desc: '业力值降到-50以下', category: 'story', hidden: true },
+  { id: 'fate_ring_resist', name: '魔戒克星', icon: '💍', desc: '抵抗至尊魔戒的诱惑', category: 'story', hidden: true },
+  
+  // ── 战斗导演成就 ──
+  { id: 'comeback_king', name: '逆转之王', icon: '🔥', desc: '从濒死状态逆转取胜', category: 'combat', hidden: false },
+  { id: 'ss_rating', name: '无双战神', icon: '💎', desc: '获得SS级战斗评定', category: 'combat', hidden: false },
+  { id: 'crit_chain_5', name: '暴击风暴', icon: '⚡', desc: '单场战斗5连暴击', category: 'combat', hidden: true },
+  { id: 'speed_kill', name: '秒杀', icon: '⚔', desc: '3回合内击败Boss', category: 'combat', hidden: true },
+  
+  // ── 收集成就 ──
+  { id: 'relic_5', name: '遗物收藏家', icon: '🏺', desc: '收集5个不同遗物', category: 'collect', hidden: false },
+  { id: 'legendary_equip', name: '传奇降临', icon: '🗡', desc: '获得第一件传奇装备', category: 'collect', hidden: false },
+  { id: 'full_set', name: '套装齐全', icon: '👑', desc: '凑齐一套完整套装', category: 'collect', hidden: false },
+  { id: 'bestiary_50', name: '怪物学者', icon: '📖', desc: '图鉴记录50种不同敌人', category: 'collect', hidden: false },
+  { id: 'bestiary_all', name: '生物百科', icon: '📚', desc: '图鉴记录所有敌人', category: 'collect', hidden: true },
+];
+
+// 合并到主成就列表
+try {
+  for (const ach of EXTENDED_ACHIEVEMENTS) {
+    if (!ACHIEVEMENTS.find(a => a.id === ach.id)) {
+      ACHIEVEMENTS.push(ach);
+    }
+  }
+} catch {}

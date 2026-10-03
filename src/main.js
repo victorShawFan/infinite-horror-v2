@@ -162,6 +162,7 @@ import { initFloorMastery, recordFloorKill, recordFloorCollect, recordFloorEvent
 import { initBattleScene, startBattleScene, stopBattleScene, updateBattleState, playBattleResult, isBattleSceneActive } from './core/BattleScene.js';
 import { initAwakeningState, getAwakeningStage, getAwakeningLevel, canAwaken, performAwakening, getAwakeningCombatBonuses, getAwakeningSkills, renderAwakeningPanel, serializeAwakening, deserializeAwakening } from './core/AwakeningSystem.js';
 import { checkFateChoice, makeFateChoice, applyFateConsequence, renderFateChoiceUI, renderFateHistoryPanel, serializeFateChoices, deserializeFateChoices, getFateStats, resetFateChoices } from './core/FateChoiceSystem.js';
+import { initDirector, stopDirector, directorOnRound, directorOnDamage, directorOnChainReaction, directorOnBossPhase, directorOnDefend, directorOnVictory, directorOnDefeat, getTension, renderBattleSummaryPanel } from './core/CombatDirector.js';
 import { addJournalEntry, triggerChapterJournals, triggerChapterCompleteJournal, serializeJournal, deserializeJournal, renderJournalPanel } from './core/StoryJournal.js';
 import { getCanonState, resetCanonState } from './core/CanonState.js';
 import { announce, autoAnnounce, clearAnnouncements } from './core/CombatAnnouncer.js';
@@ -1136,6 +1137,13 @@ function startGame() {
             round: data.round,
           });
         }
+        // 战斗导演——回合事件
+        const dirEvents = directorOnRound(data.round, data.playerHp, data.playerMaxHp || 100, data.enemyHp, data.enemyMaxHp || 100);
+        for (const ev of dirEvents) {
+          if (ev.priority === 'high' || ev.priority === 'critical') {
+            try { renderer.notify(ev.text, ev.color, 90); } catch {}
+          }
+        }
       } catch {}
     });
     eventBus.on('combat:critical', () => {
@@ -1165,6 +1173,9 @@ function startGame() {
           updateBattleState({ action: 'player_skill', actionData: { color: '#ffcc44' } });
         }
       } catch {}
+    });
+    eventBus.on('combat:chain_reaction', (chain) => {
+      try { directorOnChainReaction(chain); } catch {}
     });
   } catch(e) { console.warn('BattleScene events:', e); }
 
@@ -4517,6 +4528,7 @@ async function startCombat(enemy, preScaledEnemy) {
   try {
     const _isBoss = !!(enemy.type === 'boss' || enemy.isBoss || enemy.bossId);
     startBattleScene(gameState.player, scaledEnemy, gameState.chapter, _isBoss);
+    initDirector(_isBoss);
   } catch(e) { console.warn('BattleScene start:', e); }
   // 记录遭遇的敌人供训练房使用（在战斗前记录，避免死亡后被移除）
   try { recordEncounteredEnemy(scaledEnemy); } catch {}
@@ -4574,8 +4586,16 @@ async function startCombat(enemy, preScaledEnemy) {
   // 战斗场景演出结果
   try {
     playBattleResult(result.victory);
-    // 延迟停止，让胜利/失败动画播放
     setTimeout(() => { try { stopBattleScene(); } catch {} }, 1500);
+  } catch {}
+  // 战斗导演总结
+  try {
+    const summaryEvents = result.victory ? directorOnVictory(result.rounds || 0) : directorOnDefeat(result.rounds || 0);
+    stopDirector();
+    if (summaryEvents.length > 0 && summaryEvents[0].type === 'battle_summary') {
+      // 存储总结供后续显示
+      gameState._lastBattleSummary = summaryEvents[0];
+    }
   } catch {}
 
   if (result.victory) {

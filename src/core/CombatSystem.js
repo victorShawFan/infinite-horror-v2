@@ -45,6 +45,7 @@ import { getIntelCombatBonus, recordDiscovery } from './EnemyIntelSystem.js';
 import { resetChainState, recordElementHit, recordStatusApplied, applyChainDamage, formatChainLog, getChainStats } from './ChainReaction.js';
 import { resetTactics, recordTacticalAction, onDefendChosen, consumeCharge, addCharge, getPositionModifier, switchPosition, isCounterWindow } from './CombatTactics.js';
 import { getAwakeningCombatBonuses, getAwakeningLevel } from './AwakeningSystem.js';
+import { directorOnDamage, directorOnDefend } from './CombatDirector.js';
 
 // ── 伤害计算 ──
 export function calcDamage(attacker, defender, damageType = DAMAGE_TYPE.PHYSICAL, minDmg = 1) {
