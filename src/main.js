@@ -208,7 +208,10 @@ function autoSave(reason = '') {
     localStorage.setItem('ih_abyss', JSON.stringify(serializeAbyss()));
     try { localStorage.setItem('ih_exploration_events', JSON.stringify(serializeExplorationEvents())); } catch {}
     try { localStorage.setItem('ih_narratives', JSON.stringify(serializeNarratives())); } catch {}
-    localStorage.setItem('ih_daily', JSON.stringify(serializeDaily()));    // 设置持久化：难度 + 音量 + 迷雾
+    localStorage.setItem('ih_daily', JSON.stringify(serializeDaily()));
+    try { localStorage.setItem('ih_player_stats', JSON.stringify(serializePlayerStats())); } catch {}
+    try { localStorage.setItem('ih_flashbacks', JSON.stringify(serializeFlashbacks())); } catch {}
+    // 设置持久化：难度 + 音量 + 迷雾
     try {
       const settingsData = {
         difficulty: getDifficulty(),
