@@ -1775,10 +1775,11 @@ document.addEventListener('keydown', (e) => {
     localStorage.setItem('ih_dynamic_diff', JSON.stringify(serializeDynamicDifficulty()));
     localStorage.setItem('ih_growth', JSON.stringify(serializeGrowth()));
     localStorage.setItem('ih_statalloc', JSON.stringify(serializeStatAllocation())); } catch {}
+    try { localStorage.setItem('ih_abyss', JSON.stringify(serializeAbyss())); } catch {}
+    try { localStorage.setItem('ih_daily', JSON.stringify(serializeDaily())); } catch {}
     renderer.notify('💾 手动存档完成', '#44ff88', 90);
     return;
-    localStorage.setItem('ih_abyss', JSON.stringify(serializeAbyss()));
-    localStorage.setItem('ih_daily', JSON.stringify(serializeDaily()));  }
+  }
   if (e.key === 'F9') {
     e.preventDefault();
     if (gameState.load(0)) {
@@ -1798,6 +1799,21 @@ document.addEventListener('keydown', (e) => {
   // 探索模式
   if (gameState.state === GAME_STATE.EXPLORING) {
     let dx = 0, dy = 0;
+
+    // Shift 组合键 — 在 switch 之前处理
+    if (e.shiftKey) {
+      const sk = e.key.toLowerCase();
+      if (sk === 't') {
+        // 战斗统计 (Shift+T)
+        _showCombatStatsPanel();
+        return;
+      }
+      if (sk === 'p') {
+        // 玩家统计面板 (Shift+P)
+        showPlayerStatsPanel();
+        return;
+      }
+    }
     switch (e.key.toLowerCase()) {
       case 'w': case 'arrowup':    dy = -1; break;
       case 's': case 'arrowdown':  dy = 1; break;
@@ -1827,9 +1843,8 @@ document.addEventListener('keydown', (e) => {
         // 同伴关系面板
         showRelationshipPanel();
         return;
-            case 'tab':
-        // 迷你地图开关
-        e.preventDefault();
+      case 'o':
+        // 迷你地图开关 (原Tab，改为O)
         if (window._miniMap) window._miniMap.toggle();
         return;
 case 'h': case '?':
@@ -1839,10 +1854,6 @@ case 'h': case '?':
       case 'l':
         // 战斗日志
         showCombatLog();
-        return;
-      case 'P':
-        // 玩家统计面板 (Shift+P)
-        showPlayerStatsPanel();
         return;
       case 't':
         // 战术/策略模式开关
@@ -1868,10 +1879,6 @@ case 'h': case '?':
       case 'b':
         // 装备仓库
         openEquipmentStash();
-        return;
-      case 't':
-        // 战斗统计
-        _showCombatStatsPanel();
         return;
       case 'c':
         // 知识典籍

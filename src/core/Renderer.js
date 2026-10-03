@@ -860,11 +860,14 @@ export class Renderer {
     if (this._time < 1800 || (this._time % 3600 < 300)) {
       const hints = [
         { key: 'WASD', desc: '移动' },
+        { key: 'Space', desc: '交互' },
         { key: 'I', desc: '背包' },
-        { key: 'Q', desc: '道具' },
         { key: 'G', desc: '基因锁' },
+        { key: 'T', desc: '策略' },
         { key: 'M', desc: '地图' },
+        { key: 'O', desc: '迷你图' },
         { key: 'Tab', desc: '角色' },
+        { key: 'F5', desc: '存档' },
         { key: 'H', desc: '帮助' },
       ];
       ctx.save();
