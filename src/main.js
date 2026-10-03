@@ -1119,33 +1119,65 @@ function startGame() {
         mpText.textContent = 'MP ' + data.playerMana + '/' + pMaxMana;
       }
     }
-    // 更新状态效果图标
-    if (data.log && data.log.length > 0) {
+    // 更新状态效果图标（使用真实战斗状态数据）
+    {
       let statusEl = document.getElementById('chud-status-icons');
       if (!statusEl) {
         const hud = document.getElementById('combat-hud');
         if (hud) {
           statusEl = document.createElement('div');
           statusEl.id = 'chud-status-icons';
-          statusEl.style.cssText = 'display:flex;justify-content:center;gap:4px;margin-top:2px;';
+          statusEl.style.cssText = 'display:flex;justify-content:center;gap:4px;margin-top:2px;flex-wrap:wrap;';
           hud.appendChild(statusEl);
         }
       }
       if (statusEl) {
-        // 从战斗日志中提取活跃状态
         const statusIcons = [];
-        const logText = data.log.map(e => e.text).join(' ');
-        if (logText.includes('基因锁')) statusIcons.push({ icon: '🧬', color: '#ff8800' });
-        if (logText.includes('连杀')) statusIcons.push({ icon: '🔥', color: '#ff4444' });
-        if (logText.includes('中毒')) statusIcons.push({ icon: '☠', color: '#88ff44' });
-        if (logText.includes('灼烧') || logText.includes('燃烧')) statusIcons.push({ icon: '🔥', color: '#ff6600' });
-        if (logText.includes('防御姿态') || logText.includes('🛡')) statusIcons.push({ icon: '🛡', color: '#4488ff' });
-        if (logText.includes('附魔')) statusIcons.push({ icon: '✨', color: '#aa88ff' });
-        if (logText.includes('吸血')) statusIcons.push({ icon: '🩸', color: '#ff4488' });
-        // 只展示最近的状态，不堆叠太多
-        statusEl.innerHTML = statusIcons.slice(0, 6).map(s =>
-          '<span style="font-size:10px;color:' + s.color + ';text-shadow:0 0 4px ' + s.color + '44;">' + s.icon + '</span>'
-        ).join('');
+        const STATUS_ICON_MAP = {
+          burn: { icon: '🔥', color: '#ff6600', label: '灼烧' },
+          freeze: { icon: '❄', color: '#44ccff', label: '冻结' },
+          poison: { icon: '☠', color: '#88ff44', label: '中毒' },
+          stun: { icon: '💫', color: '#ffcc44', label: '眩晕' },
+          buff_atk: { icon: '⚔', color: '#ff6644', label: 'ATK↑' },
+          buff_def: { icon: '🛡', color: '#4488ff', label: 'DEF↑' },
+          buff_crt: { icon: '🎯', color: '#ff44aa', label: 'CRT↑' },
+          debuff_atk: { icon: '⬇', color: '#ff4444', label: 'ATK↓' },
+        };
+        // 从真实 statusEffects 读取玩家状态
+        if (data.statusEffects) {
+          const playerEffects = data.statusEffects.player || [];
+          const enemyEffects = data.statusEffects.enemy || [];
+          for (const eff of playerEffects) {
+            const mapping = STATUS_ICON_MAP[eff.type];
+            if (mapping) {
+              statusIcons.push({ ...mapping, duration: eff.duration, isPlayer: true });
+            }
+          }
+          // 敌人状态（小字显示）
+          for (const eff of enemyEffects) {
+            const mapping = STATUS_ICON_MAP[eff.type];
+            if (mapping) {
+              statusIcons.push({ icon: mapping.icon, color: '#666', label: '敌' + mapping.label, isEnemy: true });
+            }
+          }
+        }
+        // 遗物效果标记
+        if (data.relicFx) {
+          if (data.relicFx.lifeStealPct > 0) statusIcons.push({ icon: '🩸', color: '#ff4488', label: '吸血' });
+          if (data.relicFx.deathSaveHpPct > 0) statusIcons.push({ icon: '🪶', color: '#ffcc44', label: '凤凰翎' });
+          if (data.relicFx.autoAttackInterval > 0) statusIcons.push({ icon: '💠', color: '#8844ff', label: '虚空' });
+          if (data.relicFx.reflectChance > 0) statusIcons.push({ icon: '🪞', color: '#aa88ff', label: '反弹' });
+        }
+        // 天赋效果标记
+        if (data.perkFx) {
+          if (data.perkFx.regenPct > 0) statusIcons.push({ icon: '💚', color: '#44cc88', label: '再生' });
+          if (data.perkFx.berserkerMaxBonus > 0 || data.perkFx.fearAuraBase > 0) statusIcons.push({ icon: '👁', color: '#cc44ff', label: '领域' });
+        }
+        // 渲染
+        statusEl.innerHTML = statusIcons.slice(0, 8).map(s => {
+          const title = s.label + (s.duration ? ' (' + s.duration + '回合)' : '');
+          return '<span title="' + title + '" style="font-size:' + (s.isEnemy ? '8' : '11') + 'px;color:' + s.color + ';text-shadow:0 0 4px ' + s.color + '44;cursor:help;padding:0 1px;">' + s.icon + '</span>';
+        }).join('');
       }
     }
   });
