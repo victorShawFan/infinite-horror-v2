@@ -1484,7 +1484,30 @@ function loadFloor(index, isAdvancing) {
   } catch (e) { console.warn('CanonState sync:', e); }
   // 设置当前章节楼层总数（供HUD使用）
   gameState.chapterFloorCount = chapter.floors?.length || 6;
-  if (isAdvancing && index > 0) gameState.stats.floorsCleared++;
+  if (isAdvancing && index > 0) {
+    gameState.stats.floorsCleared++;
+    // ── 楼层精通结算（离开上一层时） ──
+    try {
+      const prevFloorId = chapter.floors[index - 1]?.id;
+      if (prevFloorId) {
+        const masteryRewards = getFloorMasteryRewards(prevFloorId, gameState.chapter);
+        if (masteryRewards.stars > 0 && masteryRewards.exp > 0) {
+          const p = gameState.player;
+          p.exp = (p.exp || 0) + masteryRewards.exp;
+          p.gold = (p.gold || 0) + masteryRewards.gold;
+          if (masteryRewards.rewardPoints > 0) p.rewardPoints = (p.rewardPoints || 0) + masteryRewards.rewardPoints;
+          // 浮动提示
+          const starText = '★'.repeat(masteryRewards.stars) + '☆'.repeat(3 - masteryRewards.stars);
+          try { renderer.notify('楼层精通: ' + starText + ' (+' + masteryRewards.exp + 'EXP +' + masteryRewards.gold + 'G)', '#ffcc44', 120); } catch {}
+          // 弹窗队列
+          try {
+            const masteryHtml = renderMasteryPopup(prevFloorId, gameState.chapter);
+            if (masteryHtml) eventBus.emit('ui:show_mastery_popup', { html: masteryHtml, floorId: prevFloorId });
+          } catch {}
+        }
+      }
+    } catch (e) { console.warn('FloorMastery settle:', e); }
+  }
   if (index >= chapter.floors.length) {
     // 所有层完成 — 进入主神空间
     showChapterComplete();
