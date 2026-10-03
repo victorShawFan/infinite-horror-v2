@@ -99,6 +99,7 @@ import { initTitleFX, spawnDamageNumber, screenShake, screenFlash } from './core
 import { getBattleEnvironment, formatEnvironmentHTML, processEnvironmentEffect } from './core/BattleEnvironment.js';
 import { generateTacticalHints, formatTacticalHintsHTML } from './core/TacticalHints.js';
 import { initStatAllocation, grantStatPoints, allocateStat, autoAllocate, getPendingPoints, renderStatAllocationPanel, serializeStatAllocation, deserializeStatAllocation, getRecommendedBuild } from './core/StatAllocation.js';
+import { getEnchantCombatBonus, serializeEnchant, deserializeEnchant } from './core/EnchantSystem.js';
 
 // ── 全局状态 ──
 let renderer;
@@ -770,6 +771,7 @@ document.getElementById('btn-new-game').addEventListener('click', () => {
     try { const _grData = localStorage.getItem('ih_growth'); if (_grData) deserializeGrowth(JSON.parse(_grData)); } catch {}
     try { const _saData = localStorage.getItem('ih_statalloc'); if (_saData) deserializeStatAllocation(JSON.parse(_saData)); } catch {}
     initStatAllocation();
+    try { const _enData = localStorage.getItem('ih_enchant'); if (_enData) deserializeEnchant(JSON.parse(_enData)); } catch {}
     try { const _abData = localStorage.getItem('ih_abyss'); if (_abData) deserializeAbyss(JSON.parse(_abData)); } catch {}
     try { const _dlData = localStorage.getItem('ih_daily'); if (_dlData) deserializeDaily(JSON.parse(_dlData));    } catch {}
       } catch {}
@@ -997,6 +999,9 @@ function startGame() {
     p.exp += data.rewards.exp;
     p.rewardPoints = (p.rewardPoints || 0) + data.rewards.rewardPoints;
     gameState.player.gold = (gameState.player.gold || 0) + data.rewards.gold;
+    // 灵魂碎片掉落（每次战斗1-3个）
+    const shardDrop = 1 + Math.floor(Math.random() * 3);
+    gameState.soulShards = (gameState.soulShards || 0) + shardDrop;
     gameState.stats.goldEarned = (gameState.stats.goldEarned || 0) + data.rewards.gold;
 
     // 检查升级
@@ -3252,6 +3257,15 @@ function startCombat(enemy, preScaledEnemy) {
 
       // Boss击杀特效 + 战斗总结
       if (scaledEnemy.bossId || scaledEnemy.type === 'boss') {
+        // Boss掉落元素核心
+        try {
+          const coreTypes = ['fire_core','ice_core','poison_core','psychic_core','dark_core','holy_core','spirit_core'];
+          const droppedCore = coreTypes[Math.floor(Math.random() * coreTypes.length)];
+          gameState.enchantCores = gameState.enchantCores || {};
+          gameState.enchantCores[droppedCore] = (gameState.enchantCores[droppedCore] || 0) + 1;
+          gameState.soulShards = (gameState.soulShards || 0) + 10; // Boss额外碎片
+        } catch {}
+
         renderer.shake(8, 600);
         renderer.flash('rgba(255, 200, 0)', 300);
         const actualDmg = Math.max(0, hpBeforeCombat - gameState.player.hp);
