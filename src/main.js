@@ -131,6 +131,7 @@ import { showKeybindHelp } from './core/KeybindHelp.js';
 import { generateDamageBreakdownHTML } from './core/DamageBreakdown.js';
 import { ScreenEffects } from './core/ScreenEffects.js';
 import { getRandomTip, getContextualTip } from './core/GameplayTips.js';
+import { tryAmbientNarration, renderAmbientText } from './core/AmbientNarration.js';
 import { toggleAutoBattle, isAutoBattleEnabled, shouldAutoBattle, renderAutoBattleIndicator } from './core/AutoBattleSystem.js';
 import { drawEnemyRadar } from './core/EnemyRadar.js';
 import { renderAbilitiesPanel } from './core/CompanionAbilities.js';
@@ -1535,6 +1536,23 @@ function gameLoop(timestamp) {
     try { drawQuestHUD(renderer.ctx, renderer.canvas.width, renderer.canvas.height); } catch {}
     try { renderAutoBattleIndicator(renderer.ctx, 12, renderer.canvas.height - 52); } catch {}
     try { drawEnemyRadar(renderer.ctx, entities, gameState.player, gameState.chapter, undefined, currentFloorIndex); } catch {}
+    // 环境叙事（底部淡入文字）
+    try {
+      if (!window._ambientText) window._ambientText = null;
+      if (!window._ambientFade) window._ambientFade = 0;
+      const _newAmbient = tryAmbientNarration();
+      if (_newAmbient) { window._ambientText = _newAmbient; window._ambientFade = 180; } // 3秒显示（60fps*3）
+      if (window._ambientFade > 0 && window._ambientText) {
+        const _alpha = Math.min(1, window._ambientFade / 60);
+        const _ctx = renderer.ctx;
+        _ctx.save();
+        _ctx.globalAlpha = _alpha * 0.6;
+        renderAmbientText(_ctx, renderer.canvas.width, renderer.canvas.height, window._ambientText);
+        _ctx.restore();
+        window._ambientFade--;
+      }
+    } catch {}
+
     // FPS指示器（右下角小字）
     if (_fpsDisplay > 0) {
       const fpsCtx = renderer.ctx;
