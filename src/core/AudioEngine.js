@@ -174,38 +174,73 @@ class AudioEngine {
     }
   }
 
-  /** 开始恐怖氛围背景音 */
-  startAmbience() {
-    if (!this._initialized || this._bgmOsc) return;
-    // 低沉的 drone
+  /** 章节感知氛围背景音 */
+  startAmbience(chapter = 1) {
+    this.stopAmbience();
+    if (!this._initialized) return;
+    
+    // 每章不同的音色和节奏
+    const CHAPTER_AMBIENCE = {
+      1:  { freq: 55, type: 'sawtooth', lfoRate: 0.3, lfoDepth: 8, filterFreq: 200, name: '生化恐惧' },
+      2:  { freq: 48, type: 'triangle', lfoRate: 0.15, lfoDepth: 4, filterFreq: 180, name: '异形深空' },
+      3:  { freq: 62, type: 'sawtooth', lfoRate: 0.5, lfoDepth: 12, filterFreq: 160, name: '咒怨不安' },
+      4:  { freq: 52, type: 'sine', lfoRate: 0.2, lfoDepth: 6, filterFreq: 250, name: '沙漠古墓' },
+      5:  { freq: 45, type: 'triangle', lfoRate: 0.1, lfoDepth: 3, filterFreq: 300, name: '死神低语' },
+      6:  { freq: 50, type: 'sawtooth', lfoRate: 0.25, lfoDepth: 10, filterFreq: 150, name: '深海压迫' },
+      7:  { freq: 58, type: 'square', lfoRate: 0.4, lfoDepth: 15, filterFreq: 120, name: '废墟警报' },
+      8:  { freq: 65, type: 'sine', lfoRate: 0.08, lfoDepth: 2, filterFreq: 400, name: '原野悠远' },
+      9:  { freq: 42, type: 'sawtooth', lfoRate: 0.35, lfoDepth: 8, filterFreq: 180, name: '虫潮逼近' },
+      10: { freq: 55, type: 'triangle', lfoRate: 0.2, lfoDepth: 5, filterFreq: 280, name: '战场号角' },
+      11: { freq: 38, type: 'sawtooth', lfoRate: 0.6, lfoDepth: 20, filterFreq: 100, name: '梦境扭曲' },
+      12: { freq: 60, type: 'square', lfoRate: 0.45, lfoDepth: 18, filterFreq: 140, name: '终末轰鸣' },
+    };
+    
+    const cfg = CHAPTER_AMBIENCE[chapter] || CHAPTER_AMBIENCE[1];
+    
+    // 主音振荡器
     this._bgmOsc = this.ctx.createOscillator();
     const filter = this.ctx.createBiquadFilter();
     filter.type = 'lowpass';
-    filter.frequency.value = 200;
+    filter.frequency.value = cfg.filterFreq;
+    filter.Q.value = 2;
 
     this._bgmOsc.connect(filter);
     filter.connect(this.musicGain);
 
-    this._bgmOsc.type = 'sawtooth';
-    this._bgmOsc.frequency.value = 55; // A1 低音
+    this._bgmOsc.type = cfg.type;
+    this._bgmOsc.frequency.value = cfg.freq;
 
-    // LFO 调制频率产生不安感
+    // LFO 调制频率产生氛围感
     const lfo = this.ctx.createOscillator();
     const lfoGain = this.ctx.createGain();
     lfo.connect(lfoGain);
     lfoGain.connect(this._bgmOsc.frequency);
-    lfo.frequency.value = 0.3; // 极慢
-    lfoGain.gain.value = 8;
+    lfo.frequency.value = cfg.lfoRate;
+    lfoGain.gain.value = cfg.lfoDepth;
     lfo.start();
+    this._bgmLfo = lfo;
+
+    // 第二层谐波（增加厚度）
+    this._bgmOsc2 = this.ctx.createOscillator();
+    const filter2 = this.ctx.createBiquadFilter();
+    filter2.type = 'lowpass';
+    filter2.frequency.value = cfg.filterFreq * 0.7;
+    const gain2 = this.ctx.createGain();
+    gain2.gain.value = 0.15;
+    this._bgmOsc2.connect(filter2);
+    filter2.connect(gain2);
+    gain2.connect(this.musicGain);
+    this._bgmOsc2.type = 'sine';
+    this._bgmOsc2.frequency.value = cfg.freq * 1.5; // 五度泛音
+    this._bgmOsc2.start();
 
     this._bgmOsc.start();
   }
 
   stopAmbience() {
-    if (this._bgmOsc) {
-      this._bgmOsc.stop();
-      this._bgmOsc = null;
-    }
+    try { if (this._bgmOsc) { this._bgmOsc.stop(); this._bgmOsc = null; } } catch {}
+    try { if (this._bgmOsc2) { this._bgmOsc2.stop(); this._bgmOsc2 = null; } } catch {}
+    try { if (this._bgmLfo) { this._bgmLfo.stop(); this._bgmLfo = null; } } catch {}
   }
 
   /** 恢复音频上下文（需要用户交互后调用） */

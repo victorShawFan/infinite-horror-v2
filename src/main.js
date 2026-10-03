@@ -839,7 +839,7 @@ document.getElementById('btn-new-game').addEventListener('click', () => {
         document.getElementById('btn-resume-game').addEventListener('click', () => {
           audioEngine.init();
           audioEngine.resume();
-          audioEngine.startAmbience();
+          audioEngine.startAmbience(gameState.chapter || 1);
           menuState = 'playing';
           overlay.innerHTML = '';
           combatAnimator = new CombatAnimator(renderer);
@@ -860,7 +860,7 @@ document.getElementById('btn-new-game').addEventListener('click', () => {
       } else {
         audioEngine.init();
         audioEngine.resume();
-        audioEngine.startAmbience();
+        audioEngine.startAmbience(gameState.chapter || 1);
         menuState = 'playing';
         document.getElementById('ui-overlay').innerHTML = '';
         combatAnimator = new CombatAnimator(renderer);
@@ -946,7 +946,7 @@ function startNewGame() {
   // 初始化音频
   audioEngine.init();
   audioEngine.resume();
-  audioEngine.startAmbience();
+  audioEngine.startAmbience(gameState.chapter || 1);
 
   // 添加初始队友并建立初始关系
   gameState.addCompanion({ id: 'zhang_jie', name: '张杰', role: '战术领队', alive: true });
