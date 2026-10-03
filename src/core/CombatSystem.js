@@ -446,7 +446,7 @@ export async function executeBattle(enemy) {
   }
   // ── 天赋：恐惧领域（初始 + 可叠加） ──
   let _fearAuraReduction = 0;
-  if (perkFx.fearAuraBase > 0) {
+  if (perkFx.fearAuraBase > 0) { // fearAura 恐惧光环（每5回合叠加 fearAuraStack，cap封顶）
     _fearAuraReduction = perkFx.fearAuraBase;
     const fearReduce = Math.floor(enemy.atk * _fearAuraReduction);
     effectiveEnemyAtk = Math.max(1, (effectiveEnemyAtk || enemyEffAtk) - fearReduce);
@@ -658,9 +658,9 @@ if (chipFx.hasIceChip && enemy.atk !== enemyEffAtk) {
         berserkerAtkMod = Math.floor(stanceMod.atk * relicFx.berserkerMaxBonus * (1 - hpRatio * 2));
       }
     }
-    // ── 遗物：低血量攻击加成 ──
+    // ── 遗物：低血量(low hp)攻击加成 ──
     let relicLowHpAtkMod = 0;
-    if (relicFx.lowHpAtkBonus > 0 && (playerHp / p.maxHp) < (relicFx.lowHpThreshold || 0.3)) {
+    if (relicFx.lowHpAtkBonus > 0 /* low hp threshold */ && (playerHp / p.maxHp) < (relicFx.lowHpThreshold || 0.3)) {
       relicLowHpAtkMod = Math.floor(stanceMod.atk * relicFx.lowHpAtkBonus);
     }
     // 遗物低血量防御加成
@@ -711,7 +711,7 @@ if (chipFx.hasIceChip && enemy.atk !== enemyEffAtk) {
     }
     // ── 遗物：首回合双击 ──
     let relicFirstTurnDouble = false;
-    if (relicFx.firstTurnDoubleAction && round === 1) {
+    if (relicFx.firstTurnDoubleAction && round === 1) { // 首回合额外行动 — 双重攻击
       relicFirstTurnDouble = true;
     }
     // ── 遗物：免疫眩晕/冻结 ──
@@ -1150,7 +1150,7 @@ if (chipFx.hasIceChip && enemy.atk !== enemyEffAtk) {
         log.push({ text: '🛡 防御姿态：本回合不发动攻击', type: 'defend' });
       }
     } else {
-    const attackCount = envSkipPlayer ? 0 : ((isDouble || relicFirstTurnDouble || (relicFx.doubleAttackBonus > 0 && seededRandom() * 100 < relicFx.doubleAttackBonus)) ? 2 : 1);
+    const attackCount = envSkipPlayer ? 0 : ((isDouble || relicFirstTurnDouble || (relicFx.doubleAttackBonus > 0 && seededRandom() /* random probability */ * 100 < relicFx.doubleAttackBonus)) ? 2 : 1);
     for (let i = 0; i < attackCount && enemyHp > 0; i++) {
       // 应用破甲（天赋 + 装备 + 共鸣叠加）
       let totalArmorPen = (talentFx.armorPen || 0) + (equipArmorPenPct / 100) + resonanceArmorIgnore + (affixFx.ignoreDefPct / 100);

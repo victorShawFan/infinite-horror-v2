@@ -229,7 +229,7 @@ export function generateLoot(enemy, chapter, options = {}) {
   }
   
   // 遗物效果：保底史诗掉落
-  if (options.guaranteeEpic && drops.every(d => d.type !== 'equipment')) {
+  if ((options.guaranteeEpic || options.guaranteeEpicReward) && drops.every(d => d.type !== 'equipment')) {
     const epicEquip = generateEquipment(chapter, RARITY.EPIC);
     drops.push({ type: 'equipment', equipment: epicEquip });
   }

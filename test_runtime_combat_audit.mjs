@@ -180,3 +180,6 @@ console.log(`\n═════════════════════�
 console.log(`战斗数值语义审计: ${pass}通过, ${fail}失败`);
 if (fail === 0) console.log('✅ 全部通过');
 else console.log(`⚠️  ${fail} 项需修复`);
+
+// Exit with failure if any tests failed
+if (fail > 0) process.exit(1);
