@@ -153,6 +153,7 @@ import { getEnchantCombatBonus, serializeEnchant, deserializeEnchant } from './c
 import { getChapterNarrative, markNarrativeTriggered, applyNarrativeResult, serializeNarratives, deserializeNarratives } from './core/ChapterNarrativeEvents.js';
 import { getSubplotSystem, resetSubplotSystem } from './core/SubplotSystem.js';
 import { getCurrentOrder, setOrder, tickOrderCooldown, getOrderCombatEffect, resetOrders, ORDER_TYPE, renderOrderSelector } from './core/TacticalOrders.js';
+import { recordChapterEnemies, recordEncounteredEnemy, serializeTrainingRoom, deserializeTrainingRoom, createTrainingEnemy, recordTrainingResult } from './core/TrainingRoom.js';
 import { getCanonState, resetCanonState } from './core/CanonState.js';
 import { showChapterBriefing } from './core/ChapterBriefing.js';
 import { initCombatFXListeners, drawAllCombatFX, isHitStopped, updateAndDrawGhosts } from './core/CombatFX.js';
@@ -212,6 +213,7 @@ function autoSave(reason = '') {
     localStorage.setItem('ih_status_effects', JSON.stringify(serializeEffects()));
     localStorage.setItem('ih_dynamic_diff', JSON.stringify(serializeDynamicDifficulty()));
     localStorage.setItem('ih_canon', JSON.stringify(getCanonState().toJSON()));
+    localStorage.setItem('ih_training', JSON.stringify(serializeTrainingRoom()));
     localStorage.setItem('ih_subplot', JSON.stringify(getSubplotSystem().toJSON()));
     localStorage.setItem('ih_growth', JSON.stringify(serializeGrowth()));
     localStorage.setItem('ih_statalloc', JSON.stringify(serializeStatAllocation()));
@@ -1106,6 +1108,78 @@ function startGame() {
     _showChallengePreBattle(overlay, enemy, challenge);
   });
 
+  // ── 训练房战斗入口 ──
+  eventBus.on('training:start', async (data) => {
+    const { enemy: trainingEnemy } = data;
+    if (!trainingEnemy) return;
+
+    // 保存玩家战前状态
+    const p = gameState.player;
+    const hpBefore = p.hp;
+    const manaBefore = p.mana || 0;
+    const goldBefore = p.gold || 0;
+    const expBefore = p.exp || 0;
+    const rpBefore = p.rewardPoints || 0;
+
+    // 创建训练敌人副本（标记 _noReward）
+    const trainEnemy = createTrainingEnemy(trainingEnemy);
+
+    // 执行真实战斗
+    try {
+      const result = await executeBattle(trainEnemy);
+
+      // 恢复玩家战前资源（训练不消耗也不获得）
+      p.hp = hpBefore;
+      p.mana = manaBefore;
+      p.gold = goldBefore;
+      p.exp = expBefore;
+      p.rewardPoints = rpBefore;
+
+      // 记录训练结果
+      recordTrainingResult(trainEnemy, {
+        victory: result.victory,
+        rounds: result.rounds || 0,
+        totalDamageDealt: result.totalDamageDealt || 0,
+        totalDamageTaken: result.totalDamageTaken || 0,
+      });
+
+      // 显示训练结果面板
+      const overlay = document.getElementById('ui-overlay');
+      if (overlay) {
+        const resultColor = result.victory ? '#44ff88' : '#ff4444';
+        const resultIcon = result.victory ? '✓ 训练胜利' : '✗ 训练失败';
+        const resultDiv = document.createElement('div');
+        resultDiv.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:9999;' +
+          'background:rgba(10,10,20,0.95);border:1px solid ' + resultColor + '50;border-radius:12px;' +
+          'padding:24px 32px;min-width:300px;text-align:center;animation:fadeIn 0.3s;';
+        resultDiv.innerHTML = '<h3 style="color:' + resultColor + ';letter-spacing:3px;margin-bottom:12px;">' + resultIcon + '</h3>' +
+          '<p style="color:#aaa;font-size:13px;">对手: ' + trainEnemy.name + '</p>' +
+          '<p style="color:#888;font-size:12px;margin-top:8px;">' +
+          '回合: ' + (result.rounds || 0) + ' | 输出: ' + (result.totalDamageDealt || 0) + ' | 承伤: ' + (result.totalDamageTaken || 0) +
+          '</p>' +
+          '<p style="color:#555;font-size:11px;margin-top:12px;">训练模式 · HP/资源已完全恢复</p>' +
+          '<button id="training-close-btn" style="margin-top:16px;padding:8px 24px;background:' + resultColor + '20;' +
+          'border:1px solid ' + resultColor + '40;color:' + resultColor + ';border-radius:6px;cursor:pointer;' +
+          'font-size:13px;">返回训练房</button>';
+        document.body.appendChild(resultDiv);
+        document.getElementById('training-close-btn').addEventListener('click', () => {
+          resultDiv.remove();
+          // 返回主神空间
+          if (typeof renderLordGodSpace === 'function') {
+            renderLordGodSpace(window._onLordGodClose);
+          }
+        });
+      }
+
+      // 保存训练数据
+      try { localStorage.setItem('ih_training', JSON.stringify(serializeTrainingRoom())); } catch {}
+    } catch (err) {
+      console.warn('Training battle error:', err);
+      p.hp = hpBefore;
+      p.mana = manaBefore;
+    }
+  });
+
   // 实时战报更新 + HUD实时HP + 回合/MP
   eventBus.on('combat:log_update', (data) => {
     updateLiveBattleLog(data.log);
@@ -1623,6 +1697,7 @@ eventBus.on('player:death', () => {
         if (!gameLoopRunning) { gameLoopRunning = true; requestAnimationFrame(gameLoop); }
         // 恢复正史状态和支线系统
       try { const _cd = localStorage.getItem('ih_canon'); if (_cd) getCanonState().fromJSON(JSON.parse(_cd)); } catch {}
+      try { const _td = localStorage.getItem('ih_training'); if (_td) deserializeTrainingRoom(JSON.parse(_td)); } catch {}
       try { const _sd = localStorage.getItem('ih_subplot'); if (_sd) getSubplotSystem().fromJSON(JSON.parse(_sd)); } catch {}
             renderer.notify('💾 存档已加载', '#44aaff', 90);
       } else {
@@ -4145,6 +4220,8 @@ async function startCombat(enemy, preScaledEnemy) {
     const hpBeforeCombat = p.hp;
   // 在执行战斗前创建HUD，这样combat:log_update事件可以实时更新HP条
   _showCombatHUD(gameState.player, enemy, scaledEnemy, hpBeforeCombat);
+  // 记录遭遇的敌人供训练房使用（在战斗前记录，避免死亡后被移除）
+  try { recordEncounteredEnemy(scaledEnemy); } catch {}
   const result = await executeBattle(scaledEnemy);
   result._isBoss = !!(enemy.type === 'boss' || enemy.isBoss || enemy.bossId);
   // 确保实时战报显示完整战斗日志（非暂停战斗可能没有中间更新）
@@ -5326,6 +5403,8 @@ function toggleGeneLock() {
 // ── 章节完成 ──
 function showChapterComplete() {
   autoSave('章节完成');
+  // 记录本章敌人供训练房使用
+  try { recordChapterEnemies(entities.filter(e => e.type === 'enemy' || e.type === 'boss')); } catch {}
   // 章节通关支线奖励
   try {
     const ss = getSubplotSystem();
@@ -5504,10 +5583,10 @@ function showChapterComplete() {
             // Ch2新人：楚轩、零点、霸王、李帅西
             const existingIds = gameState.companions.map(c => c.id);
             const ch2Companions = [
-              { id: 'chuxuan', name: '楚轩', role: '军师/战略家', alive: true },
-              { id: 'lingdian', name: '零点', role: '狙击手', alive: true },
-              { id: 'bawang', name: '霸王', role: '近战强手', alive: true },
-              { id: 'lishuaixi', name: '李帅西', role: '新人', alive: true },
+              { id: 'chu_xuan', name: '楚轩', role: '军师/战略家', alive: true },
+              { id: 'ling_dian', name: '零点', role: '狙击手', alive: true },
+              { id: 'ba_wang', name: '霸王', role: '近战强手', alive: true },
+              { id: 'li_shuaixi', name: '李帅西', role: '新人', alive: true },
             ];
             for (const c of ch2Companions) {
               if (!existingIds.includes(c.id)) gameState.addCompanion(c);

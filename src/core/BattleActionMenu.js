@@ -296,10 +296,11 @@ export function applyDefendAction() {
  * 尝试逃跑
  * @returns {{ success: boolean, log: object }}
  */
-export function attemptFlee(player, enemy) {
+export function attemptFlee(player, enemy, orderFx = {}) {
   const spdDiff = (player.spd || 5) - (enemy.spd || 5);
   const baseChance = 0.4;
-  const chance = Math.min(0.9, Math.max(0.1, baseChance + spdDiff * 0.05));
+  const fleeBonus = orderFx.fleeBonusChance || 0; // 撤离指令加成
+  const chance = Math.min(0.95, Math.max(0.1, baseChance + spdDiff * 0.05 + fleeBonus));
   const success = Math.random() < chance;
   
   return {

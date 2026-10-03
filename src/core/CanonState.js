@@ -73,6 +73,34 @@ const CAPTAIN_TRANSITIONS = [
   { chapter: 1, captain: 'zhang_jie', event: '张杰是初始队长' },
   { chapter: 5, floor: 6, captain: 'zheng_zha', event: '张杰牺牲后郑吒成为队长' },
 ];
+// ── 角色 ID 别名映射 ── 部分章节代码使用短ID（如chuxuan），CanonState使用下划线ID（如chu_xuan）
+const ID_ALIASES = {
+  chuxuan: 'chu_xuan',
+  lingdian: 'ling_dian',
+  bawang: 'ba_wang',
+  wangxia: 'wang_xia',
+  zhangjie: 'zhang_jie',
+  zhengzha: 'zheng_zha',
+  zhanlan: 'zhan_lan',
+  lixiaoyi: 'li_xiaoyi',
+  zhaoyingkong: 'zhao_yingkong',
+  qitengyi: 'qi_tengyi',
+  mingyanwei: 'ming_yanwei',
+  zhangheng: 'zhang_heng',
+  xiaohonglv: 'xiao_honglv',
+  chengxiao: 'cheng_xiao',
+  luogandao: 'luo_gandao',
+  liuyu: 'liu_yu',
+  linjuntian: 'lin_juntian',
+  mougang: 'mou_gang',
+  lishuaixi: 'li_shuaixi',
+};
+
+/** 解析角色ID — 同时接受 chuxuan 和 chu_xuan */
+function resolveCharId(id) {
+  return ID_ALIASES[id] || id;
+}
+
 
 // 复活时间线（Ch8-9）
 const RESURRECTIONS = {
@@ -234,7 +262,8 @@ class CanonState {
   syncToGameState(gameState) {
     if (!gameState.companions) return;
     for (const comp of gameState.companions) {
-      const canon = this.characters[comp.id];
+      const canonId = resolveCharId(comp.id);
+      const canon = this.characters[canonId];
       if (canon) {
         comp.alive = canon.alive;
       }
@@ -264,6 +293,8 @@ class CanonState {
 
 // 单例
 let _instance = null;
+
+export { resolveCharId };
 
 export function getCanonState() {
   if (!_instance) _instance = new CanonState();

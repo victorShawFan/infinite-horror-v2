@@ -4,6 +4,7 @@
 
 import { BLOODLINE, GENE_LOCK } from './constants.js';
 import { getSubplotSystem, SUBPLOT_RANKS, RANK_ORDER } from './SubplotSystem.js';
+import { renderTrainingRoomPanel, getTrainingEnemies, createTrainingEnemy, recordTrainingResult } from './TrainingRoom.js';
 import { eventBus } from './EventBus.js';
 import { gameState } from './GameState.js';
 import { audioEngine } from './AudioEngine.js';
@@ -266,6 +267,7 @@ export function renderLordGodSpace(onClose) {
       { key: 'enchant', name: '✨ 附魔', color: '#aa88ff' },
       { key: 'stash', name: '📦 仓库', color: '#cc8844' },
       { key: 'subplot', name: '📜 支线合成', color: '#88aaff' },
+      { key: 'training', name: '🏋 训练房', color: '#ffcc44' },
     ];
 
     overlay.innerHTML = `
@@ -703,6 +705,24 @@ export function renderLordGodSpace(onClose) {
       return;
     }
 
+
+    // ── 训练房页面 ──
+    if (cat === 'training') {
+      container.innerHTML = renderTrainingRoomPanel();
+      container.querySelectorAll('.training-enemy').forEach(card => {
+        card.addEventListener('click', () => {
+          const idx = parseInt(card.dataset.idx);
+          const enemies = getTrainingEnemies();
+          if (enemies[idx]) {
+            const trainingEnemy = createTrainingEnemy(enemies[idx]);
+            // 通知战斗系统开始训练战斗
+            eventBus.emit('training:start', { enemy: trainingEnemy });
+            try { audioEngine.playBattleStart && audioEngine.playBattleStart(); } catch {}
+          }
+        });
+      });
+      return;
+    }
 
     // ── 支线剧情合成页面 ──
     if (cat === 'subplot') {

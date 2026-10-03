@@ -347,6 +347,7 @@ export async function executeBattle(enemy) {
   let round = 0;
   let _totalDmgDealt = 0, _totalDmgTaken = 0, _critHits = 0;
   let _lootDrops = [];
+  const _isTraining = !!(enemy._noReward || enemy.isTraining);
   // 应用战斗姿态修正
   const _rawAtk = getEffectiveAtk(p);
   const _rawDef = getEffectiveDef(p);
@@ -612,6 +613,17 @@ if (chipFx.hasIceChip && enemy.atk !== enemyEffAtk) {
   let playerLowHpBossLineTriggered = false;
   while (enemyHp > 0 && playerHp > 0) {
     tickOrderCooldown();
+    // 互动指令：每回合概率治疗
+    try {
+      const _interactFx = getOrderCombatEffect();
+      if (_interactFx.healChance && _interactFx.healAmount && Math.random() < _interactFx.healChance) {
+        const _healAmt = Math.min(_interactFx.healAmount, p.maxHp - playerHp);
+        if (_healAmt > 0) {
+          playerHp = Math.min(p.maxHp, playerHp + _healAmt);
+          log.push({ text: '🔧 同伴互动治疗 +' + _healAmt + ' HP', type: 'heal' });
+        }
+      }
+    } catch {}
     round++;
     // ── 天赋：恐惧领域叠加（每5回合） ──
     if (perkFx.fearAuraStack > 0 && round > 0 && round % 5 === 0) {
@@ -937,7 +949,7 @@ if (chipFx.hasIceChip && enemy.atk !== enemyEffAtk) {
       );
       // 处理逃跑
       if (_actionChoice.type === ACTION_TYPE.FLEE) {
-        const fleeResult = attemptFlee(p, enemy);
+        const fleeResult = attemptFlee(p, enemy, getOrderCombatEffect());
         log.push(fleeResult.log);
         if (fleeResult.success) {
           p.hp = playerHp;
@@ -1387,8 +1399,13 @@ if (chipFx.hasIceChip && enemy.atk !== enemyEffAtk) {
       if (dodgeBuff) {
         log.push({ text: `🌀 模拟思维预判！闪避了 ${enemy.name} 的攻击`, type: 'dodge' });
       } else {
-        // 防御姿态减伤
-        const _actualEnemyDmg = _defendActive ? Math.floor(eHit.damage * 0.5) : eHit.damage;
+        // 防御姿态减伤 + 掩护指令减伤
+        const _coverReduce = getOrderCombatEffect().playerDamageReduce || 0;
+        let _actualEnemyDmg = _defendActive ? Math.floor(eHit.damage * 0.5) : eHit.damage;
+        if (_coverReduce > 0) {
+          const _coverAmt = Math.floor(_actualEnemyDmg * _coverReduce);
+          _actualEnemyDmg = Math.max(0, _actualEnemyDmg - _coverAmt);
+        }
         playerHp -= _actualEnemyDmg;
         if (_actualEnemyDmg > 0) {
           const _defendLabel = _defendActive ? ' (🛡减半)' : '';
@@ -1651,7 +1668,7 @@ if (chipFx.hasIceChip && enemy.atk !== enemyEffAtk) {
     gameState.stats.damageDealt += enemy.hp;
 
     const rewards = enemy.rewards || {};
-    if (rewards.exp) {
+    if (!_isTraining && rewards.exp) {
       // 天赋/遗物经验加成
       const expMult = 1 + (perkFx.expMultiplier || 0) + (relicFx.expBonus || 0);
       const boostedExp = Math.floor(rewards.exp * expMult);
@@ -1659,7 +1676,7 @@ if (chipFx.hasIceChip && enemy.atk !== enemyEffAtk) {
       if (expMult > 1) rewards._expBoost = boostedExp - rewards.exp;
       rewards.exp = boostedExp;
     }
-    if (rewards.gold) {
+    if (!_isTraining && rewards.gold) {
       // NG+ 变异器: 诅咒黄金 — 拾取战斗金币双倍但扣1HP
       if (getActiveMutators().some(m => m.id === 'cursed_gold')) {
         rewards.gold = Math.floor(rewards.gold * 2);
@@ -1667,10 +1684,10 @@ if (chipFx.hasIceChip && enemy.atk !== enemyEffAtk) {
       }
       p.gold += rewards.gold; gameState.stats.goldEarned += rewards.gold;
     }
-    if (rewards.rewardPoints) p.rewardPoints += rewards.rewardPoints;
+    if (!_isTraining && rewards.rewardPoints) p.rewardPoints += rewards.rewardPoints;
 
     // ── 战利品掉落系统 ──
-    try {
+    if (!_isTraining) try {
       const loot = generateLoot(enemy, gameState.chapter || 1, { guaranteeEpic: relicFx.guaranteeEpicReward || false });
       if (loot.length > 0) {
         _lootDrops = loot;
@@ -1819,12 +1836,12 @@ if (chipFx.hasIceChip && enemy.atk !== enemyEffAtk) {
             p.hp = Math.max(1, playerHp);
             gameState.stats.enemiesKilled++;
             const rewards = enemy.rewards || {};
-            if (rewards.exp) {
+            if (!_isTraining && rewards.exp) {
       const expMult2 = 1 + (perkFx.expMultiplier || 0) + (relicFx.expBonus || 0);
       const boostedExp2 = Math.floor(rewards.exp * expMult2);
       gameState.addExp(boostedExp2);
     }
-            if (rewards.gold) {
+            if (!_isTraining && rewards.gold) {
               if (getActiveMutators().some(m => m.id === 'cursed_gold')) {
                 rewards.gold = Math.floor(rewards.gold * 2);
                 p.hp = Math.max(1, p.hp - 1);
@@ -1896,7 +1913,7 @@ if (chipFx.hasIceChip && enemy.atk !== enemyEffAtk) {
 
   // 最终战报更新
   eventBus.emit('combat:log_update', { log: [...log], round, playerHp, enemyHp, playerMaxHp: p.maxHp, enemyMaxHp, playerMana, final: true, statusEffects: combatState.statusEffects, relicFx: relicFx || {}, perkFx: perkFx || {} });
-  return { victory: enemyHp <= 0, log, rounds: round, totalDamageDealt: _totalDmgDealt, totalDamageTaken: _totalDmgTaken, critCount: _critHits, drops: _lootDrops };
+  return { victory: enemyHp <= 0, log, rounds: round, totalDamageDealt: _totalDmgDealt, totalDamageTaken: _totalDmgTaken, critCount: _critHits, drops: _isTraining ? [] : _lootDrops, isTraining: _isTraining };
 }
 
 // ── 有效属性计算 ──
