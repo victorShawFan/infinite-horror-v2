@@ -68,6 +68,48 @@ const TUTORIAL_STEPS = [
     highlight: '同伴',
     delay: 0,
   },
+  {
+    id: 'karma_intro',
+    trigger: 'first_narrative_choice',
+    text: '你的选择会影响业力值！按 K 查看业力面板。正义路线增强防御和治疗，暗黑路线增强攻击。',
+    highlight: '业力',
+    delay: 500,
+  },
+  {
+    id: 'companion_abilities',
+    trigger: 'first_companion_ability',
+    text: '同伴在战斗中会自动发动技能！按 J 查看同伴技能。关系越好，技能越强！',
+    highlight: '同伴技能',
+    delay: 500,
+  },
+  {
+    id: 'combo_system',
+    trigger: 'first_combo',
+    text: '连续暴击、使用不同元素或配合同伴攻击可以触发连击加成！最高+100%伤害！',
+    highlight: '连击',
+    delay: 500,
+  },
+  {
+    id: 'interactable_intro',
+    trigger: 'first_interactable',
+    text: '探索楼层时注意交互物：💧泉水恢复HP，⚔祭坛永久加属性，🌀传送阵可以快速移动！',
+    highlight: '交互物',
+    delay: 500,
+  },
+  {
+    id: 'enchant_intro',
+    trigger: 'first_enchant_unlock',
+    text: '在主神空间可以给装备附魔！消耗灵魂碎片和元素核心，为武器添加元素伤害。',
+    highlight: '附魔',
+    delay: 500,
+  },
+  {
+    id: 'door_reward',
+    trigger: 'first_door_open',
+    text: '门后有奖励！合理使用钥匙，优先开奖励丰富的高级门。蓝门>黄门，红门最珍贵！',
+    highlight: '门奖励',
+    delay: 500,
+  },
 ];
 
 class TutorialManager {

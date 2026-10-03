@@ -2853,6 +2853,7 @@ function checkNarrativeEvent() {
       if (!choice) return;
       
       const result = choice.result;
+      try { tutorialManager.trigger('first_narrative_choice'); } catch {};
       const effects = applyNarrativeResult(result);
       
       // 显示结果
@@ -3654,6 +3655,19 @@ function pickupItem(item) {
       if (p.keys[item.doorColor] > 0) {
         p.keys[item.doorColor]--;
         renderer.addFloatText('门已打开', item.x, item.y, 'rgb(136, 102, 68)');
+        try { tutorialManager.trigger('first_door_open'); } catch {}
+        // 门后奖励
+        if (item.doorReward) {
+          try {
+            const dr = getDoorReward(item.doorReward, item.doorColor);
+            if (dr.text) {
+              startDialogue([{ text: dr.text, speaker: '系统' }]);
+              if (dr.rewards.gold) renderer.addFloatText('+' + dr.rewards.gold + 'G', item.x, item.y - 1, '#ffcc44');
+              if (dr.rewards.exp) renderer.addFloatText('+' + dr.rewards.exp + ' EXP', item.x, item.y - 1, '#aa88ff');
+              if (dr.rewards.heal) renderer.addFloatText('+' + dr.rewards.heal + ' HP', item.x, item.y - 1, '#44ff88');
+            }
+          } catch {}
+        }
       } else {
         startDialogue([{ text: `需要 ${item.doorColor === 'yellow' ? '黄色' : item.doorColor === 'blue' ? '蓝色' : '红色'} 门卡才能打开。`, speaker: '系统' }]);
         return false; // 不移除门，不允许移动
@@ -3676,6 +3690,7 @@ function triggerEvent(entity) {
   if (entity.interactableType) {
     const result = activateInteractable(entity);
     if (result.text) {
+      try { tutorialManager.trigger('first_interactable'); } catch {}
       startDialogue([{ text: result.text, speaker: '系统' }]);
     }
     if (result.floatText) {
