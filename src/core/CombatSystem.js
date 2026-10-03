@@ -32,6 +32,7 @@ import { COMPANION_PROFILES } from './RelationshipSystem.js';
 import { processEnvironmentEffect } from './BattleEnvironment.js';
 import { getBossIntro, getBossPhaseDialogue, getBossLowHpLine, getBossDefeatLines, getBossKillPlayerLine, getBossPlayerLowHpLine } from './BossDialogue.js';
 import { getEnchantCombatBonus } from './EnchantSystem.js';
+import { initCombatAbilities, getAvailableAbilities, useCompanionAbility, tickAbilityCooldowns } from './CompanionAbilities.js';
 import { getKarmaCombatModifiers, getKarmaLevel } from './KarmaSystem.js';
 
 // ── 伤害计算 ──
@@ -304,6 +305,9 @@ export function executeBattle(enemy) {
   if (stance.id !== 'balanced') {
     log.push({ text: `${stance.icon} 姿态: ${stance.name}`, type: 'buff' });
   }
+  
+  // 初始化同伴技能
+  try { initCombatAbilities(); } catch {}
 
   // ── 业力系统战斗修正 ──
   let karmaHealBonus = 0;

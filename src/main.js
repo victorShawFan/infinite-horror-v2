@@ -114,6 +114,7 @@ import { killStreak } from './core/KillStreak.js';
 import { rateBattle, recordRating, formatRatingHTML, getRatingStats } from './core/BattleRating.js';
 import { fogOfWar } from './core/FogOfWar.js';
 import { openMerchantShop } from './core/FieldMerchant.js';
+import { renderAbilitiesPanel } from './core/CompanionAbilities.js';
 import { getKarmaLevel, getKarmaCombatModifiers, getEndingType, renderKarmaPanel, renderKarmaDisplay } from './core/KarmaSystem.js';
 import { getStash, addToStash, removeFromStash, isStashFull, openEquipmentStash, serializeStash, deserializeStash } from './core/EquipmentStash.js';
 import { getCompanionCombatBonuses, getCompanionBattleCry, formatCompanionCombatHTML } from './core/CompanionCombat.js';
@@ -1692,6 +1693,53 @@ function _loadAbyssFloor(floorData) {
   
   gameState.setState(GAME_STATE.EXPLORING);
   renderer.notify('🕳 ' + floorData.name, '#aa66ff', 100);
+}
+
+// ── 同伴技能面板 ──
+function _showCompanionAbilitiesPanel() {
+  if (gameState.state !== GAME_STATE.EXPLORING) return;
+  gameState.setState(GAME_STATE.INVENTORY);
+  const overlay = document.getElementById('overlay');
+  const content = renderAbilitiesPanel();
+  overlay.innerHTML = '<div style="position:absolute;top:0;left:0;right:0;bottom:0;display:flex;flex-direction:column;align-items:center;justify-content:center;background:rgba(0,0,0,0.92);animation:fadeIn 0.3s ease;">'
+    + '<h2 style="color:#44aaff;letter-spacing:4px;margin-bottom:16px;">👥 同伴技能</h2>'
+    + '<p style="color:#666;font-size:10px;margin-bottom:12px;">战斗中自动触发 · 关系越高技能越强</p>'
+    + content
+    + '<p style="color:#555;font-size:10px;margin-top:16px;">J / ESC 关闭</p>'
+    + '</div>';
+  overlay.style.display = 'flex';
+  const _close = (ev) => {
+    if (ev.key === 'Escape' || ev.key.toLowerCase() === 'j') {
+      overlay.style.display = 'none';
+      overlay.innerHTML = '';
+      gameState.setState(GAME_STATE.EXPLORING);
+      window.removeEventListener('keydown', _close);
+    }
+  };
+  window.addEventListener('keydown', _close);
+}
+
+// ── 业力面板 ──
+function _showKarmaPanel() {
+  if (gameState.state !== GAME_STATE.EXPLORING) return;
+  gameState.setState(GAME_STATE.INVENTORY);
+  const overlay = document.getElementById('overlay');
+  const content = renderKarmaPanel();
+  overlay.innerHTML = '<div style="position:absolute;top:0;left:0;right:0;bottom:0;display:flex;flex-direction:column;align-items:center;justify-content:center;background:rgba(0,0,0,0.92);animation:fadeIn 0.3s ease;">'
+    + '<h2 style="color:#ffcc44;letter-spacing:4px;margin-bottom:16px;">⚖ 业 力</h2>'
+    + content
+    + '<p style="color:#555;font-size:10px;margin-top:16px;">K / ESC 关闭</p>'
+    + '</div>';
+  overlay.style.display = 'flex';
+  const _close = (ev) => {
+    if (ev.key === 'Escape' || ev.key.toLowerCase() === 'k') {
+      overlay.style.display = 'none';
+      overlay.innerHTML = '';
+      gameState.setState(GAME_STATE.EXPLORING);
+      window.removeEventListener('keydown', _close);
+    }
+  };
+  window.addEventListener('keydown', _close);
 }
 
 // ── 成长轨迹面板 ──
