@@ -24,7 +24,7 @@ window.addEventListener('unhandledrejection', (e) => {
 try {
   const _gameGlobalCSS = document.createElement('style');
   _gameGlobalCSS.textContent = [
-    '@keyframes fadeIn{from{opacity:0}to{opacity:1}}',
+    '@keyframes slideUp{from{opacity:0;transform:translateX(-50%) translateY(20px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}@keyframes fadeIn{from{opacity:0}to{opacity:1}}',
     '@keyframes fadeOut{from{opacity:1}to{opacity:0}}',
     '@keyframes slideInRight{from{transform:translateX(100%);opacity:0}to{transform:translateX(0);opacity:1}}',
     '@keyframes slideInUp{from{transform:translateY(30px);opacity:0}to{transform:translateY(0);opacity:1}}',
@@ -1255,7 +1255,7 @@ function showFloorTitle(floor) {
       </div>
     </div>
     <style>
-      @keyframes fadeIn { from { opacity: 0 } to { opacity: 1 } }
+      @keyframes slideUp{from{opacity:0;transform:translateX(-50%) translateY(20px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}@keyframes fadeIn { from { opacity: 0 } to { opacity: 1 } }
     </style>
   `;
   setTimeout(() => {
@@ -1393,7 +1393,7 @@ eventBus.on('player:death', () => {
           "死亡不是终点，只要主神还需要你。" —— 张杰
         </p>
       </div>
-      <style>@keyframes fadeIn { from { opacity: 0 } to { opacity: 1 } }</style>
+      <style>@keyframes slideUp{from{opacity:0;transform:translateX(-50%) translateY(20px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}@keyframes fadeIn { from { opacity: 0 } to { opacity: 1 } }</style>
     `;
 
     document.getElementById('btn-load')?.addEventListener('click', () => {
@@ -3720,6 +3720,47 @@ window._updateCombatHUDDelta = function(target, delta) {
 };
 
 
+// ── 战后简短收获总结 ──
+function _showMiniLootSummary(exp, gold, drops, rating) {
+  const existing = document.getElementById('mini-loot-summary');
+  if (existing) existing.remove();
+  
+  const hasDrops = drops && drops.length > 0;
+  const equipDrops = hasDrops ? drops.filter(d => d.type === 'equipment') : [];
+  const gemDrops = hasDrops ? drops.filter(d => d.type === 'gem') : [];
+  const consumeDrops = hasDrops ? drops.filter(d => d.type === 'consumable') : [];
+  
+  let dropIcons = '';
+  if (equipDrops.length > 0) dropIcons += ' ⚔×' + equipDrops.length;
+  if (gemDrops.length > 0) dropIcons += ' 💎×' + gemDrops.length;
+  if (consumeDrops.length > 0) dropIcons += ' 📦×' + consumeDrops.length;
+  
+  const div = document.createElement('div');
+  div.id = 'mini-loot-summary';
+  div.style.cssText = 'position:fixed;bottom:50px;left:50%;transform:translateX(-50%);z-index:180;' +
+    'background:rgba(10,10,20,0.9);border:1px solid ' + (rating?.color || '#44aaff') + '44;' +
+    'border-radius:10px;padding:8px 20px;pointer-events:none;' +
+    'display:flex;gap:12px;align-items:center;' +
+    'animation:slideUp 0.3s ease-out;';
+  
+  div.innerHTML = 
+    (rating ? '<span style="color:' + rating.color + ';font-size:16px;font-weight:bold;">' + rating.grade + '</span>' : '') +
+    '<span style="color:#aa88ff;font-size:12px;">+' + exp + ' EXP</span>' +
+    (gold ? '<span style="color:#ffcc44;font-size:12px;">+' + gold + 'G</span>' : '') +
+    (dropIcons ? '<span style="color:#88aaff;font-size:11px;">' + dropIcons.trim() + '</span>' : '');
+  
+  document.body.appendChild(div);
+  
+  // 自动消失
+  setTimeout(() => {
+    div.style.transition = 'opacity 0.5s, transform 0.5s';
+    div.style.opacity = '0';
+    div.style.transform = 'translateX(-50%) translateY(10px)';
+    setTimeout(() => div.remove(), 500);
+  }, 2500);
+}
+
+
 function startCombat(enemy, preScaledEnemy) {
   // 战斗发起闪光
   renderer.flash('rgba(255, 50, 50)', 150);
@@ -3905,6 +3946,15 @@ function startCombat(enemy, preScaledEnemy) {
       renderer.addFloatText(battleRating.icon + ' ' + battleRating.grade, gameState.player.x, gameState.player.y - 2.5, battleRating.color);
       renderer.addFloatText(`+${scaledEnemy.rewards?.exp || 0} EXP`, enemy.x, enemy.y - 1, 'rgb(170, 136, 255)');
       if (scaledEnemy.rewards?.gold) renderer.addFloatText(`+${scaledEnemy.rewards.gold}G`, enemy.x, enemy.y - 0.4, 'rgb(255, 204, 68)');
+      // 战后简短收获总结
+      try {
+        _showMiniLootSummary(
+          scaledEnemy.rewards?.exp || 0,
+          scaledEnemy.rewards?.gold || 0,
+          result.drops || [],
+          battleRating
+        );
+      } catch {}
       // 奖励飞行动画 — 经验和金币从敌人飞向HUD
       try {
         const TILE = 48;
@@ -4037,7 +4087,7 @@ function startCombat(enemy, preScaledEnemy) {
                    onmouseout="this.style.background='rgba(255,204,68,0.1)'">继续</button>
               </div>
             </div>
-            <style>@keyframes fadeIn{from{opacity:0}to{opacity:1}}</style>
+            <style>@keyframes slideUp{from{opacity:0;transform:translateX(-50%) translateY(20px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}@keyframes fadeIn{from{opacity:0}to{opacity:1}}</style>
           `;
           const closeBossPanel = () => {
             overlay.innerHTML = '';
@@ -5093,7 +5143,7 @@ function showChapterComplete() {
                    onmouseout="this.style.background='transparent'">返回标题</button>
               </div>
             </div>
-            <style>@keyframes fadeIn{from{opacity:0}to{opacity:1}}@keyframes scrollCredits{0%{opacity:0;transform:translateY(20px)}20%{opacity:1;transform:translateY(0)}80%{opacity:1}100%{opacity:0.8}}</style>
+            <style>@keyframes slideUp{from{opacity:0;transform:translateX(-50%) translateY(20px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}@keyframes fadeIn{from{opacity:0}to{opacity:1}}@keyframes scrollCredits{0%{opacity:0;transform:translateY(20px)}20%{opacity:1;transform:translateY(0)}80%{opacity:1}100%{opacity:0.8}}</style>
           `;
           // ── NG+ 结算逻辑 ──
           setTimeout(() => {
