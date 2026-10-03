@@ -798,8 +798,22 @@ if (chipFx.hasIceChip && enemy.atk !== enemyEffAtk) {
             log.push({ text: '📦 使用 ' + usedItem.name + '！恢复 ' + manaAmt + ' MP', type: 'heal' });
           }
           if (usedItem.effect?.atkBoost) {
-            log.push({ text: '📦 使用 ' + usedItem.name + '！ATK+' + Math.floor(usedItem.effect.atkBoost * 100) + '%', type: 'buff' });
+            const boostAmt = Math.floor(pAtk * usedItem.effect.atkBoost);
+            stanceMod.atk += boostAmt;
+            log.push({ text: '📦 使用 ' + usedItem.name + '！ATK+' + boostAmt + ' (' + Math.floor(usedItem.effect.atkBoost * 100) + '%)', type: 'buff' });
           }
+          if (usedItem.effect?.defBoost) {
+            const defBoostAmt = Math.floor(pDef * usedItem.effect.defBoost);
+            stanceMod.def += defBoostAmt;
+            log.push({ text: '📦 使用 ' + usedItem.name + '！DEF+' + defBoostAmt, type: 'buff' });
+          }
+          if (usedItem.effect?.removeDebuff) {
+            // 清除玩家负面状态
+            combatState.statusEffects.player = (combatState.statusEffects.player || []).filter(e => e.type !== 'debuff');
+            log.push({ text: '📦 ' + usedItem.name + ' 清除负面状态！', type: 'buff' });
+          }
+          // 更新ConsumableSystem统计
+          try { if (typeof _stats !== 'undefined') _stats.consumablesUsed++; } catch {}
           inv.splice(itemIdx, 1);
         }
         // 使用道具后仍可正常攻击，不跳过
@@ -1089,8 +1103,9 @@ if (chipFx.hasIceChip && enemy.atk !== enemyEffAtk) {
           if (talentFx.lastStand && playerHp < p.maxHp * talentFx.lastStand.threshold) {
             totalSpecialDmg = Math.floor(totalSpecialDmg * (1 - talentFx.lastStand.dmgReduce));
           }
-          playerHp -= totalSpecialDmg;
-          log.push({ text: `💥 ${special.name}！→ 郑吒 ${totalSpecialDmg}`, type: 'boss_special' });
+          const _finalBossSpecialDmg = _defendActive ? Math.floor(totalSpecialDmg * 0.5) : totalSpecialDmg;
+          playerHp -= _finalBossSpecialDmg;
+          log.push({ text: `💥 ${special.name}！→ 郑吒 ${_finalBossSpecialDmg}${_defendActive ? ' (🛡减半)' : ''}`, type: 'boss_special' });
           // 自伤
           if (special.selfDmg) {
             const selfHurt = Math.floor(enemyMaxHp * special.selfDmg);
@@ -1215,8 +1230,9 @@ if (chipFx.hasIceChip && enemy.atk !== enemyEffAtk) {
           { def: pDef, res: p.res || 0 },
           enemy.damageType || DAMAGE_TYPE.PHYSICAL, 0
         );
-        playerHp -= dsHit.damage;
-        if (dsHit.damage > 0) log.push({ text: `⚡ 精英连击！${dsHit.damage}`, type: 'enemy_attack' });
+        const _dsDmg = _defendActive ? Math.floor(dsHit.damage * 0.5) : dsHit.damage;
+        playerHp -= _dsDmg;
+        if (_dsDmg > 0) log.push({ text: `⚡ 精英连击！${_dsDmg}${_defendActive ? ' (🛡减半)' : ''}`, type: 'enemy_attack' });
       }
       // ── 精英词缀: 嗜血 ──
       if (eliteFx && eliteFx.lifestealRatio > 0 && eHit && eHit.damage > 0 && enemyHp > 0) {
@@ -1231,8 +1247,9 @@ if (chipFx.hasIceChip && enemy.atk !== enemyEffAtk) {
           { def: pDef, res: p.res || 0 },
           enemy.damageType || DAMAGE_TYPE.PHYSICAL, 0
         );
-        playerHp -= eHit2.damage;
-        if (eHit2.damage > 0) log.push({ text: `⚡ ${enemy.name}二连击！${eHit2.damage}`, type: 'enemy_attack' });
+        const _swiftDmg = _defendActive ? Math.floor(eHit2.damage * 0.5) : eHit2.damage;
+        playerHp -= _swiftDmg;
+        if (_swiftDmg > 0) log.push({ text: `⚡ ${enemy.name}二连击！${_swiftDmg}${_defendActive ? ' (🛡减半)' : ''}`, type: 'enemy_attack' });
       }
 
       // ── 敌人特性：吸血 ──
@@ -1244,9 +1261,10 @@ if (chipFx.hasIceChip && enemy.atk !== enemyEffAtk) {
 
       // ── 敌人特性：剧毒 ──
       if ((enemy.traits || []).includes('poisonous') && playerHp > 0) {
-        const poisonDmg = Math.max(1, Math.floor(p.maxHp * 0.03));
+        const _rawPoisonDmg = Math.max(1, Math.floor(p.maxHp * 0.03));
+        const poisonDmg = _defendActive ? Math.max(1, Math.floor(_rawPoisonDmg * 0.75)) : _rawPoisonDmg;
         playerHp -= poisonDmg;
-        if (round <= 6) log.push({ text: `☠ 中毒！-${poisonDmg} HP`, type: 'poison' });
+        if (round <= 6) log.push({ text: `☠ 中毒！-${poisonDmg} HP${_defendActive ? ' (🛡减轻)' : ''}`, type: 'poison' });
       }
 
       } // close talent dodge else

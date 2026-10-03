@@ -192,7 +192,18 @@ export function showPlayerStatsPanel() {
 }
 
 // ── 序列化 ──
-export function serializePlayerStats() { return { ..._stats }; }
+export function serializePlayerStats() {
+  const out = { ..._stats };
+  // Infinity 不能 JSON 序列化，用 -1 作为哨兵值
+  if (out.fastestBossKill === Infinity) out.fastestBossKill = -1;
+  return out;
+}
 export function deserializePlayerStats(data) {
-  if (data) _stats = { ...DEFAULT_STATS, ...data };
+  if (data) {
+    _stats = { ...DEFAULT_STATS, ...data };
+    // 还原哨兵值为 Infinity
+    if (_stats.fastestBossKill === -1 || _stats.fastestBossKill === null) {
+      _stats.fastestBossKill = Infinity;
+    }
+  }
 }

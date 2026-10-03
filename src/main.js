@@ -3952,6 +3952,8 @@ async function startCombat(enemy, preScaledEnemy) {
     const _hadTempBuffs = Object.keys(_tempBuffs).length > 0;
 
     const hpBeforeCombat = p.hp;
+  // 在执行战斗前创建HUD，这样combat:log_update事件可以实时更新HP条
+  _showCombatHUD(gameState.player, enemy, scaledEnemy, hpBeforeCombat);
   const result = await executeBattle(scaledEnemy);
   result._isBoss = !!(enemy.type === 'boss' || enemy.isBoss || enemy.bossId);
   // 确保实时战报显示完整战斗日志（非暂停战斗可能没有中间更新）
@@ -3990,9 +3992,7 @@ async function startCombat(enemy, preScaledEnemy) {
       rounds: result.rounds || 0,
       enemyName: scaledEnemy.name || enemy.name,
     });
-    if (result.victory) {
-      recordMaxStreak(gameState.stats.killStreak || 0);
-    }
+    // 连杀记录在主战斗流程中更新，这里不再重复
     updateHighestLevel(p.level || 1);
   } catch {}
 
@@ -4008,6 +4008,7 @@ async function startCombat(enemy, preScaledEnemy) {
 
 // 连杀记录
     killStreak.recordKill();
+    recordMaxStreak(killStreak.kills || 0);
     // 成就追踪: 击杀
     try {
       const nearDeath = gameState.player.hp <= gameState.player.maxHp * 0.1;
@@ -4052,8 +4053,6 @@ async function startCombat(enemy, preScaledEnemy) {
     } else if (p.hp <= p.maxHp * 0.2) {
       try { const fb = tryFlashback('near_death'); if (fb) renderFlashback(fb, document.body); } catch {}
     }
-    _showCombatHUD(gameState.player, enemy, scaledEnemy, hpBeforeCombat);
-  
   // 播放战斗动画序列
   combatAnimator.playCombatSequence(result, enemy, () => {
     // 隐藏战斗HUD和实时战报
