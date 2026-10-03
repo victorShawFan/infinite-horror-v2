@@ -1162,6 +1162,10 @@ if (chipFx.hasIceChip && enemy.atk !== enemyEffAtk) {
       try { recordCrit(pHit.isCrit); } catch {}
       try { if (pHit.isWeak) recordWeaknessHit(); } catch {}
       try { if (pHit.elemAdvantage) recordElementalHit(); } catch {}
+      // 情报系统: 弱点/元素发现
+      try { if (pHit.isWeak) recordDiscovery(enemy, 'weakness', '弱点攻击效果显著'); } catch {}
+      try { if (round >= 3 && !pHit.isCrit) recordDiscovery(enemy, 'stats'); } catch {}
+      try { if (round >= 5) recordDiscovery(enemy, 'pattern', '攻击模式已观察'); } catch {}
       // 天赋：暴击伤害加成
       let finalDmg = pHit.damage;
       if (pHit.isCrit && (talentFx.critDmgBonus > 0 || stanceCritDmgBonus > 0)) {
