@@ -675,22 +675,22 @@ EXPLORATION_EVENTS[12].push(
 EXPLORATION_EVENTS[1].push(
   {
     id: 'distress_signal',
-    title: '求救信号',
-    text: '通讯器突然收到一段微弱的求救信号。"……被困在……C区……还有幸存者……"信号时断时续。',
+    title: 'Umbrella终端',
+    text: '一台Umbrella公司的加密终端仍在运行。屏幕上闪烁着"T-VIRUS BREACH LEVEL 5"的红色警告。',
     choices: [
-      { text: '📡 追踪信号源', result: { type: 'info', text: '循着信号找到了一间密室，墙上刻着异形巢穴的弱点。', effect: { nextBattleCritBonus: 12, exp: 8 } } },
+      { text: '📡 查看数据', result: { type: 'info', text: '终端记录了T-病毒变异体的弱点数据。暴君的关节是脆弱部位。', effect: { nextBattleCritBonus: 12, exp: 8 } } },
       { text: '⚠ 这可能是陷阱', result: { type: 'safe', text: '保持警惕是明智的。你绕过了那个区域。', effect: { karma: 3, exp: 3 } } },
       { text: '📢 回复信号', result: { type: 'karma', text: '"我们来了，坚持住！" 即使无人回应，你知道自己做了该做的事。', effect: { karma: 8, healPercent: 0.05 } } },
     ],
     weight: 7,
   },
   {
-    id: 'acid_pool',
-    title: '酸液积洼',
-    text: '走廊尽头，地面被腐蚀出一个巨大的凹坑，里面满是异形的酸血。浓烈的酸味刺激着鼻腔。',
+    id: 'zombie_horde_sign',
+    title: '丧尸聚集的痕迹',
+    text: '走廊地面上到处是拖行的血迹和抓痕。蜂巢实验区的这个区域曾有大量丧尸聚集。',
     choices: [
-      { text: '🧪 收集酸液样本', result: { type: 'buff', text: '小心翼翼地收集了一些。这些酸液可以腐蚀敌人的护甲。', effect: { nextBattleAtkBonus: 4, exp: 5 } } },
-      { text: '🔍 查看被腐蚀的物品', result: { type: 'loot', text: '在酸液边缘发现了半溶解的军用装备，还有些可用的零件。', effect: { gold: 40 } } },
+      { text: '🧪 收集T-病毒样本', result: { type: 'buff', text: '小心收集了残留的病毒样本。这些数据对战斗分析有帮助。', effect: { nextBattleAtkBonus: 4, exp: 5 } } },
+      { text: '🔍 搜索残骸', result: { type: 'loot', text: '在血迹旁发现了安保人员的装备残骸，还有些可用的弹药。', effect: { gold: 40 } } },
       { text: '🚶 绕道而行', result: { type: 'safe', text: '不值得冒险。你找到了另一条更安全的路线。', effect: { exp: 3 } } },
     ],
     weight: 6,
@@ -700,20 +700,20 @@ EXPLORATION_EVENTS[1].push(
 // ── 第2章补充 ──
 EXPLORATION_EVENTS[2].push(
   {
-    id: 'cursed_mirror',
-    title: '诅咒之镜',
-    text: '一面落满灰尘的镜子。当你走过时，镜中映出的不是你——而是一个苍白的、黑发遮面的女人。',
+    id: 'alien_nest_sign',
+    title: '异形巢穴标记',
+    text: '走廊墙壁上出现了大量异形分泌的树脂结构。空气变得潮湿闷热——巢穴就在附近。',
     choices: [
-      { text: '🔍 直视镜中', result: { type: 'info', text: '女人的影像消散了。在她消失的位置，镜面上浮现出一行字——是守护符文。', effect: { nextBattleEnemyAtkReduce: 3, exp: 6 } } },
-      { text: '🔨 打碎镜子', result: { type: 'risk', text: '碎裂的镜片中传出一声尖叫。诅咒似乎减弱了。', effect: { karma: -2, nextBattleAtkBonus: 3 } } },
-      { text: '🙏 背诵经文', result: { type: 'karma', text: '"南无阿弥陀佛……" 古老的经文在空气中回荡，驱散了阴冷。', effect: { karma: 10, healPercent: 0.08 } } },
+      { text: '🔍 分析树脂结构', result: { type: 'info', text: '从树脂的分布推断出异形的巡逻路线和巢穴入口方向。', effect: { nextBattleEnemyAtkReduce: 3, exp: 6 } } },
+      { text: '🔥 焚烧巢穴入口', result: { type: 'risk', text: '火焰引发了异形的骚动，但也清理了一条安全通道。', effect: { karma: -2, nextBattleAtkBonus: 3 } } },
+      { text: '🔇 悄声绕行', result: { type: 'karma', text: '你压低声音，沿着墙壁小心绕过了巢穴区域。安全第一。', effect: { karma: 10, healPercent: 0.08 } } },
     ],
     weight: 8,
   },
   {
-    id: 'childs_drawing',
-    title: '孩子的画',
-    text: '墙上贴着一幅蜡笔画——画着一个快乐的家庭。但画中父亲的位置被黑色涂鸦覆盖了。',
+    id: 'crew_log',
+    title: '船员日志',
+    text: '飞船走廊的一个储物柜里有一本手写日志。最后几页的字迹越来越潦草，显示着绝望。',
     choices: [
       { text: '📖 仔细研究', result: { type: 'info', text: '画的背面写着这栋房子的平面图。你发现了一条隐藏通道的标记。', effect: { gold: 35, exp: 5 } } },
       { text: '🖐 触碰黑色涂鸦', result: { type: 'risk', text: '手指触碰的瞬间，一股寒意穿过全身。但你似乎获得了短暂的灵觉。', effect: { nextBattleCritBonus: 10, damage: 8 } } },
@@ -726,20 +726,20 @@ EXPLORATION_EVENTS[2].push(
 // ── 第3章补充 ──
 EXPLORATION_EVENTS[3].push(
   {
-    id: 'hidden_passage',
-    title: '隐秘甬道',
-    text: '一块松动的地砖。推开后露出一条通往地下的窄道，空气中弥漫着某种植物的香气。',
+    id: 'cursed_mirror',
+    title: '诅咒之镜',
+    text: '走廊尽头立着一面落满灰尘的镜子。当你靠近时，镜中映出的不是你——而是一个苍白的、黑发遮面的女人。',
     choices: [
-      { text: '🔦 探索甬道', result: { type: 'loot', text: '甬道尽头是一个小型祭室，摆放着古埃及的护身符和几枚金币。', effect: { gold: 65, exp: 10, karma: 3 } } },
-      { text: '📖 研究壁画', result: { type: 'info', text: '壁画描绘了击败木乃伊的仪式。知识就是力量。', effect: { nextBattleBossDmgBonus: 6, exp: 8 } } },
+      { text: '🔍 直视镜中', result: { type: 'loot', text: '女人的影像消散了。镜面上浮现出一行古老的守护符文——是退散怨灵的咒语。', effect: { gold: 65, exp: 10, karma: 3 } } },
+      { text: '🔨 打碎镜子', result: { type: 'info', text: '碎裂的镜片中传出一声尖叫。诅咒的力量似乎减弱了。', effect: { nextBattleBossDmgBonus: 6, exp: 8 } } },
       { text: '🚶 记下位置离开', result: { type: 'safe', text: '也许以后再来探索。你在地图上标注了位置。', effect: { exp: 3 } } },
     ],
     weight: 7,
   },
   {
-    id: 'sand_storm_warning',
-    title: '沙暴预兆',
-    text: '天空突然暗了下来，远处的沙丘开始移动。一场沙暴正在逼近。',
+    id: 'seven_curse_wave',
+    title: '第七波诅咒',
+    text: '空气中突然弥漫着阴冷的气息。门窗自动关闭，头顶传来咚咚的脚步声——伽椰子在天花板上爬行。',
     choices: [
       { text: '🏃 寻找掩体', result: { type: 'safe', text: '及时找到了一处岩石下的庇护所。沙暴过后，你精神焕发地继续前进。', effect: { healPercent: 0.1, exp: 5 } } },
       { text: '⚡ 冲过沙暴', result: { type: 'risk', text: '沙砾割伤了皮肤，但你看到了沙暴中隐藏的遗迹入口。', effect: { damage: 12, gold: 50, nextBattleAtkBonus: 3 } } },
@@ -752,9 +752,9 @@ EXPLORATION_EVENTS[3].push(
 // ── 第4章补充 ──
 EXPLORATION_EVENTS[4].push(
   {
-    id: 'apple_of_death',
-    title: '死亡之苹果',
-    text: '桌上摆着一颗完美的红苹果。在这个与死神相关的世界里，一切看起来正常的东西都可疑。',
+    id: 'sandstorm_coming',
+    title: '沙暴预兆',
+    text: '天空突然暗了下来，远处的沙丘开始移动。伊莫顿的力量在召唤一场毁灭性的沙暴。',
     choices: [
       { text: '🍎 吃掉苹果', result: { type: 'risk', text: '苹果入口瞬间，身体感到一阵灼热。HP略有损失，但感觉力量在增长。', effect: { damage: 15, nextBattleAtkBonus: 6, nextBattleCritBonus: 8 } } },
       { text: '🔍 检查苹果', result: { type: 'info', text: '苹果表面有极微小的文字——是死神的规则漏洞！下次被攻击时自动闪避一次。', effect: { exp: 12, nextBattleCritBonus: 5 } } },
@@ -763,9 +763,9 @@ EXPLORATION_EVENTS[4].push(
     weight: 9,
   },
   {
-    id: 'notebook_remnant',
-    title: '残缺的笔记本',
-    text: '角落里有一本破旧的笔记本，上面记录着某个轮回者的心路历程和战斗经验。',
+    id: 'hieroglyph_tablet',
+    title: '象形文字石板',
+    text: '一块刻满象形文字的石板。齐腾一翻译后发现，上面记载着太阳金经的真正使用方法。',
     choices: [
       { text: '📖 通读笔记', result: { type: 'info', text: '前辈的经验弥足珍贵。你学到了一些对抗超自然存在的技巧。', effect: { exp: 15, nextBattleCritBonus: 6 } } },
       { text: '📝 撕下有用的页面', result: { type: 'loot', text: '几页记录了死神规则的细节，这些信息非常有价值。', effect: { gold: 30, nextBattleBossDmgBonus: 4 } } },
@@ -778,9 +778,9 @@ EXPLORATION_EVENTS[4].push(
 // ── 第5章补充 ──
 EXPLORATION_EVENTS[5].push(
   {
-    id: 'egg_chamber',
-    title: '异形卵室',
-    text: '一间巨大的房间里摆满了异形卵。大多数已经孵化了，但还有几颗在微微颤动。',
+    id: 'death_pattern',
+    title: '死亡规律',
+    text: '你在走廊的白板上发现了某个前辈轮回者留下的分析——他试图破解死神的杀人顺序规律。',
     choices: [
       { text: '🔥 全部烧掉', result: { type: 'karma', text: '火焰吞噬了卵室。这些怪物不会再伤害任何人了。', effect: { karma: 8, exp: 10 } } },
       { text: '🔬 研究未孵化的卵', result: { type: 'info', text: '通过观察卵的结构，你发现了幼体阶段的弱点。', effect: { nextBattleCritBonus: 10, nextBattleAtkBonus: 3 } } },
@@ -789,9 +789,9 @@ EXPLORATION_EVENTS[5].push(
     weight: 8,
   },
   {
-    id: 'derelict_mech',
-    title: '废弃的机甲',
-    text: '一台半毁的战斗机甲倚靠在墙边。驾驶舱还能打开，控制台上闪着微弱的灯光。',
+    id: 'premonition_dream',
+    title: '预知梦境',
+    text: '在短暂的休息中，你做了一个异常清晰的梦。梦中看到了一连串即将发生的连锁事故。',
     choices: [
       { text: '🔧 拆卸零件', result: { type: 'loot', text: '从机甲上拆下了一些高品质零件，可以用来强化装备。', effect: { gold: 55, exp: 5 } } },
       { text: '⚡ 尝试启动', result: { type: 'risk', text: '机甲发出轰鸣后再次熄灭。但在短暂的启动中，武器系统扫描了周边区域。', effect: { nextBattleCritBonus: 12, damage: 5 } } },
