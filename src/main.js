@@ -163,6 +163,7 @@ import { initBattleScene, startBattleScene, stopBattleScene, updateBattleState, 
 import { initAwakeningState, getAwakeningStage, getAwakeningLevel, canAwaken, performAwakening, getAwakeningCombatBonuses, getAwakeningSkills, renderAwakeningPanel, serializeAwakening, deserializeAwakening } from './core/AwakeningSystem.js';
 import { checkFateChoice, makeFateChoice, applyFateConsequence, renderFateChoiceUI, renderFateHistoryPanel, serializeFateChoices, deserializeFateChoices, getFateStats, resetFateChoices } from './core/FateChoiceSystem.js';
 import { initDirector, stopDirector, directorOnRound, directorOnDamage, directorOnChainReaction, directorOnBossPhase, directorOnDefend, directorOnVictory, directorOnDefeat, getTension, renderBattleSummaryPanel } from './core/CombatDirector.js';
+import { getChapterEnvironment, checkEnvironmentHazard, applyEnvironmentEffect, clearEnvironmentEffects, renderEnvironmentInfo, getFloorNarrative } from './core/EnvironmentHazards.js';
 import { addJournalEntry, triggerChapterJournals, triggerChapterCompleteJournal, serializeJournal, deserializeJournal, renderJournalPanel } from './core/StoryJournal.js';
 import { getCanonState, resetCanonState } from './core/CanonState.js';
 import { announce, autoAnnounce, clearAnnouncements } from './core/CombatAnnouncer.js';
@@ -1712,7 +1713,6 @@ function showFloorTitle(floor) {
   try {
     const fateChoices = checkFateChoice(gameState.chapter, currentFloorIndex);
     if (fateChoices.length > 0) {
-      // 延迟显示，等楼层加载完成
       setTimeout(() => {
         for (const fc of fateChoices) {
           _showFateChoice(fc);
@@ -1720,6 +1720,22 @@ function showFloorTitle(floor) {
       }, 800);
     }
   } catch(e) { console.warn('FateChoice check:', e); }
+  // ── 环境危害检查 ──
+  try {
+    clearEnvironmentEffects(gameState.player);
+    const hazards = checkEnvironmentHazard(gameState.chapter, currentFloorIndex);
+    for (const h of hazards) {
+      const changes = applyEnvironmentEffect(h, gameState.player);
+      for (const c of changes) {
+        try { renderer.notify(c.text, '#ffaa44', 100); } catch {}
+      }
+    }
+    // 楼层叙事
+    const floorNarr = getFloorNarrative(gameState.chapter, currentFloorIndex);
+    if (floorNarr && currentFloorIndex > 0) {
+      try { renderer.notify(floorNarr, '#888888', 150); } catch {}
+    }
+  } catch(e) { console.warn('Environment check:', e); }
   // 触发章节日志
   try { triggerChapterJournals(gameState.chapter); } catch {}
   const sceneBgMap = {
