@@ -1571,6 +1571,13 @@ document.addEventListener('keydown', (e) => {
   }
 
   // 快捷保存/读档 (任何状态下可用)
+  // Tab → 角色详情面板
+  if (e.key === 'Tab') {
+    e.preventDefault();
+    showCharacterSheet();
+    return;
+  }
+
   if (e.key === 'F5') {
     e.preventDefault();
     gameState.save(0);
