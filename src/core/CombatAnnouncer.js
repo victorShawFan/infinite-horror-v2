@@ -200,6 +200,7 @@ export function autoAnnounce(combatResult) {
 
 // ── 显示播报 ──
 function _showAnnouncement(type, def) {
+  if (typeof document === 'undefined') return; // Node.js环境跳过
   // 移除旧元素
   if (_announceEl) {
     _announceEl.remove();
