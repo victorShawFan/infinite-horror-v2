@@ -37,11 +37,11 @@ console.log('══════════════════════�
   const thornEnemy = { type: 'enemy', name: '荆棘怪', hp: 100, atk: 20, def: 5, traits: ['thorns'] };
   
   p.hp = 500;
-  const r1 = executeBattle({...normalEnemy});
+  const r1 = await executeBattle({...normalEnemy});
   const hp1 = p.hp;
   
   p.hp = 500;
-  const r2 = executeBattle({...thornEnemy});
+  const r2 = await executeBattle({...thornEnemy});
   const hp2 = p.hp;
   
   assert(r1.victory && r2.victory, '两个都应该能打赢');
@@ -55,11 +55,11 @@ console.log('══════════════════════�
   const regenE = { type: 'enemy', name: '再生', hp: 400, atk: 15, def: 15, traits: ['regen'] };
   
   p.hp = 500;
-  const r1 = executeBattle({...normalE});
+  const r1 = await executeBattle({...normalE});
   const rounds1 = r1.rounds;
   
   p.hp = 500;
-  const r2 = executeBattle({...regenE});
+  const r2 = await executeBattle({...regenE});
   const rounds2 = r2.rounds;
   
   assert(r1.victory && r2.victory, '两个都应能打赢');
@@ -71,7 +71,7 @@ console.log('══════════════════════�
   const p = resetPlayer();
   const shieldE = { type: 'enemy', name: '护盾怪', hp: 150, atk: 15, def: 5, traits: ['shield'] };
   p.hp = 500;
-  const r = executeBattle({...shieldE});
+  const r = await executeBattle({...shieldE});
   assert(r.victory, '护盾怪应可击败');
   // Log should contain shield text
   const hasShieldLog = r.log.some(l => l.text && l.text.includes('护盾'));
@@ -83,7 +83,7 @@ console.log('══════════════════════�
   const p = resetPlayer();
   const undyingE = { type: 'enemy', name: '不死怪', hp: 100, atk: 15, def: 5, traits: ['undying'] };
   p.hp = 500;
-  const r = executeBattle({...undyingE});
+  const r = await executeBattle({...undyingE});
   assert(r.victory, '不死怪应最终被击败');
   const hasReviveLog = r.log.some(l => l.text && l.text.includes('复活'));
   assert(hasReviveLog, '战斗日志应包含复活信息');
@@ -96,9 +96,9 @@ console.log('══════════════════════�
   p.hp = 500;
   const normalE = { type: 'enemy', name: '普通', hp: 200, atk: 20, def: 8, traits: [] };
   
-  const r1 = executeBattle({...normalE}); const hp1 = p.hp;
+  const r1 = await executeBattle({...normalE}); const hp1 = p.hp;
   p.hp = 500;
-  const r2 = executeBattle({...poisonE}); const hp2 = p.hp;
+  const r2 = await executeBattle({...poisonE}); const hp2 = p.hp;
   
   assert(r1.victory && r2.victory, '两个都应能打赢');
   // Poison should cause extra damage, but if fights are very short it may not show
@@ -134,7 +134,7 @@ console.log('══════════════════════�
   const p = resetPlayer({ atk: 30 }); // moderate damage for longer fight
   const enrageE = { type: 'enemy', name: '狂怒怪', hp: 200, atk: 20, def: 5, traits: ['enrage'] };
   p.hp = 500;
-  const r = executeBattle({...enrageE});
+  const r = await executeBattle({...enrageE});
   assert(r.victory, '狂怒怪应可击败');
   const hasEnrageLog = r.log.some(l => l.text && l.text.includes('狂怒'));
   assert(hasEnrageLog, '战斗日志应包含狂怒信息');
@@ -146,7 +146,7 @@ console.log('══════════════════════�
   const bossE = { type: 'boss', name: 'TestBoss', hp: 200, atk: 25, def: 8,
                   bossId: 'tyrant_t002', traits: [] };
   p.hp = 500;
-  const r = executeBattle({...bossE});
+  const r = await executeBattle({...bossE});
   assert(r.victory, 'Boss应可击败');
   const hasPhaseLog = r.log.some(l => l.type === 'boss_phase');
   // Phase might not trigger if fight is too short
@@ -162,7 +162,7 @@ console.log('══════════════════════�
   let gotLoot = false;
   for (let i = 0; i < 20; i++) {
     p.hp = 500;
-    const r = executeBattle({...enemy});
+    const r = await executeBattle({...enemy});
     if (r.log.some(l => l.type === 'loot' || l.type === 'loot_equipment')) {
       gotLoot = true;
       break;
@@ -177,7 +177,7 @@ console.log('══════════════════════�
   p.hp = 100; // 20% HP
   p.inventory = [{ type: 'consumable', name: '修复包', effect: { healPercent: 0.5 }, desc: '50%' }];
   const enemy = { type: 'enemy', name: '测试怪', hp: 50, atk: 10, def: 3, traits: [] };
-  const r = executeBattle({...enemy});
+  const r = await executeBattle({...enemy});
   assert(r.victory, '应能打赢');
   const hasAutoHeal = r.log.some(l => l.text && l.text.includes('战前使用'));
   assert(hasAutoHeal, '应有战前自动使用消耗品日志');

@@ -21,7 +21,7 @@ const enemy = {
   rewards: { exp: 10, gold: 5 },
 };
 
-const result = executeBattle(enemy);
+const result = await executeBattle(enemy);
 
 assert(result.victory === true, 'Should win the battle');
 assert(result.rounds > 0, `Should have rounds > 0, got ${result.rounds}`);

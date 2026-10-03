@@ -81,7 +81,7 @@ for (let ci = 0; ci < chapters.length; ci++) {
       }
 
       const hpBefore = p.hp;
-      executeBattle({...scaled});
+      await executeBattle({...scaled});
       const hpAfter = p.hp;
       const margin = hpAfter;
 

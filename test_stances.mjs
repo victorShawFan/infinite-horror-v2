@@ -77,21 +77,21 @@ const testEnemy = { id: 'stance_test', name: '测试靶', hp: 80, atk: 10, def: 
 // 平衡姿态
 setStance('balanced');
 gameState.player.hp = 500;
-const r1 = executeBattle(testEnemy);
+const r1 = await executeBattle(testEnemy);
 assert(r1.victory, '平衡姿态胜利');
 const hp1 = gameState.player.hp;
 
 // 猛攻姿态(应该更快结束)
 setStance('aggressive');
 gameState.player.hp = 500;
-const r2 = executeBattle(testEnemy);
+const r2 = await executeBattle(testEnemy);
 assert(r2.victory, '猛攻姿态胜利');
 assert(r2.rounds <= r1.rounds || r2.rounds === r1.rounds, `猛攻回合 <= 平衡: ${r2.rounds} vs ${r1.rounds}`);
 
 // 防御姿态(应该损失更少HP)
 setStance('defensive');
 gameState.player.hp = 500;
-const r3 = executeBattle(testEnemy);
+const r3 = await executeBattle(testEnemy);
 assert(r3.victory, '防御姿态胜利');
 
 // 恢复默认

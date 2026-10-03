@@ -606,7 +606,7 @@ function showMainMenu() {
     <div style="
       position: absolute; top: 0; left: 0; right: 0; bottom: 0;
       display: flex; flex-direction: column; align-items: center; justify-content: center;
-      background: url('/assets/scenes/1-1_列车醒来_背景.jpg') center/cover no-repeat;
+      background: url('./assets/scenes/1-1_列车醒来_背景.jpg') center/cover no-repeat;
     ">
     <div style="
       position: absolute; top: 0; left: 0; right: 0; bottom: 0;
@@ -1085,19 +1085,29 @@ function startGame() {
       // 授予3属性点供手动分配
       grantStatPoints(3);
     }
-    // 升级庆典
+    // 升级庆典 — 通过 ModalQueue 排队（最高优先级）
     if (_levelsGained > 0 && _firstLevelOldStats) {
       try {
-        const unlocks = getLevelUnlocks(p.level, p);
-        showLevelUpCelebration({
+        const _luData = {
           newLevel: p.level,
-          oldStats: _firstLevelOldStats,
+          oldStats: { ..._firstLevelOldStats },
           newStats: { maxHp: p.maxHp, atk: p.atk, def: p.def, spd: p.spd || 5, crt: p.crt || 0 },
           statPoints: getPendingPoints(),
-          unlocks,
+          unlocks: getLevelUnlocks(p.level, p),
+        };
+        modalQueue.enqueue({
+          id: 'level-up',
+          priority: 15,  // 升级庆典最高优先
+          show: (done) => {
+            showLevelUpCelebration(_luData);
+            try { audioEngine.play('levelup'); } catch {}
+            renderer.addFloatText('⬆ LEVEL ' + _luData.newLevel, p.x, p.y - 2, '#ffaa00');
+            // LevelUpCelebration 面板关闭后通知队列
+            const _checkLU = setInterval(() => {
+              if (!document.getElementById('level-up-celebration')) { clearInterval(_checkLU); done(); }
+            }, 300);
+          },
         });
-        try { audioEngine.play('levelup'); } catch {}
-        renderer.addFloatText('⬆ LEVEL ' + p.level, p.x, p.y - 2, '#ffaa00');
       } catch (e) { console.warn('LevelUp celebration error:', e); }
     }
 
@@ -4076,24 +4086,40 @@ async function startCombat(enemy, preScaledEnemy) {
     }
     combatResult = result;
     
-    // ── 战后详细分析（重要战斗） ──
+    // ── 战后详细分析（重要战斗）── 通过 ModalQueue 排队
     if (result.victory && battleRating) {
       try {
         if (shouldShowAnalysis(result, battleRating)) {
-          setTimeout(() => {
-            showPostCombatAnalysis(result, battleRating, scaledEnemy || enemy);
-          }, 800);
+          modalQueue.enqueue({
+            id: 'post-combat-analysis',
+            priority: 5,
+            show: (done) => {
+              showPostCombatAnalysis(result, battleRating, scaledEnemy || enemy);
+              // PostCombatAnalysis 面板关闭后通知队列
+              const _checkClosed = setInterval(() => {
+                if (!document.getElementById('post-combat-analysis')) { clearInterval(_checkClosed); done(); }
+              }, 300);
+            },
+          });
         }
       } catch (e) { console.warn('PostCombatAnalysis:', e); }
     }
     
-    // ── 装备掉落弹窗（胜利时有装备掉落） ──
+    // ── 装备掉落弹窗（胜利时有装备掉落）── 通过 ModalQueue 排队
     if (result.victory && result.drops) {
       const equipDrops = result.drops.filter(d => d.type === 'equipment');
-      if (equipDrops.length > 0) {
-        setTimeout(() => {
-          for (const ed of equipDrops) _queueEquipDropPanel(ed);
-        }, 500);
+      for (const ed of equipDrops) {
+        modalQueue.enqueue({
+          id: 'equip-drop-' + (ed.name || 'item'),
+          priority: 8,
+          show: (done) => {
+            _queueEquipDropPanel(ed);
+            // 装备弹窗关闭后通知队列
+            const _checkEquip = setInterval(() => {
+              if (!document.querySelector('.equip-drop-panel')) { clearInterval(_checkEquip); done(); }
+            }, 300);
+          },
+        });
       }
     }
     

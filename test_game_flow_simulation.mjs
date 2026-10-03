@@ -56,7 +56,7 @@ for (let f = 0; f < chapter.floors.length; f++) {
     const preview = previewBattle(p, enemy.scaled);
     if (preview.canWin) {
       // Simulate the fight
-      const result = executeBattle(enemy.scaled);
+      const result = await executeBattle(enemy.scaled);
       if (result.victory) {
         totalKills++;
         // Apply rewards

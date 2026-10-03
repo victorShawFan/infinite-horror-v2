@@ -91,7 +91,7 @@ console.log('\n═══ Fix2: 图鉴 damageTaken ═══');
   assert(preview.totalDamage > 0, 'totalDamage 应 > 0（敌人 atk > 玩家 def）');
   
   const hpBefore = gameState.player.hp;
-  const result = executeBattle(enemy);
+  const result = await executeBattle(enemy);
   const hpAfter = gameState.player.hp;
   const actualDmgTaken = Math.max(0, hpBefore - hpAfter);
   assert(result.victory, '应该胜利');

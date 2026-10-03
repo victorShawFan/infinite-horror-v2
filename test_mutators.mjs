@@ -58,7 +58,7 @@ if (cursedCycle > 0) {
   p.level = 10; p.atk = 50; p.def = 20; p.hp = 200; p.maxHp = 200;
   p.gold = 0;
   const testEnemy = { id: 'test_mutator', name: '测试敌', hp: 10, atk: 1, def: 0, spd: 1, rewards: { gold: 100, exp: 10 } };
-  const result = executeBattle(testEnemy);
+  const result = await executeBattle(testEnemy);
   assert(result.victory, 'cursed_gold战斗胜利');
   assert(p.gold === 200, `cursed_gold双倍金币: ${p.gold} (期望200)`);
   assert(p.hp <= 199, `cursed_gold扣HP: ${p.hp} <= 199`);
@@ -81,7 +81,7 @@ if (painCycle > 0) {
   const testEnemy2 = { id: 'test_pain', name: '幻痛敌', hp: 50, atk: 20, def: 5, spd: 5, rewards: { gold: 50, exp: 20 } };
   for (let i = 0; i < 5; i++) {
     gameState.player.hp = 300;
-    const r = executeBattle(testEnemy2);
+    const r = await executeBattle(testEnemy2);
     assert(r.victory !== undefined, `phantom_pain不崩溃(run ${i+1})`);
   }
 } else {

@@ -35,7 +35,7 @@ let ch1Defeats = 0;
 for (const f of ch1.floors) {
   for (const e of f.entities.filter(e => e.type === ENTITY_TYPE.ENEMY || e.type === ENTITY_TYPE.BOSS)) {
     { const se = scaleEnemy(e, 1); if (!previewBattle(p, se).canWin) { ch1Defeats++; continue; }
-    executeBattle({...se}); }
+    await executeBattle({...se}); }
   }
   for (const e of f.entities.filter(e => e.type === ENTITY_TYPE.ITEM)) {
     if (e.effect?.heal) p.hp = Math.min(p.maxHp, p.hp + e.effect.heal);
@@ -56,7 +56,7 @@ let ch2Defeats = 0;
 for (const f of ch2.floors) {
   for (const e of f.entities.filter(e => e.type === ENTITY_TYPE.ENEMY || e.type === ENTITY_TYPE.BOSS)) {
     { const se = scaleEnemy(e, 2); if (!previewBattle(p, se).canWin) { ch2Defeats++; continue; }
-    executeBattle({...se}); }
+    await executeBattle({...se}); }
   }
   for (const e of f.entities.filter(e => e.type === ENTITY_TYPE.ITEM)) {
     if (e.effect?.heal) p.hp = Math.min(p.maxHp, p.hp + e.effect.heal);
@@ -79,7 +79,7 @@ let ch3Defeats = 0;
 for (const f of ch3.floors) {
   for (const e of f.entities.filter(e => e.type === ENTITY_TYPE.ENEMY || e.type === ENTITY_TYPE.BOSS)) {
     { const se = scaleEnemy(e, 3); if (!previewBattle(p, se).canWin) { ch3Defeats++; continue; }
-    executeBattle({...se}); }
+    await executeBattle({...se}); }
   }
   for (const e of f.entities.filter(e => e.type === ENTITY_TYPE.ITEM)) {
     if (e.effect?.heal) p.hp = Math.min(p.maxHp, p.hp + e.effect.heal);
@@ -104,7 +104,7 @@ let ch4Defeats = 0;
 for (const f of ch4.floors) {
   for (const e of f.entities.filter(e => e.type === ENTITY_TYPE.ENEMY || e.type === ENTITY_TYPE.BOSS)) {
     { const se = scaleEnemy(e, 4); if (!previewBattle(p, se).canWin) { ch4Defeats++; continue; }
-    executeBattle({...se}); }
+    await executeBattle({...se}); }
   }
   for (const e of f.entities.filter(e => e.type === ENTITY_TYPE.ITEM)) {
     if (e.effect?.heal) p.hp = Math.min(p.maxHp, p.hp + e.effect.heal);
@@ -130,7 +130,7 @@ let ch5Defeats = 0;
 for (const f of ch5.floors) {
   for (const e of f.entities.filter(e => e.type === ENTITY_TYPE.ENEMY || e.type === ENTITY_TYPE.BOSS)) {
     { const se = scaleEnemy(e, 5); if (!previewBattle(p, se).canWin) { ch5Defeats++; continue; }
-    executeBattle({...se}); }
+    await executeBattle({...se}); }
   }
   for (const e of f.entities.filter(e => e.type === ENTITY_TYPE.ITEM)) {
     if (e.effect?.heal) p.hp = Math.min(p.maxHp, p.hp + e.effect.heal);
@@ -156,7 +156,7 @@ let ch6Defeats = 0;
 for (const f of ch6.floors) {
   for (const e of f.entities.filter(e => e.type === ENTITY_TYPE.ENEMY || e.type === ENTITY_TYPE.BOSS)) {
     { const se = scaleEnemy(e, 6); if (!previewBattle(p, se).canWin) { ch6Defeats++; continue; }
-    executeBattle({...se}); }
+    await executeBattle({...se}); }
   }
   for (const e of f.entities.filter(e => e.type === ENTITY_TYPE.ITEM)) {
     if (e.effect?.heal) p.hp = Math.min(p.maxHp, p.hp + e.effect.heal);
@@ -182,7 +182,7 @@ let ch7Defeats = 0;
 for (const f of ch7.floors) {
   for (const e of f.entities.filter(e => e.type === ENTITY_TYPE.ENEMY || e.type === ENTITY_TYPE.BOSS)) {
     { const se = scaleEnemy(e, 7); if (!previewBattle(p, se).canWin) { ch7Defeats++; continue; }
-    executeBattle({...se}); }
+    await executeBattle({...se}); }
   }
   for (const e of f.entities.filter(e => e.type === ENTITY_TYPE.ITEM)) {
     if (e.effect?.heal) p.hp = Math.min(p.maxHp, p.hp + e.effect.heal);
@@ -207,7 +207,7 @@ let ch8Defeats = 0;
 for (const f of ch8.floors) {
   for (const e of f.entities.filter(e => e.type === ENTITY_TYPE.ENEMY || e.type === ENTITY_TYPE.BOSS)) {
     { const se = scaleEnemy(e, 8); if (!previewBattle(p, se).canWin) { ch8Defeats++; continue; }
-    executeBattle({...se}); }
+    await executeBattle({...se}); }
   }
   for (const e of f.entities.filter(e => e.type === ENTITY_TYPE.ITEM)) {
     if (e.effect?.heal) p.hp = Math.min(p.maxHp, p.hp + e.effect.heal);
@@ -232,7 +232,7 @@ let ch9Defeats = 0;
 for (const f of ch9.floors) {
   for (const e of f.entities.filter(e => e.type === ENTITY_TYPE.ENEMY || e.type === ENTITY_TYPE.BOSS)) {
     { const se = scaleEnemy(e, 9); if (!previewBattle(p, se).canWin) { ch9Defeats++; continue; }
-    executeBattle({...se}); }
+    await executeBattle({...se}); }
   }
   for (const e of f.entities.filter(e => e.type === ENTITY_TYPE.ITEM)) {
     if (e.effect?.heal) p.hp = Math.min(p.maxHp, p.hp + e.effect.heal);
@@ -257,7 +257,7 @@ let ch10Defeats = 0;
 for (const f of ch10.floors) {
   for (const e of f.entities.filter(e => e.type === ENTITY_TYPE.ENEMY || e.type === ENTITY_TYPE.BOSS)) {
     { const se = scaleEnemy(e, 10); if (!previewBattle(p, se).canWin) { ch10Defeats++; continue; }
-    executeBattle({...se}); }
+    await executeBattle({...se}); }
   }
   for (const e of f.entities.filter(e => e.type === ENTITY_TYPE.ITEM)) {
     if (e.effect?.heal) p.hp = Math.min(p.maxHp, p.hp + e.effect.heal);
@@ -282,7 +282,7 @@ let ch11Defeats = 0;
 for (const f of ch11.floors) {
   for (const e of f.entities.filter(e => e.type === ENTITY_TYPE.ENEMY || e.type === ENTITY_TYPE.BOSS)) {
     { const se = scaleEnemy(e, 11); if (!previewBattle(p, se).canWin) { ch11Defeats++; continue; }
-    executeBattle({...se}); }
+    await executeBattle({...se}); }
   }
   for (const e of f.entities.filter(e => e.type === ENTITY_TYPE.ITEM)) {
     if (e.effect?.heal) p.hp = Math.min(p.maxHp, p.hp + e.effect.heal);
@@ -307,7 +307,7 @@ let ch12Defeats = 0;
 for (const f of ch12.floors) {
   for (const e of f.entities.filter(e => e.type === ENTITY_TYPE.ENEMY || e.type === ENTITY_TYPE.BOSS)) {
     { const se = scaleEnemy(e, 12); if (!previewBattle(p, se).canWin) { ch12Defeats++; continue; }
-    executeBattle({...se}); }
+    await executeBattle({...se}); }
   }
   for (const e of f.entities.filter(e => e.type === ENTITY_TYPE.ITEM)) {
     if (e.effect?.heal) p.hp = Math.min(p.maxHp, p.hp + e.effect.heal);

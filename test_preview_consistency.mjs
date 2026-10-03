@@ -82,7 +82,7 @@ for (const build of BUILDS) {
     if (!preview.canWin) continue; // 跳过预判打不过的
     
     // 执行实战
-    const result = executeBattle({ ...enemy, rewards: { exp: 10, gold: 5 } });
+    const result = await executeBattle({ ...enemy, rewards: { exp: 10, gold: 5 } });
     
     // 对比
     const previewHpAfter = preview.hpAfter;

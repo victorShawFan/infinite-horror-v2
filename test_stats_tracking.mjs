@@ -43,32 +43,32 @@ console.log('\n═══ 统计追踪审计 ═══');
 // Test 1: enemiesKilled and damageDealt
 resetPlayer(); resetStats();
 const weak = { id: 'w1', name: '弱怪', hp: 30, atk: 5, def: 5, spd: 3, rewards: { exp: 10, gold: 5 } };
-executeBattle(weak);
+await executeBattle(weak);
 assert(gameState.stats.enemiesKilled === 1, `enemiesKilled=1 (got ${gameState.stats.enemiesKilled})`);
 assert(gameState.stats.damageDealt > 0, `damageDealt>0 (got ${gameState.stats.damageDealt})`);
 
 // Test 2: bossesKilled
 resetPlayer(); resetStats();
 const boss = { id: 'b1', name: '测试Boss', bossId: 'test_boss', hp: 50, atk: 8, def: 5, spd: 3, rewards: { exp: 50, gold: 20 } };
-executeBattle(boss);
+await executeBattle(boss);
 assert(gameState.stats.bossesKilled === 1, `bossesKilled=1 (got ${gameState.stats.bossesKilled})`);
 
 // Test 3: maxSingleHit > 0
 resetPlayer(); resetStats();
 gameState.player.atk = 100; // high ATK to get big hits
-executeBattle({ id: 'w2', name: '沙包怪', hp: 200, atk: 3, def: 1, spd: 1, rewards: { exp: 5 } });
+await executeBattle({ id: 'w2', name: '沙包怪', hp: 200, atk: 3, def: 1, spd: 1, rewards: { exp: 5 } });
 assert(gameState.stats.maxSingleHit > 0, `maxSingleHit>0 (got ${gameState.stats.maxSingleHit})`);
 
 // Test 4: criticalHits (with 30% crit, very likely over many tests)
 resetPlayer(); resetStats();
 gameState.player.crt = 999; // guaranteed crit
-executeBattle({ id: 'w3', name: '暴击靶', hp: 100, atk: 3, def: 1, spd: 1, rewards: { exp: 5 } });
+await executeBattle({ id: 'w3', name: '暴击靶', hp: 100, atk: 3, def: 1, spd: 1, rewards: { exp: 5 } });
 assert(gameState.stats.criticalHits > 0, `criticalHits>0 with 90% crt (got ${gameState.stats.criticalHits})`);
 
 // Test 5: damageTaken in GameState
 resetPlayer(); resetStats();
 gameState.player.atk = 40; gameState.player.def = 5;
-executeBattle({ id: 'w4', name: '伤害源', hp: 30, atk: 20, def: 10, spd: 5, rewards: { exp: 5 } });
+await executeBattle({ id: 'w4', name: '伤害源', hp: 30, atk: 20, def: 10, spd: 5, rewards: { exp: 5 } });
 assert(gameState.stats.damageTaken >= 0, `damageTaken tracked (got ${gameState.stats.damageTaken})`);
 
 // Test 6: deathCount (verified via GameState direct tracking)

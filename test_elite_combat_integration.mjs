@@ -57,7 +57,7 @@ assert(previewElite.turnsNeeded >= previewNormal.turnsNeeded,
 
 // Test 6: Execute battle against elite
 gameState.player.hp = 500;
-const result = executeBattle(legendaryElite);
+const result = await executeBattle(legendaryElite);
 assert(result.victory !== undefined, 'Should have victory result');
 assert(result.log.length > 0, 'Should have combat log');
 // Check if elite-specific log entries exist

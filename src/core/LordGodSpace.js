@@ -229,7 +229,7 @@ export function renderLordGodSpace(onClose) {
     overlay.innerHTML = `
       <div style="
         position: absolute; top: 0; left: 0; right: 0; bottom: 0;
-        background: url('/assets/scenes/lord_god_space.jpg') center/cover no-repeat;
+        background: url('./assets/scenes/lord_god_space.jpg') center/cover no-repeat;
         overflow-y: auto; padding: 30px;
       ">
         <div style="position: fixed; top: 0; left: 0; right: 0; bottom: 0;

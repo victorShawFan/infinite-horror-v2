@@ -841,19 +841,11 @@ if (chipFx.hasIceChip && enemy.atk !== enemyEffAtk) {
 
     if (enemyHp <= 0) break;
 
-    // ── 玩家物理攻击 ──
-    if (_skipPlayerAttack) {
-      // 防御/逃跑失败：跳过物理攻击，仅保留被动效果
-      if (_defendActive && round <= 6) {
-        log.push({ text: '🛡 防御姿态：本回合不发动攻击', type: 'defend' });
-      }
-    } else {
-    // 检查是否有 muscle_control buff（下次攻击双倍）
+    // ── 每回合共享变量（物理攻击和敌人攻击都需要） ──
     let atkMultiplier = 1;
     const mcBuff = (combatState.statusEffects?.player || []).find(e => e.type === STATUS_EFFECT.BUFF_ATK);
-    if (mcBuff && mcBuff.value > 50) atkMultiplier = 2; // muscle_control gives 100% buff
+    if (mcBuff && mcBuff.value > 50) atkMultiplier = 2;
 
-    // ── 敌人特性：狂怒（低HP增攻） ──
     let enemyEnrageMult = 1;
     if ((enemy.traits || []).includes('enrage') && enemyHp < enemyMaxHp * 0.5) {
       enemyEnrageMult = 1.4;
@@ -862,13 +854,11 @@ if (chipFx.hasIceChip && enemy.atk !== enemyEffAtk) {
       }
     }
 
-    // ── 天赋：狂暴（低HP加攻） ──
     let berserkMult = 1;
     if (talentFx.berserkerThreshold && playerHp < p.maxHp * talentFx.berserkerThreshold) {
       berserkMult = 1 + talentFx.berserkerAtkBonus;
       if (round <= 6 || round % 5 === 0) log.push({ text: `🔥 狂暴！ATK +${Math.floor(talentFx.berserkerAtkBonus * 100)}%`, type: 'buff' });
     }
-    // ── 天赋：连锁暴击 ──
     let chainCritBonus = lastCrit ? (talentFx.chainCrit || 0) : 0;
     lastCrit = false;
 
@@ -876,6 +866,14 @@ if (chipFx.hasIceChip && enemy.atk !== enemyEffAtk) {
     if (envSkipPlayer) {
       if (round <= 6) log.push({ text: '⚡ 你被环境效果击晕，本回合无法行动！', type: 'environment_debuff' });
     }
+
+    // ── 玩家物理攻击 ──
+    if (_skipPlayerAttack) {
+      // 防御/逃跑失败：跳过物理攻击，仅保留被动效果
+      if (_defendActive && round <= 6) {
+        log.push({ text: '🛡 防御姿态：本回合不发动攻击', type: 'defend' });
+      }
+    } else {
     const attackCount = envSkipPlayer ? 0 : (isDouble ? 2 : 1);
     for (let i = 0; i < attackCount && enemyHp > 0; i++) {
       // 应用破甲（天赋 + 装备 + 共鸣叠加）
