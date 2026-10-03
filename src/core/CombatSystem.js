@@ -30,6 +30,7 @@ import { getEliteCombatEffects, recordEliteKill } from './EliteMonsterSystem.js'
 import { generateCombatDialogue, getVictoryComment } from './CompanionDialogue.js';
 import { COMPANION_PROFILES } from './RelationshipSystem.js';
 import { processEnvironmentEffect } from './BattleEnvironment.js';
+import { getBossIntro, getBossPhaseDialogue, getBossLowHpLine, getBossDefeatLines, getBossKillPlayerLine, getBossPlayerLowHpLine } from './BossDialogue.js';
 import { getEnchantCombatBonus } from './EnchantSystem.js';
 
 // ── 伤害计算 ──
@@ -392,6 +393,19 @@ if (chipFx.hasIceChip && enemy.atk !== enemyEffAtk) {
 
   // ── Boss 相位系统 ──
   const bossPhases = enemy.bossId ? getBossPhases(enemy.bossId) : null;
+  // ── Boss 开场白 ──
+  if (enemy.bossId) {
+    try {
+      const introLines = getBossIntro(enemy.bossId);
+      if (introLines) {
+        log.push({ text: '', type: 'separator' });
+        for (const line of introLines) {
+          if (line) log.push({ text: line, type: 'boss_dialogue' });
+        }
+        log.push({ text: '', type: 'separator' });
+      }
+    } catch {}
+  }
   let currentPhaseIdx = -1;
   let bossSpecialLastUsed = 0;
   const enemyMaxHp = enemy.hp;
@@ -476,6 +490,8 @@ if (chipFx.hasIceChip && enemy.atk !== enemyEffAtk) {
   let envCritBonus = 0;
   let envAtkMod = 0;
   let envDefMod = 0;
+  let bossLowHpTriggered = false;
+  let playerLowHpBossLineTriggered = false;
   while (enemyHp > 0 && playerHp > 0) {
     round++;
     // 每回合重置环境修正
@@ -618,7 +634,29 @@ if (chipFx.hasIceChip && enemy.atk !== enemyEffAtk) {
           eventBus.emit('combat:boss_phase', { phase: ph, enemy });
           log.push({ text: `  ${ph.desc}`, type: 'boss_phase' });
         }
+          try { const _pd = getBossPhaseDialogue(enemy.bossId, ph.name); if (_pd) log.push({ text: "「" + _pd + "」", type: "boss_dialogue" }); } catch {}
       }
+    }
+
+    
+    // ── Boss 低血量对话 ──
+    if (enemy.bossId && !bossLowHpTriggered && enemyHp > 0 && enemyHp < enemy.hp * 0.20) {
+      bossLowHpTriggered = true;
+      try {
+        const lowHpLine = getBossLowHpLine(enemy.bossId);
+        if (lowHpLine) {
+          log.push({ text: '', type: 'separator' });
+          log.push({ text: '「' + lowHpLine + '」', type: 'boss_dialogue' });
+        }
+      } catch {}
+    }
+    // ── Boss 对濒死玩家的嘲讽 ──
+    if (enemy.bossId && !playerLowHpBossLineTriggered && playerHp > 0 && playerHp < p.maxHp * 0.20) {
+      playerLowHpBossLineTriggered = true;
+      try {
+        const plLine = getBossPlayerLowHpLine(enemy.bossId);
+        if (plLine) log.push({ text: '「' + plLine + '」', type: 'boss_dialogue' });
+      } catch {}
     }
 
     // ── 敌人特性：每回合再生 ──
@@ -1298,6 +1336,28 @@ if (chipFx.hasIceChip && enemy.atk !== enemyEffAtk) {
   if (_totalDmgTaken === 0 && playerHp < p.maxHp) {
     _totalDmgTaken = p.maxHp - Math.max(0, playerHp);
   }
+  
+  // ── Boss 终局对话 ──
+  if (enemy.bossId) {
+    try {
+      if (enemyHp <= 0) {
+        const defeatLines = getBossDefeatLines(enemy.bossId);
+        if (defeatLines) {
+          log.push({ text: '', type: 'separator' });
+          for (const line of (Array.isArray(defeatLines) ? defeatLines : [defeatLines])) {
+            if (line) log.push({ text: line, type: 'boss_dialogue' });
+          }
+        }
+      } else if (playerHp <= 0) {
+        const killLine = getBossKillPlayerLine(enemy.bossId);
+        if (killLine) {
+          log.push({ text: '', type: 'separator' });
+          log.push({ text: '「' + killLine + '」', type: 'boss_dialogue' });
+        }
+      }
+    } catch {}
+  }
+
   return { victory: enemyHp <= 0, log, rounds: round, totalDamageDealt: _totalDmgDealt, totalDamageTaken: _totalDmgTaken, critCount: _critHits };
 }
 

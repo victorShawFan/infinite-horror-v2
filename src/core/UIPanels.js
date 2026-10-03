@@ -968,6 +968,12 @@ export function showCombatLog() {
             if (l.type === 'counter') c = '#ffaa88';
             if (l.type === 'death_save') c = '#ffdd00';
             if (l.type === 'execute') c = '#ff0000';
+            if (l.type === 'boss_dialogue') c = '#ffcc88'; // Boss台词用暖金色
+            if (l.type === 'boss_phase') c = '#ff6644';
+            if (l.type === 'environment') c = '#4488aa';
+            if (l.type === 'environment_buff') c = '#44cc88';
+            if (l.type === 'environment_debuff') c = '#cc8844';
+            if (l.type === 'environment_heal') c = '#88ffaa';
             const icon = { skill: '🧬', spell: '✦', burn: '🔥', poison: '☠', freeze: '❄', dodge: '💨', block: '🛡', counter: '⚡', death_save: '💀', execute: '☠' }[l.type] || '';
             return '<span style="color:' + c + '">' + icon + (icon ? ' ' : '') + l.text + '</span>';
           }).join('<br>')}
