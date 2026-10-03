@@ -120,6 +120,7 @@ import { getChapterLore, renderChapterIntroCard } from './core/ChapterWorldLore.
 import { scanFloor, renderFloorOverview } from './core/FloorScanner.js';
 import { generateRewardChoices, applyReward, renderRewardChoicePanel } from './core/RewardChoiceSystem.js';
 import { toggleAutoBattle, isAutoBattleEnabled, shouldAutoBattle, renderAutoBattleIndicator } from './core/AutoBattleSystem.js';
+import { drawEnemyRadar } from './core/EnemyRadar.js';
 import { renderAbilitiesPanel } from './core/CompanionAbilities.js';
 import { getKarmaLevel, getKarmaCombatModifiers, getEndingType, renderKarmaPanel, renderKarmaDisplay } from './core/KarmaSystem.js';
 import { getStash, addToStash, removeFromStash, isStashFull, openEquipmentStash, serializeStash, deserializeStash } from './core/EquipmentStash.js';
@@ -1467,6 +1468,7 @@ function gameLoop() {
   if (gameState.state === GAME_STATE.EXPLORING && !dialogueState && !combatResult) {
     try { drawQuestHUD(renderer.ctx, renderer.canvas.width, renderer.canvas.height); } catch {}
     try { renderAutoBattleIndicator(renderer.ctx, 12, renderer.canvas.height - 52); } catch {}
+    try { drawEnemyRadar(renderer.ctx, entities, gameState.player, gameState.chapter); } catch {}
   }
 
   requestAnimationFrame(gameLoop);
