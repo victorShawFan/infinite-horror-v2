@@ -162,6 +162,7 @@ import { initFloorMastery, recordFloorKill, recordFloorCollect, recordFloorEvent
 import { addJournalEntry, triggerChapterJournals, triggerChapterCompleteJournal, serializeJournal, deserializeJournal, renderJournalPanel } from './core/StoryJournal.js';
 import { getCanonState, resetCanonState } from './core/CanonState.js';
 import { announce, autoAnnounce, clearAnnouncements } from './core/CombatAnnouncer.js';
+import { showBossVictoryScreen } from './core/VictoryScreen.js';
 import { recordEncounter, recordKill, recordDiscovery, getIntelCombatBonus, getEnemyIntel, getPreBattleIntelHTML, renderIntelPanel, serializeIntel, deserializeIntel, INTEL_LEVEL } from './core/EnemyIntelSystem.js';
 import { showChapterBriefing } from './core/ChapterBriefing.js';
 import { initCombatFXListeners, drawAllCombatFX, isHitStopped, updateAndDrawGhosts } from './core/CombatFX.js';
