@@ -1058,9 +1058,18 @@ function startGame() {
     _showChallengePreBattle(overlay, enemy, challenge);
   });
 
-  // 实时战报更新
+  // 实时战报更新 + HUD实时HP
   eventBus.on('combat:log_update', (data) => {
     updateLiveBattleLog(data.log);
+    // 同步更新战斗HUD的HP条
+    if (window._combatHUD && data.playerHp !== undefined) {
+      const pMax = data.playerMaxHp || window._combatHUD.playerMaxHp;
+      const eMax = data.enemyMaxHp || window._combatHUD.enemyMaxHp;
+      _updateCombatHUD(data.playerHp, pMax, Math.max(0, data.enemyHp / eMax));
+      if (window._combatHUD.enemyText) {
+        window._combatHUD.enemyText.textContent = 'HP ' + Math.max(0, data.enemyHp);
+      }
+    }
   });
 
   eventBus.on('challenge:end', (data) => {
