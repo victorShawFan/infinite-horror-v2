@@ -377,6 +377,59 @@ export class Renderer {
         ctx.fillRect(px, py, TILE_SIZE, TILE_SIZE);
       }
     }
+    // ── 环境装饰层 — 在地板上绘制主题相关的小装饰物 ──
+    this._drawEnvironmentDecor(ctx, floor);
+  }
+  
+  _drawEnvironmentDecor(ctx, floor) {
+    const { tiles, width, height } = floor;
+    const theme = floor?.theme || 'default';
+    const ch = gameState?.chapter || 1;
+    
+    // 主题装饰物定义
+    const DECOR = {
+      biolab:        { chars: ['💉', '🧪', '⚠', '🩸'], color: 'rgba(68,255,68,0.15)', chance: 0.04 },
+      alien_ship:    { chars: ['💀', '🥚', '🔩', '⚙'], color: 'rgba(60,120,200,0.12)', chance: 0.05 },
+      alien_hive:    { chars: ['🥚', '🕸', '💀', '🩸'], color: 'rgba(120,60,40,0.15)', chance: 0.06 },
+      alien_vent:    { chars: ['⚙', '💨', '🔧'], color: 'rgba(40,60,80,0.10)', chance: 0.03 },
+      juon_house:    { chars: ['🕯', '📿', '🪞', '🈲'], color: 'rgba(150,100,200,0.10)', chance: 0.04 },
+      juon_basement: { chars: ['💀', '🕯', '🈲'], color: 'rgba(100,50,120,0.12)', chance: 0.05 },
+      desert:        { chars: ['🏺', '💎', '⚱'], color: 'rgba(200,160,60,0.10)', chance: 0.03 },
+      tomb:          { chars: ['💀', '🏺', '🔱', '📜'], color: 'rgba(140,100,40,0.12)', chance: 0.05 },
+      modern_road:   { chars: ['🚗', '📱', '🔧'], color: 'rgba(80,80,80,0.08)', chance: 0.02 },
+      jungle:        { chars: ['🌿', '🍃', '🦎', '🌺'], color: 'rgba(60,140,40,0.12)', chance: 0.05 },
+      scifi_base:    { chars: ['⚙', '💡', '🔬', '📡'], color: 'rgba(60,80,160,0.10)', chance: 0.04 },
+      fantasy:       { chars: ['⚔', '🛡', '🏰', '🌟'], color: 'rgba(140,120,60,0.10)', chance: 0.03 },
+      nightmare:     { chars: ['👁', '🌀', '💀', '🩸'], color: 'rgba(150,30,80,0.15)', chance: 0.06 },
+      spirit:        { chars: ['✦', '🌀', '💫'], color: 'rgba(100,80,200,0.12)', chance: 0.04 },
+      finale:        { chars: ['💀', '🔥', '⚡', '✦'], color: 'rgba(200,80,40,0.15)', chance: 0.05 },
+    };
+    
+    const decor = DECOR[theme] || null;
+    if (!decor) return;
+    
+    ctx.save();
+    for (let y = 0; y < height; y++) {
+      for (let x = 0; x < width; x++) {
+        if (tiles[y]?.[x] !== TILE.FLOOR) continue;
+        // 伪随机决定是否放置装饰（基于坐标的确定性哈希）
+        const hash = ((x * 2654435761) ^ (y * 2246822519)) >>> 0;
+        if ((hash % 1000) / 1000 >= decor.chance) continue;
+        
+        const px = x * TILE_SIZE;
+        const py = y * TILE_SIZE;
+        const charIdx = hash % decor.chars.length;
+        const decorChar = decor.chars[charIdx];
+        const decorSize = 8 + (hash % 5);
+        const ox = (hash % 20) - 2;
+        const oy = ((hash >> 8) % 20) - 2;
+        
+        ctx.globalAlpha = 0.2 + (hash % 15) / 100;
+        ctx.font = decorSize + 'px sans-serif';
+        ctx.fillText(decorChar, px + ox + 6, py + oy + TILE_SIZE - 6);
+      }
+    }
+    ctx.restore();
   }
 
 

@@ -40,6 +40,9 @@ import { shouldPauseForAction, showBattleActionMenu, applyDefendAction, attemptF
 // ── 伤害计算 ──
 export function calcDamage(attacker, defender, damageType = DAMAGE_TYPE.PHYSICAL, minDmg = 1) {
   let baseDmg = Math.max(minDmg, attacker.atk - defender.def);
+  // 伤害浮动 ±15%，增加战斗不确定性
+  const variance = 0.85 + Math.random() * 0.30;
+  baseDmg = Math.max(minDmg, Math.floor(baseDmg * variance));
 
   const isWeak = defender.weaknesses?.includes(damageType) || false;
   if (isWeak) baseDmg = Math.floor(baseDmg * 1.5);
