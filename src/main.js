@@ -5402,6 +5402,15 @@ function showChapterComplete() {
         </p>
         ${(() => {
           try {
+            const ss = getSubplotSystem();
+            const inv = ss.formatInventory();
+            return '<div style="margin-top:8px;padding:8px;background:rgba(136,170,255,0.05);border:1px solid rgba(136,170,255,0.15);border-radius:6px;">' +
+              '<p style="color:#88aaff;font-size:10px;margin-bottom:4px;">📜 支线剧情库存</p>' +
+              '<p style="color:#aaa;font-size:11px;">' + inv + '</p></div>';
+          } catch { return ''; }
+        })()}
+        ${(() => {
+          try {
             const relSummary = getRelationshipSummary(gameState.relationships);
             if (relSummary.length === 0) return '';
             const bondCount = relSummary.filter(r => r.value >= 71).length;
