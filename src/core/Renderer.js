@@ -662,7 +662,16 @@ export class Renderer {
     } catch {}
 
     // HP条
-    this._drawBar(ctx, pad + 10, pad + 30, 200, 12, p.hp, p.maxHp, COLORS.HP_BAR, '#333');
+    // HP条颜色根据血量百分比动态变化
+    const _hpPct = p.hp / p.maxHp;
+    const _hpBarColor = _hpPct > 0.6 ? COLORS.HP_BAR : _hpPct > 0.3 ? '#ddaa22' : '#dd3333';
+    this._drawBar(ctx, pad + 10, pad + 30, 200, 12, p.hp, p.maxHp, _hpBarColor, '#333');
+    // 低血量闪烁警告
+    if (_hpPct <= 0.25 && Math.floor(Date.now() / 400) % 2 === 0) {
+      ctx.fillStyle = 'rgba(255, 40, 40, 0.15)';
+      roundRect(ctx, pad, pad, 220, hudH, 8);
+      ctx.fill();
+    }
     ctx.font = '11px "Microsoft YaHei"';
     ctx.fillStyle = COLORS.TEXT_WHITE;
     ctx.fillText(`HP ${p.hp}/${p.maxHp}`, pad + 10, pad + 55);
