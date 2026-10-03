@@ -12,6 +12,7 @@ export function showKeybindHelp() {
       { key: '空格', desc: '互动 / 对话推进' },
       { key: 'Shift+移动', desc: '潜行模式' },
       { key: 'Shift+P', desc: '玩家统计面板' },
+      { key: 'T', desc: '策略模式开关 (每回合手选行动)' },
     ]},
     { group: '战斗与装备', keys: [
       { key: '碰撞敌人', desc: '触发战斗（自动）' },

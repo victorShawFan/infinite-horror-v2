@@ -1709,6 +1709,15 @@ case 'h': case '?':
         // 玩家统计面板 (Shift+P)
         showPlayerStatsPanel();
         return;
+      case 't':
+        // 战术/策略模式开关
+        setStrategicMode(!isStrategicMode());
+        renderer.addFloatText(
+          isStrategicMode() ? '🎯 策略模式: 开启' : '⚡ 策略模式: 关闭',
+          gameState.player.x, gameState.player.y - 1,
+          isStrategicMode() ? '#ffcc44' : '#888'
+        );
+        return;
       case 'm':
         // 全地图视图
         showFullMap();
