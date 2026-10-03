@@ -114,6 +114,7 @@ import { killStreak } from './core/KillStreak.js';
 import { rateBattle, recordRating, formatRatingHTML, getRatingStats } from './core/BattleRating.js';
 import { fogOfWar } from './core/FogOfWar.js';
 import { openMerchantShop } from './core/FieldMerchant.js';
+import { injectKeyDoors, getDoorReward, initKeys, getKeyCount } from './core/KeyDoorSystem.js';
 import { renderAbilitiesPanel } from './core/CompanionAbilities.js';
 import { getKarmaLevel, getKarmaCombatModifiers, getEndingType, renderKarmaPanel, renderKarmaDisplay } from './core/KarmaSystem.js';
 import { getStash, addToStash, removeFromStash, isStashFull, openEquipmentStash, serializeStash, deserializeStash } from './core/EquipmentStash.js';
@@ -797,6 +798,7 @@ document.getElementById('btn-new-game').addEventListener('click', () => {
     try { const _grData = localStorage.getItem('ih_growth'); if (_grData) deserializeGrowth(JSON.parse(_grData)); } catch {}
     try { const _saData = localStorage.getItem('ih_statalloc'); if (_saData) deserializeStatAllocation(JSON.parse(_saData)); } catch {}
     initStatAllocation();
+    initKeys();
     try { const _enData = localStorage.getItem('ih_enchant'); if (_enData) deserializeEnchant(JSON.parse(_enData)); } catch {}
     try { const _naData = localStorage.getItem('ih_narratives'); if (_naData) deserializeNarratives(JSON.parse(_naData)); } catch {}
     try { const _abData = localStorage.getItem('ih_abyss'); if (_abData) deserializeAbyss(JSON.parse(_abData)); } catch {}

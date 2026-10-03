@@ -18,6 +18,7 @@ import { drawWallTile, drawFloorTile, drawLavaTile, drawStairsTile, drawCharacte
 import { dynamicLighting } from './DynamicLighting.js';
 import { getPendingPoints } from './StatAllocation.js';
 import { getKarmaLevel } from './KarmaSystem.js';
+import { renderKeyHUD } from './KeyDoorSystem.js';
 
 export class Renderer {
   constructor(canvas) {
