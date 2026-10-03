@@ -14,6 +14,8 @@
 import { gameState } from './GameState.js';
 import { getEffectiveAtk, getEffectiveDef, getEffectiveCrt, getEffectiveSpd, getStatsBreakdown } from './CombatSystem.js';
 import { BLOODLINE, GENE_LOCK } from './constants.js';
+import { getOwnedRelics, getRelicDef, RELIC_DEFINITIONS } from './RelicSystem.js';
+import { getSelectedPerks, PERK_TIERS } from './PerkSystem.js';
 
 const BLOODLINE_NAMES = {
   [BLOODLINE.NONE]: '无血统',
@@ -184,6 +186,18 @@ export function showCharacterSheet() {
           }).join('')}
         </div>
         ${(p.geneLockCharge || 0) > 0 ? `<p style="color:#666;font-size:10px;margin-top:4px;">充能: ${p.geneLockCharge || 0}</p>` : ''}
+      </div>
+      
+      <!-- 遗物 -->
+      <div style="margin-bottom:16px;padding:10px;background:rgba(255,204,68,0.03);border:1px solid #ffcc4415;border-radius:8px;">
+        <p style="color:#ffcc44;font-size:10px;letter-spacing:2px;margin-bottom:6px;">🏛 遗物 (\0)</p>
+        \<p style="color:#555;font-size:10px;">-</p>
+      </div>
+      
+      <!-- 天赋觉醒 -->
+      <div style="margin-bottom:16px;padding:10px;background:rgba(255,136,68,0.03);border:1px solid #ff884415;border-radius:8px;">
+        <p style="color:#ff8844;font-size:10px;letter-spacing:2px;margin-bottom:6px;">★ 天赋觉醒</p>
+        \<p style="color:#555;font-size:10px;">-</p>
       </div>
       
       <!-- 战斗统计 -->
