@@ -164,6 +164,7 @@ import { initAwakeningState, getAwakeningStage, getAwakeningLevel, canAwaken, pe
 import { checkFateChoice, makeFateChoice, applyFateConsequence, renderFateChoiceUI, renderFateHistoryPanel, serializeFateChoices, deserializeFateChoices, getFateStats, resetFateChoices } from './core/FateChoiceSystem.js';
 import { initDirector, stopDirector, directorOnRound, directorOnDamage, directorOnChainReaction, directorOnBossPhase, directorOnDefend, directorOnVictory, directorOnDefeat, getTension, renderBattleSummaryPanel } from './core/CombatDirector.js';
 import { getChapterEnvironment, checkEnvironmentHazard, applyEnvironmentEffect, clearEnvironmentEffects, renderEnvironmentInfo, getFloorNarrative } from './core/EnvironmentHazards.js';
+import { checkCompanionEvents, markEventTriggered, renderCompanionDialogue, serializeCompanionStoryEvents, deserializeCompanionStoryEvents, resetCompanionStoryEvents } from './core/CompanionStoryEvents.js';
 import { addJournalEntry, triggerChapterJournals, triggerChapterCompleteJournal, serializeJournal, deserializeJournal, renderJournalPanel } from './core/StoryJournal.js';
 import { getCanonState, resetCanonState } from './core/CanonState.js';
 import { announce, autoAnnounce, clearAnnouncements } from './core/CombatAnnouncer.js';
@@ -315,6 +316,7 @@ function autoSave(reason = '') {
     localStorage.setItem('ih_mastery', JSON.stringify(serializeFloorMastery()));
     try { localStorage.setItem('ih_awakening', JSON.stringify(serializeAwakening())); } catch {}
     try { localStorage.setItem('ih_fate', JSON.stringify(serializeFateChoices())); } catch {}
+    try { localStorage.setItem('ih_comp_story', JSON.stringify(serializeCompanionStoryEvents())); } catch {}
     localStorage.setItem('ih_journal', JSON.stringify(serializeJournal()));
     localStorage.setItem('ih_intel', JSON.stringify(serializeIntel()));
     localStorage.setItem('ih_sync', JSON.stringify(serializeSync()));
@@ -959,6 +961,7 @@ document.getElementById('btn-new-game').addEventListener('click', () => {
     try { const _msData = localStorage.getItem('ih_mastery'); if (_msData) deserializeFloorMastery(JSON.parse(_msData)); } catch {}
     try { const _awkData = localStorage.getItem('ih_awakening'); if (_awkData) deserializeAwakening(JSON.parse(_awkData)); } catch {}
     try { const _fateData = localStorage.getItem('ih_fate'); if (_fateData) deserializeFateChoices(JSON.parse(_fateData)); } catch {}
+    try { const _csData = localStorage.getItem('ih_comp_story'); if (_csData) deserializeCompanionStoryEvents(JSON.parse(_csData)); } catch {}
     try { const _dlData = localStorage.getItem('ih_daily'); if (_dlData) deserializeDaily(JSON.parse(_dlData));    } catch {}
       } catch {}
       const chapterGens = { 1: generateChapter1, 2: generateChapter2, 3: generateChapter3, 4: generateChapter4, 5: generateChapter5, 6: generateChapter6, 7: generateChapter7, 8: generateChapter8, 9: generateChapter9, 10: generateChapter10, 11: generateChapter11, 12: generateChapter12 };
@@ -1720,6 +1723,24 @@ function showFloorTitle(floor) {
       }, 800);
     }
   } catch(e) { console.warn('FateChoice check:', e); }
+  // ── 同伴剧情事件检查 ──
+  try {
+    const compEvents = checkCompanionEvents({
+      chapter: gameState.chapter,
+      floor: currentFloorIndex,
+      type: 'chapter_start',
+      player: gameState.player,
+      relationships: gameState.relationships || {},
+    });
+    if (compEvents.length > 0) {
+      setTimeout(() => {
+        for (const evt of compEvents) {
+          _showCompanionStoryEvent(evt);
+          markEventTriggered(evt.id);
+        }
+      }, 600);
+    }
+  } catch(e) { console.warn('CompanionStory:', e); }
   // ── 环境危害检查 ──
   try {
     clearEnvironmentEffects(gameState.player);
@@ -4460,6 +4481,37 @@ window._updateCombatHUDDelta = function(target, delta) {
 
 
 // ── 战后简短收获总结 ──
+// ── 战斗总结面板（Boss战/高评级后显示） ──
+function _showBattleSummaryOverlay(summary) {
+  if (typeof document === 'undefined') return;
+  const existing = document.getElementById('battle-summary-overlay');
+  if (existing) existing.remove();
+  
+  const overlay = document.createElement('div');
+  overlay.id = 'battle-summary-overlay';
+  overlay.style.cssText = 'position:fixed;inset:0;z-index:250;background:rgba(0,0,0,0.85);' +
+    'display:flex;align-items:center;justify-content:center;animation:fadeIn 0.5s;cursor:pointer;';
+  overlay.innerHTML = renderBattleSummaryPanel(summary);
+  
+  // 点击关闭
+  overlay.addEventListener('click', () => {
+    overlay.style.transition = 'opacity 0.3s';
+    overlay.style.opacity = '0';
+    setTimeout(() => overlay.remove(), 300);
+  });
+  
+  // 5秒后自动淡出
+  setTimeout(() => {
+    if (overlay.parentElement) {
+      overlay.style.transition = 'opacity 0.5s';
+      overlay.style.opacity = '0';
+      setTimeout(() => overlay.remove(), 500);
+    }
+  }, 5000);
+  
+  document.body.appendChild(overlay);
+}
+
 function _showMiniLootSummary(exp, gold, drops, rating, combatStats) {
   const existing = document.getElementById('mini-loot-summary');
   if (existing) existing.remove();
@@ -4609,8 +4661,12 @@ async function startCombat(enemy, preScaledEnemy) {
     const summaryEvents = result.victory ? directorOnVictory(result.rounds || 0) : directorOnDefeat(result.rounds || 0);
     stopDirector();
     if (summaryEvents.length > 0 && summaryEvents[0].type === 'battle_summary') {
-      // 存储总结供后续显示
       gameState._lastBattleSummary = summaryEvents[0];
+      // Boss战和高评级战斗显示完整总结面板
+      const _summary = summaryEvents[0];
+      if (result._isBoss || _summary.rating === 'SS' || _summary.rating === 'S') {
+        setTimeout(() => _showBattleSummaryOverlay(_summary), 1200);
+      }
     }
   } catch {}
 
@@ -5799,6 +5855,52 @@ function toggleGeneLock() {
   } else {
     renderer.addFloatText('基因锁 · 解除', p.x, p.y - 1, 'rgb(180, 180, 180)');
   }
+}
+
+// ── 同伴剧情事件显示 ──
+function _showCompanionStoryEvent(event) {
+  if (typeof document === 'undefined') return;
+  const overlay = document.createElement('div');
+  overlay.id = 'companion-story-overlay';
+  overlay.style.cssText = 'position:fixed;inset:0;z-index:280;background:rgba(0,0,0,0.9);display:flex;align-items:center;justify-content:center;animation:fadeIn 0.5s;';
+  
+  const dialogueHtml = renderCompanionDialogue(event);
+  overlay.innerHTML = `
+    <div style="max-width:540px;width:90%;max-height:80vh;overflow-y:auto;padding:4px;">
+      ${dialogueHtml}
+      <div style="text-align:center;margin-top:16px;">
+        <button id="comp-story-close" style="padding:8px 24px;background:#ffcc4422;border:1px solid #ffcc44;
+          color:#ffcc44;border-radius:6px;cursor:pointer;font-size:12px;font-family:inherit;">继续</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+  
+  document.getElementById('comp-story-close')?.addEventListener('click', () => {
+    // 应用效果
+    if (event.effect) {
+      const p = gameState.player;
+      if (event.effect.playerBuff) {
+        const b = event.effect.playerBuff;
+        if (b.atk) p.atk += b.atk;
+        if (b.def) p.def += b.def;
+        if (b.crt) p.crt = (p.crt || 0) + b.crt;
+        if (b.hp_restore) p.hp = Math.min(p.maxHp, p.hp + Math.floor(p.maxHp * b.hp_restore));
+      }
+      if (event.effect.relationship) {
+        const rels = gameState.relationships || {};
+        rels[event.companion] = (rels[event.companion] || 0) + event.effect.relationship;
+        gameState.relationships = rels;
+      }
+      if (event.effect.karma) {
+        p.karma = (p.karma || 0) + event.effect.karma;
+      }
+    }
+    overlay.style.transition = 'opacity 0.3s';
+    overlay.style.opacity = '0';
+    setTimeout(() => overlay.remove(), 300);
+    try { autoSave('同伴剧情'); } catch {}
+  });
 }
 
 // ── 命运抉择显示 ──
