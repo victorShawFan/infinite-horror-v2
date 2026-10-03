@@ -201,6 +201,31 @@ function _drawEnemySprite(ctx, x, y, charOrName, color, options) {
   if (name.includes('禁卫') || name.includes('护卫')) look = ENEMY_LOOKS.xeno_elite;
   if (name.includes('皇后')) look = ENEMY_LOOKS.queen;
   if (name.includes('卵囊')) look = ENEMY_LOOKS.facehugger;
+  // Ch3 咒怨系
+  if (name.includes('幽灵') || name.includes('恶灵') || name.includes('伽椰子') || name.includes('诅咒')) look = ENEMY_LOOKS.spirit_entity;
+  // Ch4 木乃伊系
+  if (name.includes('木乃伊') || name.includes('沙') || name.includes('石像') || name.includes('守墓')) look = ENEMY_LOOKS.mutant;
+  // Ch5 死神系
+  if (name.includes('死神') || name.includes('命运') || name.includes('因果')) look = ENEMY_LOOKS.nazgul;
+  // Ch7 浣熊市/恶魔队
+  if (name.includes('恶魔') || name.includes('复制体') || name.includes('暗影')) look = ENEMY_LOOKS.demon;
+  if (name.includes('复制') && name.includes('郑吒')) look = ENEMY_LOOKS.copy_fighter;
+  // Ch8 侏罗纪
+  if (name.includes('恐龙') || name.includes('迅猛') || name.includes('翼龙') || name.includes('剑龙')) look = ENEMY_LOOKS.raptor;
+  if (name.includes('霸王龙') || name.includes('暴龙')) look = ENEMY_LOOKS.dragon;
+  // Ch9 星河战队
+  if (name.includes('虫') || name.includes('蝎') || name.includes('甲壳') || name.includes('工蜂')) look = ENEMY_LOOKS.bug;
+  if (name.includes('脑虫') || name.includes('母虫')) look = { ...ENEMY_LOOKS.bug, eye: '#ff44ff', glow: '#ff00ff' };
+  // Ch10 魔戒
+  if (name.includes('兽人') || name.includes('半兽')) look = ENEMY_LOOKS.orc;
+  if (name.includes('巨魔') || name.includes('食人')) look = ENEMY_LOOKS.troll;
+  if (name.includes('戒灵') || name.includes('黑骑士')) look = ENEMY_LOOKS.nazgul;
+  if (name.includes('龙') && !name.includes('恐龙')) look = ENEMY_LOOKS.dragon;
+  // Ch11 梦魇
+  if (name.includes('弗莱迪') || name.includes('梦魇') || name.includes('心魔')) look = ENEMY_LOOKS.nightmare_creature;
+  if (name.includes('机甲') || name.includes('变形金刚') || name.includes('机器')) look = ENEMY_LOOKS.mech_drone;
+  // Ch12 终战
+  if (name.includes('生化') && name.includes('精英')) look = ENEMY_LOOKS.bio_elite;
 
   // 阴影
   ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
