@@ -125,6 +125,8 @@ import { assessThreat, drawThreatIndicator, getEnemyTooltipHTML } from './core/E
 import { tryExplorationEvent, renderExplorationEvent, applyEventEffect, serializeExplorationEvents, deserializeExplorationEvents } from './core/ExplorationEvents.js';
 import { shouldPauseForAction, showBattleActionMenu, applyDefendAction, attemptFlee, ACTION_TYPE, setStrategicMode, isStrategicMode } from './core/BattleActionMenu.js';
 import { shouldShowAnalysis, showPostCombatAnalysis } from './core/PostCombatAnalysis.js';
+import { showCharacterSheet } from './core/CharacterSheet.js';
+import { showWorldDashboard } from './core/WorldDashboard.js';
 import { toggleAutoBattle, isAutoBattleEnabled, shouldAutoBattle, renderAutoBattleIndicator } from './core/AutoBattleSystem.js';
 import { drawEnemyRadar } from './core/EnemyRadar.js';
 import { renderAbilitiesPanel } from './core/CompanionAbilities.js';
@@ -5102,6 +5104,8 @@ function showChapterComplete() {
           gameState._chapterClearCounted = false;
           // 章节转场闪回
           try { const fb = tryFlashback('chapter_transition'); if (fb) renderFlashback(fb, document.body); } catch {}
+          // 世界态势仪表盘
+          try { showWorldDashboard(); } catch {}
           gameState.nodeIndex = 0;
           // 清除已移除实体（新章节新地图）
           gameState.removedEntityIds = {};
