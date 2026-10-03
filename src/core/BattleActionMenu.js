@@ -129,6 +129,7 @@ export function showBattleActionMenu(player, enemy, round, combatState) {
         ${canFlee ? `<button class="bam-btn" data-action="flee" style="background:rgba(100,100,100,0.08);border-color:#666;">
           💨 逃跑 <span style="color:#666;font-size:10px;">(5)</span>
         </button>` : ''}
+        ${(() => { try { const _sg = getSyncGauge(); return _sg.ready ? '<button class="bam-btn" data-action="sync" style="background:rgba(255,204,68,0.15);border-color:#ffcc44;animation:pulse 0.8s infinite;">⚡ 协同攻击 <span style=\"color:#ffcc44;font-size:10px;\">(S)</span></button>' : ''; } catch(e) { return ''; } })()}
       </div>
     `;
     
