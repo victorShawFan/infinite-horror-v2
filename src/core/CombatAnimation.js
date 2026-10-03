@@ -186,6 +186,56 @@ export class CombatAnimator {
         const lootColor = entry.color || 'rgb(255, 204, 68)';
         this._queue.push({ type: 'text', text: entry.text.slice(0, 24), x: px, y: py - 0.3, color: lootColor, delay });
         delay += 200;
+      } else if (entry.type === 'skill') {
+        // 技能 — 蓝紫色浮字在敌人头上 + 闪光
+        this._queue.push({ type: 'text', text: entry.text.slice(0, 20), x: enemy.x, y: enemy.y - 0.5, color: 'rgb(130, 170, 255)', delay });
+        this._queue.push({ type: 'flash', color: 'rgba(100, 130, 255, 0.12)', duration: 120, delay });
+        delay += 200;
+      } else if (entry.type === 'relic_attack') {
+        // 遗物自动攻击 — 紫色浮字
+        this._queue.push({ type: 'text', text: entry.text.slice(0, 18), x: enemy.x, y: enemy.y - 0.4, color: 'rgb(180, 100, 255)', delay });
+        delay += 180;
+      } else if (entry.type === 'relic_save' || entry.type === 'talent_save') {
+        // 死亡拯救 — 强烈金色闪光
+        const px = window._gamePlayerX || 0;
+        const py = window._gamePlayerY || 0;
+        this._queue.push({ type: 'text', text: entry.text.slice(0, 24), x: px, y: py - 1, color: 'rgb(255, 215, 0)', delay });
+        this._queue.push({ type: 'flash', color: 'rgba(255, 215, 0, 0.4)', duration: 400, delay });
+        this._queue.push({ type: 'shake', intensity: 4, duration: 200, delay });
+        this._queue.push({
+          type: 'particles',
+          x: px * TILE_SIZE + TILE_SIZE / 2,
+          y: py * TILE_SIZE + TILE_SIZE / 2,
+          color: 'rgb(255, 215, 0)', count: 12, delay
+        });
+        delay += 500;
+      } else if (entry.type === 'relic_buff') {
+        // 遗物被动效果 — 淡紫色
+        const px = window._gamePlayerX || 0;
+        const py = window._gamePlayerY || 0;
+        this._queue.push({ type: 'text', text: entry.text.slice(0, 16), x: px, y: py - 0.6, color: 'rgb(170, 130, 255)', delay });
+        delay += 120;
+      } else if (entry.type === 'poison') {
+        // 中毒 — 绿色浮字在敌人/玩家头上
+        this._queue.push({ type: 'text', text: entry.text.slice(0, 16), x: enemy.x, y: enemy.y - 0.3, color: 'rgb(100, 255, 80)', delay });
+        delay += 150;
+      } else if (entry.type === 'dodge') {
+        // 闪避 — 白色浮字
+        const px = window._gamePlayerX || 0;
+        const py = window._gamePlayerY || 0;
+        this._queue.push({ type: 'text', text: '💨 闪避！', x: px, y: py - 0.5, color: 'rgb(200, 230, 255)', delay });
+        delay += 150;
+      } else if (entry.type === 'debuff') {
+        // 负面效果 — 红紫色浮字
+        this._queue.push({ type: 'text', text: entry.text.slice(0, 16), x: enemy.x, y: enemy.y - 0.3, color: 'rgb(200, 80, 160)', delay });
+        delay += 150;
+      } else if (entry.type === 'block') {
+        // 格挡 — 蓝白色
+        const px = window._gamePlayerX || 0;
+        const py = window._gamePlayerY || 0;
+        this._queue.push({ type: 'text', text: entry.text.slice(0, 16), x: px, y: py - 0.5, color: 'rgb(150, 200, 255)', delay });
+        this._queue.push({ type: 'flash', color: 'rgba(150, 200, 255, 0.1)', duration: 100, delay });
+        delay += 150;
       } else if (entry.type === 'enemy_revive') {
         // 敌人复活 — 紫色闪光
         this._queue.push({ type: 'text', text: '💀 复活！', x: enemy.x, y: enemy.y - 0.5, color: 'rgb(255, 68, 255)', delay });
