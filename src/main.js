@@ -166,6 +166,7 @@ import { initDirector, stopDirector, directorOnRound, directorOnDamage, director
 import { getChapterEnvironment, checkEnvironmentHazard, applyEnvironmentEffect, clearEnvironmentEffects, renderEnvironmentInfo, getFloorNarrative } from './core/EnvironmentHazards.js';
 import { checkCompanionEvents, markEventTriggered, renderCompanionDialogue, serializeCompanionStoryEvents, deserializeCompanionStoryEvents, resetCompanionStoryEvents } from './core/CompanionStoryEvents.js';
 import { generateFloorChallenges, evaluateChallenges, setFloorStarData, getFloorStarData, getTotalStars, renderFloorChallengeHUD, serializeStarChallenge, deserializeStarChallenge, initStarChallenge } from './core/StarChallenge.js';
+import { initAchievementNotifications, showAchievementNotify } from './core/AchievementNotify.js';
 import { addJournalEntry, triggerChapterJournals, triggerChapterCompleteJournal, serializeJournal, deserializeJournal, renderJournalPanel } from './core/StoryJournal.js';
 import { getCanonState, resetCanonState } from './core/CanonState.js';
 import { announce, autoAnnounce, clearAnnouncements } from './core/CombatAnnouncer.js';
@@ -176,6 +177,7 @@ import { renderProgressDashboard } from './core/ProgressDashboard.js';
 import { recordEncounter, recordKill, recordDiscovery, getIntelCombatBonus, getEnemyIntel, getPreBattleIntelHTML, renderIntelPanel, serializeIntel, deserializeIntel, INTEL_LEVEL } from './core/EnemyIntelSystem.js';
 import { showChapterBriefing } from './core/ChapterBriefing.js';
 import { initCombatFXListeners, drawAllCombatFX, isHitStopped, updateAndDrawGhosts } from './core/CombatFX.js';
+import { getSaveSlots, saveToSlot, loadFromSlot, deleteSlot, autoSaveToSlot, renderSaveLoadPanel } from './core/SaveSlots.js';
 
 // ── 全局状态 ──
 let renderer;
@@ -317,6 +319,7 @@ function autoSave(reason = '') {
     localStorage.setItem('ih_mastery', JSON.stringify(serializeFloorMastery()));
     try { localStorage.setItem('ih_awakening', JSON.stringify(serializeAwakening())); } catch {}
     try { localStorage.setItem('ih_fate', JSON.stringify(serializeFateChoices())); } catch {}
+    try { localStorage.setItem('ih_star_challenge', JSON.stringify(serializeStarChallenge())); } catch {}
     try { localStorage.setItem('ih_comp_story', JSON.stringify(serializeCompanionStoryEvents())); } catch {}
     try { localStorage.setItem('ih_stars', JSON.stringify(serializeStarChallenge())); } catch {}
     localStorage.setItem('ih_journal', JSON.stringify(serializeJournal()));
@@ -352,6 +355,7 @@ function autoSave(reason = '') {
     } catch {}
     } catch {}
     try { renderer.showSaveIndicator(); } catch {}
+    try { autoSaveToSlot(gameState, { _saveReason: reason }); } catch {}
     if (reason) console.log('[AutoSave]', reason);
   } catch (e) {
     console.warn('[AutoSave] failed:', e);
@@ -1001,6 +1005,8 @@ document.getElementById('btn-new-game').addEventListener('click', () => {
           combatAnimator = new CombatAnimator(renderer);
   // 初始化战斗场景系统
   try { initBattleScene(renderer.canvas); } catch(e) { console.warn('BattleScene init:', e); }
+  // 成就通知
+  try { initAchievementNotifications(); } catch {}
 
   // 迷你地图
   if (!window._miniMap) {
@@ -1158,6 +1164,7 @@ function startGame() {
         if (isBattleSceneActive()) {
           updateBattleState({ action: 'player_attack', isCrit: true });
         }
+        try { directorOnDamage('player', 'enemy', 0, true, false); } catch {}
       } catch {}
     });
     eventBus.on('combat:player_hurt', () => {
@@ -1165,6 +1172,7 @@ function startGame() {
         if (isBattleSceneActive()) {
           updateBattleState({ action: 'enemy_attack' });
         }
+        try { directorOnDamage('enemy', 'player', 0, false, false); } catch {}
       } catch {}
     });
     eventBus.on('combat:boss_phase', (data) => {
@@ -1172,6 +1180,7 @@ function startGame() {
         if (isBattleSceneActive()) {
           updateBattleState({ bossPhase: data.phase });
         }
+        try { directorOnBossPhase(data?.phase || 0, ''); } catch {}
       } catch {}
     });
     eventBus.on('combat:sync_attack', () => {
@@ -1715,6 +1724,14 @@ function showFloorTitle(floor) {
   try { setAtmosphere(gameState.chapter); } catch {}
   // 初始化楼层精通追踪
   try { initFloorMastery(floor.id, floor.entities || entities || []); } catch {}
+
+  // ── 星级挑战：为新楼层生成挑战目标 ──
+  try {
+    const isBossFloor = !!(floor.entities && floor.entities.some(e => e.type === 'boss' || e.isBoss || e.bossId));
+    const floorChallenges = generateFloorChallenges(gameState.chapter, index, isBossFloor);
+    gameState._currentFloorChallenges = floorChallenges;
+    setFloorStarData(gameState.chapter, index, floorChallenges);
+  } catch(e) { console.warn('StarChallenge gen:', e); }
   // ── 命运抉择检查 ──
   try {
     const fateChoices = checkFateChoice(gameState.chapter, currentFloorIndex);
@@ -3792,31 +3809,20 @@ function _showSaveSlotPanel(onClose) {
   const overlay = document.getElementById('ui-overlay');
   const p = gameState.player;
   
-  // Read all save slots
-  const slots = [];
-  for (let i = 0; i < 5; i++) {
-    try {
-      const raw = localStorage.getItem('infinite_horror_save_' + i);
-      if (raw) {
-        const data = JSON.parse(raw);
-        slots.push({
-          slot: i,
-          exists: true,
-          chapter: data.chapter || 1,
-          level: data.player?.level || 1,
-          hp: data.player?.hp || 0,
-          maxHp: data.player?.maxHp || 100,
-          nodeIndex: data.nodeIndex || 0,
-          timestamp: data._saveTimestamp || '未知',
-          reason: data._saveReason || '',
-        });
-      } else {
-        slots.push({ slot: i, exists: false });
-      }
-    } catch {
-      slots.push({ slot: i, exists: false });
-    }
-  }
+  // Read all save slots (using SaveSlots module + legacy fallback)
+  const _rawSlots = getSaveSlots();
+  const slots = _rawSlots.map((s, idx) => ({
+    slot: idx,
+    slotId: s.id,
+    exists: !!s.data,
+    chapter: s.preview?.chapter || 1,
+    level: s.preview?.level || 1,
+    hp: s.preview?.hp || 0,
+    maxHp: s.preview?.maxHp || 100,
+    nodeIndex: s.preview?.nodeIndex || 0,
+    timestamp: s.preview?.saveTime || '未知',
+    reason: s.preview?.reason || s.name,
+  }));
   
   overlay.innerHTML = `
     <div style="position:absolute;top:0;left:0;right:0;bottom:0;
@@ -3877,7 +3883,8 @@ function _showSaveSlotPanel(onClose) {
     btn.addEventListener('click', (e) => {
       e.stopPropagation();
       const slot = parseInt(btn.dataset.slot);
-      gameState.save(slot, '手动存档');
+      const slotId = slots[slot]?.slotId || String(slot + 1);
+      try { saveToSlot(slotId, gameState, { _saveReason: '手动存档' }); } catch { gameState.save(slot, '手动存档'); }
       renderer.notify('💾 已保存到档位 ' + (slot + 1), '#44cc88', 90);
       overlay.innerHTML = '';
       if (onClose) onClose();
@@ -3889,7 +3896,10 @@ function _showSaveSlotPanel(onClose) {
     btn.addEventListener('click', (e) => {
       e.stopPropagation();
       const slot = parseInt(btn.dataset.slot);
-      if (gameState.load(slot)) {
+      const slotId = slots[slot]?.slotId || String(slot + 1);
+      const loaded = loadFromSlot(slotId);
+      if (loaded) { Object.assign(gameState, { chapter: loaded.chapter, nodeIndex: loaded.nodeIndex, player: { ...gameState.player, ...loaded.player }, stats: { ...gameState.stats, ...loaded.stats }, relationships: loaded.relationships || gameState.relationships }); }
+      if (loaded || gameState.load(slot)) {
         const chapterGens = { 1: generateChapter1, 2: generateChapter2, 3: generateChapter3, 4: generateChapter4, 5: generateChapter5, 6: generateChapter6, 7: generateChapter7, 8: generateChapter8, 9: generateChapter9, 10: generateChapter10, 11: generateChapter11, 12: generateChapter12 };
         const gen = chapterGens[gameState.chapter] || generateChapter1;
         chapter = gen();
@@ -4686,6 +4696,19 @@ async function startCombat(enemy, preScaledEnemy) {
 
 // 连杀记录
     killStreak.recordKill();
+
+    // ── 星级挑战评估 ──
+    try {
+      if (gameState._currentFloorChallenges) {
+        const evalResult = { ...result, finalHpPercent: gameState.player.hp / gameState.player.maxHp };
+        evaluateChallenges(gameState._currentFloorChallenges, evalResult);
+        setFloorStarData(gameState.chapter, currentFloorIndex, gameState._currentFloorChallenges);
+        const starCount = gameState._currentFloorChallenges.filter(c => c.completed).length;
+        if (starCount > 0) {
+          renderer.addFloatText('★'.repeat(starCount) + ' 挑战完成!', gameState.player.x, gameState.player.y - 2.5, '#ffcc44');
+        }
+      }
+    } catch(e) { console.warn('StarChallenge eval:', e); }
     try { recordKill(scaledEnemy || enemy); } catch {} // 情报系统击杀记录
     recordMaxStreak(killStreak.kills || 0);
     // 成就追踪: 击杀

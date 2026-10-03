@@ -15,6 +15,7 @@ import { scaleEnemy } from './DifficultyScaler.js';
 import { getAvailableSkills } from './SkillSystem.js';
 import { getPlayerPowerRating, getEnemyPowerRating, comparePower } from './PowerRating.js';
 import { drawWallTile, drawFloorTile, drawLavaTile, drawStairsTile, drawCharacterSprite, drawHealthBar } from './SpriteRenderer.js';
+import { drawWallDecoration, drawFloorDecoration } from './MapDecorations.js';
 import { dynamicLighting } from './DynamicLighting.js';
 import { getPendingPoints } from './StatAllocation.js';
 import { getKarmaLevel } from './KarmaSystem.js';
@@ -354,10 +355,12 @@ export class Renderer {
             break;
           case TILE.FLOOR:
             drawFloorTile(ctx, px, py, (x * 7 + y * 13) % 4, floor?.theme);
+            try { drawFloorDecoration(ctx, x, y, this._chapter || 1); } catch {}
             continue;
             break;
           case TILE.WALL:
             drawWallTile(ctx, px, py, 0, floor?.theme);
+            try { drawWallDecoration(ctx, x, y, this._chapter || 1); } catch {}
             continue;
           case TILE.STAIRS:
             drawStairsTile(ctx, px, py, this._time);
