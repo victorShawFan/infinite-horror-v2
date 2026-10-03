@@ -32,6 +32,69 @@ let _ctx = {};
  * 注入面板所需的共享上下文
  * @param {object} context - { renderer, bestiary, _ctx.combatHistory, getChapter, getFloorIndex, getEntities, loreTracker, milestoneTracker }
  */
+
+// ── 装备对比浮窗 ──
+function showEquipCompareTooltip(parentEl, newEquip, currentEquip, x, y) {
+  // Remove existing tooltip
+  const existing = document.getElementById('equip-compare-tooltip');
+  if (existing) existing.remove();
+  
+  const div = document.createElement('div');
+  div.id = 'equip-compare-tooltip';
+  div.style.cssText = `
+    position: fixed; left: ${x + 10}px; top: ${y - 10}px;
+    background: rgba(10,10,20,0.98); border: 1px solid #555;
+    border-radius: 8px; padding: 12px 16px; min-width: 200px;
+    z-index: 9999; pointer-events: none; font-size: 12px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+  `;
+  
+  const stats = ['atk', 'def', 'spd', 'crt', 'maxHp', 'res'];
+  const labels = { atk: 'ATK', def: 'DEF', spd: 'SPD', crt: 'CRT', maxHp: 'MaxHP', res: '法抗' };
+  
+  let html = '<p style="color:#ffcc44;font-size:11px;letter-spacing:2px;margin-bottom:8px;">' + 
+    (newEquip.name || '装备') + '</p>';
+  
+  if (newEquip.desc) {
+    html += '<p style="color:#888;font-size:10px;font-style:italic;margin-bottom:8px;">' + newEquip.desc + '</p>';
+  }
+  
+  // Show stats comparison
+  for (const stat of stats) {
+    const newVal = newEquip[stat] || 0;
+    const curVal = currentEquip ? (currentEquip[stat] || 0) : 0;
+    if (newVal || curVal) {
+      const diff = newVal - curVal;
+      const diffColor = diff > 0 ? '#44ff88' : diff < 0 ? '#ff4444' : '#888';
+      const diffText = diff > 0 ? '+' + diff : diff < 0 ? '' + diff : '±0';
+      html += '<div style="display:flex;justify-content:space-between;margin:2px 0;">';
+      html += '<span style="color:#aaa;">' + labels[stat] + '</span>';
+      html += '<span style="color:#ddd;">' + newVal + ' <span style="color:' + diffColor + ';font-size:10px;">(' + diffText + ')</span></span>';
+      html += '</div>';
+    }
+  }
+  
+  // Set bonus info
+  if (newEquip.setId) {
+    html += '<p style="color:#aa88ff;font-size:10px;margin-top:6px;">🔗 套装件</p>';
+  }
+  
+  if (currentEquip) {
+    html += '<hr style="border:none;border-top:1px solid #333;margin:8px 0;">';
+    html += '<p style="color:#666;font-size:10px;">当前: ' + (currentEquip.name || '无') + '</p>';
+  } else {
+    html += '<p style="color:#556;font-size:10px;margin-top:4px;">当前槽位为空</p>';
+  }
+  
+  div.innerHTML = html;
+  document.body.appendChild(div);
+  
+  // Auto-remove after 5 seconds or on any click
+  setTimeout(() => div.remove(), 5000);
+  const handler = () => { div.remove(); document.removeEventListener('click', handler); };
+  document.addEventListener('click', handler);
+}
+
 export function initPanelContext(context) {
   _ctx = context;
 }
@@ -358,6 +421,24 @@ export function showInventoryPanel() {
         // 如果已有装备，放回背包
         if (p[slot]) {
           p.inventory.push({ type: 'equipment', equipment: p[slot] });
+    
+    // 装备对比浮窗
+    inv.querySelectorAll('.inv-item').forEach(el => {
+      el.addEventListener('mouseenter', (e) => {
+        const idx = parseInt(el.dataset.idx);
+        const item = p.inventory?.[idx];
+        if (!item?.equipment) return;
+        const eq = item.equipment;
+        const currentSlot = eq.slot;
+        const current = p[currentSlot] || null;
+        showEquipCompareTooltip(el, eq, current, e.clientX, e.clientY);
+      });
+      el.addEventListener('mouseleave', () => {
+        const tt = document.getElementById('equip-compare-tooltip');
+        if (tt) tt.remove();
+      });
+    });
+
         }
         p[slot] = item.equipment;
         p.inventory.splice(idx, 1);
