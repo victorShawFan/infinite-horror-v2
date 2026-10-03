@@ -161,7 +161,7 @@ console.log('\n=== 新增技能验证 ===');
 
 // 技能总数应≥22
 const totalSkills = Object.keys(SKILL_DEFINITIONS).length;
-assert(totalSkills >= 21, `技能总数≥21 (实际${totalSkills})`);
+assert(totalSkills >= 23, `技能总数≥21 (实际${totalSkills})`);
 console.log(`  ✓ 技能总数: ${totalSkills}`);
 
 // 每个技能ID唯一

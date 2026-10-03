@@ -534,7 +534,58 @@ export const SKILL_DEFINITIONS = {
   // 高阶基因锁技能
   // ═══════════════════════════════════════════
 
-  /** 第二阶：连环斩 — 多段攻击 */
+  /** 龙族：龙鳞化甲 — 巨幅提升防御+反弹 */
+  dragon_scale: {
+    id: 'dragon_scale',
+    name: '龙鳞化甲',
+    desc: '催动龙族血脉，全身覆盖龙鳞。DEF+100%持续2回合，受击反弹20%伤害',
+    type: 'bloodline',
+    unlockReq: { bloodline: 'dragon' },
+    manaCost: 8,
+    cooldown: 6,
+    execute(player, _enemy, _cs) {
+      const log = [];
+      const effects = [];
+      const defBuff = Math.floor((player.def || 10) * 1.0);
+      log.push({ text: '🐉 龙鳞化甲！防御力翻倍！', type: 'skill' });
+      effects.push({
+        target: 'player',
+        effect: { type: 'buff_def', value: defBuff, duration: 2, source: 'dragon_scale' },
+      });
+      effects.push({
+        target: 'player',
+        effect: { type: 'reflect', value: 20, duration: 2, source: 'dragon_scale' },
+      });
+      return { log, effects };
+    },
+  },
+
+  /** 灵能：精神护盾 — 免疫+反弹 */
+  psi_shield: {
+    id: 'psi_shield',
+    name: '精神护盾',
+    desc: '展开灵能护盾，DEF+50%持续2回合，受击反弹10%伤害',
+    type: 'bloodline',
+    unlockReq: { bloodline: 'psychic' },
+    manaCost: 8,
+    cooldown: 5,
+    execute(player, _enemy, _cs) {
+      const log = [];
+      const effects = [];
+      log.push({ text: '🧠 精神护盾展开！灵能结界笼罩全身！', type: 'skill' });
+      effects.push({
+        target: 'player',
+        effect: { type: 'buff_def', value: Math.floor((player.def || 10) * 0.5), duration: 2, source: 'psi_shield' },
+      });
+      effects.push({
+        target: 'player',
+        effect: { type: 'reflect', value: 10, duration: 2, source: 'psi_shield' },
+      });
+      return { log, effects };
+    },
+  },
+
+    /** 第二阶：连环斩 — 多段攻击 */
   chain_slash: {
     id: 'chain_slash',
     name: '连环斩',
