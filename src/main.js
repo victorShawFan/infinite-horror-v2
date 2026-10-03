@@ -3017,6 +3017,22 @@ function checkNarrativeEvent() {
 
 
 // ── 战斗装备掉落弹窗 ──
+// ── 装备掉落队列（防止多个面板同时弹出） ──
+let _equipDropQueue = [];
+let _equipDropShowing = false;
+
+function _queueEquipDropPanel(equipDrop) {
+  _equipDropQueue.push(equipDrop);
+  if (!_equipDropShowing) _processNextEquipDrop();
+}
+
+function _processNextEquipDrop() {
+  if (_equipDropQueue.length === 0) { _equipDropShowing = false; return; }
+  _equipDropShowing = true;
+  const next = _equipDropQueue.shift();
+  _showEquipDropPanel(next);
+}
+
 function _showEquipDropPanel(equipDrop) {
   const p = gameState.player;
   const slot = equipDrop.equipment?.slot || equipDrop.slot || 'weapon';
@@ -3082,7 +3098,15 @@ function _showEquipDropPanel(equipDrop) {
   `;
   document.body.appendChild(panel);
   
-  const close = () => { panel.remove(); document.removeEventListener('keydown', edpKey); };
+  const close = () => {
+    panel.remove();
+    document.removeEventListener('keydown', edpKey);
+    // Remove the drop from inventory to prevent duplication (applyLoot already added it)
+    const invIdx = (p.inventory || []).findIndex(item => item === newEquip || (item.name === newEquip.name && item.type === 'equipment'));
+    if (invIdx >= 0) p.inventory.splice(invIdx, 1);
+    // Process next queued equip drop
+    setTimeout(() => _processNextEquipDrop(), 200);
+  };
   
   const doEquip = () => {
     if (currentEquip && !isStashFull()) addToStash(currentEquip);
@@ -3626,7 +3650,7 @@ function _showPreBattleItemPanel(overlay, scaledEnemy, enemy) {
 
 
 // ── 战斗中实时HP条显示 ──
-function _showCombatHUD(player, enemy, scaledEnemy) {
+function _showCombatHUD(player, enemy, scaledEnemy, initialPlayerHp) {
   const existing = document.getElementById('combat-hud');
   if (existing) existing.remove();
   
@@ -3637,7 +3661,8 @@ function _showCombatHUD(player, enemy, scaledEnemy) {
     'background:linear-gradient(180deg,rgba(0,0,0,0.7)0%,rgba(0,0,0,0)100%);' +
     'animation:fadeIn 0.3s;';
   
-  const pHpPct = Math.max(0, Math.min(100, (player.hp / player.maxHp) * 100));
+  const _initHp = initialPlayerHp ?? player.hp;
+  const pHpPct = Math.max(0, Math.min(100, (_initHp / player.maxHp) * 100));
   const eHpPct = 100; // enemy starts at full
   
   hud.innerHTML = `
@@ -3646,7 +3671,7 @@ function _showCombatHUD(player, enemy, scaledEnemy) {
       <div style="background:rgba(50,50,50,0.6);border-radius:4px;height:10px;overflow:hidden;position:relative;">
         <div id="chud-player-hp" style="background:linear-gradient(90deg,#44ff88,#22cc66);width:${pHpPct}%;height:100%;transition:width 0.3s;border-radius:4px;"></div>
       </div>
-      <p id="chud-player-hp-text" style="color:#ccc;font-size:9px;margin-top:1px;">${player.hp}/${player.maxHp}</p>
+      <p id="chud-player-hp-text" style="color:#ccc;font-size:9px;margin-top:1px;">${_initHp}/${player.maxHp}</p>
     </div>
     <div style="display:flex;align-items:center;">
       <span style="color:#ff4444;font-size:16px;font-weight:bold;text-shadow:0 0 8px rgba(255,68,68,0.4);">⚔</span>
@@ -3663,7 +3688,7 @@ function _showCombatHUD(player, enemy, scaledEnemy) {
   
   // Store references for updates
   window._combatHUD = {
-    _trackedPlayerHp: player.hp,
+    _trackedPlayerHp: initialPlayerHp ?? player.hp,
     _trackedEnemyHp: scaledEnemy.hp,
     playerMaxHp: player.maxHp,
     enemyMaxHp: scaledEnemy.hp,
@@ -3699,7 +3724,7 @@ function _hideCombatHUD() {
     setTimeout(() => el.remove(), 500);
   }
   window._combatHUD = null;
-  window._updateCombatHUDDelta = null;
+  // Note: don't null _updateCombatHUDDelta — it's re-bound per-fight by _showCombatHUD
 }
 
 // 战斗动画中实时HP更新
@@ -3849,7 +3874,13 @@ function startCombat(enemy, preScaledEnemy) {
   window._gamePlayerY = gameState.player.y;
 
   // 显示战斗HUD
-  _showCombatHUD(gameState.player, enemy, scaledEnemy);
+  // ── 闪回触发 ──
+    if (result._isBoss) {
+      try { const fb = tryFlashback('pre_boss'); if (fb) renderFlashback(fb, document.body); } catch {}
+    } else if (p.hp <= p.maxHp * 0.2) {
+      try { const fb = tryFlashback('near_death'); if (fb) renderFlashback(fb, document.body); } catch {}
+    }
+    _showCombatHUD(gameState.player, enemy, scaledEnemy, hpBeforeCombat);
   
   // 播放战斗动画序列
   combatAnimator.playCombatSequence(result, enemy, () => {
@@ -3917,7 +3948,7 @@ function startCombat(enemy, preScaledEnemy) {
       const equipDrops = result.drops.filter(d => d.type === 'equipment');
       if (equipDrops.length > 0) {
         setTimeout(() => {
-          for (const ed of equipDrops) _showEquipDropPanel(ed);
+          for (const ed of equipDrops) _queueEquipDropPanel(ed);
         }, 500);
       }
     }
@@ -4388,6 +4419,7 @@ function triggerEvent(entity) {
     // 基因锁效果
     if (evt.effect?.geneLock) {
       gameState.player.geneLock = evt.effect.geneLock;
+      try { const fb = tryFlashback('gene_lock_advance'); if (fb) renderFlashback(fb, document.body); } catch {}
       renderer.shake(6, 500);
       // 里程碑：基因锁
       try { checkGrowthMilestones(milestoneTracker, gameState.player); } catch {}
@@ -4430,6 +4462,7 @@ function triggerEvent(entity) {
           setTimeout(() => { try { dismiss(); } catch {} }, 8000);
         }, 800);
         try { recordMilestone(comp.name + ' \u9635\u4ea1', gameState.chapter, 'companion_death'); } catch {}
+          try { const fb = tryFlashback('companion_death'); if (fb) renderFlashback(fb, document.body); } catch {}
       }
       // 也从地图实体移除队友图标
       const compEntIdx = entities.findIndex(e => e.id === evt.companionDeath);
@@ -4760,9 +4793,13 @@ function _startFromChapter(chapterNum) {
     p.gold += chapterNum * 50;
     p.rewardPoints += chapterNum * 30;
     p.exp = 0;
+    const _prevGeneLock = p.geneLock || 0;
     p.geneLock = Math.min(Math.floor(chapterNum / 3), 4);
     if (chapterNum >= 6) p.geneLock = Math.max(p.geneLock, 2);
     if (chapterNum >= 9) p.geneLock = Math.max(p.geneLock, 3);
+    if (p.geneLock > _prevGeneLock) {
+      try { const fb = tryFlashback('gene_lock_advance'); if (fb) renderFlashback(fb, document.body); } catch {}
+    }
   }
   
   // Load appropriate chapter
@@ -4986,6 +5023,8 @@ function showChapterComplete() {
           const doStart = () => {
           gameState.chapter = nextChapter;
           gameState._chapterClearCounted = false;
+          // 章节转场闪回
+          try { const fb = tryFlashback('chapter_transition'); if (fb) renderFlashback(fb, document.body); } catch {}
           gameState.nodeIndex = 0;
           // 清除已移除实体（新章节新地图）
           gameState.removedEntityIds = {};
