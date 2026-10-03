@@ -16,6 +16,7 @@
 // ═══════════════════════════════════════════════════════════════
 
 import { BLOODLINE, GENE_LOCK, DAMAGE_TYPE } from './constants.js';
+import { random as seededRandom, chance as seededChance } from './RandomSystem.js';
 
 // ─────────────────────────────────────────────
 // 状态效果类型常量
@@ -29,6 +30,8 @@ export const STATUS_EFFECT = {
   BUFF_DEF:   'buff_def',   // 防御力加成
   BUFF_CRT:   'buff_crt',   // 暴击率加成
   DEBUFF_ATK: 'debuff_atk', // 攻击力削弱
+  DEBUFF_DEF: 'debuff_def', // 防御力削弱
+  REFLECT:    'reflect',     // 反弹伤害
 };
 
 // ─────────────────────────────────────────────
@@ -342,7 +345,7 @@ export const SKILL_DEFINITIONS = {
       const dmg = Math.floor(player.atk * 1.2);
       enemy.hp = Math.max(0, (enemy.hp || 0) - dmg);
       log.push({ text: '⚡ 急速突刺！造成 ' + dmg + ' 伤害！', type: 'skill' });
-      if (Math.random() < 0.25) {
+      if (seededChance(25)) {
         const bonus = Math.floor(player.atk * 0.6);
         enemy.hp = Math.max(0, (enemy.hp || 0) - bonus);
         log.push({ text: '⚡⚡ 追加攻击！额外 ' + bonus + ' 伤害！', type: 'critical' });
@@ -392,7 +395,7 @@ export const SKILL_DEFINITIONS = {
       log.push({ text: '🔍 弱点分析！发现了敌人的防御缺陷！DEF-' + defReduce, type: 'skill' });
       effects.push({
         target: 'enemy',
-        effect: { type: 'debuff_atk', value: -defReduce, duration: 3, source: 'analyze_weakness' },
+        effect: { type: STATUS_EFFECT.DEBUFF_DEF, value: defReduce, duration: 3, source: 'analyze_weakness' },
       });
       return { log, effects };
     },
@@ -460,7 +463,12 @@ export const SKILL_DEFINITIONS = {
       log.push({ text: '🛡 铁壁！防御力大幅提升！DEF+' + defBuff, type: 'skill' });
       effects.push({
         target: 'player',
-        effect: { type: 'buff_def', value: defBuff, duration: 3, source: 'iron_fortress' },
+        effect: { type: STATUS_EFFECT.BUFF_DEF, value: defBuff, duration: 3, source: 'iron_fortress' },
+      });
+      // 反弹效果
+      effects.push({
+        target: 'player',
+        effect: { type: STATUS_EFFECT.REFLECT, value: 15, duration: 3, source: 'iron_fortress' },
       });
       return { log, effects };
     },
@@ -481,7 +489,7 @@ export const SKILL_DEFINITIONS = {
       const dmg = Math.floor(player.atk * 1.8);
       enemy.hp = Math.max(0, (enemy.hp || 0) - dmg);
       log.push({ text: '⚡ 天雷咒！雷霆降世造成 ' + dmg + ' 伤害！', type: 'skill' });
-      if (Math.random() < 0.3) {
+      if (seededChance(30)) {
         effects.push({
           target: 'enemy',
           effect: { type: 'stun', value: 0, duration: 1, source: 'heavenly_thunder' },
@@ -719,10 +727,18 @@ export function useSkill(player, skillId, enemy, combatState) {
     player.mana = (player.mana || 0) - skillDef.manaCost;
   }
 
+  // 记录执行前HP
+  const prePlayerHp = player.hp || 0;
+  const preEnemyHp = enemy.hp || 0;
+
   // 执行技能逻辑
   const result = skillDef.execute(player, enemy, combatState);
   const log = result.log || [];
   const effects = result.effects || [];
+
+  // 自动检测HP变化，填充 damage/heal
+  const enemyHpLoss = preEnemyHp - (enemy.hp || 0);
+  const playerHpGain = (player.hp || 0) - prePlayerHp;
 
   // 设置冷却
   combatState.cooldowns[skillId] = skillDef.cooldown;
@@ -738,7 +754,14 @@ export function useSkill(player, skillId, enemy, combatState) {
     );
   }
 
-  return { log, effects };
+  // 返回结果，自动包含 damage 和 heal
+  return {
+    log,
+    effects,
+    damage: result.damage || (enemyHpLoss > 0 ? enemyHpLoss : 0),
+    heal: result.heal || (playerHpGain > 0 ? playerHpGain : 0),
+    manaCost: skillDef.manaCost || 0,
+  };
 }
 
 /**
@@ -864,6 +887,12 @@ export function processStatusEffects(target, combatState) {
       case STATUS_EFFECT.DEBUFF_ATK:
         log.push({ text: `⬇ 攻击力-${eff.value}%（剩余${eff.duration}回合）`, type: 'debuff' });
         break;
+      case STATUS_EFFECT.DEBUFF_DEF:
+        log.push({ text: `⬇ 防御力-${eff.value}（剩余${eff.duration}回合）`, type: 'debuff' });
+        break;
+      case STATUS_EFFECT.REFLECT:
+        log.push({ text: `🛡 反弹${eff.value}%伤害（剩余${eff.duration}回合）`, type: 'buff' });
+        break;
     }
   }
 
@@ -933,6 +962,8 @@ function _effectName(type) {
     [STATUS_EFFECT.BUFF_DEF]:   '防御强化',
     [STATUS_EFFECT.BUFF_CRT]:   '暴击强化',
     [STATUS_EFFECT.DEBUFF_ATK]: '攻击削弱',
+    [STATUS_EFFECT.DEBUFF_DEF]: '防御削弱',
+    [STATUS_EFFECT.REFLECT]:    '反弹',
   };
   return names[type] || type;
 }

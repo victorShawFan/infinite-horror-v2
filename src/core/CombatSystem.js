@@ -10,9 +10,8 @@ import { eventBus } from './EventBus.js';
 import { gameState } from './GameState.js';
 import { checkGeneLockAdvancement, advanceGeneLock } from './GeneLockSystem.js';
 import {
-  getAvailableSkills, canUseSkill, useSkill,
-  processStatusEffects, applyStatusEffect, tickCooldowns,
-  STATUS_EFFECT
+  getAvailableSkills, canUseSkill, useSkill, STATUS_EFFECT,
+  processStatusEffects, applyStatusEffect, tickCooldowns
 } from './SkillSystem.js';
 import { getTalentEffects } from './TalentTree.js';
 import { getEquipmentTotalStats, getActiveSetBonuses } from './EquipmentSystem.js';
@@ -79,7 +78,7 @@ function calcSpellDamage(caster, target) {
   const spellPower = Math.floor(caster.atk * 0.8) + 5;
   const magicDef = target.res || 0;
   let dmg = Math.max(1, spellPower - Math.floor(magicDef * 0.3));
-  const isCrit = Math.random() * 100 < (caster.crt || 0);
+  const isCrit = seededRandom() * 100 < (caster.crt || 0);
   if (isCrit) dmg = Math.floor(dmg * 1.6);
   return { damage: dmg, isCrit, isSpell: true };
 }
@@ -407,12 +406,25 @@ export async function executeBattle(enemy) {
   // ── 天赋觉醒战斗效果 ──
   let perkFx = {};
   try { perkFx = getPerkCombatEffects(); } catch {}
-  let perkKillAtkStacks = 0; // 嗜血本能叠加
+  let perkKillBonusAtk = 0; // 嗜血本能叠加
   let perkConsecutiveHits = 0; // 势不可挡连击计数
   let perkDeathResistUsed = false;
-  let perkDebuffImmuneUsed = false;
+  let perkImmunedOnce = false;
   let perkAdaptiveResists = {}; // 自适应护甲记录
+  let relicKillStreak = 0;          // 遗物连杀计数
   // 恐惧领域：降低敌人ATK
+  // ── 天赋：全属性加成 ──
+  if (perkFx.allStatsPct > 0) {
+    stanceMod.atk = Math.floor(stanceMod.atk * (1 + perkFx.allStatsPct));
+    stanceMod.def = Math.floor(stanceMod.def * (1 + perkFx.allStatsPct));
+    stanceMod.spd = Math.floor((stanceMod.spd || pSpd) * (1 + perkFx.allStatsPct));
+  }
+  // ── 天赋：冷却缩减 ──
+  if (perkFx.cdReduce > 0) {
+    for (const sid of Object.keys(combatState.cooldowns || {})) {
+      combatState.cooldowns[sid] = Math.max(0, combatState.cooldowns[sid] - perkFx.cdReduce);
+    }
+  }
   if (perkFx.fearAuraBase > 0) {
     const fearReduce = Math.floor(enemy.atk * perkFx.fearAuraBase);
     effectiveEnemyAtk = Math.max(1, (effectiveEnemyAtk || enemyEffAtk) - fearReduce);
@@ -511,6 +523,12 @@ if (chipFx.hasIceChip && enemy.atk !== enemyEffAtk) {
   if (p.armor?.armorPenPct) equipArmorPenPct += p.armor.armorPenPct;
   if (p.accessory?.armorPenPct) equipArmorPenPct += p.accessory.armorPenPct;
   if (equipLifeStealPct > 0) log.push({ text: `🩸 装备吸血 ${equipLifeStealPct}%`, type: 'buff' });
+    // ── 遗物吸血百分比 ──
+    if (relicFx.lifeStealPct > 0) {
+      equipLifeStealPct += relicFx.lifeStealPct * 100;
+    }
+    // ── 遗物暴击吸血 ──
+    let relicCritLifeStealPct = relicFx.critLifeStealPct || 0;
   if (equipArmorPenPct > 0) log.push({ text: `🔪 装备破甲 ${equipArmorPenPct}%`, type: 'buff' });
 
   // ── 元素共鸣状态 ──
@@ -632,6 +650,54 @@ if (chipFx.hasIceChip && enemy.atk !== enemyEffAtk) {
     }
     if (perkFx.lowHpDefBonus > 0 && playerHp < p.maxHp * 0.5) {
       perkOverchargeDef = Math.floor(stanceMod.def * perkFx.lowHpDefBonus);
+    }
+    // ── 遗物：吸血（每轮标记，在攻击后处理） ──
+    // ── 遗物：毒攻（标记，在攻击后处理） ──
+    // ── 遗物：反伤（标记，在受击后处理） ──
+    // ── 遗物：连杀ATK加成 ──
+    let relicKillStreakAtk = 0;
+    if (relicFx.killStreakAtkPct > 0 && relicKillStreak > 0) {
+      relicKillStreakAtk = Math.min(
+        Math.floor(stanceMod.atk * relicFx.killStreakAtkCap / 100),
+        Math.floor(stanceMod.atk * relicFx.killStreakAtkPct * relicKillStreak / 100)
+      );
+    }
+    // ── 遗物：首回合双击 ──
+    let relicFirstTurnDouble = false;
+    if (relicFx.firstTurnDoubleAction && round === 1) {
+      relicFirstTurnDouble = true;
+    }
+    // ── 遗物：免疫眩晕/冻结 ──
+    if (relicFx.immuneStun || relicFx.immuneFreeze) {
+      const pEffects = combatState.statusEffects?.player || [];
+      for (let i = pEffects.length - 1; i >= 0; i--) {
+        if (relicFx.immuneStun && pEffects[i].type === 'stun') {
+          pEffects.splice(i, 1);
+          if (round <= 3) log.push({ text: '💎 遗物免疫眩晕！', type: 'relic_buff' });
+        }
+        if (relicFx.immuneFreeze && pEffects[i].type === 'freeze') {
+          pEffects.splice(i, 1);
+          if (round <= 3) log.push({ text: '💎 遗物免疫冻结！', type: 'relic_buff' });
+        }
+      }
+    }
+    // ── 天赋：免疫首次负面效果 ──
+    if (perkFx.immuneDebuffOnce && !perkImmunedOnce) {
+      const pEffects = combatState.statusEffects?.player || [];
+      const debuffTypes = ['debuff_atk', 'debuff_def', 'stun', 'freeze', 'burn', 'poison'];
+      for (let i = pEffects.length - 1; i >= 0; i--) {
+        if (debuffTypes.includes(pEffects[i].type)) {
+          pEffects.splice(i, 1);
+          perkImmunedOnce = true;
+          log.push({ text: '🌟 天赋免疫！抵消了一次负面效果！', type: 'talent_save' });
+          break;
+        }
+      }
+    }
+    // ── 天赋：真实伤害 ──
+    let perkTrueDmg = 0;
+    if (perkFx.trueDmgPerLevel > 0) {
+      perkTrueDmg = perkFx.trueDmgPerLevel * (p.level || 1);
     }
     // 同伴技能冷却
     try { tickAbilityCooldowns(); } catch {}
@@ -942,6 +1008,37 @@ if (chipFx.hasIceChip && enemy.atk !== enemyEffAtk) {
         playerHp = Math.min(p.maxHp, playerHp + skillHeal);
       }
       if (skillResult.manaCost) playerMana -= skillResult.manaCost;
+      // ── 天赋：法术回响(30%不消耗冷却) ──
+      if (perkFx.skillCdRefund > 0 && seededRandom() < perkFx.skillCdRefund) {
+        combatState.cooldowns[skill.id] = 0;
+        log.push({ text: '🔮 法术回响！技能冷却重置！', type: 'buff' });
+      }
+      // ── 遗物：基因锁技能冷却缩减 ──
+      if (relicFx.geneLockCdReduce > 0 && skill.type === 'gene_lock') {
+        combatState.cooldowns[skill.id] = Math.max(0, (combatState.cooldowns[skill.id] || 0) - relicFx.geneLockCdReduce);
+      }
+    }
+
+    if (enemyHp <= 0) break;
+
+    // ── 天赋：真实伤害(每次攻击附加) ──
+    if (perkTrueDmg > 0 && enemyHp > 0) {
+      enemyHp = Math.max(0, enemyHp - perkTrueDmg);
+      _totalDmgDealt += perkTrueDmg;
+      if (round <= 6) log.push({ text: `⚡ 真实伤害 ${perkTrueDmg}`, type: 'skill' });
+    }
+
+    // ── 遗物：攻击附毒 ──
+    if (relicFx.poisonChance > 0 && seededRandom() < relicFx.poisonChance && enemyHp > 0) {
+      const existing = (combatState.statusEffects?.enemy || []).find(e => e.type === 'poison');
+      if (!existing) {
+        if (!combatState.statusEffects.enemy) combatState.statusEffects.enemy = [];
+        combatState.statusEffects.enemy.push({
+          type: 'poison', value: relicFx.poisonDmg || 5,
+          duration: relicFx.poisonDuration || 3, source: 'relic_scorpion'
+        });
+        log.push({ text: `🦂 蝎尾毒素发动！每回合${relicFx.poisonDmg || 5}伤害`, type: 'poison' });
+      }
     }
 
     if (enemyHp <= 0) break;
@@ -986,17 +1083,20 @@ if (chipFx.hasIceChip && enemy.atk !== enemyEffAtk) {
       totalArmorPen = Math.min(totalArmorPen, 0.80); // 上限80%
       const armorPenDef = totalArmorPen > 0 ? Math.floor(enemy.def * (1 - totalArmorPen)) : enemy.def;
       const pHit = calcDamage(
-        { atk: Math.max(1, Math.floor(pAtk * atkMultiplier * berserkMult) + envAtkMod), crt: pCrt + chainCritBonus + envCritBonus, geneLock: p.geneLock },
+        { atk: Math.max(1, Math.floor(pAtk * atkMultiplier * berserkMult) + envAtkMod + perkKillBonusAtk + (relicKillStreakAtk || 0) + (perkOverchargeAtk || 0)),
+          crt: pCrt + chainCritBonus + envCritBonus + (perkFx.guaranteedCritAfter > 0 && perkConsecutiveHits >= perkFx.guaranteedCritAfter ? 100 : 0),
+          _critDmgBonus: (perkFx.critDmgBonus || 0) + (perkFx.guaranteedCritDmgBonus || 0) + (relicFx.critDmgBonus || 0),
+          geneLock: p.geneLock },
         { ...enemy, def: bossPhases ? effectiveEnemyDef : armorPenDef },
         p.weapon?.damageType || DAMAGE_TYPE.PHYSICAL
       );
       // ── 敌人特性: 幻影闪避（evasive trait）──
-      if ((enemy.traits || []).includes('evasive') && Math.random() < 0.15) {
+      if ((enemy.traits || []).includes('evasive') && seededRandom() < 0.15) {
         if (round <= 6 || i === 0) log.push({ text: `💨 ${enemy.name} 幻影闪避！躲开了攻击`, type: 'dodge' });
         continue; // skip this hit entirely
       }
       // ── 精英词缀: 暗影闪避 ──
-      if (affix && affix.dodgeChance && Math.random() < affix.dodgeChance) {
+      if (affix && affix.dodgeChance && seededRandom() < affix.dodgeChance) {
         if (round <= 6 || i === 0) log.push({ text: `🌑 【${affix.name}】闪避了攻击！`, type: 'affix_dodge' });
         continue; // skip this hit entirely
       }
@@ -1173,7 +1273,7 @@ if (chipFx.hasIceChip && enemy.atk !== enemyEffAtk) {
       e => e.type === STATUS_EFFECT.STUN || e.type === STATUS_EFFECT.FREEZE
     );
     // 元素共鸣眩晕概率
-    if (!enemyStunned && resonanceStunChance > 0 && Math.random() < resonanceStunChance) {
+    if (!enemyStunned && resonanceStunChance > 0 && seededRandom() < resonanceStunChance) {
       enemyStunned = true;
       if (round <= 8) log.push({ text: `❄ 冻结思维！${enemy.name}被冻结！`, type: 'control' });
     }
@@ -1211,12 +1311,24 @@ if (chipFx.hasIceChip && enemy.atk !== enemyEffAtk) {
             playerHp = 1;
             log.push({ text: `🌟 天赋【重生】发动！保留1HP！`, type: 'talent_save' });
           }
+          // 天赋：钢铁意志(20%概率存活)
+          if (playerHp <= 0 && perkFx.deathResist > 0 && !perkDeathResistUsed && seededRandom() < perkFx.deathResist) {
+            perkDeathResistUsed = true;
+            playerHp = 1;
+            log.push({ text: '🌟 钢铁意志！以不屈之心存活！(1HP)', type: 'talent_save' });
+          }
+          // 遗物：凤凰之羽(死亡拯救)
+          if (playerHp <= 0 && relicFx.deathSaveHpPct > 0 && !deathSaveUsed) {
+            deathSaveUsed = true;
+            playerHp = Math.max(1, Math.floor(p.maxHp * relicFx.deathSaveHpPct));
+            log.push({ text: `🔥 凤凰之羽发动！HP恢复至${playerHp}！`, type: 'relic_save' });
+          }
           if (playerHp <= 0) break;
         }
       }
 
       // ── 天赋：闪避 ──
-      const dodgeRoll = Math.random();
+      const dodgeRoll = seededRandom();
       if (talentFx.dodgeChance > 0 && dodgeRoll < talentFx.dodgeChance) {
         log.push({ text: `💨 天赋闪避！躲开了 ${enemy.name} 的攻击`, type: 'dodge' });
       } else {
@@ -1254,7 +1366,7 @@ if (chipFx.hasIceChip && enemy.atk !== enemyEffAtk) {
             if (round <= 4) log.push({ text: '✨ 附魔反弹 ' + enchReflectDmg, type: 'buff' });
           }
           // ── NG+ 变异器: 幻痛 ──
-          if (getActiveMutators().some(m => m.id === 'phantom_pain') && Math.random() < 0.10) {
+          if (getActiveMutators().some(m => m.id === 'phantom_pain') && seededRandom() < 0.10) {
             const phantomDmg = eHit.damage;
             playerHp -= phantomDmg;
             log.push({ text: `💀 幻痛！额外 ${phantomDmg} 伤害`, type: 'affix_damage' });
@@ -1262,17 +1374,28 @@ if (chipFx.hasIceChip && enemy.atk !== enemyEffAtk) {
         }
       }
 
-      // ── 防御反击 ──
-      if (_defendActive && Math.random() < 0.2 && enemyHp > 0) {
-        const counterDmg = Math.max(1, Math.floor(pAtk * 0.3));
-        enemyHp -= counterDmg;
-        _totalDmgDealt += counterDmg;
-        log.push({ text: '🛡⚔ 防御反击！' + counterDmg, type: 'reflect' });
+      // ── 防御反击（含天赋强化） ──
+      {
+        let counterChance = 0.2;
+        let counterPct = 0.3;
+        if (perkFx.counterDefend > 0 && _defendActive) {
+          counterChance = perkFx.counterDefend; // 防御时100%反击
+          counterPct = perkFx.counterDmgPct || 0.5;
+        } else if (perkFx.counterBase > 0 && !_defendActive) {
+          counterChance = perkFx.counterBase; // 非防御时20%反击
+          counterPct = perkFx.counterDmgPct || 0.5;
+        }
+        if ((_defendActive || perkFx.counterBase > 0) && seededRandom() < counterChance && enemyHp > 0) {
+          const counterDmg = Math.max(1, Math.floor(pAtk * counterPct));
+          enemyHp -= counterDmg;
+          _totalDmgDealt += counterDmg;
+          log.push({ text: '🛡⚔ ' + (_defendActive ? '防御' : '天赋') + '反击！' + counterDmg, type: 'reflect' });
+        }
       }
 
       // ── 天赋：格挡 ──
       let blocked = false;
-      if (talentFx.blockChance > 0 && !dodgeBuff && Math.random() < talentFx.blockChance) {
+      if (talentFx.blockChance > 0 && !dodgeBuff && seededRandom() < talentFx.blockChance) {
         const blockAmt = Math.floor(eHit.damage * talentFx.blockReduce);
         playerHp += blockAmt; // 返还已扣除的部分
         blocked = true;
@@ -1298,6 +1421,18 @@ if (chipFx.hasIceChip && enemy.atk !== enemyEffAtk) {
         playerHp = 1;
         log.push({ text: `🌟 天赋【重生】发动！保留1HP！`, type: 'talent_save' });
       }
+      // ── 天赋：钢铁意志 ──
+      if (playerHp <= 0 && perkFx.deathResist > 0 && !perkDeathResistUsed && seededRandom() < perkFx.deathResist) {
+        perkDeathResistUsed = true;
+        playerHp = 1;
+        log.push({ text: '🌟 钢铁意志发动！保留1HP！', type: 'talent_save' });
+      }
+      // ── 遗物：凤凰之羽 ──
+      if (playerHp <= 0 && relicFx.deathSaveHpPct > 0 && !deathSaveUsed) {
+        deathSaveUsed = true;
+        playerHp = Math.max(1, Math.floor(p.maxHp * relicFx.deathSaveHpPct));
+        log.push({ text: `🔥 凤凰之羽！HP恢复至${playerHp}！`, type: 'relic_save' });
+      }
 
       // ── 天赋：受暴击减伤 ──
       if (eHit.isCrit && talentFx.critDmgReduce > 0 && !dodgeBuff) {
@@ -1305,6 +1440,51 @@ if (chipFx.hasIceChip && enemy.atk !== enemyEffAtk) {
         playerHp += reduce;
       }
 
+      // ── 天赋：势不可挡(连续攻击后必暴击) ──
+      perkConsecutiveHits++;
+
+      // ── 遗物：反伤处理 ──
+      if (relicFx.reflectChance > 0 && eHit.damage > 0 && seededRandom() < relicFx.reflectChance && enemyHp > 0) {
+        const relicReflect = Math.max(1, Math.floor(eHit.damage * relicFx.reflectPct));
+        enemyHp -= relicReflect;
+        _totalDmgDealt += relicReflect;
+        if (round <= 6) log.push({ text: `🪞 镜之碎片反弹 ${relicReflect}`, type: 'reflect' });
+      }
+      // ── 遗物：减伤 ──
+      if (relicFx.flatDmgReduction > 0 && eHit.damage > 0) {
+        const dmgReduce = Math.floor(eHit.damage * relicFx.flatDmgReduction);
+        playerHp += dmgReduce; // 返还已扣除的部分
+        if (round <= 4) log.push({ text: `💎 遗物减伤 ${dmgReduce}`, type: 'relic_buff' });
+      }
+      // ── 天赋：自适应护甲 ──
+      if (perkFx.adaptiveResist > 0 && eHit.damage > 0) {
+        const dmgType = enemy.damageType || 'physical';
+        if (!perkAdaptiveResists[dmgType]) perkAdaptiveResists[dmgType] = 0;
+        const cap = perkFx.adaptiveResistCap || 0.5;
+        if (perkAdaptiveResists[dmgType] < cap) {
+          perkAdaptiveResists[dmgType] = Math.min(cap, perkAdaptiveResists[dmgType] + perkFx.adaptiveResist);
+          const resistPct = Math.floor(perkAdaptiveResists[dmgType] * 100);
+          if (round <= 8) log.push({ text: `🛡 自适应护甲：${dmgType}抗性${resistPct}%`, type: 'buff' });
+        }
+        // 应用减伤
+        const adaptReduce = Math.floor(eHit.damage * perkAdaptiveResists[dmgType]);
+        playerHp += adaptReduce;
+      }
+      // ── 遗物：自动闪避 ──
+      if (relicFx.autoEvadeInterval > 0 && relicAutoEvadeCounter % relicFx.autoEvadeInterval === 0 && eHit.damage > 0) {
+        playerHp += eHit.damage; // 返还全部伤害
+        log.push({ text: '💨 遗物自动闪避！', type: 'dodge' });
+      }
+      // ── 技能反弹效果(铁壁等) ──
+      {
+        const reflectEff = (combatState.statusEffects?.player || []).find(e => e.type === 'reflect');
+        if (reflectEff && eHit.damage > 0 && enemyHp > 0) {
+          const skillReflect = Math.max(1, Math.floor(eHit.damage * reflectEff.value / 100));
+          enemyHp -= skillReflect;
+          _totalDmgDealt += skillReflect;
+          log.push({ text: `🛡 铁壁反弹 ${skillReflect}！`, type: 'reflect' });
+        }
+      }
       // ── 武修反伤 ──
       if (isMartial && !dodgeBuff && eHit.damage > 0 && enemyHp > 0) {
         const reflect = Math.max(1, Math.floor(eHit.damage * 0.15));
@@ -1313,7 +1493,7 @@ if (chipFx.hasIceChip && enemy.atk !== enemyEffAtk) {
       }
 
       // ── 精英词缀: 连击 ──
-      if (eliteFx && eliteFx.doubleStrikeChance > 0 && Math.random() < eliteFx.doubleStrikeChance && enemyHp > 0 && playerHp > 0) {
+      if (eliteFx && eliteFx.doubleStrikeChance > 0 && seededRandom() < eliteFx.doubleStrikeChance && enemyHp > 0 && playerHp > 0) {
         const dsHit = calcDamage(
           { atk: Math.floor((bossPhases ? effectiveEnemyAtk : enemyEffAtk) * enemyEnrageMult), crt: enemy.crt || 0 },
           { def: pDef, res: p.res || 0 },
@@ -1330,7 +1510,7 @@ if (chipFx.hasIceChip && enemy.atk !== enemyEffAtk) {
         if (round <= 6) log.push({ text: `🩸 精英吸血 +${eliteVamp}`, type: 'enemy_heal' });
       }
       // ── 敌人特性：迅捷（20%双击） ──
-      if ((enemy.traits || []).includes('swift') && Math.random() < 0.20 && enemyHp > 0 && playerHp > 0) {
+      if ((enemy.traits || []).includes('swift') && seededRandom() < 0.20 && enemyHp > 0 && playerHp > 0) {
         const eHit2 = calcDamage(
           { atk: Math.floor((bossPhases ? effectiveEnemyAtk : enemyEffAtk) * enemyEnrageMult), crt: enemy.crt || 0 },
           { def: pDef, res: p.res || 0 },
@@ -1463,6 +1643,42 @@ if (chipFx.hasIceChip && enemy.atk !== enemyEffAtk) {
       playerHp = p.hp;
       log.push({ text: `💚 天赋击杀回血 +${killHealAmt}`, type: 'heal' });
     }
+    // ── 天赋：嗜血本能 ──
+    if (perkFx.killBonusAtk > 0) {
+      const cap = perkFx.killBonusAtkCap || 25;
+      if (perkKillBonusAtk < cap) {
+        perkKillBonusAtk = Math.min(cap, perkKillBonusAtk + perkFx.killBonusAtk);
+        log.push({ text: `🩸 嗜血本能！ATK临时+${perkKillBonusAtk}`, type: 'buff' });
+      }
+    }
+    // ── 天赋：灵魂收割 ──
+    if (perkFx.killHealPct > 0) {
+      const soulHeal = Math.max(1, Math.floor(p.maxHp * perkFx.killHealPct));
+      playerHp = Math.min(p.maxHp, playerHp + soulHeal);
+      p.hp = playerHp;
+      log.push({ text: `💀 灵魂收割！+${soulHeal}HP`, type: 'heal' });
+    }
+    if (perkFx.killManaRestorePct > 0 && p.maxMana > 0) {
+      const manaRestore = Math.max(1, Math.floor(p.maxMana * perkFx.killManaRestorePct));
+      p.mana = Math.min(p.maxMana, (p.mana || 0) + manaRestore);
+      playerMana = p.mana;
+      log.push({ text: `💀 灵魂收割！+${manaRestore}MP`, type: 'heal' });
+    }
+    // ── 遗物：击杀回血 ──
+    if (relicFx.killHealPct > 0) {
+      const relicKillHeal = Math.max(1, Math.floor(p.maxHp * relicFx.killHealPct));
+      playerHp = Math.min(p.maxHp, playerHp + relicKillHeal);
+      p.hp = playerHp;
+      log.push({ text: `💎 遗物击杀回血 +${relicKillHeal}`, type: 'heal' });
+    }
+    // ── 遗物：连杀记录 ──
+    relicKillStreak++;
+    // ── 天赋：基因锁充能加速 ──
+    if (perkFx.geneLockChargeBonus > 0) {
+      const bonusCharge = Math.floor((enemy.geneLockCharge || 5) * perkFx.geneLockChargeBonus);
+      p.geneLockCharge += bonusCharge;
+      log.push({ text: `⚡ 天赋基因锁充能加速 +${bonusCharge}`, type: 'geneLock' });
+    }
 
     // ── 基因锁充能 + 进阶检测 ──
     if (p.geneLock < GENE_LOCK.STAGE_4) {
@@ -1528,7 +1744,7 @@ if (chipFx.hasIceChip && enemy.atk !== enemyEffAtk) {
       );
       // 羁绊同伴有35%概率救援（最多尝试3次）
       for (const bc of bondCompanions.slice(0, 3)) {
-        if (Math.random() < 0.35) {
+        if (seededRandom() < 0.35) {
           companionRescue = true;
           const profile = COMPANION_PROFILES?.[bc.id];
           const name = profile?.name || bc.name || bc.id;
