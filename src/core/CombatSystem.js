@@ -2061,7 +2061,7 @@ export function getEffectiveAtk(player) {
   // 战术指令加成
   try {
     const orderFx = getOrderCombatEffect();
-    if (orderFx.companionDmgMult && orderFx.companionDmgMult !== 1) {
+    if (orderFx.companionDmgMult && orderFx.companionDmgMult !== 1 && gameState.companions?.some(c => c.alive)) {
       const companionAtk = Math.floor(atk * 0.1 * (orderFx.companionDmgMult - 1));
       atk += companionAtk;
     }
