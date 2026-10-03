@@ -151,6 +151,7 @@ import { generateTacticalHints, formatTacticalHintsHTML } from './core/TacticalH
 import { initStatAllocation, grantStatPoints, allocateStat, autoAllocate, getPendingPoints, renderStatAllocationPanel, serializeStatAllocation, deserializeStatAllocation, getRecommendedBuild } from './core/StatAllocation.js';
 import { getEnchantCombatBonus, serializeEnchant, deserializeEnchant } from './core/EnchantSystem.js';
 import { getChapterNarrative, markNarrativeTriggered, applyNarrativeResult, serializeNarratives, deserializeNarratives } from './core/ChapterNarrativeEvents.js';
+import { getCanonState, resetCanonState } from './core/CanonState.js';
 
 // ── 全局状态 ──
 let renderer;
@@ -206,6 +207,7 @@ function autoSave(reason = '') {
     localStorage.setItem('ih_battle_history', JSON.stringify(serializeBattleHistory()));
     localStorage.setItem('ih_status_effects', JSON.stringify(serializeEffects()));
     localStorage.setItem('ih_dynamic_diff', JSON.stringify(serializeDynamicDifficulty()));
+    localStorage.setItem('ih_canon', JSON.stringify(getCanonState().toJSON()));
     localStorage.setItem('ih_growth', JSON.stringify(serializeGrowth()));
     localStorage.setItem('ih_statalloc', JSON.stringify(serializeStatAllocation()));
     localStorage.setItem('ih_abyss', JSON.stringify(serializeAbyss()));
@@ -919,6 +921,8 @@ function menuLoop() {
 }
 
 function startNewGame() {
+  resetCanonState();
+
   gameState._chapterClearCounted = false;
   // 重置状态
   gameState.reset();
@@ -1287,6 +1291,12 @@ function startGame() {
 }
 
 function loadFloor(index, isAdvancing) {
+  // 正史状态推进 — canon_state 是人物生死唯一权威
+  try {
+    const canon = getCanonState();
+    canon.advanceTo(gameState.chapter, index);
+    canon.syncToGameState(gameState);
+  } catch (e) { console.warn('CanonState sync:', e); }
   // 设置当前章节楼层总数（供HUD使用）
   gameState.chapterFloorCount = chapter.floors?.length || 6;
   if (isAdvancing && index > 0) gameState.stats.floorsCleared++;
