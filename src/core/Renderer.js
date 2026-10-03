@@ -855,7 +855,34 @@ export class Renderer {
       if (karmaHud.id !== 'neutral') {
         ctx.fillStyle = karmaHud.color;
         ctx.font = '11px "Microsoft YaHei"';
-        ctx.fillText(karmaHud.icon + ' ' + karmaHud.name, rx + 90, pad + 145);
+        ctx.fillText(karmaHud.icon + ' ' + karmaHud.name, rx + 90, pad + 145);      }
+    } catch {}
+
+    // ── 星级挑战指示器（左下） ──
+    try {
+      const _floorChallenges = gameState._currentFloorChallenges;
+      if (_floorChallenges && _floorChallenges.length > 0) {
+        const scY = CANVAS_H - 90;
+        const scX = pad;
+        ctx.fillStyle = 'rgba(10, 10, 20, 0.82)';
+        roundRect(ctx, scX, scY, 180, 70, 6);
+        ctx.fill();
+        ctx.strokeStyle = 'rgba(255, 204, 68, 0.3)';
+        ctx.lineWidth = 1;
+        roundRect(ctx, scX, scY, 180, 70, 6);
+        ctx.stroke();
+        ctx.font = 'bold 11px "Microsoft YaHei"';
+        ctx.fillStyle = '#ffcc44';
+        ctx.textAlign = 'left';
+        ctx.fillText('★ 楼层挑战', scX + 8, scY + 15);
+        ctx.font = '10px "Microsoft YaHei"';
+        for (let ci = 0; ci < Math.min(3, _floorChallenges.length); ci++) {
+          const ch = _floorChallenges[ci];
+          const starIcon = ch.completed ? '★' : '☆';
+          const color = ch.completed ? '#ffcc44' : '#555';
+          ctx.fillStyle = color;
+          ctx.fillText(starIcon + ' ' + (ch.name || ch.desc || '???'), scX + 8, scY + 32 + ci * 16);
+        }
       }
     } catch {}
 

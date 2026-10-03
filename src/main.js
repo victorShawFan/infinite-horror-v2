@@ -165,7 +165,7 @@ import { checkFateChoice, makeFateChoice, applyFateConsequence, renderFateChoice
 import { initDirector, stopDirector, directorOnRound, directorOnDamage, directorOnChainReaction, directorOnBossPhase, directorOnDefend, directorOnVictory, directorOnDefeat, getTension, renderBattleSummaryPanel } from './core/CombatDirector.js';
 import { getChapterEnvironment, checkEnvironmentHazard, applyEnvironmentEffect, clearEnvironmentEffects, renderEnvironmentInfo, getFloorNarrative } from './core/EnvironmentHazards.js';
 import { checkCompanionEvents, markEventTriggered, renderCompanionDialogue, serializeCompanionStoryEvents, deserializeCompanionStoryEvents, resetCompanionStoryEvents } from './core/CompanionStoryEvents.js';
-import { generateFloorChallenges, evaluateChallenges, setFloorStarData, getFloorStarData, getTotalStars, renderFloorChallengeHUD, serializeStarChallenge, deserializeStarChallenge, initStarChallenge } from './core/StarChallenge.js';
+import { generateFloorChallenges, evaluateChallenges, setFloorStarData, getFloorStarData, getTotalStars, renderFloorChallengeHUD, serializeStarChallenge, deserializeStarChallenge, initStarChallenge, renderStarOverview, claimMilestone } from './core/StarChallenge.js';
 import { initAchievementNotifications, showAchievementNotify } from './core/AchievementNotify.js';
 import { addJournalEntry, triggerChapterJournals, triggerChapterCompleteJournal, serializeJournal, deserializeJournal, renderJournalPanel } from './core/StoryJournal.js';
 import { getCanonState, resetCanonState } from './core/CanonState.js';
@@ -3964,6 +3964,10 @@ function _showPauseMenu() {
             background:rgba(255,68,68,0.06);border:1px solid #ff444422;color:#ff6666;
             padding:10px;cursor:pointer;font-size:13px;font-family:inherit;
             border-radius:8px;letter-spacing:2px;">🌍 轮回之路</button>
+          <button class="pause-btn" id="pause-stars" style="
+            background:rgba(255,204,68,0.06);border:1px solid #ffcc4422;color:#ffcc44;
+            padding:10px;cursor:pointer;font-size:13px;font-family:inherit;
+            border-radius:8px;letter-spacing:2px;">⭐ 星级挑战</button>
           <button class="pause-btn" id="pause-progress" style="
             background:rgba(170,136,255,0.06);border:1px solid #aa88ff22;color:#aa88ff;
             padding:10px;cursor:pointer;font-size:13px;font-family:inherit;
@@ -4040,6 +4044,40 @@ function _showPauseMenu() {
     const jkh = (e) => { if (e.key === 'Escape') closeJ(); };
     document.addEventListener('keydown', jkh);
     document.getElementById('journal-backdrop')?.addEventListener('click', (e) => { if (e.target.id === 'journal-backdrop') closeJ(); });
+  });
+    // ── 星级挑战总览 ──
+  document.getElementById('pause-stars')?.addEventListener('click', () => {
+    const starHtml = renderStarOverview();
+    overlay.innerHTML = '<div style="position:absolute;top:0;left:0;right:0;bottom:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.85);" id="star-backdrop">' +
+      '<div style="background:rgba(10,8,5,0.98);border:1px solid #ffcc44;border-radius:12px;padding:24px;max-width:500px;width:94%;max-height:85vh;overflow-y:auto;">' +
+      starHtml +
+      '<div style="text-align:center;margin-top:12px;">' +
+      '<p style="color:#555;font-size:10px;">点击空白 / Esc 关闭</p></div>' +
+      '</div></div>';
+    // Milestone claim buttons
+    overlay.querySelectorAll('.milestone-claim-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const stars = parseInt(btn.dataset.stars);
+        try {
+          const reward = claimMilestone(stars);
+          if (reward) {
+            const p = gameState.player;
+            if (reward.exp) { p.exp = (p.exp || 0) + reward.exp; }
+            if (reward.gold) { p.gold = (p.gold || 0) + reward.gold; }
+            if (reward.rewardPoints) { p.rewardPoints = (p.rewardPoints || 0) + reward.rewardPoints; }
+            renderer.notify('🎁 领取里程碑奖励: ' + JSON.stringify(reward), '#ffcc44', 120);
+            // Re-render
+            document.getElementById('star-backdrop')?.click();
+            document.getElementById('pause-stars')?.click();
+          }
+        } catch(e) { console.warn('Milestone claim:', e); }
+      });
+    });
+    const closeStar = () => { _showPauseMenu(); document.removeEventListener('keydown', skh); };
+    const skh = (e) => { if (e.key === 'Escape') closeStar(); };
+    document.addEventListener('keydown', skh);
+    document.getElementById('star-backdrop')?.addEventListener('click', (e) => { if (e.target.id === 'star-backdrop') closeStar(); });
   });
     document.getElementById('pause-help')?.addEventListener('click', () => {
     close();
