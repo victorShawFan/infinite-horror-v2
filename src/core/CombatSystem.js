@@ -40,6 +40,7 @@ import { getRelicCombatEffects, hasRelic } from './RelicSystem.js';
 import { getPerkCombatEffects } from './PerkSystem.js';
 import { getEnemyIntent } from './EnemyIntentSystem.js';
 import { random as seededRandom, chance as seededChance } from './RandomSystem.js';
+import { addSyncGauge, getSyncGauge, executeSyncAttack, resetSyncGauge } from './SyncAttack.js';
 import { getIntelCombatBonus, recordDiscovery } from './EnemyIntelSystem.js';
 
 // ── 伤害计算 ──
@@ -1158,12 +1159,13 @@ if (chipFx.hasIceChip && enemy.atk !== enemyEffAtk) {
 
       const hitLabel = isDouble ? `[${i + 1}击] ` : '';
       const multiLabel = atkMultiplier > 1 ? ' 💪强化！' : '';
-      if (pHit.isCrit) { lastCrit = true; gameState.stats.criticalHits++; }
+      if (pHit.isCrit) { lastCrit = true; gameState.stats.criticalHits++; 
+        try { addSyncGauge(10, 'crit'); eventBus.emit('combat:crit'); } catch {} }
       try { recordCrit(pHit.isCrit); } catch {}
       try { if (pHit.isWeak) recordWeaknessHit(); } catch {}
-      try { if (pHit.elemAdvantage) recordElementalHit(); } catch {}
+      try { if (pHit.elemAdvantage) { recordElementalHit(); addSyncGauge(8, 'element'); eventBus.emit('combat:elemental_advantage'); } } catch {}
       // 情报系统: 弱点/元素发现
-      try { if (pHit.isWeak) recordDiscovery(enemy, 'weakness', '弱点攻击效果显著'); } catch {}
+      try { if (pHit.isWeak) { recordDiscovery(enemy, 'weakness', '弱点攻击效果显著'); addSyncGauge(15, 'weakness'); eventBus.emit('combat:weakness_hit'); } } catch {}
       try { if (round >= 3 && !pHit.isCrit) recordDiscovery(enemy, 'stats'); } catch {}
       try { if (round >= 5) recordDiscovery(enemy, 'pattern', '攻击模式已观察'); } catch {}
       // 天赋：暴击伤害加成
