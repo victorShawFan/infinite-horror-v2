@@ -322,6 +322,273 @@ export const SKILL_DEFINITIONS = {
       return { log, effects };
     },
   },
+
+  // ═══════════════════════════════════════════
+  // 通用技能 — 无需特殊解锁
+  // ═══════════════════════════════════════════
+
+  /** 急速突刺 — 高速近战攻击 */
+  quick_strike: {
+    id: 'quick_strike',
+    name: '急速突刺',
+    desc: '以极快速度攻击，造成120%ATK伤害，25%概率追加一击',
+    type: 'gene_lock',
+    unlockReq: { geneLock: 0 },
+    manaCost: 0,
+    cooldown: 2,
+    execute(player, enemy, _cs) {
+      const log = [];
+      const effects = [];
+      const dmg = Math.floor(player.atk * 1.2);
+      enemy.hp = Math.max(0, (enemy.hp || 0) - dmg);
+      log.push({ text: '⚡ 急速突刺！造成 ' + dmg + ' 伤害！', type: 'skill' });
+      if (Math.random() < 0.25) {
+        const bonus = Math.floor(player.atk * 0.6);
+        enemy.hp = Math.max(0, (enemy.hp || 0) - bonus);
+        log.push({ text: '⚡⚡ 追加攻击！额外 ' + bonus + ' 伤害！', type: 'critical' });
+      }
+      return { log, effects };
+    },
+  },
+
+  /** 战吼 — 提升自身ATK和CRT */
+  war_cry: {
+    id: 'war_cry',
+    name: '战吼',
+    desc: '激发战意，ATK+25%和CRT+15%持续4回合',
+    type: 'gene_lock',
+    unlockReq: { geneLock: 0 },
+    manaCost: 0,
+    cooldown: 6,
+    execute(player, _enemy, _cs) {
+      const log = [];
+      const effects = [];
+      log.push({ text: '🔊 战吼！力量在沸腾！', type: 'skill' });
+      effects.push({
+        target: 'player',
+        effect: { type: 'buff_atk', value: Math.floor(player.atk * 0.25), duration: 4, source: 'war_cry' },
+      });
+      effects.push({
+        target: 'player',
+        effect: { type: 'buff_crt', value: 15, duration: 4, source: 'war_cry' },
+      });
+      return { log, effects };
+    },
+  },
+
+  /** 弱点分析 — 降低敌人防御 */
+  analyze_weakness: {
+    id: 'analyze_weakness',
+    name: '弱点分析',
+    desc: '分析敌人弱点，降低敌人DEF 40%持续3回合',
+    type: 'gene_lock',
+    unlockReq: { geneLock: 1 },
+    manaCost: 0,
+    cooldown: 5,
+    execute(_player, enemy, _cs) {
+      const log = [];
+      const effects = [];
+      const defReduce = Math.floor((enemy.def || 0) * 0.4);
+      log.push({ text: '🔍 弱点分析！发现了敌人的防御缺陷！DEF-' + defReduce, type: 'skill' });
+      effects.push({
+        target: 'enemy',
+        effect: { type: 'debuff_atk', value: -defReduce, duration: 3, source: 'analyze_weakness' },
+      });
+      return { log, effects };
+    },
+  },
+
+  // ═══════════════════════════════════════════
+  // 血统技能 — 按血统解锁
+  // ═══════════════════════════════════════════
+
+  /** 血族：暗夜之拥 — 大量吸血 */
+  embrace_of_night: {
+    id: 'embrace_of_night',
+    name: '暗夜之拥',
+    desc: '释放血族之力，造成150%ATK暗属性伤害，恢复伤害的40%HP',
+    type: 'bloodline',
+    unlockReq: { bloodline: 'vampire' },
+    manaCost: 10,
+    cooldown: 5,
+    execute(player, enemy, _cs) {
+      const log = [];
+      const effects = [];
+      const dmg = Math.floor(player.atk * 1.5);
+      enemy.hp = Math.max(0, (enemy.hp || 0) - dmg);
+      const heal = Math.floor(dmg * 0.4);
+      player.hp = Math.min(player.maxHp || 999, (player.hp || 0) + heal);
+      log.push({ text: '🩸 暗夜之拥！造成 ' + dmg + ' 暗属性伤害，恢复 ' + heal + ' HP！', type: 'skill' });
+      return { log, effects };
+    },
+  },
+
+  /** 古武：碎岩拳 — 无视防御的物理攻击 */
+  shatter_fist: {
+    id: 'shatter_fist',
+    name: '碎岩拳',
+    desc: '古武绝技，造成200%ATK伤害（无视50%防御）',
+    type: 'bloodline',
+    unlockReq: { bloodline: 'ancient_wu' },
+    manaCost: 0,
+    cooldown: 4,
+    execute(player, enemy, _cs) {
+      const log = [];
+      const effects = [];
+      const rawDmg = Math.floor(player.atk * 2.0);
+      const defIgnore = Math.floor((enemy.def || 0) * 0.5);
+      const actualDmg = Math.max(1, rawDmg - (enemy.def || 0) + defIgnore);
+      enemy.hp = Math.max(0, (enemy.hp || 0) - actualDmg);
+      log.push({ text: '👊 碎岩拳！无视防御造成 ' + actualDmg + ' 伤害！', type: 'skill' });
+      return { log, effects };
+    },
+  },
+
+  /** 武修：铁壁 — 大幅提升防御 */
+  iron_fortress: {
+    id: 'iron_fortress',
+    name: '铁壁',
+    desc: '武修防御术，DEF+80%持续3回合，被攻击时反弹15%伤害',
+    type: 'bloodline',
+    unlockReq: { bloodline: 'martial' },
+    manaCost: 0,
+    cooldown: 5,
+    execute(player, _enemy, _cs) {
+      const log = [];
+      const effects = [];
+      const defBuff = Math.floor((player.def || 10) * 0.8);
+      log.push({ text: '🛡 铁壁！防御力大幅提升！DEF+' + defBuff, type: 'skill' });
+      effects.push({
+        target: 'player',
+        effect: { type: 'buff_def', value: defBuff, duration: 3, source: 'iron_fortress' },
+      });
+      return { log, effects };
+    },
+  },
+
+  /** 道法：天雷咒 — AOE雷属性伤害 */
+  heavenly_thunder: {
+    id: 'heavenly_thunder',
+    name: '天雷咒',
+    desc: '召唤天雷，造成180%ATK雷属性伤害，30%概率眩晕1回合',
+    type: 'bloodline',
+    unlockReq: { bloodline: 'daoist' },
+    manaCost: 15,
+    cooldown: 4,
+    execute(player, enemy, _cs) {
+      const log = [];
+      const effects = [];
+      const dmg = Math.floor(player.atk * 1.8);
+      enemy.hp = Math.max(0, (enemy.hp || 0) - dmg);
+      log.push({ text: '⚡ 天雷咒！雷霆降世造成 ' + dmg + ' 伤害！', type: 'skill' });
+      if (Math.random() < 0.3) {
+        effects.push({
+          target: 'enemy',
+          effect: { type: 'stun', value: 0, duration: 1, source: 'heavenly_thunder' },
+        });
+        log.push({ text: '💫 雷击眩晕！敌人无法行动！', type: 'debuff' });
+      }
+      return { log, effects };
+    },
+  },
+
+  /** 道法：金光咒 — 治疗+净化 */
+  golden_light: {
+    id: 'golden_light',
+    name: '金光咒',
+    desc: '道法治愈术，恢复30%MaxHP并清除所有负面状态',
+    type: 'bloodline',
+    unlockReq: { bloodline: 'daoist' },
+    manaCost: 12,
+    cooldown: 6,
+    execute(player, _enemy, combatState) {
+      const log = [];
+      const effects = [];
+      const heal = Math.floor((player.maxHp || 100) * 0.3);
+      player.hp = Math.min(player.maxHp || 999, (player.hp || 0) + heal);
+      log.push({ text: '✨ 金光咒！恢复 ' + heal + ' HP！', type: 'skill' });
+      // 清除负面状态
+      if (combatState && combatState.statusEffects) {
+        const before = (combatState.statusEffects.player || []).length;
+        combatState.statusEffects.player = (combatState.statusEffects.player || []).filter(e =>
+          !['burn', 'freeze', 'poison', 'stun', 'debuff_atk'].includes(e.type)
+        );
+        const cleared = before - combatState.statusEffects.player.length;
+        if (cleared > 0) {
+          log.push({ text: '💫 净化！清除了 ' + cleared + ' 个负面效果！', type: 'buff' });
+        }
+      }
+      return { log, effects };
+    },
+  },
+
+  // ═══════════════════════════════════════════
+  // 高阶基因锁技能
+  // ═══════════════════════════════════════════
+
+  /** 第二阶：连环斩 — 多段攻击 */
+  chain_slash: {
+    id: 'chain_slash',
+    name: '连环斩',
+    desc: '基因锁加速出手，连续攻击3次，每次造成80%ATK伤害',
+    type: 'gene_lock',
+    unlockReq: { geneLock: 2 },
+    manaCost: 0,
+    cooldown: 4,
+    execute(player, enemy, _cs) {
+      const log = [];
+      const effects = [];
+      let total = 0;
+      for (let i = 0; i < 3; i++) {
+        const dmg = Math.floor(player.atk * 0.8);
+        enemy.hp = Math.max(0, (enemy.hp || 0) - dmg);
+        total += dmg;
+      }
+      log.push({ text: '🗡🗡🗡 连环斩！三连击造成 ' + total + ' 总伤害！', type: 'skill' });
+      return { log, effects };
+    },
+  },
+
+  /** 第三阶：零点狙击 — 必定暴击的精准攻击 */
+  zero_shot: {
+    id: 'zero_shot',
+    name: '零点狙击',
+    desc: '模拟思维锁定弱点，必定暴击，造成250%ATK伤害',
+    type: 'gene_lock',
+    unlockReq: { geneLock: 3 },
+    manaCost: 0,
+    cooldown: 6,
+    execute(player, enemy, _cs) {
+      const log = [];
+      const effects = [];
+      const dmg = Math.floor(player.atk * 2.5);
+      enemy.hp = Math.max(0, (enemy.hp || 0) - dmg);
+      log.push({ text: '🎯 零点狙击！精准命中要害！' + dmg + ' 暴击伤害！', type: 'critical' });
+      return { log, effects };
+    },
+  },
+
+  /** 第四阶：洪荒之力 — 终极技能 */
+  primordial_force: {
+    id: 'primordial_force',
+    name: '洪荒之力',
+    desc: '释放洪荒之力，造成400%ATK伤害，但自身受到20%MaxHP反噬',
+    type: 'gene_lock',
+    unlockReq: { geneLock: 4 },
+    manaCost: 0,
+    cooldown: 8,
+    execute(player, enemy, _cs) {
+      const log = [];
+      const effects = [];
+      const dmg = Math.floor(player.atk * 4.0);
+      enemy.hp = Math.max(0, (enemy.hp || 0) - dmg);
+      const backlash = Math.floor((player.maxHp || 100) * 0.2);
+      player.hp = Math.max(1, (player.hp || 0) - backlash);
+      log.push({ text: '🌋 洪荒之力爆发！造成 ' + dmg + ' 毁灭性伤害！', type: 'skill' });
+      log.push({ text: '💔 力量反噬！自身受到 ' + backlash + ' 伤害', type: 'danger' });
+      return { log, effects };
+    },
+  },
 };
 
 // ─────────────────────────────────────────────
