@@ -1087,6 +1087,35 @@ function startGame() {
         mpText.textContent = 'MP ' + data.playerMana + '/' + pMaxMana;
       }
     }
+    // 更新状态效果图标
+    if (data.log && data.log.length > 0) {
+      let statusEl = document.getElementById('chud-status-icons');
+      if (!statusEl) {
+        const hud = document.getElementById('combat-hud');
+        if (hud) {
+          statusEl = document.createElement('div');
+          statusEl.id = 'chud-status-icons';
+          statusEl.style.cssText = 'display:flex;justify-content:center;gap:4px;margin-top:2px;';
+          hud.appendChild(statusEl);
+        }
+      }
+      if (statusEl) {
+        // 从战斗日志中提取活跃状态
+        const statusIcons = [];
+        const logText = data.log.map(e => e.text).join(' ');
+        if (logText.includes('基因锁')) statusIcons.push({ icon: '🧬', color: '#ff8800' });
+        if (logText.includes('连杀')) statusIcons.push({ icon: '🔥', color: '#ff4444' });
+        if (logText.includes('中毒')) statusIcons.push({ icon: '☠', color: '#88ff44' });
+        if (logText.includes('灼烧') || logText.includes('燃烧')) statusIcons.push({ icon: '🔥', color: '#ff6600' });
+        if (logText.includes('防御姿态') || logText.includes('🛡')) statusIcons.push({ icon: '🛡', color: '#4488ff' });
+        if (logText.includes('附魔')) statusIcons.push({ icon: '✨', color: '#aa88ff' });
+        if (logText.includes('吸血')) statusIcons.push({ icon: '🩸', color: '#ff4488' });
+        // 只展示最近的状态，不堆叠太多
+        statusEl.innerHTML = statusIcons.slice(0, 6).map(s =>
+          '<span style="font-size:10px;color:' + s.color + ';text-shadow:0 0 4px ' + s.color + '44;">' + s.icon + '</span>'
+        ).join('');
+      }
+    }
   });
 
   eventBus.on('challenge:end', (data) => {
