@@ -493,3 +493,155 @@ EXPLORATION_EVENTS[12].push({
   ],
   weight: 10,
 });
+
+// ═══ 补充探索事件 — Ch7-12各增2个，增强叙事深度 ═══
+
+EXPLORATION_EVENTS[7].push(
+  {
+    id: 'demon_graffiti',
+    title: '墙上的涂鸦',
+    text: '用黑色喷漆写成的字："你们来晚了。——复制体楚轩"。笔迹工整得令人不安。',
+    choices: [
+      { text: '🔍 分析笔迹', result: { type: 'info', text: '字迹中隐藏的细微抖动暴露了复制体的弱点。', effect: { nextBattleCritBonus: 12 } } },
+      { text: '✋ 擦掉涂鸦', result: { type: 'karma', text: '"我们不会被恐吓。" 士气提升。', effect: { karma: 5, nextBattleAtkBonus: 2 } } },
+      { text: '📷 记录情报', result: { type: 'loot', text: '这些信息将来也许有用。', effect: { exp: 12 } } },
+    ],
+    weight: 8,
+  },
+  {
+    id: 'fallen_teammate_gear',
+    title: '阵亡队友的遗物',
+    text: '在废墟中发现了一个背包，属于之前阵亡的队友。里面还有一些物资……和一封信。',
+    choices: [
+      { text: '📧 阅读遗信', result: { type: 'karma', text: '"把大家都带回来。" 信上只有这一句话。', effect: { karma: 12, exp: 10 } } },
+      { text: '🎒 整理物资', result: { type: 'loot', text: '医疗用品和少量弹药。在这里，每一点资源都珍贵。', effect: { healPercent: 0.12, gold: 30 } } },
+      { text: '🙏 为其默哀', result: { type: 'heal', text: '短暂的默哀让你平复心情，准备好面对接下来的一切。', effect: { healPercent: 0.08, karma: 8 } } },
+    ],
+    weight: 9,
+  }
+);
+
+EXPLORATION_EVENTS[8].push(
+  {
+    id: 'resurrection_altar',
+    title: '复活祭坛的回响',
+    text: '祭坛上还残留着微弱的金色光芒。空气中回荡着远古的低语。',
+    choices: [
+      { text: '🙏 触碰祭坛', result: { type: 'heal', text: '金色光芒包裹了你，生命力得到恢复。', effect: { healPercent: 0.2, karma: 5 } } },
+      { text: '📖 解读符文', result: { type: 'info', text: '符文记载了复活仪式的秘密。理解加深了你的力量。', effect: { exp: 20, nextBattleAtkBonus: 3 } } },
+      { text: '🔮 汲取力量', result: { type: 'buff', text: '祭坛的残余能量增强了你的属性。', effect: { nextBattleAtkBonus: 5, nextBattleCritBonus: 8 } } },
+    ],
+    weight: 7,
+  },
+  {
+    id: 'dinosaur_fossil',
+    title: '巨大的化石',
+    text: '一具完整的恐龙化石嵌入墙壁。它的颅骨中似乎有什么东西在发光。',
+    choices: [
+      { text: '💎 取出发光物', result: { type: 'loot', text: '一颗远古能量结晶。蕴含着不可思议的力量。', effect: { gold: 50, exp: 15 } } },
+      { text: '🔬 研究化石', result: { type: 'info', text: '了解了这种生物的弱点。对类似敌人伤害+5%', effect: { nextBattleCritBonus: 10 } } },
+      { text: '🚶 保持敬畏', result: { type: 'karma', text: '有些东西不应该被打扰。', effect: { karma: 8 } } },
+    ],
+    weight: 6,
+  }
+);
+
+EXPLORATION_EVENTS[9].push(
+  {
+    id: 'alien_tech',
+    title: '外星科技残骸',
+    text: '一块散发蓝光的金属板，上面刻满了无法辨认的符号。触碰时手指会感到刺痛。',
+    choices: [
+      { text: '🖐 尝试激活', result: { type: 'buff', text: '能量从金属板中涌入你的身体！短暂的力量增幅。', effect: { nextBattleAtkBonus: 6, nextBattleCritBonus: 10 } } },
+      { text: '🔧 拆卸零件', result: { type: 'gold', text: '高科技零件在任何市场都有价值。', effect: { gold: 70 } } },
+      { text: '📡 记录信号', result: { type: 'info', text: '信号频率暴露了附近敌人的位置。', effect: { exp: 12, nextBattleEnemyAtkReduce: 3 } } },
+    ],
+    weight: 7,
+  },
+  {
+    id: 'team_traces',
+    title: '中洲队的标记',
+    text: '墙上刻着中洲队的暗号。"楚轩到此一游。方向：北偏西15度。"——这是楚轩的字迹。',
+    choices: [
+      { text: '🧭 按指示前进', result: { type: 'buff', text: '楚轩的路线果然避开了危险。体力恢复。', effect: { healPercent: 0.12, exp: 8 } } },
+      { text: '📝 留下回信', result: { type: 'karma', text: '"收到。我们在路上了。" 队伍凝聚力上升。', effect: { karma: 8 } } },
+      { text: '⚠ 怀疑是陷阱', result: { type: 'safe', text: '谨慎不会有错。你选择了另一条路。', effect: { exp: 5, gold: 20 } } },
+    ],
+    weight: 8,
+  }
+);
+
+EXPLORATION_EVENTS[10].push(
+  {
+    id: 'war_trophy',
+    title: '战利品残骸',
+    text: '地上散落着其他轮回队的装备碎片。五队大战的战场上，到处都是战斗的痕迹。',
+    choices: [
+      { text: '🔍 搜集残骸', result: { type: 'loot', text: '从残骸中拼凑出一些可用的装备零件。', effect: { gold: 60, exp: 10 } } },
+      { text: '📊 分析战术', result: { type: 'info', text: '从战斗痕迹推断出其他队伍的战术偏好。', effect: { nextBattleCritBonus: 14, nextBattleEnemyAtkReduce: 2 } } },
+      { text: '🙏 为逝者致意', result: { type: 'karma', text: '无论敌友，每个轮回者都值得尊重。', effect: { karma: 12, healPercent: 0.05 } } },
+    ],
+    weight: 9,
+  },
+  {
+    id: 'alliance_offer',
+    title: '来自暗处的声音',
+    text: '"中洲队……我们可以合作。" 一个陌生的声音从黑暗中传来。看不清对方的面容。',
+    choices: [
+      { text: '🤝 接受合作', result: { type: 'buff', text: '对方分享了一些战斗情报作为诚意。', effect: { nextBattleAtkBonus: 4, nextBattleCritBonus: 8, karma: -3 } } },
+      { text: '🗡 拒绝并警惕', result: { type: 'safe', text: '"不需要。" 你保持了距离。信任不是轻易给的。', effect: { karma: 5 } } },
+      { text: '🎯 反追踪', result: { type: 'info', text: '你顺着声音方向悄悄记下了对方的位置。', effect: { exp: 15, nextBattleCritBonus: 10 } } },
+    ],
+    weight: 7,
+  }
+);
+
+EXPLORATION_EVENTS[11].push(
+  {
+    id: 'nightmare_memory',
+    title: '消逝的记忆',
+    text: '脑海中突然闪过一段不属于你的记忆——是另一个时间线的自己，正在经历完全不同的轮回。',
+    choices: [
+      { text: '🧠 吸收记忆', result: { type: 'buff', text: '另一个自己的战斗经验流入体内。', effect: { nextBattleAtkBonus: 5, nextBattleCritBonus: 10, exp: 15 } } },
+      { text: '🛡 抵抗入侵', result: { type: 'karma', text: '"我是我自己。不需要别人的记忆。" 意志更加坚定。', effect: { karma: 10, healPercent: 0.1 } } },
+      { text: '🌀 任其流过', result: { type: 'info', text: '记忆碎片中有关于主神的线索。', effect: { exp: 20, karma: 3 } } },
+    ],
+    weight: 9,
+  },
+  {
+    id: 'power_surge',
+    title: '力量暴走',
+    text: '你体内的洪荒之力突然失控，能量在体表游走。痛苦……但也蕴含着突破的可能。',
+    choices: [
+      { text: '⚡ 引导力量', result: { type: 'buff', text: '成功将暴走的力量转化为战斗增幅！ATK大幅提升。', effect: { nextBattleAtkBonus: 8, damage: 15 } } },
+      { text: '🧘 平息暴走', result: { type: 'heal', text: '深呼吸。控制。力量重新归于平静。', effect: { healPercent: 0.15, karma: 5 } } },
+      { text: '🔥 释放一切', result: { type: 'risk', text: '力量狂暴释放！身体受损但战力暴增。', effect: { nextBattleAtkBonus: 12, nextBattleCritBonus: 15, damage: 25 } } },
+    ],
+    weight: 10,
+  }
+);
+
+EXPLORATION_EVENTS[12].push(
+  {
+    id: 'lord_god_whisper',
+    title: '主神的低语',
+    text: '"你以为打败我就能改变什么吗？" 一个没有情感的声音在脑海中回响。',
+    choices: [
+      { text: '💬 回答它', result: { type: 'karma', text: '"不需要改变什么。只要我们活着回去就够了。" 主神沉默了。', effect: { karma: 15, exp: 20 } } },
+      { text: '🤫 忽略它', result: { type: 'safe', text: '不要被精神攻击动摇。专注于眼前的战斗。', effect: { nextBattleAtkBonus: 3 } } },
+      { text: '⚔ 以力量回应', result: { type: 'buff', text: '"看着吧。" 你的怒火转化为战斗意志。', effect: { nextBattleAtkBonus: 8, nextBattleCritBonus: 12, karma: -5 } } },
+    ],
+    weight: 10,
+  },
+  {
+    id: 'team_final_moment',
+    title: '最后的团聚',
+    text: '短暂的休整时间。活着的队友们围坐在一起。没有人说话，但每个人的目光中都充满了信任。',
+    choices: [
+      { text: '🗣 鼓舞士气', result: { type: 'karma', text: '"最后一战了。不管结果如何——我们一起。" 全队士气高涨。', effect: { karma: 10, healPercent: 0.15, nextBattleAtkBonus: 3 } } },
+      { text: '🤝 握紧拳头', result: { type: 'buff', text: '无需言语。拳头碰拳头，一切尽在不言中。', effect: { nextBattleAtkBonus: 5, nextBattleCritBonus: 8 } } },
+      { text: '🌙 默默看星空', result: { type: 'heal', text: '也许这是最后一次仰望星空了。但活着的每一刻都值得珍惜。', effect: { healPercent: 0.2, karma: 8, exp: 10 } } },
+    ],
+    weight: 10,
+  }
+);
