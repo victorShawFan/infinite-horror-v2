@@ -153,6 +153,7 @@ import { getEnchantCombatBonus, serializeEnchant, deserializeEnchant } from './c
 import { getChapterNarrative, markNarrativeTriggered, applyNarrativeResult, serializeNarratives, deserializeNarratives } from './core/ChapterNarrativeEvents.js';
 import { getCanonState, resetCanonState } from './core/CanonState.js';
 import { showChapterBriefing } from './core/ChapterBriefing.js';
+import { initCombatFXListeners, drawAllCombatFX, isHitStopped, updateAndDrawGhosts } from './core/CombatFX.js';
 
 // ── 全局状态 ──
 let renderer;
@@ -1006,6 +1007,7 @@ function startGame() {
   tutorialManager.trigger('game_start');
   document.getElementById('ui-overlay').innerHTML = '';
   combatAnimator = new CombatAnimator(renderer);
+  initCombatFXListeners();
 
   chapter = generateChapter1();
   // 初始化大气效果
@@ -1668,6 +1670,8 @@ let _fpsAccum = 0;
 
 function gameLoop(timestamp) {
   if (!gameStarted) { gameLoopRunning = false; return; }
+  // 击中暂停帧
+  if (isHitStopped()) { requestAnimationFrame(gameLoop); return; }
   
   // FPS tracking
   if (timestamp) {
@@ -1688,6 +1692,8 @@ function gameLoop(timestamp) {
   // 后处理视觉特效
   if (!screenEffects && renderer.canvas) screenEffects = new ScreenEffects(renderer.canvas);
   if (screenEffects) try { screenEffects.render(); } catch {}
+  // 战斗特效层
+  try { drawAllCombatFX(renderer.ctx, renderer.canvas.width, renderer.canvas.height); } catch {}
 
   // 迷你地图
   if (window._miniMap && window._miniMap.visible) {
