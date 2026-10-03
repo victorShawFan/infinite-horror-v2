@@ -1370,6 +1370,23 @@ function startGame() {
         }).join('');
       }
     }
+    // ── 更新协同攻击进度条 ──
+    try {
+      const syncInfo = getSyncGauge();
+      const syncGauge = document.getElementById('chud-sync-gauge');
+      const syncBar = document.getElementById('chud-sync-bar');
+      const syncText = document.getElementById('chud-sync-text');
+      if (syncGauge && syncBar && syncText) {
+        syncGauge.style.display = syncInfo.current > 0 ? 'block' : 'none';
+        const pct = Math.min(100, Math.floor(syncInfo.current / syncInfo.max * 100));
+        syncBar.style.width = pct + '%';
+        syncBar.style.background = syncInfo.ready ? 'linear-gradient(90deg,#ffcc44,#ff4444)' : 'linear-gradient(90deg,#ffcc44,#ff8844)';
+        syncText.textContent = syncInfo.ready ? '⚡ READY!' : pct + '%';
+        syncText.style.color = syncInfo.ready ? '#ff4444' : '#ffcc44';
+        if (syncInfo.ready) syncGauge.style.animation = 'pulse 0.8s infinite';
+        else syncGauge.style.animation = 'none';
+      }
+    } catch {}
   });
 
   eventBus.on('challenge:end', (data) => {
@@ -4269,6 +4286,15 @@ function _showCombatHUD(player, enemy, scaledEnemy, initialPlayerHp) {
           <div id="chud-enemy-hp" style="background:linear-gradient(90deg,#ff4444,#cc2222);width:100%;height:100%;transition:width 0.3s;border-radius:4px;"></div>
         </div>
         <p id="chud-enemy-hp-text" style="color:#ccc;font-size:9px;margin-top:1px;">HP ${scaledEnemy.hp}</p>
+      </div>
+    </div>
+    <div id="chud-sync-gauge" style="width:100%;max-width:460px;margin-top:4px;display:none;">
+      <div style="display:flex;align-items:center;gap:6px;">
+        <span style="color:#ffcc44;font-size:9px;">⚡ 协同</span>
+        <div style="flex:1;height:4px;background:rgba(50,50,50,0.5);border-radius:2px;overflow:hidden;">
+          <div id="chud-sync-bar" style="height:100%;width:0%;background:linear-gradient(90deg,#ffcc44,#ff8844);border-radius:2px;transition:width 0.3s;"></div>
+        </div>
+        <span id="chud-sync-text" style="color:#ffcc44;font-size:8px;">0%</span>
       </div>
     </div>
   `;
