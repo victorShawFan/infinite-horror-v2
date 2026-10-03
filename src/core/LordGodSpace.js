@@ -17,6 +17,7 @@ import { getAvailableChallenges, challengeState } from './ChallengeDungeon.js';
 import { getAvailableRecipes, QUALITY } from './ForgeSystem.js';
 import { openEquipmentStash } from './EquipmentStash.js';
 import { getAvailableEnchants, applyEnchant, removeEnchant, renderEnchantPanel, ENCHANT_CORES } from './EnchantSystem.js';
+import { generateRelicChoices, addRelic, hasRelic, getOwnedRelics, getRelicDef, RELIC_DEFINITIONS, renderRelicInventoryPanel } from './RelicSystem.js';
 
 /** 主神空间商店/强化项目 */
 export const SHOP_ITEMS = {
@@ -115,6 +116,15 @@ export const SHOP_ITEMS = {
     { id: 'acc_neural', name: '神经链接器', desc: 'CRT+12, SPD+3', cost: 800,
       accessory: { name: '神经链接器', crt: 12, spd: 3 }, requires: 'acc_scope' },
   ],
+  // ── 遗物商店 ──
+  relics: [
+    { id: 'relic_random_common', name: '普通遗物盲盒', desc: '随机获得一件普通遗物', cost: 500,
+      relicPool: 'common' },
+    { id: 'relic_random_uncommon', name: '稀有遗物盲盒', desc: '随机获得一件稀有遗物', cost: 1200,
+      relicPool: 'uncommon' },
+    { id: 'relic_random_rare', name: '珍贵遗物盲盒', desc: '随机获得一件珍贵遗物', cost: 2500,
+      relicPool: 'rare' },
+  ],
 };
 
 /** 已购买记录 */
@@ -196,6 +206,27 @@ export function purchaseItem(item) {
     getPurchased().delete(item.id);
   }
 
+  // 遗物盲盒购买
+  if (item.relicPool) {
+    const pool = item.relicPool;
+    const available = Object.values(RELIC_DEFINITIONS).filter(r => 
+      r.rarity === pool && !hasRelic(r.id)
+    );
+    if (available.length === 0) {
+      // 退款
+      p.rewardPoints += item.cost;
+      getPurchased().delete(item.id);
+      return { success: false, message: '该稀有度已没有可获取的遗物了' };
+    }
+    const chosen = available[Math.floor(Math.random() * available.length)];
+    const res = addRelic(chosen.id);
+    // 遗物盲盒可重复购买（每次不同遗物）
+    getPurchased().delete(item.id);
+    if (res.success) {
+      return { success: true, message: `获得遗物: ${chosen.icon} ${chosen.name} — ${chosen.desc}` };
+    }
+  }
+
   audioEngine.playPickup();
   eventBus.emit('shop:purchase', item);
   gameState.save(0);
@@ -217,6 +248,7 @@ export function renderLordGodSpace(onClose) {
       { key: 'bloodline', name: '🩸 血统', color: '#ff4488' },
       { key: 'chips', name: '💎 芯片', color: '#aa44ff' },
       { key: 'equipment', name: '⚔ 装备', color: '#ffcc44' },
+      { key: 'relics', name: '🏛 遗物', color: '#ffcc44' },
       { key: 'forge', name: '🔨 锻造', color: '#ff6644' },
       { key: 'talents', name: '🌟 天赋', color: '#ffdd44' },
       { key: 'geneLock', name: '🧬 基因锁', color: '#ff6600' },

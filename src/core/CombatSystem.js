@@ -36,6 +36,7 @@ import { initCombatAbilities, getAvailableAbilities, useCompanionAbility, tickAb
 import { initComboState, recordCrit, recordElementalHit, recordWeaknessHit, recordCompanionAction, recordBlock, getComboBonus, formatComboLog } from './ComboSystem.js';
 import { getKarmaCombatModifiers, getKarmaLevel } from './KarmaSystem.js';
 import { shouldPauseForAction, showBattleActionMenu, applyDefendAction, attemptFlee, ACTION_TYPE } from './BattleActionMenu.js';
+import { getRelicCombatEffects, hasRelic } from './RelicSystem.js';
 
 // ── 伤害计算 ──
 export function calcDamage(attacker, defender, damageType = DAMAGE_TYPE.PHYSICAL, minDmg = 1) {
@@ -377,6 +378,31 @@ export async function executeBattle(enemy) {
   if (enchantFx.bonusAtk || enchantFx.bonusDef || enchantFx.bonusCrt) {
     log.push({ text: '✨ 附魔效果激活', type: 'buff' });
   }
+  // ── 遗物系统战斗效果 ──
+  let relicFx = {};
+  try { relicFx = getRelicCombatEffects(); } catch {}
+  // 遗物ATK/DEF百分比加成
+  if (relicFx.atkPctBonus) stanceMod.atk = Math.floor(stanceMod.atk * (1 + relicFx.atkPctBonus));
+  if (relicFx.defPctBonus) stanceMod.def = Math.floor(stanceMod.def * (1 + relicFx.defPctBonus));
+  if (relicFx.allStatsPctBonus) {
+    stanceMod.atk = Math.floor(stanceMod.atk * (1 + relicFx.allStatsPctBonus));
+    stanceMod.def = Math.floor(stanceMod.def * (1 + relicFx.allStatsPctBonus));
+    stanceMod.spd = Math.floor((stanceMod.spd || pSpd) * (1 + relicFx.allStatsPctBonus));
+  }
+  // 遗物战斗开始治疗/扣血
+  if (relicFx.combatStartHealPct > 0) {
+    const relicHeal = Math.floor(p.maxHp * relicFx.combatStartHealPct);
+    playerHp = Math.min(p.maxHp, playerHp + relicHeal);
+    log.push({ text: '🫀 遗物效果：恢复 ' + relicHeal + ' HP', type: 'heal' });
+  }
+  if (relicFx.combatStartDamagePct > 0) {
+    const relicDmg = Math.floor(p.maxHp * relicFx.combatStartDamagePct);
+    playerHp = Math.max(1, playerHp - relicDmg);
+    log.push({ text: '📜 恶魔契约：消耗 ' + relicDmg + ' HP 换取力量', type: 'danger' });
+  }
+  let relicDeathSaveUsed = false;
+  let relicAutoEvadeCounter = 0;
+  let _relicKillStreakAtkBonus = 0;
   const isDouble = canDoubleAttack(pSpd + (enchantFx.bonusSpd || 0), enemy.spd || 5);
   const isDaoist = p.activeBloodline === BLOODLINE.DAOIST;
   const isVampire = p.activeBloodline === BLOODLINE.VAMPIRE;
@@ -547,6 +573,28 @@ if (chipFx.hasIceChip && enemy.atk !== enemyEffAtk) {
   let playerLowHpBossLineTriggered = false;
   while (enemyHp > 0 && playerHp > 0) {
     round++;
+    // 遗物狂战士效果：HP越低ATK越高
+    let berserkerAtkMod = 0;
+    if (relicFx.berserkerMaxBonus > 0) {
+      const hpRatio = playerHp / p.maxHp;
+      if (hpRatio < 0.5) {
+        berserkerAtkMod = Math.floor(stanceMod.atk * relicFx.berserkerMaxBonus * (1 - hpRatio * 2));
+      }
+    }
+    // 遗物低血量防御加成
+    let relicLowHpDefMod = 0;
+    if (relicFx.lowHpDefBonus > 0 && (playerHp / p.maxHp) < (relicFx.lowHpThreshold || 0.3)) {
+      relicLowHpDefMod = Math.floor(stanceMod.def * relicFx.lowHpDefBonus);
+    }
+    // 遗物自动攻击
+    if (relicFx.autoAttackInterval > 0 && round > 0 && round % relicFx.autoAttackInterval === 0 && enemyHp > 0) {
+      const autoDmg = Math.floor(stanceMod.atk * relicFx.autoAttackPct);
+      enemyHp = Math.max(0, enemyHp - autoDmg);
+      _totalDmgDealt += autoDmg;
+      log.push({ text: '💠 虚空冲击！造成 ' + autoDmg + ' 伤害', type: 'relic_attack' });
+    }
+    // 遗物自动闪避计数
+    relicAutoEvadeCounter++;
     // 同伴技能冷却
     try { tickAbilityCooldowns(); } catch {}
     // 每回合重置环境修正

@@ -119,6 +119,7 @@ import { injectInteractables, activateInteractable } from './core/FloorInteracta
 import { getChapterLore, renderChapterIntroCard } from './core/ChapterWorldLore.js';
 import { scanFloor, renderFloorOverview } from './core/FloorScanner.js';
 import { generateRewardChoices, applyReward, renderRewardChoicePanel } from './core/RewardChoiceSystem.js';
+import { generateRelicChoices, addRelic, renderRelicChoicePanel, renderRelicAcquirePanel, getOwnedRelics, getRelicDef, renderRelicInventoryPanel, getRelicCombatEffects } from './core/RelicSystem.js';
 import { tryFlashback, renderFlashback, serializeFlashbacks, deserializeFlashbacks } from './core/FlashbackSystem.js';
 import { showLevelUpCelebration, getLevelUnlocks } from './core/LevelUpCelebration.js';
 import { assessThreat, drawThreatIndicator, getEnemyTooltipHTML } from './core/EnemyPowerIndicator.js';
@@ -1128,10 +1129,23 @@ function startGame() {
     gameState.soulShards = (gameState.soulShards || 0) + shardDrop;
     gameState.stats.goldEarned = (gameState.stats.goldEarned || 0) + data.rewards.gold;
 
+    // 遗物击杀回血
+    try {
+      const rfx = getRelicCombatEffects();
+      if (rfx.killHealPct > 0) {
+        const relicKillHeal = Math.floor(gameState.player.maxHp * rfx.killHealPct);
+        gameState.player.hp = Math.min(gameState.player.maxHp, gameState.player.hp + relicKillHeal);
+      }
+    } catch {}
     // 统一使用 gameState.addExp() 升级（与主战斗一致）
     const _levelBefore = p.level;
     const _firstLevelOldStats = { maxHp: p.maxHp, atk: p.atk, def: p.def, spd: p.spd || 5, crt: p.crt || 0 };
-    if (data.rewards.exp) gameState.addExp(data.rewards.exp);
+    if (data.rewards.exp) {
+      let relicExpBonus = 0;
+      try { const rfx = getRelicCombatEffects(); relicExpBonus = Math.floor(data.rewards.exp * (rfx.expBonus || 0)); } catch {}
+      gameState.addExp(data.rewards.exp + relicExpBonus);
+      if (relicExpBonus > 0) renderer.notify('♾ 遗物加成: +' + relicExpBonus + ' EXP', '#aa88ff', 80);
+    }
     const _levelsGained = p.level - _levelBefore;
     // 每次升级授予属性点
     for (let i = 0; i < _levelsGained; i++) grantStatPoints(3);
@@ -4392,7 +4406,67 @@ async function startCombat(enemy, preScaledEnemy) {
             overlay.innerHTML = '';
             document.removeEventListener('keydown', bkh);
             autoSave('击败Boss: ' + (enemy.name || 'unknown'));
-            // 触发boss击败事件和对话
+            
+            // ── Boss击杀后掉落遗物（3选1） ──
+            try {
+              const relicChoices = generateRelicChoices(3, 'common', 'boss');
+              if (relicChoices.length > 0) {
+                const relicOverlay = document.createElement('div');
+                relicOverlay.id = 'relic-choice-overlay';
+                relicOverlay.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;z-index:260;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.8);animation:fadeIn 0.4s';
+                relicOverlay.innerHTML = renderRelicChoicePanel(relicChoices);
+                document.body.appendChild(relicOverlay);
+                
+                const _closeRelicPanel = () => {
+                  relicOverlay.remove();
+                  document.removeEventListener('keydown', _relicKeyHandler);
+                  // 继续原来的Boss击败流程
+                  if (enemy.onDefeat) {
+                    if (enemy.onDefeat.flag) gameState.setFlag(enemy.onDefeat.flag);
+                    startDialogue(enemy.onDefeat.lines);
+                  } else {
+                    gameState.setState(GAME_STATE.EXPLORING);
+                  }
+                };
+                
+                relicOverlay.querySelectorAll('.relic-choice').forEach(card => {
+                  card.addEventListener('click', () => {
+                    const idx = parseInt(card.dataset.idx);
+                    const chosen = relicChoices[idx];
+                    if (chosen) {
+                      const res = addRelic(chosen.id);
+                      if (res.success) {
+                        renderer.addFloatText(chosen.icon + ' ' + chosen.name, gameState.player.x, gameState.player.y - 1.5, '#ffcc44');
+                        renderer.notify('获得遗物: ' + chosen.name + ' — ' + chosen.desc, '#ffcc44', 180);
+                        try { audioEngine.play('relic_acquire'); } catch {}
+                        try { audioEngine.play('pickup'); } catch {}
+                      }
+                    }
+                    _closeRelicPanel();
+                  });
+                });
+                
+                const _relicKeyHandler = (ev) => {
+                  const num = parseInt(ev.key);
+                  if (num >= 1 && num <= relicChoices.length) {
+                    const chosen = relicChoices[num - 1];
+                    if (chosen) {
+                      const res = addRelic(chosen.id);
+                      if (res.success) {
+                        renderer.addFloatText(chosen.icon + ' ' + chosen.name, gameState.player.x, gameState.player.y - 1.5, '#ffcc44');
+                        renderer.notify('获得遗物: ' + chosen.name + ' — ' + chosen.desc, '#ffcc44', 180);
+                        try { audioEngine.play('pickup'); } catch {}
+                      }
+                    }
+                    _closeRelicPanel();
+                  }
+                };
+                document.addEventListener('keydown', _relicKeyHandler);
+                return; // 遗物选择完毕后再继续
+              }
+            } catch (e) { console.warn('RelicDrop:', e); }
+            
+            // 如果没有遗物可选，直接继续
             if (enemy.onDefeat) {
               if (enemy.onDefeat.flag) gameState.setFlag(enemy.onDefeat.flag);
               startDialogue(enemy.onDefeat.lines);
