@@ -159,6 +159,7 @@ import './core/DamagePopup.js'; // 伤害飘字（自动监听combat:log_update�
 import { setAtmosphere, removeAtmosphere } from './core/AtmosphereOverlay.js';
 import { getCompanionReaction, showCompanionReaction } from './core/CompanionBattleReaction.js';
 import { initFloorMastery, recordFloorKill, recordFloorCollect, recordFloorEvent, getFloorMasteryRewards, renderMasteryPopup, serializeFloorMastery, deserializeFloorMastery } from './core/FloorMastery.js';
+import { addJournalEntry, triggerChapterJournals, triggerChapterCompleteJournal, serializeJournal, deserializeJournal, renderJournalPanel } from './core/StoryJournal.js';
 import { getCanonState, resetCanonState } from './core/CanonState.js';
 import { showChapterBriefing } from './core/ChapterBriefing.js';
 import { initCombatFXListeners, drawAllCombatFX, isHitStopped, updateAndDrawGhosts } from './core/CombatFX.js';
@@ -182,6 +183,34 @@ let combatHistory = []; // 战斗历史记录
 window._showForgePanel = showForgePanel;
 
 // 成就解锁通知
+// 日志新条目通知
+eventBus.on('journal:new_entry', ({ title }) => {
+  try {
+    const notif = document.createElement('div');
+    notif.style.cssText = 'position:fixed;top:60px;right:20px;z-index:9990;' +
+      'background:rgba(15,10,5,0.92);border:1px solid #88660040;border-radius:8px;' +
+      'padding:8px 16px;animation:fadeIn 0.4s;pointer-events:none;max-width:240px;';
+    notif.innerHTML = '<p style="color:#886644;font-size:10px;letter-spacing:2px;">📖 手记更新</p>' +
+      '<p style="color:#aa9977;font-size:12px;margin-top:2px;">' + title + '</p>';
+    document.body.appendChild(notif);
+    setTimeout(() => { notif.style.transition='opacity 0.5s'; notif.style.opacity='0'; setTimeout(()=>notif.remove(),500); }, 2500);
+  } catch {}
+});
+
+
+// 精通弹窗通知
+eventBus.on('ui:show_mastery_popup', ({ html }) => {
+  try {
+    const popup = document.createElement('div');
+    popup.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:9999;' +
+      'background:rgba(10,8,5,0.96);border:1px solid #44ff8840;border-radius:12px;' +
+      'padding:20px;min-width:300px;animation:fadeIn 0.5s;cursor:pointer;';
+    popup.innerHTML = html;
+    popup.onclick = () => { popup.style.transition='opacity 0.3s'; popup.style.opacity='0'; setTimeout(()=>popup.remove(),300); };
+    document.body.appendChild(popup);
+    setTimeout(() => { try { popup.style.transition='opacity 0.5s'; popup.style.opacity='0'; setTimeout(()=>popup.remove(),500); } catch {} }, 4000);
+  } catch {}
+});
 eventBus.on('achievement:unlocked', ({ achievement }) => {
   const notif = document.createElement('div');
   notif.style.cssText = 'position:fixed;top:20px;right:20px;z-index:99999;' +
@@ -221,6 +250,7 @@ function autoSave(reason = '') {
     localStorage.setItem('ih_training', JSON.stringify(serializeTrainingRoom()));
     localStorage.setItem('ih_subplot', JSON.stringify(getSubplotSystem().toJSON()));
     localStorage.setItem('ih_mastery', JSON.stringify(serializeFloorMastery()));
+    localStorage.setItem('ih_journal', JSON.stringify(serializeJournal()));
     localStorage.setItem('ih_growth', JSON.stringify(serializeGrowth()));
     localStorage.setItem('ih_statalloc', JSON.stringify(serializeStatAllocation()));
     localStorage.setItem('ih_abyss', JSON.stringify(serializeAbyss()));
@@ -856,6 +886,8 @@ document.getElementById('btn-new-game').addEventListener('click', () => {
     try { const _enData = localStorage.getItem('ih_enchant'); if (_enData) deserializeEnchant(JSON.parse(_enData)); } catch {}
     try { const _naData = localStorage.getItem('ih_narratives'); if (_naData) deserializeNarratives(JSON.parse(_naData)); } catch {}
     try { const _abData = localStorage.getItem('ih_abyss'); if (_abData) deserializeAbyss(JSON.parse(_abData)); } catch {}
+    try { const _jlData = localStorage.getItem('ih_journal'); if (_jlData) deserializeJournal(JSON.parse(_jlData)); } catch {}
+    try { const _msData = localStorage.getItem('ih_mastery'); if (_msData) deserializeFloorMastery(JSON.parse(_msData)); } catch {}
     try { const _dlData = localStorage.getItem('ih_daily'); if (_dlData) deserializeDaily(JSON.parse(_dlData));    } catch {}
       } catch {}
       const chapterGens = { 1: generateChapter1, 2: generateChapter2, 3: generateChapter3, 4: generateChapter4, 5: generateChapter5, 6: generateChapter6, 7: generateChapter7, 8: generateChapter8, 9: generateChapter9, 10: generateChapter10, 11: generateChapter11, 12: generateChapter12 };
@@ -1510,6 +1542,8 @@ function showFloorTitle(floor) {
   try { setAtmosphere(gameState.chapter); } catch {}
   // 初始化楼层精通追踪
   try { initFloorMastery(floor.id, floor.entities || entities || []); } catch {}
+  // 触发章节日志
+  try { triggerChapterJournals(gameState.chapter); } catch {}
   const sceneBgMap = {
     '1-1': '/assets/scenes/1-1_列车醒来_背景.jpg',
     '1-2': '/assets/scenes/1-2_蜂巢入口_背景.jpg',
@@ -1708,6 +1742,7 @@ eventBus.on('player:death', () => {
         // 恢复正史状态和支线系统
       try { const _cd = localStorage.getItem('ih_canon'); if (_cd) getCanonState().fromJSON(JSON.parse(_cd)); } catch {}
       try { const _td = localStorage.getItem('ih_training'); if (_td) deserializeTrainingRoom(JSON.parse(_td)); } catch {}
+      try { const _jd = localStorage.getItem('ih_journal'); if (_jd) deserializeJournal(JSON.parse(_jd)); } catch {}
       try { const _sd = localStorage.getItem('ih_subplot'); if (_sd) getSubplotSystem().fromJSON(JSON.parse(_sd)); } catch {}
             renderer.notify('💾 存档已加载', '#44aaff', 90);
       } else {
@@ -4951,6 +4986,8 @@ function triggerEvent(entity) {
     if (evt.flag) gameState.setFlag(evt.flag);
     // 成就追踪: 剧情标记
     try { if (evt.flag) achievementTracker.recordFlag(evt.flag); } catch {}
+    // 精通: 记录事件触发
+    try { recordFloorEvent(chapter.floors[currentFloorIndex]?.id); } catch {}
 
     // 奖励
     if (evt.rewards) {
@@ -5019,6 +5056,8 @@ function triggerEvent(entity) {
           setTimeout(() => { try { dismiss(); } catch {} }, 8000);
         }, 800);
         try { recordMilestone(comp.name + ' \u9635\u4ea1', gameState.chapter, 'companion_death'); } catch {}
+        // 触发手记: 队友阵亡
+        try { if (evt.companionDeath === 'zhang_jie') addJournalEntry('ch5_zhang_jie_death'); } catch {}
           try { const fb = tryFlashback('companion_death'); if (fb) renderFlashback(fb, document.body); } catch {}
       }
       // 也从地图实体移除队友图标
@@ -5437,6 +5476,11 @@ function showChapterComplete() {
     const floorId = chapter.floors[currentFloorIndex]?.id;
     const masteryRewards = getFloorMasteryRewards(floorId, gameState.chapter);
     if (masteryRewards.stars > 0) {
+      // 显示精通弹窗
+      try {
+        const masteryHtml = renderMasteryPopup(floorId, gameState.chapter);
+        if (masteryHtml) eventBus.emit('ui:show_mastery_popup', { html: masteryHtml, floorId });
+      } catch {}
       const p = gameState.player;
       p.exp = (p.exp || 0) + masteryRewards.exp;
       p.gold = (p.gold || 0) + masteryRewards.gold;

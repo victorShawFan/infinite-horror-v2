@@ -21,15 +21,20 @@ let _masteryData = {};
  * 初始化楼层精通追踪
  */
 export function initFloorMastery(floorId, entities) {
+  // 如果已有该楼层的精通数据且已领奖，保留不覆盖
+  if (_masteryData[floorId]?.rewarded) return;
+  
   const enemies = entities.filter(e => e.type === 'enemy' || e.type === 'boss').length;
   const items = entities.filter(e => e.type === 'item').length;
   const events = entities.filter(e => e.type === 'event' || e.type === 'companion').length;
   
+  // 如果已有进度，保留已有进度但更新总数
+  const existing = _masteryData[floorId];
   _masteryData[floorId] = {
-    enemies: { total: enemies, killed: 0 },
-    items: { total: items, collected: 0 },
-    events: { total: events, triggered: 0 },
-    stars: 0,
+    enemies: { total: enemies, killed: existing?.enemies?.killed || 0 },
+    items: { total: items, collected: existing?.items?.collected || 0 },
+    events: { total: events, triggered: existing?.events?.triggered || 0 },
+    stars: existing?.stars || 0,
     completed: false,
   };
 }
@@ -71,14 +76,20 @@ export function calculateFloorStars(floorId) {
   if (m.events.total === 0 || m.events.triggered >= m.events.total) stars++;
   
   m.stars = stars;
-  m.completed = true;
   return stars;
 }
 
 /**
  * 获取精通奖励
  */
-export function getFloorMasteryRewards(floorId, chapter) {
+export function getFloorMasteryRewards(floorId, chapter, claim = true) {
+  const m = _masteryData[floorId];
+  // 防止重复领奖
+  if (claim && m?.rewarded) {
+    const stars = m.stars || calculateFloorStars(floorId);
+    return { stars, exp: 0, gold: 0, rewardPoints: 0, bonusText: ['已领取'] };
+  }
+  
   const stars = calculateFloorStars(floorId);
   const baseExp = 10 + chapter * 5;
   const baseGold = 20 + chapter * 10;
@@ -98,6 +109,8 @@ export function getFloorMasteryRewards(floorId, chapter) {
     rewards.bonusText.push('🏆 +' + rewards.rewardPoints + '奖励点');
   }
   
+  // 标记已领奖
+  if (claim && m) m.rewarded = true;
   return rewards;
 }
 
@@ -115,7 +128,7 @@ export function renderMasteryPopup(floorId, chapter) {
   const m = _masteryData[floorId];
   if (!m) return '';
   
-  const rewards = getFloorMasteryRewards(floorId, chapter);
+  const rewards = getFloorMasteryRewards(floorId, chapter, false);
   const starDisplay = '⭐'.repeat(rewards.stars) + '☆'.repeat(3 - rewards.stars);
   
   const pctEnemy = m.enemies.total > 0 ? Math.floor(m.enemies.killed / m.enemies.total * 100) : 100;
