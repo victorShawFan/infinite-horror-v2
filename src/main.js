@@ -484,6 +484,7 @@ function _showChallengeResults(overlay, rewards, reason, challenge) {
 window.addEventListener('load', async () => {
   const canvas = document.getElementById('game-canvas');
   renderer = new Renderer(canvas);
+  renderer._gameState = gameState;
 
   const fill = document.querySelector('#loading-bar .fill');
   const loadingText = document.querySelector('#loading-screen .loading-text');

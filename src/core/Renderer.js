@@ -38,6 +38,7 @@ export class Renderer {
     this._floatTexts = []; // { text, x, y, color, life }
     this._saveIndicator = 0; // countdown frames
     this._particles = [];
+    this._gameState = null;
     this._ambientParticles = [];
     this._ambientTimer = 0;
     this._flashColor = null;
@@ -217,6 +218,8 @@ export class Renderer {
     } catch {}
 
     this._drawHUD(ctx, p, floor);
+    this._drawStateVignette(ctx, p);
+    try { this._drawFloorProgress(ctx, floor, entities); } catch {}
 
     // ── 全屏闪光效果 ──
     if (this._flashColor && this._flashStart > 0) {
@@ -502,6 +505,92 @@ export class Renderer {
       fullName: '郑吒',
       facing: p.facing || 'down',
     });
+  }
+
+
+  // ── 状态感知屏幕边框光效 ──
+  _drawStateVignette(ctx, p) {
+    const hpPct = p.hp / p.maxHp;
+    
+    // 低血量红色脉搏
+    if (hpPct < 0.3) {
+      const pulse = 0.15 + Math.sin(this._time * 0.08) * 0.1;
+      const grad = ctx.createRadialGradient(
+        CANVAS_W / 2, CANVAS_H / 2, CANVAS_W * 0.3,
+        CANVAS_W / 2, CANVAS_H / 2, CANVAS_W * 0.7
+      );
+      grad.addColorStop(0, 'rgba(0,0,0,0)');
+      grad.addColorStop(1, `rgba(180,0,0,${pulse})`);
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
+    }
+    
+    // 基因锁激活 — 金色边框
+    if (p.geneLockActive) {
+      const glow = 0.08 + Math.sin(this._time * 0.05) * 0.04;
+      const grad = ctx.createRadialGradient(
+        CANVAS_W / 2, CANVAS_H / 2, CANVAS_W * 0.35,
+        CANVAS_W / 2, CANVAS_H / 2, CANVAS_W * 0.65
+      );
+      grad.addColorStop(0, 'rgba(0,0,0,0)');
+      grad.addColorStop(1, `rgba(255,120,0,${glow})`);
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
+    }
+    
+    // 中毒 — 绿色轻微脉动
+    if (p.poisoned || (p.statusEffects && p.statusEffects.some(e => e.type === 'poison'))) {
+      const pulse = 0.06 + Math.sin(this._time * 0.06) * 0.03;
+      ctx.fillStyle = `rgba(0,180,0,${pulse})`;
+      ctx.fillRect(0, 0, CANVAS_W, 3);
+      ctx.fillRect(0, CANVAS_H - 3, CANVAS_W, 3);
+      ctx.fillRect(0, 0, 3, CANVAS_H);
+      ctx.fillRect(CANVAS_W - 3, 0, 3, CANVAS_H);
+    }
+  }
+
+
+  // ── 底部探索进度条 ──
+  _drawFloorProgress(ctx, floor, entities) {
+    if (!floor) return;
+    
+    const totalEnemies = entities.filter(e => e.type === 'enemy' || e.type === 'boss').length;
+    const totalItems = entities.filter(e => e.type === 'item' || e.type === 'equipment' || e.type === 'chest').length;
+    const totalInteract = totalEnemies + totalItems;
+    
+    // 已清除的实体数 (通过removedEntityIds估算)
+    const gs = this._gameState;
+    if (!gs) return;
+    const removedCount = gs.removedEntityIds?.[gs.nodeIndex]?.size || 0;
+    
+    const barW = 200;
+    const barH = 4;
+    const barX = CANVAS_W / 2 - barW / 2;
+    const barY = CANVAS_H - 16;
+    
+    const clearPct = totalInteract > 0 ? Math.min(1, removedCount / totalInteract) : 0;
+    
+    // 背景
+    ctx.fillStyle = 'rgba(30, 30, 40, 0.6)';
+    ctx.fillRect(barX - 2, barY - 2, barW + 4, barH + 4);
+    
+    // 进度
+    ctx.fillStyle = 'rgba(50, 50, 60, 0.8)';
+    ctx.fillRect(barX, barY, barW, barH);
+    
+    const progressColor = clearPct >= 0.8 ? 'rgba(68, 204, 136, 0.7)' : 
+                          clearPct >= 0.5 ? 'rgba(68, 170, 255, 0.6)' : 'rgba(255, 204, 68, 0.5)';
+    ctx.fillStyle = progressColor;
+    ctx.fillRect(barX, barY, barW * clearPct, barH);
+    
+    // 文字
+    ctx.font = '9px "Microsoft YaHei"';
+    ctx.textAlign = 'center';
+    ctx.fillStyle = 'rgba(150, 150, 150, 0.6)';
+    ctx.fillText(
+      (floor.name || '未知区域') + ' · ' + Math.floor(clearPct * 100) + '%探索',
+      CANVAS_W / 2, barY - 4
+    );
   }
 
   _drawHUD(ctx, p, floor) {
