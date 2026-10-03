@@ -121,6 +121,7 @@ import { scanFloor, renderFloorOverview } from './core/FloorScanner.js';
 import { generateRewardChoices, applyReward, renderRewardChoicePanel } from './core/RewardChoiceSystem.js';
 import { generateRelicChoices, addRelic, renderRelicChoicePanel, renderRelicAcquirePanel, getOwnedRelics, getRelicDef, renderRelicInventoryPanel, getRelicCombatEffects } from './core/RelicSystem.js';
 import { getPendingPerkLevels, selectPerk, renderPerkChoicePanel, PERK_TIERS, getPerkCombatEffects, hasPerkForLevel, renderPerkSummary } from './core/PerkSystem.js';
+import { showChapterPrologue } from './core/ChapterPrologue.js';
 import { tryFlashback, renderFlashback, serializeFlashbacks, deserializeFlashbacks } from './core/FlashbackSystem.js';
 import { showLevelUpCelebration, getLevelUnlocks } from './core/LevelUpCelebration.js';
 import { assessThreat, drawThreatIndicator, getEnemyTooltipHTML } from './core/EnemyPowerIndicator.js';
@@ -2081,6 +2082,21 @@ function _showKarmaPanel() {
 // ── 成长轨迹面板 ──
 // ── 章节世界观卡片 ──
 function showChapterLoreCard(chapterNum, onDismiss) {
+  // 显示章节序章（在lore card之前，首次进入章节时）
+  try {
+    const prologueKey = 'ih_prologue_ch' + chapterNum;
+    if (typeof localStorage !== 'undefined' && !localStorage.getItem(prologueKey)) {
+      localStorage.setItem(prologueKey, '1');
+      showChapterPrologue(chapterNum, () => {
+        _showLoreCardInternal(chapterNum, onDismiss);
+      });
+      return;
+    }
+  } catch {}
+  _showLoreCardInternal(chapterNum, onDismiss);
+}
+
+function _showLoreCardInternal(chapterNum, onDismiss) {
   const overlay = document.getElementById('overlay');
   const card = renderChapterIntroCard(chapterNum);
   overlay.innerHTML = '<div style="position:absolute;top:0;left:0;right:0;bottom:0;display:flex;flex-direction:column;align-items:center;justify-content:center;background:rgba(0,0,0,0.95);animation:fadeIn 1s ease;cursor:pointer;" id="lore-card-dismiss">'
