@@ -16,6 +16,7 @@ import { getAvailableSkills } from './SkillSystem.js';
 import { getPlayerPowerRating, getEnemyPowerRating, comparePower } from './PowerRating.js';
 import { drawWallTile, drawFloorTile, drawLavaTile, drawStairsTile, drawCharacterSprite, drawHealthBar } from './SpriteRenderer.js';
 import { dynamicLighting } from './DynamicLighting.js';
+import { getPendingPoints } from './StatAllocation.js';
 
 export class Renderer {
   constructor(canvas) {
@@ -518,6 +519,16 @@ export class Renderer {
     ctx.fillStyle = COLORS.PLAYER;
     ctx.textAlign = 'left';
     ctx.fillText(`郑吒 Lv.${p.level}`, pad + 10, pad + 20);
+    // 属性点待分配指示器
+    try {
+      const pendingPts = getPendingPoints();
+      if (pendingPts > 0) {
+        const ptText = '⬆' + pendingPts;
+        ctx.font = 'bold 11px "Microsoft YaHei"';
+        ctx.fillStyle = '#ffcc44';
+        ctx.fillText(ptText, pad + 170, pad + 20);
+      }
+    } catch {}
 
     // HP条
     this._drawBar(ctx, pad + 10, pad + 30, 200, 12, p.hp, p.maxHp, COLORS.HP_BAR, '#333');
