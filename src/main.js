@@ -3207,7 +3207,45 @@ function startCombat(enemy, preScaledEnemy) {
       }
       if (scaledEnemy.rewards?.rewardPoints) renderer.addFloatText(`+${scaledEnemy.rewards.rewardPoints}RP`, enemy.x + 0.5, enemy.y - 1.5, 'rgb(255, 170, 0)');
 
-      // 里程碑：战斗成就
+      
+      // ── 战斗结算吐司（非Boss时显示） ──
+      if (!(scaledEnemy.bossId || scaledEnemy.type === 'boss')) {
+        try {
+          const _toastOverlay = document.getElementById('ui-overlay');
+          const _hpPct = Math.round((p.hp / p.maxHp) * 100);
+          const _dmgDealt = result.totalDamageDealt || 0;
+          const _dmgTaken = result.totalDamageTaken || Math.max(0, hpBeforeCombat - p.hp);
+          const _crits = result.critCount || 0;
+          const _drops = result.drops || [];
+          const _dropText = _drops.length > 0 ? _drops.map(d => d.type === 'equipment' ? '⚔' + (d.equipment?.name || '') : d.type === 'gem' ? '💎' : '📦').join(' ') : '';
+          const _envTriggered = (result.log || []).filter(l => l.type && l.type.startsWith('environment')).length;
+          const _toastDiv = document.createElement('div');
+          _toastDiv.style.cssText = 'position:fixed;top:12px;right:12px;z-index:9000;' +
+            'background:rgba(10,10,20,0.92);border:1px solid ' + battleRating.color + '60;' +
+            'border-radius:10px;padding:10px 14px;min-width:180px;max-width:260px;' +
+            'box-shadow:0 4px 20px rgba(0,0,0,0.5);' +
+            'animation:slideInRight 0.3s ease-out;pointer-events:none;';
+          _toastDiv.innerHTML = 
+            '<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">' +
+            '<span style="font-size:22px;color:' + battleRating.color + ';font-weight:900;text-shadow:0 0 8px ' + battleRating.glow + ';">' + battleRating.grade + '</span>' +
+            '<div><p style="color:#ddd;font-size:12px;font-weight:bold;">vs ' + (scaledEnemy.name || '敌人') + '</p>' +
+            '<p style="color:#888;font-size:9px;">' + battleRating.label + ' · ' + result.rounds + '回合' + (_crits > 0 ? ' · ' + _crits + '暴击' : '') + '</p></div></div>' +
+            '<div style="display:flex;gap:6px;flex-wrap:wrap;">' +
+            '<span style="color:#aa88ff;font-size:11px;">+' + (scaledEnemy.rewards?.exp || 0) + ' EXP</span>' +
+            (scaledEnemy.rewards?.gold ? '<span style="color:#ffcc44;font-size:11px;">+' + scaledEnemy.rewards.gold + 'G</span>' : '') +
+            '<span style="color:' + (_hpPct >= 80 ? '#44ff88' : _hpPct >= 40 ? '#ffcc44' : '#ff4444') + ';font-size:11px;">HP ' + _hpPct + '%</span>' +
+            (_envTriggered > 0 ? '<span style="color:#4488aa;font-size:10px;">🌍×' + _envTriggered + '</span>' : '') +
+            '</div>' +
+            (_dropText ? '<p style="color:#aa88ff;font-size:10px;margin-top:4px;">' + _dropText + '</p>' : '') +
+            (getPendingPoints() > 0 ? '<p style="color:#ffcc44;font-size:9px;margin-top:3px;">⬆ ' + getPendingPoints() + '属性点待分配 (U)</p>' : '');
+          _toastOverlay.appendChild(_toastDiv);
+          // 自动消失
+          setTimeout(() => { _toastDiv.style.transition = 'opacity 0.5s'; _toastDiv.style.opacity = '0'; }, 2200);
+          setTimeout(() => { try { _toastDiv.remove(); } catch {} }, 2800);
+        } catch(e) { /* toast is non-critical */ }
+      }
+
+// 里程碑：战斗成就
       try { checkCombatMilestones(milestoneTracker, gameState.stats, enemy, result); } catch {}
       // 里程碑：成长成就（战斗后可能升级/进阶）
       try { checkGrowthMilestones(milestoneTracker, gameState.player); } catch {}
