@@ -3619,6 +3619,107 @@ function _showPreBattleItemPanel(overlay, scaledEnemy, enemy) {
   });
 }
 
+
+// ── 战斗中实时HP条显示 ──
+function _showCombatHUD(player, enemy, scaledEnemy) {
+  const existing = document.getElementById('combat-hud');
+  if (existing) existing.remove();
+  
+  const hud = document.createElement('div');
+  hud.id = 'combat-hud';
+  hud.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:150;pointer-events:none;' +
+    'display:flex;justify-content:center;gap:16px;padding:8px 20px;' +
+    'background:linear-gradient(180deg,rgba(0,0,0,0.7)0%,rgba(0,0,0,0)100%);' +
+    'animation:fadeIn 0.3s;';
+  
+  const pHpPct = Math.max(0, Math.min(100, (player.hp / player.maxHp) * 100));
+  const eHpPct = 100; // enemy starts at full
+  
+  hud.innerHTML = `
+    <div style="flex:1;max-width:220px;text-align:right;">
+      <p style="color:#44aaff;font-size:11px;letter-spacing:2px;margin-bottom:3px;">郑吒 Lv.${player.level}</p>
+      <div style="background:rgba(50,50,50,0.6);border-radius:4px;height:10px;overflow:hidden;position:relative;">
+        <div id="chud-player-hp" style="background:linear-gradient(90deg,#44ff88,#22cc66);width:${pHpPct}%;height:100%;transition:width 0.3s;border-radius:4px;"></div>
+      </div>
+      <p id="chud-player-hp-text" style="color:#ccc;font-size:9px;margin-top:1px;">${player.hp}/${player.maxHp}</p>
+    </div>
+    <div style="display:flex;align-items:center;">
+      <span style="color:#ff4444;font-size:16px;font-weight:bold;text-shadow:0 0 8px rgba(255,68,68,0.4);">⚔</span>
+    </div>
+    <div style="flex:1;max-width:220px;">
+      <p style="color:#ff6644;font-size:11px;letter-spacing:2px;margin-bottom:3px;">${scaledEnemy.name}</p>
+      <div style="background:rgba(50,50,50,0.6);border-radius:4px;height:10px;overflow:hidden;position:relative;">
+        <div id="chud-enemy-hp" style="background:linear-gradient(90deg,#ff4444,#cc2222);width:100%;height:100%;transition:width 0.3s;border-radius:4px;"></div>
+      </div>
+      <p id="chud-enemy-hp-text" style="color:#ccc;font-size:9px;margin-top:1px;">HP ${scaledEnemy.hp}</p>
+    </div>
+  `;
+  document.body.appendChild(hud);
+  
+  // Store references for updates
+  window._combatHUD = {
+    _trackedPlayerHp: player.hp,
+    _trackedEnemyHp: scaledEnemy.hp,
+    playerMaxHp: player.maxHp,
+    enemyMaxHp: scaledEnemy.hp,
+    playerBar: null, // will be set after DOM mount
+    enemyBar: null,
+  };
+  
+  requestAnimationFrame(() => {
+    window._combatHUD.playerBar = document.getElementById('chud-player-hp');
+    window._combatHUD.enemyBar = document.getElementById('chud-enemy-hp');
+    window._combatHUD.playerText = document.getElementById('chud-player-hp-text');
+    window._combatHUD.enemyText = document.getElementById('chud-enemy-hp-text');
+  });
+}
+
+function _updateCombatHUD(playerHp, playerMaxHp, enemyHpPct) {
+  if (!window._combatHUD) return;
+  const h = window._combatHUD;
+  if (h.playerBar) {
+    h.playerBar.style.width = Math.max(0, (playerHp / playerMaxHp) * 100) + '%';
+    const hpColor = playerHp / playerMaxHp > 0.5 ? '#44ff88' : playerHp / playerMaxHp > 0.25 ? '#ffcc44' : '#ff4444';
+    h.playerBar.style.background = `linear-gradient(90deg,${hpColor},${hpColor}88)`;
+  }
+  if (h.playerText) h.playerText.textContent = playerHp + '/' + playerMaxHp;
+  if (h.enemyBar) h.enemyBar.style.width = Math.max(0, enemyHpPct * 100) + '%';
+}
+
+function _hideCombatHUD() {
+  const el = document.getElementById('combat-hud');
+  if (el) {
+    el.style.transition = 'opacity 0.5s';
+    el.style.opacity = '0';
+    setTimeout(() => el.remove(), 500);
+  }
+  window._combatHUD = null;
+  window._updateCombatHUDDelta = null;
+}
+
+// 战斗动画中实时HP更新
+window._updateCombatHUDDelta = function(target, delta) {
+  if (!window._combatHUD) return;
+  const h = window._combatHUD;
+  if (target === 'player') {
+    h._trackedPlayerHp = Math.max(0, (h._trackedPlayerHp ?? h.playerMaxHp) + delta);
+    if (h.playerBar) {
+      const pct = Math.max(0, h._trackedPlayerHp / h.playerMaxHp * 100);
+      h.playerBar.style.width = pct + '%';
+      const hpColor = pct > 50 ? '#44ff88' : pct > 25 ? '#ffcc44' : '#ff4444';
+      h.playerBar.style.background = 'linear-gradient(90deg,' + hpColor + ',' + hpColor + '88)';
+    }
+    if (h.playerText) h.playerText.textContent = Math.max(0, h._trackedPlayerHp) + '/' + h.playerMaxHp;
+  } else if (target === 'enemy') {
+    h._trackedEnemyHp = Math.max(0, (h._trackedEnemyHp ?? h.enemyMaxHp) + delta);
+    if (h.enemyBar) {
+      h.enemyBar.style.width = Math.max(0, h._trackedEnemyHp / h.enemyMaxHp * 100) + '%';
+    }
+    if (h.enemyText) h.enemyText.textContent = 'HP ' + Math.max(0, h._trackedEnemyHp);
+  }
+};
+
+
 function startCombat(enemy, preScaledEnemy) {
   // 战斗发起闪光
   renderer.flash('rgba(255, 50, 50)', 150);
@@ -3701,8 +3802,13 @@ function startCombat(enemy, preScaledEnemy) {
   window._gamePlayerX = gameState.player.x;
   window._gamePlayerY = gameState.player.y;
 
+  // 显示战斗HUD
+  _showCombatHUD(gameState.player, enemy, scaledEnemy);
+  
   // 播放战斗动画序列
   combatAnimator.playCombatSequence(result, enemy, () => {
+    // 隐藏战斗HUD
+    _hideCombatHUD();
     // ── 战斗评级（先于奖励面板，以便奖励等级正确） ──
     const battleRating = result.victory ? rateBattle(result, gameState.player) : null;
     if (battleRating) { recordRating(battleRating); result.rating = battleRating; }

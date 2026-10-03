@@ -272,9 +272,23 @@ export class CombatAnimator {
           anim.isCrit ? 'rgb(255, 200, 50)' : 'rgb(255, 150, 80)'
         );
         audioEngine.playHit(anim.isCrit);
+        // 更新战斗HUD - 敌人受伤
+        try {
+          const dmg = parseInt(anim.text.replace(/[^0-9]/g, '')) || 0;
+          if (window._combatHUD && window._updateCombatHUDDelta) {
+            window._updateCombatHUDDelta('enemy', -dmg);
+          }
+        } catch {}
         break;
 
       case 'enemyAttack':
+        // 更新战斗HUD - 玩家受伤
+        try {
+          const dmg = parseInt(anim.text.replace(/[^0-9]/g, '')) || 0;
+          if (window._combatHUD && window._updateCombatHUDDelta) {
+            window._updateCombatHUDDelta('player', -dmg);
+          }
+        } catch {}
         // 显示在玩家附近
         const px = window._gamePlayerX || 0;
         const py = window._gamePlayerY || 0;
