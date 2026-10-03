@@ -3173,6 +3173,8 @@ function showCombatConfirm(enemy) {
         ${traitsHtml}
         ${descText}
         ${formatEnvironmentHTML(gameState.chapter)}
+        <!-- 情报提示 -->
+        ${(() => { try { const intel = getPreBattleIntelHTML(scaledEnemy || enemy); return intel ? '<div style="margin:6px 0;">' + intel + '</div>' : ''; } catch { return ''; } })()}
         <!-- 伤害分解 -->
         <div style="margin:8px 0;padding:8px;background:rgba(255,255,255,0.02);border-radius:8px;">${generateDamageBreakdownHTML(p, scaledEnemy)}</div>
         ${formatTacticalHintsHTML(tacticalHints)}
