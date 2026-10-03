@@ -76,6 +76,23 @@ console.log('[ Ch5 结束 — 队长交接 ]');
   ok(!cs.canResurrect('zhang_jie'), '张杰不可复活');
 }
 
+// === Ch7 结束: 恶魔队团灭，只剩郑吒 ===
+console.log('[ Ch7 结束 — 团灭 ]');
+{
+  const cs = resetCanonState();
+  cs.advanceTo(7, 6);
+  // 只有郑吒活着（罗甘道在系统中但还没加入队伍）
+  const aliveInTeam = cs.getAlive().filter(c => c.id !== 'luo_gandao');
+  ok(aliveInTeam.length === 1, `Ch7 只有1个队内成员存活 (实际: ${aliveInTeam.length})`);
+  ok(aliveInTeam[0]?.name === '郑吒', 'Ch7 唯一存活者是郑吒');
+  ok(!cs.characters.zhan_lan.alive, 'Ch7 詹岚阵亡');
+  ok(!cs.characters.zhao_yingkong.alive, 'Ch7 赵樱空阵亡');
+  ok(!cs.characters.xiao_honglv.alive, 'Ch7 萧宏律阵亡');
+  ok(!cs.characters.zhang_heng.alive, 'Ch7 张恒阵亡');
+  ok(!cs.characters.cheng_xiao.alive, 'Ch7 程啸阵亡');
+  ok(cs.captain === 'zheng_zha', 'Ch7 队长仍是郑吒');
+}
+
 // === Ch8: 楚轩复活, 霸王复活, 王侠复活, 罗甘道死亡 ===
 console.log('[ Ch8 — 复活与罗甘道死亡 ]');
 {

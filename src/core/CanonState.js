@@ -42,6 +42,12 @@ const CANON_DEATHS = {
   // Ch5
   wang_xia_ch5:    { chapter: 5, floor: 4, event: '固定死亡线', irrevocable: true },
   zhang_jie:       { chapter: 5, floor: 6, event: '张杰牺牲·不可复活', irrevocable: true, noResurrect: true },
+  // Ch7 — 恶魔队团灭中洲队（除郑吒外所有活着的队友）
+  zhan_lan_ch7:      { chapter: 7, floor: 5, event: '恶魔队猎杀', irrevocable: true },
+  zhao_yingkong_ch7: { chapter: 7, floor: 5, event: '恶魔队猎杀', irrevocable: true },
+  xiao_honglv_ch7:   { chapter: 7, floor: 5, event: '恶魔队猎杀', irrevocable: true },
+  zhang_heng_ch7:    { chapter: 7, floor: 5, event: '恶魔队猎杀', irrevocable: true },
+  cheng_xiao_ch7:    { chapter: 7, floor: 5, event: '恶魔队猎杀', irrevocable: true },
   // Ch7 — 团灭后只有郑吒经十字勋章复活
   // Ch8 — 复活楚轩等
   luo_gandao:      { chapter: 8, floor: 6, event: '负点被主神抹杀', irrevocable: true },
