@@ -1366,6 +1366,7 @@ function gameLoop() {
   if (!gameStarted) { gameLoopRunning = false; return; }
 
   const floor = chapter.floors[currentFloorIndex];
+  renderer._chapter = gameState.chapter || 1;
   renderer.render(floor, entities, hoveredEntity, dialogueState, combatResult, currentFloorIndex);
 
   // 迷你地图

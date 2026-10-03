@@ -15,6 +15,7 @@ import { scaleEnemy } from './DifficultyScaler.js';
 import { getAvailableSkills } from './SkillSystem.js';
 import { getPlayerPowerRating, getEnemyPowerRating, comparePower } from './PowerRating.js';
 import { drawWallTile, drawFloorTile, drawLavaTile, drawStairsTile, drawCharacterSprite, drawHealthBar } from './SpriteRenderer.js';
+import { dynamicLighting } from './DynamicLighting.js';
 
 export class Renderer {
   constructor(canvas) {
@@ -190,6 +191,28 @@ export class Renderer {
 
     // ── HUD（固定位置）──
     this._entities = entities;
+    
+    // ── 动态光照 ──
+    try {
+      if (!dynamicLighting._lightCanvas) {
+        dynamicLighting.init(CANVAS_W, CANVAS_H);
+      }
+      const pScreenX = (p.x - camX) * TILE_SIZE + TILE_SIZE / 2;
+      const pScreenY = (p.y - camY) * TILE_SIZE + TILE_SIZE / 2;
+      // Collect light sources from stairs and items
+      const lightSources = [];
+      for (const e of (floor.entities || [])) {
+        if (!e || e._collected) continue;
+        const sx = (e.x - camX) * TILE_SIZE + TILE_SIZE / 2;
+        const sy = (e.y - camY) * TILE_SIZE + TILE_SIZE / 2;
+        if (sx > -100 && sx < CANVAS_W + 100 && sy > -100 && sy < CANVAS_H + 100) {
+          if (e.type === 'boss' || e.bossId) lightSources.push({ x: sx, y: sy, radius: 3 });
+          else if (e.sprite === '🔑' || e.sprite === '💎') lightSources.push({ x: sx, y: sy, radius: 1.5 });
+        }
+      }
+      dynamicLighting.render(ctx, this._chapter || 1, pScreenX, pScreenY, this._time, lightSources);
+    } catch {}
+
     this._drawHUD(ctx, p, floor);
 
     // ── 全屏闪光效果 ──
