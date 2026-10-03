@@ -132,6 +132,7 @@ import { modalQueue } from './core/ModalQueue.js';
 import { showLiveBattleLog, updateLiveBattleLog, hideLiveBattleLog } from './core/LiveBattleLog.js';
 import { shouldShowAnalysis, showPostCombatAnalysis } from './core/PostCombatAnalysis.js';
 import { showCharacterSheet } from './core/CharacterSheet.js';
+import { renderBattleStatsDashboard, getBattleDashboardSummary } from './core/BattleStatsDashboard.js';
 import { showWorldDashboard } from './core/WorldDashboard.js';
 import { showKeybindHelp } from './core/KeybindHelp.js';
 import { generateDamageBreakdownHTML } from './core/DamageBreakdown.js';
@@ -3964,6 +3965,10 @@ function _showPauseMenu() {
             background:rgba(255,68,68,0.06);border:1px solid #ff444422;color:#ff6666;
             padding:10px;cursor:pointer;font-size:13px;font-family:inherit;
             border-radius:8px;letter-spacing:2px;">🌍 轮回之路</button>
+          <button class="pause-btn" id="pause-battle-stats" style="
+            background:rgba(255,136,68,0.06);border:1px solid #ff884422;color:#ff8844;
+            padding:10px;cursor:pointer;font-size:13px;font-family:inherit;
+            border-radius:8px;letter-spacing:2px;">⚔ 战斗仪表板</button>
           <button class="pause-btn" id="pause-stars" style="
             background:rgba(255,204,68,0.06);border:1px solid #ffcc4422;color:#ffcc44;
             padding:10px;cursor:pointer;font-size:13px;font-family:inherit;
@@ -4078,6 +4083,16 @@ function _showPauseMenu() {
     const skh = (e) => { if (e.key === 'Escape') closeStar(); };
     document.addEventListener('keydown', skh);
     document.getElementById('star-backdrop')?.addEventListener('click', (e) => { if (e.target.id === 'star-backdrop') closeStar(); });
+  });
+    // ── 战斗仪表板 ──
+  document.getElementById('pause-battle-stats')?.addEventListener('click', () => {
+    overlay.innerHTML = '<div style="position:absolute;top:0;left:0;right:0;bottom:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.85);" id="bstats-backdrop">' +
+      '<div id="bstats-container" style="background:rgba(8,5,10,0.98);border:1px solid #ff8844;border-radius:12px;padding:0;max-width:500px;width:94%;max-height:85vh;overflow-y:auto;"></div></div>';
+    try { renderBattleStatsDashboard(document.getElementById('bstats-container')); } catch(e) { console.warn('BattleStats:', e); document.getElementById('bstats-container').innerHTML = '<p style="color:#ff4444;padding:24px;text-align:center;">加载失败</p>'; }
+    const closeBs = () => { _showPauseMenu(); document.removeEventListener('keydown', bskh); };
+    const bskh = (e) => { if (e.key === 'Escape') closeBs(); };
+    document.addEventListener('keydown', bskh);
+    document.getElementById('bstats-backdrop')?.addEventListener('click', (e) => { if (e.target.id === 'bstats-backdrop') closeBs(); });
   });
     document.getElementById('pause-help')?.addEventListener('click', () => {
     close();
