@@ -1468,6 +1468,17 @@ export class Renderer {
         case 'affix_damage': ctx.fillStyle = '#ff6644'; break;
         case 'affix_dodge': ctx.fillStyle = '#aacccc'; break;
         case 'affix_heal': ctx.fillStyle = '#cc44aa'; break;
+        case 'relic_buff': ctx.fillStyle = '#88ccff'; break;
+        case 'relic_attack': ctx.fillStyle = '#44ddff'; break;
+        case 'boss_dialogue': ctx.fillStyle = '#ffccaa'; break;
+        case 'karma_effect': ctx.fillStyle = '#cc88ff'; break;
+        case 'combo': ctx.fillStyle = '#ffdd44'; break;
+        case 'defend': ctx.fillStyle = '#4488ff'; break;
+        case 'stamina': ctx.fillStyle = '#88aacc'; break;
+        case 'companion_skill': ctx.fillStyle = '#66ccff'; break;
+        case 'death_save': ctx.fillStyle = '#ffdd00'; break;
+        case 'relic_death_save': ctx.fillStyle = '#ffcc44'; break;
+        case 'perk_effect': ctx.fillStyle = '#aa88ff'; break;
         default: ctx.fillStyle = COLORS.TEXT_DIM;
       }
       ctx.fillText(entry.text, x + 16, y + 52 + (i - startIdx) * 22);

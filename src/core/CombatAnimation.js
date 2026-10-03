@@ -241,6 +241,35 @@ export class CombatAnimator {
         this._queue.push({ type: 'text', text: '💀 复活！', x: enemy.x, y: enemy.y - 0.5, color: 'rgb(255, 68, 255)', delay });
         this._queue.push({ type: 'flash', color: 'rgba(255, 68, 255, 0.3)', delay });
         delay += 400;
+      } else if (entry.type === 'boss_dialogue') {
+        // Boss台词 — 深红大字 + 短暂暗屏
+        this._queue.push({ type: 'text', text: entry.text.slice(0, 28), x: enemy.x, y: enemy.y - 1, color: 'rgb(255, 180, 150)', delay });
+        delay += 350;
+      } else if (entry.type === 'karma_effect') {
+        // 业力效果 — 紫色浮字
+        const px = window._gamePlayerX || 0;
+        const py = window._gamePlayerY || 0;
+        this._queue.push({ type: 'text', text: entry.text.slice(0, 20), x: px, y: py - 0.9, color: 'rgb(200, 136, 255)', delay });
+        delay += 200;
+      } else if (entry.type === 'death_save' || entry.type === 'relic_death_save' || entry.type === 'perk_effect') {
+        // 死亡拯救/天赋效果 — 金色闪光
+        const px = window._gamePlayerX || 0;
+        const py = window._gamePlayerY || 0;
+        this._queue.push({ type: 'text', text: entry.text.slice(0, 20), x: px, y: py - 0.8, color: 'rgb(255, 221, 68)', delay });
+        this._queue.push({ type: 'flash', color: 'rgba(255, 221, 68, 0.3)', duration: 300, delay });
+        this._queue.push({ type: 'particles', x: px * TILE_SIZE + TILE_SIZE/2, y: py * TILE_SIZE + TILE_SIZE/2, color: 'rgb(255, 221, 68)', count: 8, delay });
+        delay += 400;
+      } else if (entry.type === 'affix_warning') {
+        // 精英词缀警告 — 橙色大字 + 轻震
+        this._queue.push({ type: 'text', text: entry.text.slice(0, 22), x: enemy.x, y: enemy.y - 0.8, color: 'rgb(255, 170, 0)', delay });
+        this._queue.push({ type: 'shake', intensity: 2, duration: 100, delay });
+        delay += 250;
+      } else if (entry.type === 'companion_dialogue') {
+        // 同伴台词 — 淡蓝色浮字
+        const px = window._gamePlayerX || 0;
+        const py = window._gamePlayerY || 0;
+        this._queue.push({ type: 'text', text: entry.text.slice(0, 22), x: px + 1, y: py - 0.5, color: entry.color || 'rgb(170, 204, 255)', delay });
+        delay += 200;
       }
 
       // 限制最多显示的回合数，避免太长
