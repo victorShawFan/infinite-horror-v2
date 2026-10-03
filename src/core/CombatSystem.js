@@ -38,6 +38,7 @@ import { getKarmaCombatModifiers, getKarmaLevel } from './KarmaSystem.js';
 import { shouldPauseForAction, showBattleActionMenu, applyDefendAction, attemptFlee, ACTION_TYPE } from './BattleActionMenu.js';
 import { getRelicCombatEffects, hasRelic } from './RelicSystem.js';
 import { getPerkCombatEffects } from './PerkSystem.js';
+import { getEnemyIntent } from './EnemyIntentSystem.js';
 
 // ── 伤害计算 ──
 export function calcDamage(attacker, defender, damageType = DAMAGE_TYPE.PHYSICAL, minDmg = 1) {

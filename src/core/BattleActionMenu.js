@@ -17,6 +17,7 @@
 // ═══════════════════════════════════════════════════════════════
 
 import { eventBus } from './EventBus.js';
+import { getEnemyIntent, renderIntentIndicator } from './EnemyIntentSystem.js';
 import { gameState } from './GameState.js';
 import { getAvailableSkills } from './SkillSystem.js';
 
@@ -90,8 +91,24 @@ export function showBattleActionMenu(player, enemy, round, combatState) {
       pointer-events: all;
     `;
     
-    // 回合信息
-    const roundInfo = `<p style="color:#666;font-size:10px;letter-spacing:3px;margin-bottom:8px;">— 第 ${round + 1} 回合 · 选择行动 —</p>`;
+    // 回合信息 + 敌人意图
+    let intentHtml = '';
+    try {
+      const intent = getEnemyIntent(enemy, round + 1, enemy.hp || enemy._currentHp || 100, enemy._maxHp || enemy.hp || 100, player.hp, player.maxHp);
+      if (intent) {
+        intentHtml = `
+          <div style="margin-bottom:8px;display:flex;align-items:center;justify-content:center;gap:8px;">
+            <span style="color:#888;font-size:10px;">敌方意图:</span>
+            <div style="display:flex;align-items:center;gap:4px;padding:3px 10px;background:${intent.color}11;border:1px solid ${intent.color}33;border-radius:6px;">
+              <span style="font-size:14px;">${intent.icon}</span>
+              <span style="color:${intent.color};font-size:11px;font-weight:bold;">${intent.label}</span>
+              <span style="color:#999;font-size:10px;">${intent.desc}</span>
+            </div>
+          </div>
+        `;
+      }
+    } catch {}
+    const roundInfo = `${intentHtml}<p style="color:#666;font-size:10px;letter-spacing:3px;margin-bottom:8px;">— 第 ${round + 1} 回合 · 选择行动 —</p>`;
     
     // 主行动按钮
     const mainActions = `
