@@ -23,6 +23,7 @@ import { getAvailableEnchants, applyEnchant, removeEnchant, renderEnchantPanel, 
 import { generateRelicChoices, addRelic, hasRelic, getOwnedRelics, getRelicDef, RELIC_DEFINITIONS, renderRelicInventoryPanel } from './RelicSystem.js';
 import { renderJournalPanel } from './StoryJournal.js';
 import { renderIntelPanel } from './EnemyIntelSystem.js';
+import { renderWorldMap } from './WorldMap.js';
 
 /** 主神空间商店/强化项目 */
 // 每次回到主神空间，每人只可替另一名队员承担一次强化
@@ -274,6 +275,7 @@ export function renderLordGodSpace(onClose) {
       { key: 'dashboard', name: '📊 仪表板', color: '#ff8c3c' },
       { key: 'journal', name: '📖 轮回手记', color: '#886644' },
       { key: 'intel', name: '📋 敌人情报', color: '#44aaff' },
+      { key: 'worldmap', name: '🌍 轮回之路', color: '#ff4444' },
     ];
 
     overlay.innerHTML = `

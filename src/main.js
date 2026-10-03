@@ -164,6 +164,7 @@ import { getCanonState, resetCanonState } from './core/CanonState.js';
 import { announce, autoAnnounce, clearAnnouncements } from './core/CombatAnnouncer.js';
 import { showBossVictoryScreen } from './core/VictoryScreen.js';
 import { addSyncGauge, getSyncGauge, executeSyncAttack, renderSyncGaugeHTML, resetSyncGauge, serializeSync, deserializeSync } from './core/SyncAttack.js';
+import { renderWorldMap } from './core/WorldMap.js';
 import { recordEncounter, recordKill, recordDiscovery, getIntelCombatBonus, getEnemyIntel, getPreBattleIntelHTML, renderIntelPanel, serializeIntel, deserializeIntel, INTEL_LEVEL } from './core/EnemyIntelSystem.js';
 import { showChapterBriefing } from './core/ChapterBriefing.js';
 import { initCombatFXListeners, drawAllCombatFX, isHitStopped, updateAndDrawGhosts } from './core/CombatFX.js';
@@ -3787,6 +3788,10 @@ function _showPauseMenu() {
             background:rgba(68,170,255,0.08);border:1px solid #44aaff33;color:#44aaff;
             padding:10px;cursor:pointer;font-size:13px;font-family:inherit;
             border-radius:8px;letter-spacing:2px;">📋 敌人情报</button>
+          <button class="pause-btn" id="pause-worldmap" style="
+            background:rgba(255,68,68,0.06);border:1px solid #ff444422;color:#ff6666;
+            padding:10px;cursor:pointer;font-size:13px;font-family:inherit;
+            border-radius:8px;letter-spacing:2px;">🌍 轮回之路</button>
           <button class="pause-btn" id="pause-help" style="
             background:rgba(100,100,100,0.08);border:1px solid #55555533;color:#888;
             padding:10px;cursor:pointer;font-size:13px;font-family:inherit;
@@ -3811,7 +3816,19 @@ function _showPauseMenu() {
     close();
     showSettingsPanel();
   });
-  document.getElementById('pause-intel')?.addEventListener('click', () => {
+  document.getElementById('pause-worldmap')?.addEventListener('click', () => {
+    const whtml = renderWorldMap();
+    overlay.innerHTML = '<div style="position:absolute;top:0;left:0;right:0;bottom:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.85);" id="worldmap-backdrop">' +
+      '<div style="background:rgba(8,5,10,0.98);border:1px solid #ff4444;border-radius:12px;padding:24px;max-width:500px;width:94%;max-height:85vh;overflow-y:auto;">' +
+      whtml +
+      '<p style="color:#555;font-size:10px;text-align:center;margin-top:12px;">Esc / 点击空白关闭</p>' +
+      '</div></div>';
+    const closeW = () => { _showPauseMenu(); document.removeEventListener('keydown', wkh); };
+    const wkh = (e) => { if (e.key === 'Escape') closeW(); };
+    document.addEventListener('keydown', wkh);
+    document.getElementById('worldmap-backdrop')?.addEventListener('click', (e) => { if (e.target.id === 'worldmap-backdrop') closeW(); });
+  });
+    document.getElementById('pause-intel')?.addEventListener('click', () => {
     const ihtml = renderIntelPanel();
     overlay.innerHTML = '<div style="position:absolute;top:0;left:0;right:0;bottom:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.85);" id="intel-backdrop">' +
       '<div style="background:rgba(5,8,15,0.98);border:1px solid #44aaff;border-radius:12px;padding:24px;max-width:460px;width:92%;max-height:80vh;overflow-y:auto;">' +
