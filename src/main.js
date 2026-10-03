@@ -100,6 +100,7 @@ import { getBattleEnvironment, formatEnvironmentHTML, processEnvironmentEffect }
 import { generateTacticalHints, formatTacticalHintsHTML } from './core/TacticalHints.js';
 import { initStatAllocation, grantStatPoints, allocateStat, autoAllocate, getPendingPoints, renderStatAllocationPanel, serializeStatAllocation, deserializeStatAllocation, getRecommendedBuild } from './core/StatAllocation.js';
 import { getEnchantCombatBonus, serializeEnchant, deserializeEnchant } from './core/EnchantSystem.js';
+import { getChapterNarrative, markNarrativeTriggered, applyNarrativeResult, serializeNarratives, deserializeNarratives } from './core/ChapterNarrativeEvents.js';
 
 // ── 全局状态 ──
 let renderer;
@@ -158,6 +159,7 @@ function autoSave(reason = '') {
     localStorage.setItem('ih_growth', JSON.stringify(serializeGrowth()));
     localStorage.setItem('ih_statalloc', JSON.stringify(serializeStatAllocation()));
     localStorage.setItem('ih_abyss', JSON.stringify(serializeAbyss()));
+    try { localStorage.setItem('ih_narratives', JSON.stringify(serializeNarratives())); } catch {}
     localStorage.setItem('ih_daily', JSON.stringify(serializeDaily()));    // 设置持久化：难度 + 音量 + 迷雾
     try {
       const settingsData = {
@@ -772,6 +774,7 @@ document.getElementById('btn-new-game').addEventListener('click', () => {
     try { const _saData = localStorage.getItem('ih_statalloc'); if (_saData) deserializeStatAllocation(JSON.parse(_saData)); } catch {}
     initStatAllocation();
     try { const _enData = localStorage.getItem('ih_enchant'); if (_enData) deserializeEnchant(JSON.parse(_enData)); } catch {}
+    try { const _naData = localStorage.getItem('ih_narratives'); if (_naData) deserializeNarratives(JSON.parse(_naData)); } catch {}
     try { const _abData = localStorage.getItem('ih_abyss'); if (_abData) deserializeAbyss(JSON.parse(_abData)); } catch {}
     try { const _dlData = localStorage.getItem('ih_daily'); if (_dlData) deserializeDaily(JSON.parse(_dlData));    } catch {}
       } catch {}
@@ -1654,6 +1657,8 @@ function _loadAbyssFloor(floorData) {
   // Reset fog for new floor
   try { fogOfWar.resetFloor(currentFloorIndex); } catch {}
   fogOfWar.updateVision(currentFloorIndex, gameState.player.x, gameState.player.y);
+  // 检查章节叙事事件
+  try { setTimeout(() => checkNarrativeEvent(), 600); } catch {}
   
   // Update atmosphere
   try { if (floorData.theme) atmosphereRenderer.setFloorTheme(floorData.theme); } catch {}
@@ -2696,6 +2701,90 @@ function _showCredits() {
     if (e.key === 'Escape') { overlay.innerHTML = ''; document.removeEventListener('keydown', kh); }
   };
   document.addEventListener('keydown', kh);
+}
+
+
+// ── 章节叙事事件 ──
+function checkNarrativeEvent() {
+  if (gameState.state !== GAME_STATE.EXPLORING) return;
+  const floorNum = (gameState.nodeIndex || 0) + 1;
+  const evt = getChapterNarrative(gameState.chapter, floorNum);
+  if (!evt) return;
+  
+  markNarrativeTriggered(evt.id);
+  gameState.setState(GAME_STATE.DIALOGUE);
+  const overlay = document.getElementById('ui-overlay');
+  
+  overlay.innerHTML = `
+    <div style="
+      position:absolute;top:0;left:0;right:0;bottom:0;
+      display:flex;align-items:center;justify-content:center;
+      background:rgba(0,0,0,0.85);
+      animation:fadeIn 0.3s;
+    " id="narrative-backdrop">
+      <div style="
+        background:rgba(10,10,20,0.97);border:1px solid #ffcc4440;border-radius:16px;
+        padding:24px;max-width:480px;width:92%;
+        box-shadow:0 0 40px rgba(255,204,68,0.1);
+      ">
+        <p style="color:#ffcc44;font-size:10px;letter-spacing:4px;text-align:center;margin-bottom:4px;">📖 叙事事件</p>
+        <h3 style="color:#eee;text-align:center;font-size:16px;margin-bottom:14px;">${evt.title}</h3>
+        <div style="color:#bbb;font-size:13px;line-height:1.8;margin-bottom:18px;
+          border-left:2px solid #ffcc4430;padding-left:14px;white-space:pre-wrap;">${evt.text}</div>
+        <div style="display:flex;flex-direction:column;gap:8px;" id="narrative-choices">
+          ${evt.choices.map((ch, i) => `
+            <button class="narrative-choice" data-choice-idx="${i}" style="
+              background:rgba(255,204,68,0.06);border:1px solid #ffcc4430;
+              color:#ddd;padding:12px 16px;cursor:pointer;font-size:13px;
+              font-family:inherit;border-radius:8px;text-align:left;
+              transition:all 0.2s;
+            " onmouseover="this.style.borderColor='#ffcc44';this.style.background='rgba(255,204,68,0.12)'"
+               onmouseout="this.style.borderColor='#ffcc4430';this.style.background='rgba(255,204,68,0.06)'">
+              ${ch.text}
+            </button>
+          `).join('')}
+        </div>
+      </div>
+    </div>
+  `;
+  
+  overlay.querySelectorAll('.narrative-choice').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const idx = parseInt(btn.dataset.choiceIdx);
+      const choice = evt.choices[idx];
+      if (!choice) return;
+      
+      const result = choice.result;
+      const effects = applyNarrativeResult(result);
+      
+      // 显示结果
+      const choiceDiv = document.getElementById('narrative-choices');
+      choiceDiv.innerHTML = `
+        <div style="
+          background:rgba(68,255,136,0.06);border:1px solid #44ff8830;
+          border-radius:8px;padding:14px;margin-top:8px;
+        ">
+          <p style="color:#ccc;font-size:12px;line-height:1.7;white-space:pre-wrap;margin-bottom:8px;">${result.text}</p>
+          ${effects.length > 0 ? '<p style="color:#ffcc44;font-size:11px;">' + effects.join(' · ') + '</p>' : ''}
+        </div>
+        <button id="btn-narrative-close" style="
+          margin-top:12px;background:transparent;border:1px solid #444;
+          color:#888;padding:8px 30px;cursor:pointer;font-size:12px;
+          font-family:inherit;border-radius:6px;width:100%;
+        ">继续探索</button>
+      `;
+      
+      document.getElementById('btn-narrative-close')?.addEventListener('click', () => {
+        overlay.innerHTML = '';
+        gameState.setState(GAME_STATE.EXPLORING);
+        renderer.drawHUD(gameState.player, gameState);
+        // 显示效果浮动文字
+        for (const eff of effects) {
+          renderer.addFloatText(eff, gameState.player.x, gameState.player.y - 1, '#ffcc44');
+        }
+      });
+    });
+  });
 }
 
 // ── 暂停菜单 (Esc) ──
