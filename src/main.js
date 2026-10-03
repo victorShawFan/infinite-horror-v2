@@ -211,6 +211,37 @@ eventBus.on('ui:show_mastery_popup', ({ html }) => {
     setTimeout(() => { try { popup.style.transition='opacity 0.5s'; popup.style.opacity='0'; setTimeout(()=>popup.remove(),500); } catch {} }, 4000);
   } catch {}
 });
+
+// ── 故事事件 → 手记触发 ──
+eventBus.on('flag:set', ({ flag }) => {
+  try {
+    // 章节关键事件映射到手记
+    const FLAG_JOURNAL_MAP = {
+      // 第二章
+      'ch2_alien_nest': 'ch2_alien_fear',
+      'ch2_chuxuan_joined': 'ch2_chuxuan_arrival',
+      // 第三章
+      'ch3_curse_start': 'ch3_cursed',
+      // 第五章
+      'ch5_new_captain': 'ch5_captain',
+      // 第七章
+      'ch7_team_wipe': 'ch7_team_wiped',
+      'ch7_revival_oath': 'ch7_revival',
+      // 第八章
+      'ch8_chuxuan_revive': 'ch8_chuxuan_return',
+      'ch8_luogan_erase': 'ch8_luogan',
+      // 第十章
+      'ch10_five_teams': 'ch10_five_teams',
+      'ch10_zhao_yingkong_past': 'ch10_yingkong',
+      // 第十二章
+      'ch12_final_battle': 'ch12_final',
+      'ch12_chuxuan_sacrifice': 'ch12_chuxuan',
+      'ch12_ending': 'ch12_ending',
+    };
+    const journalId = FLAG_JOURNAL_MAP[flag];
+    if (journalId) addJournalEntry(journalId);
+  } catch {}
+});
 eventBus.on('achievement:unlocked', ({ achievement }) => {
   const notif = document.createElement('div');
   notif.style.cssText = 'position:fixed;top:20px;right:20px;z-index:99999;' +
@@ -3718,6 +3749,10 @@ function _showPauseMenu() {
             background:rgba(255,204,68,0.08);border:1px solid #ffcc4433;color:#ffcc44;
             padding:10px;cursor:pointer;font-size:13px;font-family:inherit;
             border-radius:8px;letter-spacing:2px;">⚙ 设置</button>
+          <button class="pause-btn" id="pause-journal" style="
+            background:rgba(136,102,68,0.08);border:1px solid #88664433;color:#886644;
+            padding:10px;cursor:pointer;font-size:13px;font-family:inherit;
+            border-radius:8px;letter-spacing:2px;">📖 轮回手记</button>
           <button class="pause-btn" id="pause-help" style="
             background:rgba(100,100,100,0.08);border:1px solid #55555533;color:#888;
             padding:10px;cursor:pointer;font-size:13px;font-family:inherit;
@@ -3742,7 +3777,20 @@ function _showPauseMenu() {
     close();
     showSettingsPanel();
   });
-  document.getElementById('pause-help')?.addEventListener('click', () => {
+  document.getElementById('pause-journal')?.addEventListener('click', () => {
+    // Show journal panel overlay
+    const jhtml = renderJournalPanel();
+    overlay.innerHTML = '<div style="position:absolute;top:0;left:0;right:0;bottom:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.85);" id="journal-backdrop">' +
+      '<div style="background:rgba(8,6,3,0.98);border:1px solid #886644;border-radius:12px;padding:24px;max-width:460px;width:92%;max-height:80vh;overflow-y:auto;">' +
+      jhtml +
+      '<p style="color:#555;font-size:10px;text-align:center;margin-top:12px;">Esc / 点击空白关闭</p>' +
+      '</div></div>';
+    const closeJ = () => { _showPauseMenu(); document.removeEventListener('keydown', jkh); };
+    const jkh = (e) => { if (e.key === 'Escape') closeJ(); };
+    document.addEventListener('keydown', jkh);
+    document.getElementById('journal-backdrop')?.addEventListener('click', (e) => { if (e.target.id === 'journal-backdrop') closeJ(); });
+  });
+    document.getElementById('pause-help')?.addEventListener('click', () => {
     close();
     showKeybindHelp();
   });
