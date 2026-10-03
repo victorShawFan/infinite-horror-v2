@@ -116,6 +116,7 @@ import { fogOfWar } from './core/FogOfWar.js';
 import { openMerchantShop } from './core/FieldMerchant.js';
 import { injectKeyDoors, getDoorReward, initKeys, getKeyCount } from './core/KeyDoorSystem.js';
 import { injectInteractables, activateInteractable } from './core/FloorInteractables.js';
+import { getChapterLore, renderChapterIntroCard } from './core/ChapterWorldLore.js';
 import { renderAbilitiesPanel } from './core/CompanionAbilities.js';
 import { getKarmaLevel, getKarmaCombatModifiers, getEndingType, renderKarmaPanel, renderKarmaDisplay } from './core/KarmaSystem.js';
 import { getStash, addToStash, removeFromStash, isStashFull, openEquipmentStash, serializeStash, deserializeStash } from './core/EquipmentStash.js';
@@ -1746,6 +1747,25 @@ function _showKarmaPanel() {
 }
 
 // ── 成长轨迹面板 ──
+// ── 章节世界观卡片 ──
+function showChapterLoreCard(chapterNum, onDismiss) {
+  const overlay = document.getElementById('overlay');
+  const card = renderChapterIntroCard(chapterNum);
+  overlay.innerHTML = '<div style="position:absolute;top:0;left:0;right:0;bottom:0;display:flex;flex-direction:column;align-items:center;justify-content:center;background:rgba(0,0,0,0.95);animation:fadeIn 1s ease;cursor:pointer;" id="lore-card-dismiss">'
+    + card
+    + '<p style="color:#444;font-size:10px;margin-top:24px;letter-spacing:4px;animation:pulse 2s infinite;">点击或按任意键继续</p>'
+    + '</div>';
+  overlay.style.display = 'flex';
+  const dismiss = () => {
+    overlay.style.display = 'none';
+    overlay.innerHTML = '';
+    window.removeEventListener('keydown', dismiss);
+    if (onDismiss) onDismiss();
+  };
+  document.getElementById('lore-card-dismiss')?.addEventListener('click', dismiss);
+  window.addEventListener('keydown', dismiss);
+}
+
 function _showGrowthPanel() {
   if (gameState.state !== GAME_STATE.EXPLORING) return;
   gameState.setState(GAME_STATE.INVENTORY);

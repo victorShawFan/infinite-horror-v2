@@ -1,3 +1,4 @@
+import { getChapterLore, renderChapterIntroCard } from './ChapterWorldLore.js';
 // ═══════════════════════════════════════════════════════════════
 // 场景转换系统 — 层间/章间过渡动画与叙事文字
 // ═══════════════════════════════════════════════════════════════
@@ -72,6 +73,17 @@ export function fadeBlackTransition(container, opts = {}) {
  * 章节标题卡片 — 大字标题 + 世界描述 + 章数
  */
 export function chapterIntroTransition(container, opts = {}) {
+  // 使用章节世界观数据增强
+  try {
+    const chapterLore = getChapterLore(opts.chapter || 1);
+    if (chapterLore && !opts.subtitle) {
+      opts.subtitle = chapterLore.subtitle || '';
+    }
+    if (chapterLore && !opts.quote) {
+      opts.quote = chapterLore.quote || '';
+    }
+  } catch {}
+
   const {
     chapterNum = 1,
     chapterName = '',

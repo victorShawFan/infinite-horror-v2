@@ -64,6 +64,8 @@ class GameState {
 
     // 队友状态
     this.companions = [];
+    this.karma = 0;
+    this.soulShards = 0;
 
     // 剧情标记
     this.flags = new Set();
@@ -288,6 +290,8 @@ class GameState {
       gemInventory: [...this.gemInventory],
       relationships: { ...this.relationships },
       soulFragments: this.player.soulFragments || 0,
+      karma: this.karma || 0,
+      soulShards: this.soulShards || 0,
     };
   }
 
@@ -337,6 +341,8 @@ class GameState {
       this.gemInventory = parsed.gemInventory || [];
       this.relationships = parsed.relationships || {};
       this.player.soulFragments = parsed.soulFragments || 0;
+      this.karma = parsed.karma || 0;
+      this.soulShards = parsed.soulShards || 0;
       eventBus.emit('game:loaded', { slot });
       return true;
     } catch (e) {
