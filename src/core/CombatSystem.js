@@ -1,4 +1,5 @@
 import { getActiveMutators } from './NewGamePlus.js';
+import { getOrderCombatEffect, tickOrderCooldown } from './TacticalOrders.js';
 import { getEffectModifiers, addEffect as addStatusEffect } from './StatusEffectTracker.js';
 // ═══════════════════════════════════════════════════════════════
 // 战斗系统 — 魔塔式数值对撞 + 血统特技 + 芯片元素 + 速度双击
@@ -610,6 +611,7 @@ if (chipFx.hasIceChip && enemy.atk !== enemyEffAtk) {
   let bossLowHpTriggered = false;
   let playerLowHpBossLineTriggered = false;
   while (enemyHp > 0 && playerHp > 0) {
+    tickOrderCooldown();
     round++;
     // ── 天赋：恐惧领域叠加（每5回合） ──
     if (perkFx.fearAuraStack > 0 && round > 0 && round % 5 === 0) {
@@ -1998,6 +2000,14 @@ export function getEffectiveAtk(player) {
   try {
     const statusMods = getEffectModifiers();
     if (statusMods.atk) atk += statusMods.atk;
+  } catch {}
+  // 战术指令加成
+  try {
+    const orderFx = getOrderCombatEffect();
+    if (orderFx.companionDmgMult && orderFx.companionDmgMult !== 1) {
+      const companionAtk = Math.floor(atk * 0.1 * (orderFx.companionDmgMult - 1));
+      atk += companionAtk;
+    }
   } catch {}
   // 业力系统加成
   try {

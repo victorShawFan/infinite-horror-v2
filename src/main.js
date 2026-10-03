@@ -152,6 +152,7 @@ import { initStatAllocation, grantStatPoints, allocateStat, autoAllocate, getPen
 import { getEnchantCombatBonus, serializeEnchant, deserializeEnchant } from './core/EnchantSystem.js';
 import { getChapterNarrative, markNarrativeTriggered, applyNarrativeResult, serializeNarratives, deserializeNarratives } from './core/ChapterNarrativeEvents.js';
 import { getSubplotSystem, resetSubplotSystem } from './core/SubplotSystem.js';
+import { getCurrentOrder, setOrder, tickOrderCooldown, getOrderCombatEffect, resetOrders, ORDER_TYPE, renderOrderSelector } from './core/TacticalOrders.js';
 import { getCanonState, resetCanonState } from './core/CanonState.js';
 import { showChapterBriefing } from './core/ChapterBriefing.js';
 import { initCombatFXListeners, drawAllCombatFX, isHitStopped, updateAndDrawGhosts } from './core/CombatFX.js';
@@ -927,6 +928,7 @@ function menuLoop() {
 function startNewGame() {
   resetCanonState();
   resetSubplotSystem();
+  resetOrders();
 
   gameState._chapterClearCounted = false;
   // 重置状态
