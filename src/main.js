@@ -98,6 +98,7 @@ import { drawQuestHUD, formatQuestPanelHTML } from './core/QuestTracker.js';
 import { initTitleFX, spawnDamageNumber, screenShake, screenFlash } from './core/TitleScreenFX.js';
 import { getBattleEnvironment, formatEnvironmentHTML, processEnvironmentEffect } from './core/BattleEnvironment.js';
 import { generateTacticalHints, formatTacticalHintsHTML } from './core/TacticalHints.js';
+import { initStatAllocation, grantStatPoints, allocateStat, autoAllocate, getPendingPoints, renderStatAllocationPanel, serializeStatAllocation, deserializeStatAllocation, getRecommendedBuild } from './core/StatAllocation.js';
 
 // ── 全局状态 ──
 let renderer;
@@ -154,6 +155,7 @@ function autoSave(reason = '') {
     localStorage.setItem('ih_status_effects', JSON.stringify(serializeEffects()));
     localStorage.setItem('ih_dynamic_diff', JSON.stringify(serializeDynamicDifficulty()));
     localStorage.setItem('ih_growth', JSON.stringify(serializeGrowth()));
+    localStorage.setItem('ih_statalloc', JSON.stringify(serializeStatAllocation()));
     localStorage.setItem('ih_abyss', JSON.stringify(serializeAbyss()));
     localStorage.setItem('ih_daily', JSON.stringify(serializeDaily()));    // 设置持久化：难度 + 音量 + 迷雾
     try {
@@ -766,6 +768,8 @@ document.getElementById('btn-new-game').addEventListener('click', () => {
     try { const _seData = localStorage.getItem('ih_status_effects'); if (_seData) deserializeEffects(JSON.parse(_seData)); } catch {}
     try { const _ddData = localStorage.getItem('ih_dynamic_diff'); if (_ddData) deserializeDynamicDifficulty(JSON.parse(_ddData)); } catch {}
     try { const _grData = localStorage.getItem('ih_growth'); if (_grData) deserializeGrowth(JSON.parse(_grData)); } catch {}
+    try { const _saData = localStorage.getItem('ih_statalloc'); if (_saData) deserializeStatAllocation(JSON.parse(_saData)); } catch {}
+    initStatAllocation();
     try { const _abData = localStorage.getItem('ih_abyss'); if (_abData) deserializeAbyss(JSON.parse(_abData)); } catch {}
     try { const _dlData = localStorage.getItem('ih_daily'); if (_dlData) deserializeDaily(JSON.parse(_dlData));    } catch {}
       } catch {}
@@ -959,6 +963,12 @@ function startGame() {
         'Lv.' + p.level + ' 升级！HP+' + Math.floor(8 + p.level * 1.5) + ' ATK+2 DEF+1',
         'rgb(255, 215, 0)', 120
       );
+        // 显示属性点提示
+        if (getPendingPoints() > 0) {
+          setTimeout(() => {
+            renderer.addFloatText('⬆ ' + getPendingPoints() + '属性点待分配', gameState.player.x, gameState.player.y - 3, '#ffcc44');
+          }, 800);
+        }
     });
   }
 
@@ -994,10 +1004,12 @@ function startGame() {
       p.exp -= p.expToNext;
       p.level++;
       p.expToNext = 20 + (p.level - 1) * 15;
-      p.maxHp += 12;
-      p.hp = p.maxHp;
-      p.atk += 2;
-      p.def += 1;
+      // 基础成长（每级固定获得）
+      p.maxHp += 5;
+      p.hp = Math.min(p.hp + 5, p.maxHp);
+      p.atk += 1;
+      // 授予3属性点供手动分配
+      grantStatPoints(3);
     }
 
     try { localStorage.setItem('ih_challenge', JSON.stringify(challengeState.toJSON()));
@@ -1005,7 +1017,8 @@ function startGame() {
     localStorage.setItem('ih_battle_history', JSON.stringify(serializeBattleHistory()));
     localStorage.setItem('ih_status_effects', JSON.stringify(serializeEffects()));
     localStorage.setItem('ih_dynamic_diff', JSON.stringify(serializeDynamicDifficulty()));
-    localStorage.setItem('ih_growth', JSON.stringify(serializeGrowth())); } catch {}
+    localStorage.setItem('ih_growth', JSON.stringify(serializeGrowth()));
+    localStorage.setItem('ih_statalloc', JSON.stringify(serializeStatAllocation())); } catch {}
     try { localStorage.setItem('ih_streak', JSON.stringify(killStreak.toJSON())); } catch {}
     localStorage.setItem('ih_abyss', JSON.stringify(serializeAbyss()));
     localStorage.setItem('ih_daily', JSON.stringify(serializeDaily()));    try { localStorage.setItem('ih_fog', JSON.stringify(fogOfWar.toJSON())); } catch {}
@@ -1431,7 +1444,8 @@ document.addEventListener('keydown', (e) => {
     localStorage.setItem('ih_battle_history', JSON.stringify(serializeBattleHistory()));
     localStorage.setItem('ih_status_effects', JSON.stringify(serializeEffects()));
     localStorage.setItem('ih_dynamic_diff', JSON.stringify(serializeDynamicDifficulty()));
-    localStorage.setItem('ih_growth', JSON.stringify(serializeGrowth())); } catch {}
+    localStorage.setItem('ih_growth', JSON.stringify(serializeGrowth()));
+    localStorage.setItem('ih_statalloc', JSON.stringify(serializeStatAllocation())); } catch {}
     renderer.notify('💾 手动存档完成', '#44ff88', 90);
     return;
     localStorage.setItem('ih_abyss', JSON.stringify(serializeAbyss()));
@@ -1532,6 +1546,10 @@ case 'h': case '?':
       case 'y':
         // 成长轨迹
         _showGrowthPanel();
+        return;
+      case 'u':
+        // 属性分配
+        _showStatAllocPanel();
         return;
       case 'escape':
         // 暂停菜单
@@ -1686,6 +1704,85 @@ function _showGrowthPanel() {
     }
   };
   document.addEventListener('keydown', kh);
+}
+
+// ── 属性分配面板 ──
+function _showStatAllocPanel() {
+  if (gameState.state !== GAME_STATE.EXPLORING && gameState.state !== GAME_STATE.INVENTORY) return;
+  const prevState = gameState.state;
+  gameState.setState(GAME_STATE.INVENTORY);
+  const overlay = document.getElementById('ui-overlay');
+  
+  function renderPanel() {
+    const content = renderStatAllocationPanel();
+    const pendingPts = getPendingPoints();
+    overlay.innerHTML = `
+      <div style="
+        position:absolute;top:0;left:0;right:0;bottom:0;
+        display:flex;align-items:center;justify-content:center;
+        background:rgba(0,0,0,0.85);
+      " id="statalloc-backdrop">
+        <div style="
+          background:rgba(10,10,20,0.97);border:1px solid ${pendingPts > 0 ? '#ffcc4480' : '#33333380'};border-radius:16px;
+          padding:20px;max-width:450px;width:92%;max-height:85vh;overflow-y:auto;
+        ">
+          <div class="stat-alloc-panel">${content}</div>
+          <div style="text-align:center;margin-top:12px;display:flex;gap:8px;justify-content:center;">
+            <button id="btn-close-statalloc" style="
+              background:transparent;border:1px solid #444;color:#888;
+              padding:6px 24px;cursor:pointer;font-size:12px;font-family:inherit;border-radius:6px;
+            ">关闭 (U/Esc)</button>
+          </div>
+        </div>
+      </div>
+    `;
+    
+    // 绑定属性分配按钮点击
+    overlay.querySelectorAll('[data-stat-alloc]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const statId = btn.dataset.statAlloc;
+        const result = allocateStat(statId);
+        if (result.success) {
+          try { audioEngine.play('pickup'); } catch {}
+          renderPanel(); // 刷新
+          renderer.drawHUD(gameState.player, gameState);
+        }
+      });
+    });
+    
+    // 绑定一键分配按钮
+    overlay.querySelectorAll('[data-auto-alloc]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const presetId = btn.dataset.autoAlloc;
+        const result = autoAllocate(presetId);
+        if (result.success) {
+          try { audioEngine.play('pickup'); } catch {}
+          renderPanel(); // 刷新
+          renderer.drawHUD(gameState.player, gameState);
+        }
+      });
+    });
+    
+    document.getElementById('btn-close-statalloc')?.addEventListener('click', closePanel);
+    document.getElementById('statalloc-backdrop')?.addEventListener('click', (e) => {
+      if (e.target.id === 'statalloc-backdrop') closePanel();
+    });
+  }
+  
+  function closePanel() {
+    overlay.innerHTML = '';
+    gameState.setState(GAME_STATE.EXPLORING);
+    document.removeEventListener('keydown', kh);
+  }
+  
+  const kh = (e) => {
+    if (e.key === 'Escape' || e.key.toLowerCase() === 'u') {
+      closePanel();
+    }
+  };
+  document.addEventListener('keydown', kh);
+  
+  renderPanel();
 }
 
 // ── 每日挑战菜单 ──
