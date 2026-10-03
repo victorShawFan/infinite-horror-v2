@@ -161,6 +161,7 @@ import { getCompanionReaction, showCompanionReaction } from './core/CompanionBat
 import { initFloorMastery, recordFloorKill, recordFloorCollect, recordFloorEvent, getFloorMasteryRewards, renderMasteryPopup, serializeFloorMastery, deserializeFloorMastery } from './core/FloorMastery.js';
 import { addJournalEntry, triggerChapterJournals, triggerChapterCompleteJournal, serializeJournal, deserializeJournal, renderJournalPanel } from './core/StoryJournal.js';
 import { getCanonState, resetCanonState } from './core/CanonState.js';
+import { announce, autoAnnounce, clearAnnouncements } from './core/CombatAnnouncer.js';
 import { recordEncounter, recordKill, recordDiscovery, getIntelCombatBonus, getEnemyIntel, getPreBattleIntelHTML, renderIntelPanel, serializeIntel, deserializeIntel, INTEL_LEVEL } from './core/EnemyIntelSystem.js';
 import { showChapterBriefing } from './core/ChapterBriefing.js';
 import { initCombatFXListeners, drawAllCombatFX, isHitStopped, updateAndDrawGhosts } from './core/CombatFX.js';
@@ -214,6 +215,11 @@ eventBus.on('intel:level_up', ({ name, newLevel }) => {
     document.body.appendChild(notif);
     setTimeout(() => { notif.style.transition='opacity 0.5s'; notif.style.opacity='0'; setTimeout(()=>notif.remove(),500); }, 2500);
   } catch {}
+});
+
+// 播报系统震屏
+eventBus.on('screen:shake', ({ intensity, duration }) => {
+  try { renderer.shake(intensity || 3, duration || 200); } catch {}
 });
 // 精通弹窗通知
 eventBus.on('ui:show_mastery_popup', ({ html }) => {
