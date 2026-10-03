@@ -165,6 +165,7 @@ import { checkFateChoice, makeFateChoice, applyFateConsequence, renderFateChoice
 import { initDirector, stopDirector, directorOnRound, directorOnDamage, directorOnChainReaction, directorOnBossPhase, directorOnDefend, directorOnVictory, directorOnDefeat, getTension, renderBattleSummaryPanel } from './core/CombatDirector.js';
 import { getChapterEnvironment, checkEnvironmentHazard, applyEnvironmentEffect, clearEnvironmentEffects, renderEnvironmentInfo, getFloorNarrative } from './core/EnvironmentHazards.js';
 import { checkCompanionEvents, markEventTriggered, renderCompanionDialogue, serializeCompanionStoryEvents, deserializeCompanionStoryEvents, resetCompanionStoryEvents } from './core/CompanionStoryEvents.js';
+import { generateFloorChallenges, evaluateChallenges, setFloorStarData, getFloorStarData, getTotalStars, renderFloorChallengeHUD, serializeStarChallenge, deserializeStarChallenge, initStarChallenge } from './core/StarChallenge.js';
 import { addJournalEntry, triggerChapterJournals, triggerChapterCompleteJournal, serializeJournal, deserializeJournal, renderJournalPanel } from './core/StoryJournal.js';
 import { getCanonState, resetCanonState } from './core/CanonState.js';
 import { announce, autoAnnounce, clearAnnouncements } from './core/CombatAnnouncer.js';
@@ -317,6 +318,7 @@ function autoSave(reason = '') {
     try { localStorage.setItem('ih_awakening', JSON.stringify(serializeAwakening())); } catch {}
     try { localStorage.setItem('ih_fate', JSON.stringify(serializeFateChoices())); } catch {}
     try { localStorage.setItem('ih_comp_story', JSON.stringify(serializeCompanionStoryEvents())); } catch {}
+    try { localStorage.setItem('ih_stars', JSON.stringify(serializeStarChallenge())); } catch {}
     localStorage.setItem('ih_journal', JSON.stringify(serializeJournal()));
     localStorage.setItem('ih_intel', JSON.stringify(serializeIntel()));
     localStorage.setItem('ih_sync', JSON.stringify(serializeSync()));
@@ -962,6 +964,7 @@ document.getElementById('btn-new-game').addEventListener('click', () => {
     try { const _awkData = localStorage.getItem('ih_awakening'); if (_awkData) deserializeAwakening(JSON.parse(_awkData)); } catch {}
     try { const _fateData = localStorage.getItem('ih_fate'); if (_fateData) deserializeFateChoices(JSON.parse(_fateData)); } catch {}
     try { const _csData = localStorage.getItem('ih_comp_story'); if (_csData) deserializeCompanionStoryEvents(JSON.parse(_csData)); } catch {}
+    try { const _stData = localStorage.getItem('ih_stars'); if (_stData) deserializeStarChallenge(JSON.parse(_stData)); } catch {}
     try { const _dlData = localStorage.getItem('ih_daily'); if (_dlData) deserializeDaily(JSON.parse(_dlData));    } catch {}
       } catch {}
       const chapterGens = { 1: generateChapter1, 2: generateChapter2, 3: generateChapter3, 4: generateChapter4, 5: generateChapter5, 6: generateChapter6, 7: generateChapter7, 8: generateChapter8, 9: generateChapter9, 10: generateChapter10, 11: generateChapter11, 12: generateChapter12 };
