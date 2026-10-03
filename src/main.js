@@ -1119,6 +1119,7 @@ function startGame() {
   chapter = generateChapter1();
   // 初始化大气效果
   atmosphereRenderer.setChapter(1);
+  try { if (screenEffects) screenEffects.setChapter(1); } catch {}
   currentFloorIndex = gameState.nodeIndex || 0;
   // 章节任务简报 — 电影式过场
   showChapterBriefing(gameState.chapter).then(() => {
@@ -5609,6 +5610,7 @@ function _startFromChapter(chapterNum) {
   
   chapter = (generators[chapterNum] || generateChapter1)();
   atmosphereRenderer.setChapter(chapterNum);
+  try { if (screenEffects) screenEffects.setChapter(chapterNum); } catch {}
   currentFloorIndex = 0;
   loadFloor(0);
   gameState.setState(GAME_STATE.EXPLORING);
