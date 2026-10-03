@@ -2707,6 +2707,8 @@ function showCombatConfirm(enemy) {
         </div>
         
         <!-- 待生效增益提示 -->
+        <!-- 可用技能预览 -->
+        <div id="available-skills-preview" style="text-align:center;margin-top:6px;min-height:16px;"></div>
         <div id="pending-buffs-preview" style="text-align:center;margin-top:6px;min-height:16px;"></div>
         
         <!-- 按钮 -->
@@ -2770,6 +2772,19 @@ function showCombatConfirm(enemy) {
   
   // 显示已有增益和加成明细
   _updatePendingBuffsPreview();
+  // 更新可用技能预览
+  try {
+    const skillEl = document.getElementById('available-skills-preview');
+    if (skillEl) {
+      const availSkills = getAvailableSkills(p);
+      if (availSkills.length > 0) {
+        skillEl.innerHTML = '<p style="color:#888;font-size:9px;margin-bottom:3px;">⚡ 自动释放技能</p>' +
+          '<div style="display:flex;gap:4px;justify-content:center;flex-wrap:wrap;">' +
+          availSkills.map(s => '<span style="color:' + (s.color || '#ff8844') + ';font-size:10px;padding:2px 6px;background:rgba(255,136,68,0.08);border:1px solid ' + (s.color || '#ff8844') + '22;border-radius:4px;">' + (s.icon || '⚡') + ' ' + s.name + '</span>').join('') +
+          '</div>';
+      }
+    }
+  } catch {}
   _updateBattlePreviewNumbers(scaledEnemy);
   
   // Keyboard shortcuts
