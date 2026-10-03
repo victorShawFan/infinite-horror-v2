@@ -176,7 +176,7 @@ function autoSave(reason = '') {
   if (now - _lastAutoSave < 2000) return; // 防抖: 2秒内不重复保存
   _lastAutoSave = now;
   try {
-    gameState.save(0);
+    gameState.save(0, reason);
     localStorage.setItem('ih_milestones', JSON.stringify(milestoneTracker.toJSON()));
     localStorage.setItem('ih_lore', JSON.stringify(loreTracker.toJSON()));
     localStorage.setItem('ih_tutorial', JSON.stringify(tutorialManager.toJSON()));
@@ -2995,6 +2995,132 @@ function checkNarrativeEvent() {
 }
 
 // ── 暂停菜单 (Esc) ──
+
+// ── 多存档槽管理面板 ──
+function _showSaveSlotPanel(onClose) {
+  const overlay = document.getElementById('ui-overlay');
+  const p = gameState.player;
+  
+  // Read all save slots
+  const slots = [];
+  for (let i = 0; i < 5; i++) {
+    try {
+      const raw = localStorage.getItem('infinite_horror_save_' + i);
+      if (raw) {
+        const data = JSON.parse(raw);
+        slots.push({
+          slot: i,
+          exists: true,
+          chapter: data.chapter || 1,
+          level: data.player?.level || 1,
+          hp: data.player?.hp || 0,
+          maxHp: data.player?.maxHp || 100,
+          nodeIndex: data.nodeIndex || 0,
+          timestamp: data._saveTimestamp || '未知',
+          reason: data._saveReason || '',
+        });
+      } else {
+        slots.push({ slot: i, exists: false });
+      }
+    } catch {
+      slots.push({ slot: i, exists: false });
+    }
+  }
+  
+  overlay.innerHTML = `
+    <div style="position:absolute;top:0;left:0;right:0;bottom:0;
+      display:flex;align-items:center;justify-content:center;
+      background:rgba(0,0,0,0.8);" id="save-slot-bg">
+      <div style="background:rgba(8,8,18,0.98);border:1px solid #4488ff33;border-radius:16px;
+        padding:24px;max-width:450px;width:92%;">
+        <h2 style="color:#4488ff;letter-spacing:4px;font-size:18px;text-align:center;margin-bottom:16px;">
+          💾 存 档 管 理
+        </h2>
+        <div style="display:flex;flex-direction:column;gap:8px;">
+          ${slots.map(s => `
+            <div class="save-slot-row" data-slot="${s.slot}" style="
+              display:flex;justify-content:space-between;align-items:center;
+              background:${s.exists ? 'rgba(68,136,255,0.05)' : 'rgba(50,50,50,0.2)'};
+              border:1px solid ${s.exists ? '#4488ff22' : '#22222244'};
+              border-radius:8px;padding:10px 14px;cursor:pointer;
+              transition:all 0.2s;
+            " onmouseenter="this.style.borderColor='${s.exists ? '#4488ff66' : '#44444488'}';this.style.background='${s.exists ? 'rgba(68,136,255,0.10)' : 'rgba(50,50,50,0.4)'}'"
+               onmouseleave="this.style.borderColor='${s.exists ? '#4488ff22' : '#22222244'}';this.style.background='${s.exists ? 'rgba(68,136,255,0.05)' : 'rgba(50,50,50,0.2)'}'"
+            >
+              <div>
+                <span style="color:#888;font-size:12px;">档位 ${s.slot + 1}</span>
+                ${s.exists ? `
+                  <span style="color:#ccc;font-size:13px;margin-left:8px;">
+                    Ch${s.chapter}-${s.nodeIndex + 1} · Lv.${s.level} · HP ${s.hp}/${s.maxHp}
+                  </span>
+                  <span style="color:#555;font-size:10px;display:block;margin-top:2px;">
+                    ${s.reason} · ${s.timestamp}
+                  </span>
+                ` : '<span style="color:#444;font-size:12px;margin-left:8px;">— 空 —</span>'}
+              </div>
+              <div style="display:flex;gap:6px;">
+                <button class="slot-save-btn" data-slot="${s.slot}" style="
+                  background:rgba(68,204,136,0.1);border:1px solid #44cc8844;color:#44cc88;
+                  padding:4px 12px;cursor:pointer;font-size:11px;font-family:inherit;border-radius:4px;
+                ">保存</button>
+                ${s.exists ? `<button class="slot-load-btn" data-slot="${s.slot}" style="
+                  background:rgba(68,136,255,0.1);border:1px solid #4488ff44;color:#4488ff;
+                  padding:4px 12px;cursor:pointer;font-size:11px;font-family:inherit;border-radius:4px;
+                ">读取</button>` : ''}
+              </div>
+            </div>
+          `).join('')}
+        </div>
+        <div style="text-align:center;margin-top:16px;">
+          <button id="btn-close-save-slots" style="
+            background:transparent;border:1px solid #444;color:#888;
+            padding:6px 24px;cursor:pointer;font-size:13px;font-family:inherit;
+            border-radius:6px;">返回</button>
+        </div>
+      </div>
+    </div>
+  `;
+  
+  // Save buttons
+  overlay.querySelectorAll('.slot-save-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const slot = parseInt(btn.dataset.slot);
+      gameState.save(slot, '手动存档');
+      renderer.notify('💾 已保存到档位 ' + (slot + 1), '#44cc88', 90);
+      overlay.innerHTML = '';
+      if (onClose) onClose();
+    });
+  });
+  
+  // Load buttons
+  overlay.querySelectorAll('.slot-load-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const slot = parseInt(btn.dataset.slot);
+      if (gameState.load(slot)) {
+        const chapterGens = { 1: generateChapter1, 2: generateChapter2, 3: generateChapter3, 4: generateChapter4, 5: generateChapter5, 6: generateChapter6, 7: generateChapter7, 8: generateChapter8, 9: generateChapter9, 10: generateChapter10, 11: generateChapter11, 12: generateChapter12 };
+        const gen = chapterGens[gameState.chapter] || generateChapter1;
+        chapter = gen();
+        currentFloorIndex = gameState.nodeIndex || 0;
+        loadFloor(currentFloorIndex);
+        renderer.notify('💾 已读取档位 ' + (slot + 1), '#4488ff', 90);
+        overlay.innerHTML = '';
+      } else {
+        renderer.notify('❌ 读取失败', '#ff4444', 60);
+      }
+    });
+  });
+  
+  document.getElementById('btn-close-save-slots')?.addEventListener('click', () => {
+    overlay.innerHTML = '';
+    if (onClose) onClose();
+  });
+  document.getElementById('save-slot-bg')?.addEventListener('click', (e) => {
+    if (e.target.id === 'save-slot-bg') { overlay.innerHTML = ''; if (onClose) onClose(); }
+  });
+}
+
 function _showPauseMenu() {
   if (gameState.state !== GAME_STATE.EXPLORING) return;
   const overlay = document.getElementById('ui-overlay');
@@ -3043,9 +3169,7 @@ function _showPauseMenu() {
   
   document.getElementById('pause-resume')?.addEventListener('click', close);
   document.getElementById('pause-save')?.addEventListener('click', () => {
-    autoSave('手动存档');
-    renderer.notify('💾 已手动存档', '#44aaff', 90);
-    close();
+    _showSaveSlotPanel(close);
   });
   document.getElementById('pause-settings')?.addEventListener('click', () => {
     close();
@@ -3461,6 +3585,11 @@ function startCombat(enemy, preScaledEnemy) {
 
   // 播放战斗动画序列
   combatAnimator.playCombatSequence(result, enemy, () => {
+    // ── 战斗评级（先于奖励面板，以便奖励等级正确） ──
+    const battleRating = result.victory ? rateBattle(result, gameState.player) : null;
+    if (battleRating) { recordRating(battleRating); result.rating = battleRating; }
+    try { if (battleRating && (battleRating.grade === 'S' || battleRating.grade === 'SS')) achievementTracker.stats.sRatings++; achievementTracker.checkStats(); } catch {}
+
     // ── 战后奖励选择（胜利时） ──
     if (result.victory && !result._rewardShown) {
       result._rewardShown = true;
@@ -3515,11 +3644,7 @@ function startCombat(enemy, preScaledEnemy) {
     // 记录图鉴（含战败）
     if (!result.victory) { try { bestiary.record(scaledEnemy || enemy, { victory: false }); localStorage.setItem("ih_bestiary", JSON.stringify(bestiary.toJSON())); } catch {} }
     
-    // 战斗评级 — 只计算一次
-    const battleRating = result.victory ? rateBattle(result, gameState.player) : null;
-    if (battleRating) { recordRating(battleRating); result.rating = battleRating; }
-      // 成就追踪: 战斗评级
-      try { if (battleRating && (battleRating.grade === 'S' || battleRating.grade === 'SS')) achievementTracker.stats.sRatings++; achievementTracker.checkStats(); } catch {}
+    // 战斗评级已在奖励面板前计算
 
     // 记录战斗历史
     combatHistory.push({

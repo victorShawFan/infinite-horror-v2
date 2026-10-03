@@ -292,12 +292,16 @@ class GameState {
       soulFragments: this.player.soulFragments || 0,
       karma: this.karma || 0,
       soulShards: this.soulShards || 0,
+      _saveTimestamp: new Date().toLocaleString('zh-CN'),
+      _saveReason: this._pendingSaveReason || '',
     };
   }
 
-  save(slot = 0) {
+  save(slot = 0, reason = '') {
+    this._pendingSaveReason = reason;
     const key = `infinite_horror_save_${slot}`;
     localStorage.setItem(key, JSON.stringify(this.toJSON()));
+    this._pendingSaveReason = '';
     eventBus.emit('game:saved', { slot });
   }
 
