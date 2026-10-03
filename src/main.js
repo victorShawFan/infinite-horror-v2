@@ -3927,6 +3927,8 @@ async function startCombat(enemy, preScaledEnemy) {
     const hpBeforeCombat = p.hp;
   const result = await executeBattle(scaledEnemy);
   result._isBoss = !!(enemy.type === 'boss' || enemy.isBoss || enemy.bossId);
+  // 确保实时战报显示完整战斗日志（非暂停战斗可能没有中间更新）
+  updateLiveBattleLog(result.log || []);
     // 清除临时战斗buff
     if (_hadTempBuffs) {
       if (_tempBuffs.atkBonus) p.atk -= _tempBuffs.atkBonus;

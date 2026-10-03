@@ -136,7 +136,32 @@ export function showBattleActionMenu(player, enemy, round, combatState) {
       </div>
     ` : '';
     
+    // 首次战斗教程提示
+    const _isFirstBattle = typeof localStorage !== 'undefined' && !localStorage.getItem('ih_tutorial_battle');
+    
     overlay.innerHTML = `
+      ${_isFirstBattle ? `
+      <div id="bam-tutorial" style="
+        position:absolute;top:20%;left:50%;transform:translateX(-50%);
+        background:rgba(5,5,20,0.95);border:1px solid #ffcc4444;border-radius:12px;
+        padding:16px 24px;max-width:360px;z-index:201;animation:bam-slideUp 0.4s;
+        pointer-events:all;
+      ">
+        <p style="color:#ffcc44;font-size:11px;letter-spacing:2px;margin-bottom:6px;">💡 战术指南</p>
+        <p style="color:#aaa;font-size:12px;line-height:1.8;">
+          Boss战和危急时刻会暂停让你选择行动：<br>
+          <span style="color:#ff6644;">⚔攻击</span> 正常出手 ·
+          <span style="color:#aa88ff;">技能</span> 消耗MP释放 ·
+          <span style="color:#4488ff;">🛡防御</span> 减伤50%<br>
+          <span style="color:#44cc88;">📦道具</span> 使用背包物品 ·
+          <span style="color:#888;">💨逃跑</span> 非Boss战可尝试
+        </p>
+        <button onclick="this.parentElement.remove();try{localStorage.setItem('ih_tutorial_battle','1')}catch{}" 
+          style="display:block;margin:8px auto 0;background:transparent;border:1px solid #ffcc4444;
+          color:#ffcc44;padding:4px 20px;cursor:pointer;font-size:11px;font-family:inherit;border-radius:4px;">
+          知道了
+        </button>
+      </div>` : ''}
       <style>
         @keyframes bam-slideUp { from { transform: translateY(40px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
         .bam-btn {
