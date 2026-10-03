@@ -115,6 +115,7 @@ import { rateBattle, recordRating, formatRatingHTML, getRatingStats } from './co
 import { fogOfWar } from './core/FogOfWar.js';
 import { openMerchantShop } from './core/FieldMerchant.js';
 import { injectKeyDoors, getDoorReward, initKeys, getKeyCount } from './core/KeyDoorSystem.js';
+import { injectInteractables, activateInteractable } from './core/FloorInteractables.js';
 import { renderAbilitiesPanel } from './core/CompanionAbilities.js';
 import { getKarmaLevel, getKarmaCombatModifiers, getEndingType, renderKarmaPanel, renderKarmaDisplay } from './core/KarmaSystem.js';
 import { getStash, addToStash, removeFromStash, isStashFull, openEquipmentStash, serializeStash, deserializeStash } from './core/EquipmentStash.js';
@@ -3651,6 +3652,27 @@ function pickupItem(item) {
 
 // ── 事件触发 ──
 function triggerEvent(entity) {
+  // ── 交互物处理 ──
+  if (entity.interactableType) {
+    const result = activateInteractable(entity);
+    if (result.text) {
+      startDialogue([{ text: result.text, speaker: '系统' }]);
+    }
+    if (result.floatText) {
+      renderer.addFloatText(result.floatText, entity.x, entity.y - 1, result.floatColor || '#fff');
+    }
+    if (result.teleport) {
+      gameState.player.x = result.teleport.x;
+      gameState.player.y = result.teleport.y;
+    }
+    if (result.consumed) {
+      const idx = entities.indexOf(entity);
+      if (idx >= 0) entities.splice(idx, 1);
+      gameState.markEntityRemoved(currentFloorIndex, entity.id);
+    }
+    return;
+  }
+  
   const evt = entity.event;
   if (!evt) return;
 
