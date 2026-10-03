@@ -119,6 +119,7 @@ import { injectInteractables, activateInteractable } from './core/FloorInteracta
 import { getChapterLore, renderChapterIntroCard } from './core/ChapterWorldLore.js';
 import { scanFloor, renderFloorOverview } from './core/FloorScanner.js';
 import { generateRewardChoices, applyReward, renderRewardChoicePanel } from './core/RewardChoiceSystem.js';
+import { toggleAutoBattle, isAutoBattleEnabled, shouldAutoBattle, renderAutoBattleIndicator } from './core/AutoBattleSystem.js';
 import { renderAbilitiesPanel } from './core/CompanionAbilities.js';
 import { getKarmaLevel, getKarmaCombatModifiers, getEndingType, renderKarmaPanel, renderKarmaDisplay } from './core/KarmaSystem.js';
 import { getStash, addToStash, removeFromStash, isStashFull, openEquipmentStash, serializeStash, deserializeStash } from './core/EquipmentStash.js';
@@ -1465,6 +1466,7 @@ function gameLoop() {
   // 任务追踪HUD
   if (gameState.state === GAME_STATE.EXPLORING && !dialogueState && !combatResult) {
     try { drawQuestHUD(renderer.ctx, renderer.canvas.width, renderer.canvas.height); } catch {}
+    try { renderAutoBattleIndicator(renderer.ctx, 12, renderer.canvas.height - 52); } catch {}
   }
 
   requestAnimationFrame(gameLoop);
@@ -1629,6 +1631,13 @@ case 'h': case '?':
       case 'k':
         // 业力面板
         _showKarmaPanel();
+        return;
+      case 'z':
+        // 自动战斗开关
+        {
+          const on = toggleAutoBattle();
+          renderer.notify(on ? '⚡ 自动战斗：开启' : '⚡ 自动战斗：关闭', on ? '#44cc88' : '#888', 90);
+        }
         return;
       case 'v':
         // 楼层战略扫描
@@ -2512,6 +2521,16 @@ function _showRandomEncounter(encounter) {
 // ── 战前确认 ──
 function showCombatConfirm(enemy) {
   tutorialManager.trigger('first_combat_confirm');
+  // ── 自动战斗：碾压弱敌时跳过确认 ──
+  {
+    const _scaledForAuto = applyDynamicScaling(scaleEnemy(enemy, gameState.chapter));
+    const autoCheck = shouldAutoBattle(gameState.player, _scaledForAuto);
+    if (autoCheck.shouldAuto) {
+      renderer.addFloatText('⚡ AUTO', enemy.x, enemy.y - 1, '#44cc88');
+      startCombat(enemy, _scaledForAuto);
+      return;
+    }
+  }
   const p = gameState.player;
   // 难度缩放：根据章节动态调整敌人属性 + 动态难度
   // 一次性构造最终敌人快照，预判和实战共用同一份
