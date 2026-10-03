@@ -95,10 +95,7 @@ for (let ch = 0; ch < 12; ch++) {
       
       if (result.victory) {
         chWins++;
-        // Apply rewards
-        if (scaled.rewards?.exp) gameState.addExp(scaled.rewards.exp);
-        if (scaled.rewards?.gold) p.gold += scaled.rewards.gold;
-        if (scaled.rewards?.rewardPoints) p.rewardPoints += scaled.rewards.rewardPoints;
+        // executeBattle() 内部已经结算了 exp/gold/rewardPoints，不再重复发放
         
         // Heal 30% after each fight (simulating items/regen)
         p.hp = Math.min(p.maxHp, p.hp + Math.floor(p.maxHp * 0.3));
