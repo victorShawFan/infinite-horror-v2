@@ -10,6 +10,7 @@ import { gameState } from './GameState.js';
 import { audioEngine } from './AudioEngine.js';
 import { addConsumable } from './ConsumableSystem.js';
 import { checkGeneLockAdvancement, advanceGeneLock, getGeneLockProgress, getGeneLockDescription } from './GeneLockSystem.js';
+import { renderBattleStatsDashboard } from './BattleStatsDashboard.js';
 import { getAvailableSkills, SKILL_DEFINITIONS } from './SkillSystem.js';
 import { enhanceEquipment, socketGem, unsocketGem, getEnhanceCost, 
          getEquipmentDisplayName, GEM_TYPES, getEquipmentTotalStats } from './EquipmentSystem.js';
@@ -268,6 +269,7 @@ export function renderLordGodSpace(onClose) {
       { key: 'stash', name: '📦 仓库', color: '#cc8844' },
       { key: 'subplot', name: '📜 支线合成', color: '#88aaff' },
       { key: 'training', name: '🏋 训练房', color: '#ffcc44' },
+      { key: 'dashboard', name: '📊 仪表板', color: '#ff8c3c' },
     ];
 
     overlay.innerHTML = `
@@ -707,6 +709,10 @@ export function renderLordGodSpace(onClose) {
 
 
     // ── 训练房页面 ──
+    if (cat === 'dashboard') {
+      container.innerHTML = renderBattleStatsDashboard();
+      return;
+    }
     if (cat === 'training') {
       container.innerHTML = renderTrainingRoomPanel();
       container.querySelectorAll('.training-enemy').forEach(card => {
