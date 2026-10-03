@@ -4106,7 +4106,7 @@ async function startCombat(enemy, preScaledEnemy) {
             _queueEquipDropPanel(ed);
             // 装备弹窗关闭后通知队列
             const _checkEquip = setInterval(() => {
-              if (!document.querySelector('.equip-drop-panel')) { clearInterval(_checkEquip); done(); }
+              if (!document.getElementById('equip-drop-panel')) { clearInterval(_checkEquip); done(); }
             }, 300);
           },
         });
