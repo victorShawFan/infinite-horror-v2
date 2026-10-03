@@ -15,7 +15,7 @@ console.log('[ 初始状态 ]');
 {
   const cs = resetCanonState();
   ok(cs.getCaptain().name === '张杰', '初始队长是张杰');
-  ok(cs.getAlive().length === 15, `初始15个角色全部存活 (实际: ${cs.getAlive().length})`);
+  ok(cs.getAlive().length === 17, `初始17个角色全部存活 (实际: ${cs.getAlive().length})`);
   ok(cs.getDead().length === 0, '无人死亡');
 }
 
@@ -82,7 +82,7 @@ console.log('[ Ch7 结束 — 团灭 ]');
   const cs = resetCanonState();
   cs.advanceTo(7, 6);
   // 只有郑吒活着（罗甘道在系统中但还没加入队伍）
-  const aliveInTeam = cs.getAlive().filter(c => c.id !== 'luo_gandao');
+  const aliveInTeam = cs.getAlive().filter(c => c.id !== 'luo_gandao' && c.id !== 'liu_yu' && c.id !== 'lin_juntian');
   ok(aliveInTeam.length === 1, `Ch7 只有1个队内成员存活 (实际: ${aliveInTeam.length})`);
   ok(aliveInTeam[0]?.name === '郑吒', 'Ch7 唯一存活者是郑吒');
   ok(!cs.characters.zhan_lan.alive, 'Ch7 詹岚阵亡');
@@ -125,6 +125,33 @@ console.log('[ Ch10 — 三人复活 ]');
   ok(cs.characters.cheng_xiao.alive, 'Ch10 程啸复活');
   // 张杰永远不会复活
   ok(!cs.characters.zhang_jie.alive, 'Ch10 张杰仍然不可复活');
+}
+
+// === Ch11: 铭烟薇复活, 罗甘道死亡 ===
+console.log('[ Ch11 — 铭烟薇复活+罗甘道死 ]');
+{
+  const cs = resetCanonState();
+  cs.advanceTo(11, 6);
+  ok(cs.characters.ming_yanwei.alive, 'Ch11 铭烟薇复活');
+  ok(!cs.characters.luo_gandao.alive, 'Ch11 罗甘道死亡');
+  ok(cs.characters.liu_yu?.alive, 'Ch11 刘郁加入并存活');
+  ok(cs.characters.lin_juntian?.alive, 'Ch11 林俊天加入并存活');
+}
+
+// === Ch12: 最终幸存三人 ===
+console.log('[ Ch12 — 最终幸存 ]');
+{
+  const cs = resetCanonState();
+  cs.advanceTo(12, 6);
+  const alive = cs.getAlive().map(c => c.name);
+  ok(alive.length === 3, `Ch12 最终存活3人 (实际: ${alive.length})`);
+  ok(alive.includes('郑吒'), 'Ch12 郑吒存活');
+  ok(alive.includes('刘郁'), 'Ch12 刘郁存活');
+  ok(alive.includes('林俊天'), 'Ch12 林俊天存活');
+  ok(!cs.characters.chu_xuan.alive, 'Ch12 楚轩牺牲');
+  ok(!cs.characters.ling_dian.alive, 'Ch12 零点牺牲');
+  ok(!cs.characters.zhao_yingkong.alive, 'Ch12 赵樱空牺牲');
+  ok(cs.captain === 'zheng_zha', 'Ch12 郑吒仍是队长');
 }
 
 // === 序列化/反序列化 ===

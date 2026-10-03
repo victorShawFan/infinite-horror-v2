@@ -24,6 +24,8 @@ const CHARACTER_DB = {
   wang_xia:      { name: '王侠', role: 'explosive',   joinChapter: 5 },
   cheng_xiao:    { name: '程啸', role: 'medic',       joinChapter: 6 },
   luo_gandao:    { name: '罗甘道', role: 'pilot',     joinChapter: 8 },
+  liu_yu:         { name: '刘郁', role: 'support',     joinChapter: 11 },
+  lin_juntian:    { name: '林俊天', role: 'warrior',   joinChapter: 11 },
 };
 
 // 正史死亡时间线 — 不可逆、不可通过游戏表现改变
@@ -42,6 +44,19 @@ const CANON_DEATHS = {
   // Ch5
   wang_xia_ch5:    { chapter: 5, floor: 4, event: '固定死亡线', irrevocable: true },
   zhang_jie:       { chapter: 5, floor: 6, event: '张杰牺牲·不可复活', irrevocable: true, noResurrect: true },
+  // Ch11 — 终战前奏
+  luo_gandao_ch11: { chapter: 11, floor: 4, event: '罗甘道牺牲', irrevocable: true },
+  // Ch12 — 最终之战（按原著最终牺牲）
+  zhan_lan_ch12:      { chapter: 12, floor: 5, event: '最终牺牲', irrevocable: true },
+  chu_xuan_ch12:      { chapter: 12, floor: 5, event: '最终牺牲', irrevocable: true },
+  ling_dian_ch12:     { chapter: 12, floor: 5, event: '最终牺牲', irrevocable: true },
+  zhao_yingkong_ch12: { chapter: 12, floor: 5, event: '最终牺牲', irrevocable: true },
+  ba_wang_ch12:       { chapter: 12, floor: 5, event: '最终牺牲', irrevocable: true },
+  zhang_heng_ch12:    { chapter: 12, floor: 5, event: '最终牺牲', irrevocable: true },
+  wang_xia_ch12:      { chapter: 12, floor: 5, event: '最终牺牲', irrevocable: true },
+  cheng_xiao_ch12:    { chapter: 12, floor: 5, event: '最终牺牲', irrevocable: true },
+  ming_yanwei_ch12:   { chapter: 12, floor: 5, event: '最终牺牲', irrevocable: true },
+
   // Ch7 — 恶魔队团灭中洲队（除郑吒外所有活着的队友）
   zhan_lan_ch7:      { chapter: 7, floor: 5, event: '恶魔队猎杀', irrevocable: true },
   zhao_yingkong_ch7: { chapter: 7, floor: 5, event: '恶魔队猎杀', irrevocable: true },
@@ -61,6 +76,7 @@ const CAPTAIN_TRANSITIONS = [
 
 // 复活时间线（Ch8-9）
 const RESURRECTIONS = {
+  ming_yanwei:   { chapter: 11, floor: 2, cost: '奖励点', event: '铭烟薇复活' },
   chu_xuan:      { chapter: 8, floor: 2, cost: '奖励点', event: '楚轩复活仪式' },
   ba_wang:       { chapter: 8, floor: 3, cost: '奖励点', event: '侏罗纪中复活' },
   wang_xia:      { chapter: 8, floor: 3, cost: '奖励点', event: '侏罗纪中复活' },
@@ -103,54 +119,78 @@ class CanonState {
   advanceTo(chapter, floor) {
     this.chapter = chapter;
     
-    // 执行正史死亡
+    // 收集所有事件并按时间排序（死亡和复活交叉执行）
+    const timeline = [];
+    
+    // 收集死亡事件
     for (const [charId, death] of Object.entries(CANON_DEATHS)) {
-      // 解析角色ID（去掉 _chN 后缀获取真实ID）
-      const realId = charId.replace(/_ch\d+$/, '');
+      if (chapter > death.chapter || (chapter === death.chapter && floor >= death.floor)) {
+        timeline.push({
+          type: 'death', charId, data: death,
+          chapter: death.chapter, floor: death.floor,
+        });
+      }
+    }
+    
+    // 收集复活事件
+    for (const [charId, res] of Object.entries(RESURRECTIONS)) {
+      if (chapter > res.chapter || (chapter === res.chapter && floor >= res.floor)) {
+        timeline.push({
+          type: 'resurrection', charId, data: res,
+          chapter: res.chapter, floor: res.floor,
+        });
+      }
+    }
+    
+    // 按章节和楼层排序（先章节小的，同章节先楼层小的，同位置先死亡后复活）
+    timeline.sort((a, b) => {
+      if (a.chapter !== b.chapter) return a.chapter - b.chapter;
+      if (a.floor !== b.floor) return a.floor - b.floor;
+      // 同位置：死亡先于复活
+      if (a.type === 'death' && b.type === 'resurrection') return -1;
+      if (a.type === 'resurrection' && b.type === 'death') return 1;
+      return 0;
+    });
+    
+    // 按时间线顺序执行
+    for (const evt of timeline) {
+      const realId = evt.charId.replace(/_ch\d+$/, '');
       const char = this.characters[realId];
       if (!char) continue;
       
-      if (chapter > death.chapter || (chapter === death.chapter && floor >= death.floor)) {
-        if (char.alive && !char.resurrected) {
+      if (evt.type === 'death') {
+        if (char.alive) {
           char.alive = false;
-          char.deathChapter = death.chapter;
-          char.deathEvent = death.event;
-          if (death.noResurrect) char.noResurrect = true;
+          char.deathChapter = evt.data.chapter;
+          char.deathEvent = evt.data.event;
+          if (evt.data.noResurrect) char.noResurrect = true;
           this.events.push({
             type: 'death',
             characterId: realId,
             characterName: char.name,
-            chapter: death.chapter,
-            floor: death.floor,
-            event: death.event,
+            chapter: evt.data.chapter,
+            floor: evt.data.floor,
+            event: evt.data.event,
             irrevocable: true,
           });
         }
-      }
-    }
-    
-    // 执行复活
-    for (const [charId, res] of Object.entries(RESURRECTIONS)) {
-      const char = this.characters[charId];
-      if (!char) continue;
-      
-      if (chapter > res.chapter || (chapter === res.chapter && floor >= res.floor)) {
+      } else if (evt.type === 'resurrection') {
         if (!char.alive && !char.noResurrect && !char.resurrected) {
           char.alive = true;
           char.resurrected = true;
           this.events.push({
             type: 'resurrection',
-            characterId: charId,
+            characterId: evt.charId,
             characterName: char.name,
-            chapter: res.chapter,
-            floor: res.floor,
-            event: res.event,
+            chapter: evt.data.chapter,
+            floor: evt.data.floor,
+            event: evt.data.event,
           });
         }
       }
     }
     
-    // 队长交接
+    // 队长交接// 队长交接
     for (const transition of CAPTAIN_TRANSITIONS) {
       if (chapter > transition.chapter || (chapter === transition.chapter && (transition.floor === undefined || floor >= transition.floor))) {
         if (this.captain !== transition.captain) {
