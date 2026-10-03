@@ -120,6 +120,10 @@ import { getChapterLore, renderChapterIntroCard } from './core/ChapterWorldLore.
 import { scanFloor, renderFloorOverview } from './core/FloorScanner.js';
 import { generateRewardChoices, applyReward, renderRewardChoicePanel } from './core/RewardChoiceSystem.js';
 import { tryFlashback, renderFlashback } from './core/FlashbackSystem.js';
+import { showLevelUpCelebration, getLevelUnlocks } from './core/LevelUpCelebration.js';
+import { assessThreat, drawThreatIndicator, getEnemyTooltipHTML } from './core/EnemyPowerIndicator.js';
+import { tryExplorationEvent, renderExplorationEvent, applyEventEffect, serializeExplorationEvents, deserializeExplorationEvents } from './core/ExplorationEvents.js';
+import { shouldPauseForAction, showBattleActionMenu, applyDefendAction, attemptFlee, ACTION_TYPE, setStrategicMode, isStrategicMode } from './core/BattleActionMenu.js';
 import { toggleAutoBattle, isAutoBattleEnabled, shouldAutoBattle, renderAutoBattleIndicator } from './core/AutoBattleSystem.js';
 import { drawEnemyRadar } from './core/EnemyRadar.js';
 import { renderAbilitiesPanel } from './core/CompanionAbilities.js';
@@ -191,6 +195,7 @@ function autoSave(reason = '') {
     localStorage.setItem('ih_growth', JSON.stringify(serializeGrowth()));
     localStorage.setItem('ih_statalloc', JSON.stringify(serializeStatAllocation()));
     localStorage.setItem('ih_abyss', JSON.stringify(serializeAbyss()));
+    try { localStorage.setItem('ih_exploration_events', JSON.stringify(serializeExplorationEvents())); } catch {}
     try { localStorage.setItem('ih_narratives', JSON.stringify(serializeNarratives())); } catch {}
     localStorage.setItem('ih_daily', JSON.stringify(serializeDaily()));    // 设置持久化：难度 + 音量 + 迷雾
     try {
@@ -806,6 +811,7 @@ document.getElementById('btn-new-game').addEventListener('click', () => {
     try { const _grData = localStorage.getItem('ih_growth'); if (_grData) deserializeGrowth(JSON.parse(_grData)); } catch {}
     try { const _saData = localStorage.getItem('ih_statalloc'); if (_saData) deserializeStatAllocation(JSON.parse(_saData)); } catch {}
     initStatAllocation();
+    try { const _eeData = localStorage.getItem('ih_exploration_events'); if (_eeData) deserializeExplorationEvents(JSON.parse(_eeData)); } catch {}
     initKeys();
     try { const _enData = localStorage.getItem('ih_enchant'); if (_enData) deserializeEnchant(JSON.parse(_enData)); } catch {}
     try { const _naData = localStorage.getItem('ih_narratives'); if (_naData) deserializeNarratives(JSON.parse(_naData)); } catch {}
@@ -1042,16 +1048,41 @@ function startGame() {
     gameState.stats.goldEarned = (gameState.stats.goldEarned || 0) + data.rewards.gold;
 
     // 检查升级
+    let _levelsGained = 0;
+    let _firstLevelOldStats = null;
     while (p.exp >= p.expToNext) {
+      if (!_firstLevelOldStats) {
+        _firstLevelOldStats = { maxHp: p.maxHp, atk: p.atk, def: p.def, spd: p.spd || 5, crt: p.crt || 0 };
+      }
       p.exp -= p.expToNext;
       p.level++;
+      _levelsGained++;
       p.expToNext = 20 + (p.level - 1) * 15;
       // 基础成长（每级固定获得）
       p.maxHp += 5;
       p.hp = Math.min(p.hp + 5, p.maxHp);
       p.atk += 1;
+      // 每偶数级额外加1 DEF
+      if (p.level % 2 === 0) { p.def = (p.def || 0) + 1; }
+      // 每5级加1 SPD
+      if (p.level % 5 === 0) { p.spd = (p.spd || 5) + 1; }
       // 授予3属性点供手动分配
       grantStatPoints(3);
+    }
+    // 升级庆典
+    if (_levelsGained > 0 && _firstLevelOldStats) {
+      try {
+        const unlocks = getLevelUnlocks(p.level, p);
+        showLevelUpCelebration({
+          newLevel: p.level,
+          oldStats: _firstLevelOldStats,
+          newStats: { maxHp: p.maxHp, atk: p.atk, def: p.def, spd: p.spd || 5, crt: p.crt || 0 },
+          statPoints: getPendingPoints(),
+          unlocks,
+        });
+        try { audioEngine.play('levelup'); } catch {}
+        renderer.addFloatText('⬆ LEVEL ' + p.level, p.x, p.y - 2, '#ffaa00');
+      } catch (e) { console.warn('LevelUp celebration error:', e); }
     }
 
     try { localStorage.setItem('ih_challenge', JSON.stringify(challengeState.toJSON()));
@@ -2465,6 +2496,19 @@ function movePlayer(dx, dy) {
     _showRandomEncounter(encounter);
   }
 
+  // ── 探索事件触发（非战斗互动） ──
+  if (!encounter) {
+    try {
+      const _explEvt = tryExplorationEvent();
+      if (_explEvt) {
+        renderExplorationEvent(_explEvt, (choice, result) => {
+          applyEventEffect(result.effect, gameState.player);
+          try { renderer.notify(result.text.slice(0, 40) + '…', '#aa8844', 90); } catch {}
+        });
+      }
+    } catch (e) { console.warn('ExplorationEvent:', e); }
+  }
+
   // 潜行系统 — 移动噪音 + 噪音衰减
   onPlayerMove();
   decayNoise();
@@ -2572,7 +2616,8 @@ function showCombatConfirm(enemy) {
   // 一次性构造最终敌人快照，预判和实战共用同一份
   const scaledEnemy = applyDynamicScaling(scaleEnemy(enemy, gameState.chapter));
   const preview = previewBattle(p, scaledEnemy);
-  const tacticalHints = generateTacticalHints(p, scaledEnemy, preview);
+  const _threat = assessThreat(scaledEnemy || enemy, p);
+        const tacticalHints = generateTacticalHints(p, scaledEnemy, preview);
   
   gameState.setState(GAME_STATE.DIALOGUE);
   const overlay = document.getElementById('ui-overlay');
@@ -3814,9 +3859,22 @@ function startCombat(enemy, preScaledEnemy) {
     }
   }
   
-  const hpBeforeCombat = p.hp;
+      // ── 应用探索事件临时战斗Buff ──
+    const _tempBuffs = gameState._tempCombatBuffs || {};
+    if (_tempBuffs.atkBonus) { p.atk += _tempBuffs.atkBonus; renderer.addFloatText('+' + _tempBuffs.atkBonus + ' ATK (情报)', p.x, p.y - 0.5, '#ffcc44'); }
+    if (_tempBuffs.critBonus) { p.crt = (p.crt || 0) + _tempBuffs.critBonus; }
+    if (_tempBuffs.enemyAtkReduce && scaledEnemy) { scaledEnemy.atk = Math.max(1, scaledEnemy.atk - _tempBuffs.enemyAtkReduce); }
+    const _hadTempBuffs = Object.keys(_tempBuffs).length > 0;
+
+    const hpBeforeCombat = p.hp;
   const result = executeBattle(scaledEnemy);
   result._isBoss = !!(enemy.type === 'boss' || enemy.isBoss || enemy.bossId);
+    // 清除临时战斗buff
+    if (_hadTempBuffs) {
+      if (_tempBuffs.atkBonus) p.atk -= _tempBuffs.atkBonus;
+      if (_tempBuffs.critBonus) p.crt = Math.max(0, (p.crt || 0) - _tempBuffs.critBonus);
+      gameState._tempCombatBuffs = {};
+    }
   
   // 恢复临时buff修改的基础属性
   if (pendingBuffs.length > 0) {
