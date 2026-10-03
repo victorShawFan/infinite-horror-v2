@@ -124,6 +124,7 @@ import { showLevelUpCelebration, getLevelUnlocks } from './core/LevelUpCelebrati
 import { assessThreat, drawThreatIndicator, getEnemyTooltipHTML } from './core/EnemyPowerIndicator.js';
 import { tryExplorationEvent, renderExplorationEvent, applyEventEffect, serializeExplorationEvents, deserializeExplorationEvents } from './core/ExplorationEvents.js';
 import { shouldPauseForAction, showBattleActionMenu, applyDefendAction, attemptFlee, ACTION_TYPE, setStrategicMode, isStrategicMode } from './core/BattleActionMenu.js';
+import { shouldShowAnalysis, showPostCombatAnalysis } from './core/PostCombatAnalysis.js';
 import { toggleAutoBattle, isAutoBattleEnabled, shouldAutoBattle, renderAutoBattleIndicator } from './core/AutoBattleSystem.js';
 import { drawEnemyRadar } from './core/EnemyRadar.js';
 import { renderAbilitiesPanel } from './core/CompanionAbilities.js';
@@ -4000,6 +4001,17 @@ function startCombat(enemy, preScaledEnemy) {
       } catch (e) { console.warn('RewardChoice:', e); }
     }
     combatResult = result;
+    
+    // ── 战后详细分析（重要战斗） ──
+    if (result.victory && battleRating) {
+      try {
+        if (shouldShowAnalysis(result, battleRating)) {
+          setTimeout(() => {
+            showPostCombatAnalysis(result, battleRating, scaledEnemy || enemy);
+          }, 800);
+        }
+      } catch (e) { console.warn('PostCombatAnalysis:', e); }
+    }
     
     // ── 装备掉落弹窗（胜利时有装备掉落） ──
     if (result.victory && result.drops) {

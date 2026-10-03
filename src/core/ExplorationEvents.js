@@ -330,3 +330,163 @@ export function deserializeExplorationEvents(data) {
   _shownEventIds = new Set(data.shownIds || []);
   _lastEventTurn = data.lastTurn || 0;
 }
+
+// ── 追加章节事件 ──
+// 第3章: 神鬼秘宝
+EXPLORATION_EVENTS[3] = [
+  {
+    id: 'ancient_trap',
+    title: '古代机关',
+    text: '墙壁上的浮雕开始缓缓移动，似乎触发了某种古代防御机制。沙子从天花板的缝隙中倾泻而下。',
+    choices: [
+      { text: '🔍 研究机关原理', result: { type: 'info', text: '你发现了机关的精妙之处。这种设计思路对战斗也有启发。CRT+8%', effect: { nextBattleCritBonus: 8, exp: 5 } } },
+      { text: '⚡ 快速通过', result: { type: 'risk', text: '成功冲了过去！肾上腺素让你的反应更快。', effect: { nextBattleCritBonus: 5 } } },
+      { text: '🔧 尝试解除', result: { type: 'gold', text: '机关解除后露出一个暗格，里面有金币和宝石。', effect: { gold: 50, exp: 8 } } },
+    ],
+    weight: 8,
+  },
+  {
+    id: 'mummy_warning',
+    title: '壁画上的警告',
+    text: '一面保存完好的壁画描述着守墓者的力量。最后一幅画中，入侵者被吞噬在金色的光芒中。',
+    choices: [
+      { text: '📖 仔细研读', result: { type: 'info', text: '你理解了守墓者的弱点——他们依赖共鸣能量。下场Boss战+5%伤害', effect: { nextBattleBossDmgBonus: 5 } } },
+      { text: '🎨 临摹符文', result: { type: 'buff', text: '符文散发微弱光芒，似乎给了你某种防护。DEF+2', effect: { nextBattleAtkBonus: 2 } } },
+      { text: '🚶 继续前进', result: { type: 'safe', text: '你记住了壁画的位置。', effect: { exp: 3 } } },
+    ],
+    weight: 7,
+  },
+];
+
+// 第4章: 死神绝境
+EXPLORATION_EVENTS[4] = [
+  {
+    id: 'death_note_page',
+    title: '黑色笔记本残页',
+    text: '地上散落着几页黑色纸张，上面写满了名字。你能感受到其中蕴含的不祥力量。',
+    choices: [
+      { text: '📜 阅读内容', result: { type: 'info', text: '名字旁边标注了死因规则。这是极其珍贵的情报。下场战斗CRT+12%', effect: { nextBattleCritBonus: 12, karma: -3 } } },
+      { text: '🔥 立刻烧毁', result: { type: 'karma', text: '火焰将纸页化为灰烬。你做了正确的事。业力大幅上升。', effect: { karma: 15, heal: 10 } } },
+      { text: '📦 收入背包', result: { type: 'loot', text: '也许以后用得上……但你感到一阵寒意。', effect: { nextBattleAtkBonus: 5, karma: -8 } } },
+    ],
+    weight: 10,
+  },
+  {
+    id: 'shinigami_glimpse',
+    title: '模糊的身影',
+    text: '角落里，一个苍白的身影一闪而过。空气中传来沙沙的写字声，然后一切归于寂静。',
+    choices: [
+      { text: '🔍 追上去看看', result: { type: 'risk', text: '你什么都没追到，但在墙角发现了一些金币。', effect: { gold: 25 } } },
+      { text: '🧘 保持冷静', result: { type: 'safe', text: '你控制住了恐惧。精神力得到了锻炼。', effect: { exp: 10, healPercent: 0.05 } } },
+      { text: '🏃 反方向逃', result: { type: 'escape', text: '明智的选择。有些东西不该去招惹。', effect: {} } },
+    ],
+    weight: 6,
+  },
+];
+
+// 第5章: 异形再临
+EXPLORATION_EVENTS[5] = [
+  {
+    id: 'xenomorph_molt',
+    title: '脱落的外骨骼',
+    text: '一具完整的异形外骨骼躺在走廊中央。它的主人在某处进化成了更危险的形态。',
+    choices: [
+      { text: '🔬 分析弱点', result: { type: 'info', text: '外骨骼的关节处最薄弱。针对性攻击可以更有效。ATK+3', effect: { nextBattleAtkBonus: 3, exp: 8 } } },
+      { text: '🛡 制作护甲', result: { type: 'buff', text: '用外骨骼碎片加固了你的装备。DEF临时+2', effect: { nextBattleAtkBonus: 2, def: 1 } } },
+      { text: '🧪 提取酸液', result: { type: 'loot', text: '小心翼翼地提取了一瓶异形酸血。可用作攻击增强。', effect: { nextBattleAtkBonus: 4 } } },
+    ],
+    weight: 9,
+  },
+];
+
+// 第6章: 恶魔初临
+EXPLORATION_EVENTS[6] = [
+  {
+    id: 'demonic_altar',
+    title: '恶魔祭坛',
+    text: '房间中央是一座黑石祭坛，上面放着一颗跳动的暗红色宝石。空气中弥漫着硫磺的气味。',
+    choices: [
+      { text: '💎 触碰宝石', result: { type: 'risk', text: '黑暗能量涌入你的身体！力量暴增但精神受创。', effect: { nextBattleAtkBonus: 8, damage: 15, karma: -10 } } },
+      { text: '🔥 摧毁祭坛', result: { type: 'karma', text: '祭坛崩塌，邪恶的气息消散。你感到一阵轻松。', effect: { karma: 12, healPercent: 0.1 } } },
+      { text: '📖 研究铭文', result: { type: 'info', text: '铭文记载了恶魔的召唤规则和弱点。知识就是力量。', effect: { nextBattleCritBonus: 10, exp: 12 } } },
+    ],
+    weight: 8,
+  },
+];
+
+// 章节7-12的简洁事件
+for (let ch = 7; ch <= 12; ch++) {
+  if (!EXPLORATION_EVENTS[ch]) EXPLORATION_EVENTS[ch] = [];
+}
+
+EXPLORATION_EVENTS[7].push({
+  id: 'middle_earth_ruins',
+  title: '中洲废墟',
+  text: '断壁残垣中，一面完整的浮雕讲述着远古的战争。这里曾是人类最辉煌的文明中心。',
+  choices: [
+    { text: '📖 铭记历史', result: { type: 'info', text: '历史的教训让你更加坚定。意志增强。', effect: { exp: 15, karma: 5 } } },
+    { text: '🔍 搜索遗物', result: { type: 'loot', text: '在废墟中找到了一些有价值的文明碎片。', effect: { gold: 60 } } },
+    { text: '🧘 默祷', result: { type: 'heal', text: '在这片土地上的冥想带来了内心的平静。', effect: { healPercent: 0.15, karma: 8 } } },
+  ],
+  weight: 7,
+});
+
+EXPLORATION_EVENTS[8].push({
+  id: 'star_map',
+  title: '星际航图',
+  text: '控制台上显示着错综复杂的星际航线。部分路线标记着"危险"和"未知"。',
+  choices: [
+    { text: '📡 下载数据', result: { type: 'info', text: '航线数据暗示了前方敌人的部署位置。', effect: { nextBattleCritBonus: 10 } } },
+    { text: '⚡ 修改航线', result: { type: 'buff', text: '调整后的航线避开了最危险的区域。', effect: { healPercent: 0.1, exp: 10 } } },
+    { text: '🔌 取走零件', result: { type: 'gold', text: '控制台的精密零件价值不菲。', effect: { gold: 45 } } },
+  ],
+  weight: 7,
+});
+
+EXPLORATION_EVENTS[9].push({
+  id: 'team_ambush',
+  title: '其他轮回队的痕迹',
+  text: '地上有打斗的痕迹和血迹。不是异形的，是人类的。看来其他轮回队已经在附近了。',
+  choices: [
+    { text: '🔍 分析战斗痕迹', result: { type: 'info', text: '从痕迹推断出对方的战斗风格。知己知彼。CRT+12%', effect: { nextBattleCritBonus: 12 } } },
+    { text: '⚠ 加强警戒', result: { type: 'buff', text: '你的注意力达到巅峰，不会被偷袭。', effect: { nextBattleAtkBonus: 3, nextBattleCritBonus: 5 } } },
+    { text: '🏃 快速离开', result: { type: 'safe', text: '不与其他队伍纠缠，保存实力迎接真正的威胁。', effect: { healPercent: 0.08 } } },
+  ],
+  weight: 9,
+});
+
+EXPLORATION_EVENTS[10].push({
+  id: 'inner_demon',
+  title: '镜中的自己',
+  text: '一面完整的镜子立在走廊中央。镜中的你，表情冰冷，眼中没有任何情感。',
+  choices: [
+    { text: '🗡 打碎镜子', result: { type: 'buff', text: '碎片散落，心魔暂时退却。攻击力暴增。', effect: { nextBattleAtkBonus: 6, karma: -3 } } },
+    { text: '🧘 直面心魔', result: { type: 'karma', text: '"我不会成为你。" 内心的力量在觉醒。', effect: { karma: 15, exp: 20, healPercent: 0.1 } } },
+    { text: '🚶 别过头走过', result: { type: 'safe', text: '有些东西等你准备好了再面对。', effect: { exp: 5 } } },
+  ],
+  weight: 10,
+});
+
+EXPLORATION_EVENTS[11].push({
+  id: 'biochem_lab',
+  title: '生化实验室',
+  text: '残破的实验室里，试管中还有残留的各色液体。有些在发出诡异的荧光。',
+  choices: [
+    { text: '🧪 分析样本', result: { type: 'info', text: '这是病毒的弱点样本！对最终Boss可能有用。', effect: { nextBattleBossDmgBonus: 8, exp: 15 } } },
+    { text: '💉 注射强化剂', result: { type: 'risk', text: '身体短暂强化，但有副作用。', effect: { nextBattleAtkBonus: 6, nextBattleCritBonus: 8, damage: 10 } } },
+    { text: '💣 摧毁一切', result: { type: 'karma', text: '不能让这些东西落入任何人手中。', effect: { karma: 10, exp: 8 } } },
+  ],
+  weight: 8,
+});
+
+EXPLORATION_EVENTS[12].push({
+  id: 'final_crossroads',
+  title: '最终抉择之路',
+  text: '走廊分成两条路。左边传来低沉的嗡鸣——那是主神的力量。右边一片寂静，但空气中有自由的气息。',
+  choices: [
+    { text: '⬅ 走向主神之力', result: { type: 'buff', text: '主神的力量灌注你的身体。在终局之战中更加强大。', effect: { nextBattleAtkBonus: 10, nextBattleCritBonus: 15, karma: -5 } } },
+    { text: '➡ 走向自由', result: { type: 'karma', text: '选择自己的道路。内心的平静赋予了真正的力量。', effect: { karma: 20, healPercent: 0.2, exp: 25 } } },
+    { text: '⏸ 驻足沉思', result: { type: 'info', text: '在抉择中获得了平衡。两种力量都给了你一些眷顾。', effect: { nextBattleAtkBonus: 5, karma: 5, healPercent: 0.1 } } },
+  ],
+  weight: 10,
+});
