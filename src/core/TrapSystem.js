@@ -5,6 +5,7 @@
 // 类型: 地板陷阱(踩到触发) / 宝箱(有锁/有陷阱) / 隐藏通道 / 环境危害
 // 玩家可通过高SPD闪避陷阱、用钥匙/芯片解除、或硬扛
 
+import { getRelicCombatEffects } from './RelicSystem.js';
 import { eventBus } from './EventBus.js';
 import { addConsumable } from './ConsumableSystem.js';
 import { gameState } from './GameState.js';
@@ -241,7 +242,14 @@ export function openChest(chestType, chapter = 1) {
 
   // 生成奖励
   const pool = CHEST_LOOT[chest.lootTable] || CHEST_LOOT.common;
-  const numLoot = chest.lootTable.includes('rare') ? 2 : 1;
+  let numLoot = chest.lootTable.includes('rare') ? 2 : 1;
+  // 遗物：破碎罗盘——探索事件额外奖励概率
+  try {
+    const _relicFx = getRelicCombatEffects();
+    if (_relicFx.eventBonusChance > 0 && Math.random() < _relicFx.eventBonusChance) {
+      numLoot++;
+    }
+  } catch {}
   const loot = [];
 
   for (let i = 0; i < numLoot; i++) {
