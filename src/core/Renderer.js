@@ -85,15 +85,22 @@ export class Renderer {
   addFloatText(text, x, y, color = COLORS.TEXT_WHITE, opts = {}) {
     const isCrit = opts.crit || text.includes('暴击') || text.includes('LEVEL');
     const isHeal = opts.heal || text.includes('+') && text.includes('HP');
+    const isBoss = opts.boss || text.includes('击 败') || text.includes('BOSS');
+    // 大伤害数字缩放 — 提取文本中的数字
+    const dmgMatch = text.match(/(\d+)/);
+    const dmgVal = dmgMatch ? parseInt(dmgMatch[1]) : 0;
+    const dmgScale = dmgVal > 200 ? 1.4 : dmgVal > 100 ? 1.2 : dmgVal > 50 ? 1.1 : 1.0;
+    const baseFontSize = isBoss ? 22 : isCrit ? 18 : isHeal ? 13 : 14;
+    const baseScale = isBoss ? 1.5 : isCrit ? 1.3 : 1.0;
     this._floatTexts.push({ 
       text, x, y, 
       vy: isCrit ? -2.0 : isHeal ? -1.0 : -1.5, 
       color, 
-      life: isCrit ? 75 : 60,
-      maxLife: isCrit ? 75 : 60,
-      fontSize: isCrit ? 18 : isHeal ? 13 : 14,
-      scale: isCrit ? 1.3 : 1.0,
-      bounce: isCrit,
+      life: isCrit ? 75 : isBoss ? 90 : 60,
+      maxLife: isCrit ? 75 : isBoss ? 90 : 60,
+      fontSize: Math.round(baseFontSize * dmgScale),
+      scale: baseScale * dmgScale,
+      bounce: isCrit || isBoss,
     });
   }
 
