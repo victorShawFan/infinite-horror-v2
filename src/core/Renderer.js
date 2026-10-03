@@ -856,6 +856,34 @@ export class Renderer {
       }
     } catch {}
 
+    // ── 底部快捷键提示（仅探索模式前30秒/新手） ──
+    if (this._time < 1800 || (this._time % 3600 < 300)) {
+      const hints = [
+        { key: 'WASD', desc: '移动' },
+        { key: 'I', desc: '背包' },
+        { key: 'Q', desc: '道具' },
+        { key: 'G', desc: '基因锁' },
+        { key: 'M', desc: '地图' },
+        { key: 'Tab', desc: '角色' },
+        { key: 'H', desc: '帮助' },
+      ];
+      ctx.save();
+      ctx.font = '9px monospace';
+      ctx.textAlign = 'center';
+      const hintY = CANVAS_H - 42;
+      const totalW = hints.length * 62;
+      const startX = (CANVAS_W - totalW) / 2;
+      const alpha = this._time < 600 ? 0.5 : 0.2;
+      for (let i = 0; i < hints.length; i++) {
+        const hx = startX + i * 62 + 31;
+        ctx.fillStyle = `rgba(100,120,180,${alpha})`;
+        ctx.fillText('[' + hints[i].key + ']', hx, hintY);
+        ctx.fillStyle = `rgba(180,180,200,${alpha * 0.7})`;
+        ctx.fillText(hints[i].desc, hx, hintY + 10);
+      }
+      ctx.restore();
+    }
+
     // ── 下方：楼层信息条 + 章节进度 ──
     {
       const floorName = floor?.name || '';
