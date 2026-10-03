@@ -151,6 +151,7 @@ import { generateTacticalHints, formatTacticalHintsHTML } from './core/TacticalH
 import { initStatAllocation, grantStatPoints, allocateStat, autoAllocate, getPendingPoints, renderStatAllocationPanel, serializeStatAllocation, deserializeStatAllocation, getRecommendedBuild } from './core/StatAllocation.js';
 import { getEnchantCombatBonus, serializeEnchant, deserializeEnchant } from './core/EnchantSystem.js';
 import { getChapterNarrative, markNarrativeTriggered, applyNarrativeResult, serializeNarratives, deserializeNarratives } from './core/ChapterNarrativeEvents.js';
+import { getSubplotSystem, resetSubplotSystem } from './core/SubplotSystem.js';
 import { getCanonState, resetCanonState } from './core/CanonState.js';
 import { showChapterBriefing } from './core/ChapterBriefing.js';
 import { initCombatFXListeners, drawAllCombatFX, isHitStopped, updateAndDrawGhosts } from './core/CombatFX.js';
@@ -210,6 +211,7 @@ function autoSave(reason = '') {
     localStorage.setItem('ih_status_effects', JSON.stringify(serializeEffects()));
     localStorage.setItem('ih_dynamic_diff', JSON.stringify(serializeDynamicDifficulty()));
     localStorage.setItem('ih_canon', JSON.stringify(getCanonState().toJSON()));
+    localStorage.setItem('ih_subplot', JSON.stringify(getSubplotSystem().toJSON()));
     localStorage.setItem('ih_growth', JSON.stringify(serializeGrowth()));
     localStorage.setItem('ih_statalloc', JSON.stringify(serializeStatAllocation()));
     localStorage.setItem('ih_abyss', JSON.stringify(serializeAbyss()));
@@ -924,6 +926,7 @@ function menuLoop() {
 
 function startNewGame() {
   resetCanonState();
+  resetSubplotSystem();
 
   gameState._chapterClearCounted = false;
   // 重置状态
@@ -1616,7 +1619,10 @@ eventBus.on('player:death', () => {
         loadFloor(currentFloorIndex);
         gameStarted = true;
         if (!gameLoopRunning) { gameLoopRunning = true; requestAnimationFrame(gameLoop); }
-        renderer.notify('💾 存档已加载', '#44aaff', 90);
+        // 恢复正史状态和支线系统
+      try { const _cd = localStorage.getItem('ih_canon'); if (_cd) getCanonState().fromJSON(JSON.parse(_cd)); } catch {}
+      try { const _sd = localStorage.getItem('ih_subplot'); if (_sd) getSubplotSystem().fromJSON(JSON.parse(_sd)); } catch {}
+            renderer.notify('💾 存档已加载', '#44aaff', 90);
       } else {
         renderer.notify('❌ 无存档可加载', '#ff4444', 60);
       }
