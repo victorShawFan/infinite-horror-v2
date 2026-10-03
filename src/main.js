@@ -157,6 +157,7 @@ import { recordChapterEnemies, recordEncounteredEnemy, serializeTrainingRoom, de
 import { playEncounterIntro, shouldPlayEncounterIntro } from './core/CombatEncounterIntro.js';
 import './core/DamagePopup.js'; // 伤害飘字（自动监听combat:log_update）
 import { setAtmosphere, removeAtmosphere } from './core/AtmosphereOverlay.js';
+import { getCompanionReaction, showCompanionReaction } from './core/CompanionBattleReaction.js';
 import { getCanonState, resetCanonState } from './core/CanonState.js';
 import { showChapterBriefing } from './core/ChapterBriefing.js';
 import { initCombatFXListeners, drawAllCombatFX, isHitStopped, updateAndDrawGhosts } from './core/CombatFX.js';
@@ -4394,6 +4395,16 @@ async function startCombat(enemy, preScaledEnemy) {
       } catch (e) { console.warn('RewardChoice:', e); }
     }
     combatResult = result;
+    
+    // ── 同伴战后反应 ──
+    if (result.victory) {
+      try {
+        const reaction = getCompanionReaction(result, battleRating);
+        if (reaction) {
+          setTimeout(() => showCompanionReaction(reaction), 800);
+        }
+      } catch {}
+    }
     
     // ── 战后详细分析（重要战斗）── 通过 ModalQueue 排队
     if (result.victory && battleRating) {
