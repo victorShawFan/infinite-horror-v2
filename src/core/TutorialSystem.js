@@ -48,6 +48,13 @@ const TUTORIAL_STEPS = [
     delay: 500,
   },
   {
+    id: "stat_alloc",
+    trigger: "first_level_up",
+    text: "升级获得3属性点！按 U 打开属性分配面板，选择你的成长方向。",
+    highlight: "属性分配",
+    delay: 3000,
+  },
+  {
     id: 'stairs',
     trigger: 'first_stairs',
     text: '绿色格子是楼梯。走上去进入下一层。记住先清理本层的资源！',

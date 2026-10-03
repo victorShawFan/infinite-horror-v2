@@ -768,6 +768,7 @@ export function showHelpPanel() {
           <tr><td style="color: #ddaa44;">C</td><td>知识典籍</td></tr>
           <tr><td style="color: #ff8866;">F</td><td>战斗回放</td></tr>
           <tr><td style="color: #ffcc44;">Y</td><td>成长轨迹</td></tr>
+          <tr><td style="color: #aa88ff;">U</td><td>属性分配（升级后有点数可分配）</td></tr>
           <tr><td style="color: #66aaff;">X</td><td>详细统计</td></tr>
           <tr><td style="color: #ff88aa;">R</td><td>同伴关系</td></tr>
           <tr><td style="color: #44ccaa;">V</td><td>迷雾开关</td></tr>
