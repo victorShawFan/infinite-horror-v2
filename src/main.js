@@ -127,6 +127,8 @@ import { shouldPauseForAction, showBattleActionMenu, applyDefendAction, attemptF
 import { shouldShowAnalysis, showPostCombatAnalysis } from './core/PostCombatAnalysis.js';
 import { showCharacterSheet } from './core/CharacterSheet.js';
 import { showWorldDashboard } from './core/WorldDashboard.js';
+import { showKeybindHelp } from './core/KeybindHelp.js';
+import { generateDamageBreakdownHTML } from './core/DamageBreakdown.js';
 import { toggleAutoBattle, isAutoBattleEnabled, shouldAutoBattle, renderAutoBattleIndicator } from './core/AutoBattleSystem.js';
 import { drawEnemyRadar } from './core/EnemyRadar.js';
 import { renderAbilitiesPanel } from './core/CompanionAbilities.js';
@@ -1654,8 +1656,8 @@ document.addEventListener('keydown', (e) => {
         if (window._miniMap) window._miniMap.toggle();
         return;
 case 'h': case '?':
-        // 帮助面板
-        showHelpPanel();
+        // 帮助面板（快捷键一览）
+        showKeybindHelp();
         return;
       case 'l':
         // 战斗日志
@@ -2725,6 +2727,8 @@ function showCombatConfirm(enemy) {
         ${traitsHtml}
         ${descText}
         ${formatEnvironmentHTML(gameState.chapter)}
+        <!-- 伤害分解 -->
+        <div style="margin:8px 0;padding:8px;background:rgba(255,255,255,0.02);border-radius:8px;">${generateDamageBreakdownHTML(p, scaledEnemy)}</div>
         ${formatTacticalHintsHTML(tacticalHints)}
         
         <!-- Build特效提示 + 精英词缀警告 -->
@@ -3379,7 +3383,7 @@ function _showPauseMenu() {
   });
   document.getElementById('pause-help')?.addEventListener('click', () => {
     close();
-    showHelpPanel();
+    showKeybindHelp();
   });
   document.getElementById('pause-quit')?.addEventListener('click', () => {
     autoSave('退出前存档');
