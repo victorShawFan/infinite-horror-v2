@@ -129,6 +129,7 @@ import { showCharacterSheet } from './core/CharacterSheet.js';
 import { showWorldDashboard } from './core/WorldDashboard.js';
 import { showKeybindHelp } from './core/KeybindHelp.js';
 import { generateDamageBreakdownHTML } from './core/DamageBreakdown.js';
+import { ScreenEffects } from './core/ScreenEffects.js';
 import { toggleAutoBattle, isAutoBattleEnabled, shouldAutoBattle, renderAutoBattleIndicator } from './core/AutoBattleSystem.js';
 import { drawEnemyRadar } from './core/EnemyRadar.js';
 import { renderAbilitiesPanel } from './core/CompanionAbilities.js';
@@ -495,6 +496,7 @@ function _showChallengeResults(overlay, rewards, reason, challenge) {
 window.addEventListener('load', async () => {
   const canvas = document.getElementById('game-canvas');
   renderer = new Renderer(canvas);
+let screenEffects = null;
   renderer._gameState = gameState;
 
   const fill = document.querySelector('#loading-bar .fill');
@@ -1514,6 +1516,9 @@ function gameLoop(timestamp) {
   const floor = chapter.floors[currentFloorIndex];
   renderer._chapter = gameState.chapter || 1;
   renderer.render(floor, entities, hoveredEntity, dialogueState, combatResult, currentFloorIndex);
+  // 后处理视觉特效
+  if (!screenEffects && renderer.canvas) screenEffects = new ScreenEffects(renderer.canvas);
+  if (screenEffects) try { screenEffects.render(); } catch {}
 
   // 迷你地图
   if (window._miniMap && window._miniMap.visible) {
@@ -3943,6 +3948,7 @@ function startCombat(enemy, preScaledEnemy) {
 
   // 暴露玩家位置给战斗动画
   window._gamePlayerX = gameState.player.x;
+    window._screenEffects = screenEffects;
   window._gamePlayerY = gameState.player.y;
 
   // 显示战斗HUD

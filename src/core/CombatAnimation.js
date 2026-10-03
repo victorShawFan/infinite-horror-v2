@@ -263,6 +263,8 @@ export class CombatAnimator {
     switch (anim.type) {
       case 'shake':
         this.renderer.shake(anim.intensity, anim.duration);
+        // 全局震屏后处理
+        try { if (window._screenEffects) window._screenEffects.shake(anim.intensity, anim.duration); } catch {}
         break;
 
       case 'playerAttack':
@@ -318,6 +320,8 @@ export class CombatAnimator {
         this.renderer._flashColor = anim.color;
         this.renderer._flashDuration = anim.duration;
         this.renderer._flashStart = performance.now();
+        // 全局闪光后处理
+        try { if (window._screenEffects) window._screenEffects.flash(anim.color, anim.duration); } catch {}
         break;
 
       case 'done':
