@@ -20,6 +20,7 @@ import { eventBus } from './EventBus.js';
 import { getEnemyIntent, renderIntentIndicator } from './EnemyIntentSystem.js';
 import { gameState } from './GameState.js';
 import { getAvailableSkills } from './SkillSystem.js';
+import { getCurrentOrder, setOrder, renderOrderSelector, ORDER_TYPE } from './TacticalOrders.js';
 
 // ── 行动类型 ──
 export const ACTION_TYPE = {
@@ -104,6 +105,10 @@ export function showBattleActionMenu(player, enemy, round, combatState) {
               <span style="color:${intent.color};font-size:11px;font-weight:bold;">${intent.label}</span>
               <span style="color:#999;font-size:10px;">${intent.desc}</span>
             </div>
+      <div id="order-selector" style="margin-top:8px;display:flex;gap:4px;justify-content:center;flex-wrap:wrap;">
+        <span style="color:#666;font-size:10px;margin-right:4px;line-height:24px;">指令:</span>
+        ${renderOrderSelector()}
+      </div>
           </div>
         `;
       }
@@ -257,6 +262,21 @@ export function showBattleActionMenu(player, enemy, round, combatState) {
       }
     };
     document.addEventListener('keydown', keyHandler);
+    // 战术指令按钮
+    container.querySelectorAll('.order-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const type = btn.dataset.order;
+        if (setOrder(type)) {
+          // 刷新指令显示
+          const orderDiv = container.querySelector('#order-selector');
+          if (orderDiv) orderDiv.innerHTML = '<span style="color:#666;font-size:10px;margin-right:4px;line-height:24px;">指令:</span>' + renderOrderSelector();
+          // 重新绑定
+          orderDiv?.querySelectorAll('.order-btn').forEach(b2 => {
+            b2.addEventListener('click', () => { setOrder(b2.dataset.order); });
+          });
+        }
+      });
+    });
   });
 }
 
