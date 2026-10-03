@@ -125,14 +125,26 @@ export function showBattleActionMenu(player, enemy, round, combatState) {
     ` : '';
     
     // 道具按钮
+    const _describeItemEffect = (item) => {
+      const eff = item.effect || {};
+      const parts = [];
+      if (eff.healPercent) parts.push('+' + Math.floor(eff.healPercent * 100) + '% HP');
+      if (eff.manaPercent) parts.push('+' + Math.floor(eff.manaPercent * 100) + '% MP');
+      if (eff.atkBoost) parts.push('ATK+' + Math.floor(eff.atkBoost * 100) + '%');
+      if (eff.defBoost) parts.push('DEF+' + Math.floor(eff.defBoost * 100) + '%');
+      if (eff.removeDebuff) parts.push('净化');
+      return parts.join(' ') || item.desc?.slice(0, 12) || '';
+    };
     const itemButtons = consumables.length > 0 ? `
       <div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:center;">
-        ${consumables.slice(0, 4).map((item, i) => 
-          `<button class="bam-btn bam-item" data-action="item" data-item-idx="${i}"
-            style="background:rgba(68,204,136,0.08);border-color:#44cc88;">
+        ${consumables.slice(0, 4).map((item, i) => {
+          const effDesc = _describeItemEffect(item);
+          return `<button class="bam-btn bam-item" data-action="item" data-item-idx="${i}"
+            style="background:rgba(68,204,136,0.08);border-color:#44cc88;text-align:center;">
             ${item.icon || '🧪'} ${item.name} <span style="color:#666;font-size:10px;">(F${i+1})</span>
-          </button>`
-        ).join('')}
+            ${effDesc ? '<br><span style="color:#44cc88;font-size:9px;">' + effDesc + '</span>' : ''}
+          </button>`;
+        }).join('')}
       </div>
     ` : '';
     
