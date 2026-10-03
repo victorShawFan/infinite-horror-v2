@@ -1922,7 +1922,10 @@ function gameLoop(timestamp) {
   renderer._chapter = gameState.chapter || 1;
   renderer.render(floor, entities, hoveredEntity, dialogueState, combatResult, currentFloorIndex);
   // 后处理视觉特效
-  if (!screenEffects && renderer.canvas) screenEffects = new ScreenEffects(renderer.canvas);
+  if (!screenEffects && renderer.canvas) {
+    screenEffects = new ScreenEffects(renderer.canvas);
+    screenEffects.setChapter(gameState.chapter || 1);
+  }
   if (screenEffects) try { screenEffects.render(); } catch {}
   // 战斗特效层
   try { drawAllCombatFX(renderer.ctx, renderer.canvas.width, renderer.canvas.height); } catch {}
@@ -5674,12 +5677,12 @@ function toggleGeneLock() {
 // ── 章节完成 ──
 function showChapterComplete() {
   autoSave('章节完成');
-  // 显示楼层精通
+  // 显示楼层精通 — 仅未领取时结算（loadFloor已结算最后一层，避免重复弹窗）
   try {
     const floorId = chapter.floors[currentFloorIndex]?.id;
     const masteryRewards = getFloorMasteryRewards(floorId, gameState.chapter);
-    if (masteryRewards.stars > 0) {
-      // 显示精通弹窗
+    if (masteryRewards.stars > 0 && masteryRewards.exp > 0) {
+      // 仅首次领取时显示弹窗和发放奖励
       try {
         const masteryHtml = renderMasteryPopup(floorId, gameState.chapter);
         if (masteryHtml) eventBus.emit('ui:show_mastery_popup', { html: masteryHtml, floorId });
