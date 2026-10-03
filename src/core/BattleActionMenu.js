@@ -22,6 +22,7 @@ import { gameState } from './GameState.js';
 import { getAvailableSkills } from './SkillSystem.js';
 import { getCurrentOrder, setOrder, renderOrderSelector, ORDER_TYPE } from './TacticalOrders.js';
 import { getSyncGauge, executeSyncAttack, renderSyncGaugeHTML } from './SyncAttack.js';
+import { renderTacticsHUD, getChargeLevel, getCurrentPosition, switchPosition } from './CombatTactics.js';
 
 // ── 行动类型 ──
 export const ACTION_TYPE = {
@@ -31,6 +32,8 @@ export const ACTION_TYPE = {
   DEFEND:   'defend',
   FLEE:     'flee',
   SYNC:     'sync',
+  CHARGE_ATTACK: 'charge_attack',
+  SWITCH_POS: 'switch_pos',
 };
 
 let _strategicMode = false;

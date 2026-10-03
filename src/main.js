@@ -159,6 +159,7 @@ import './core/DamagePopup.js'; // 伤害飘字（自动监听combat:log_update�
 import { setAtmosphere, removeAtmosphere } from './core/AtmosphereOverlay.js';
 import { getCompanionReaction, showCompanionReaction } from './core/CompanionBattleReaction.js';
 import { initFloorMastery, recordFloorKill, recordFloorCollect, recordFloorEvent, getFloorMasteryRewards, renderMasteryPopup, serializeFloorMastery, deserializeFloorMastery } from './core/FloorMastery.js';
+import { initBattleScene, startBattleScene, stopBattleScene, updateBattleState, playBattleResult, isBattleSceneActive } from './core/BattleScene.js';
 import { addJournalEntry, triggerChapterJournals, triggerChapterCompleteJournal, serializeJournal, deserializeJournal, renderJournalPanel } from './core/StoryJournal.js';
 import { getCanonState, resetCanonState } from './core/CanonState.js';
 import { announce, autoAnnounce, clearAnnouncements } from './core/CombatAnnouncer.js';
@@ -984,6 +985,8 @@ document.getElementById('btn-new-game').addEventListener('click', () => {
           menuState = 'playing';
           overlay.innerHTML = '';
           combatAnimator = new CombatAnimator(renderer);
+  // 初始化战斗场景系统
+  try { initBattleScene(renderer.canvas); } catch(e) { console.warn('BattleScene init:', e); }
 
   // 迷你地图
   if (!window._miniMap) {
@@ -1115,6 +1118,49 @@ function startGame() {
   document.getElementById('ui-overlay').innerHTML = '';
   combatAnimator = new CombatAnimator(renderer);
   initCombatFXListeners();
+  // ── 战斗场景实时事件接入 ──
+  try {
+    eventBus.on('combat:log_update', (data) => {
+      try {
+        if (isBattleSceneActive()) {
+          updateBattleState({
+            playerHp: data.playerHp,
+            enemyHp: data.enemyHp,
+            playerMana: data.playerMana,
+            round: data.round,
+          });
+        }
+      } catch {}
+    });
+    eventBus.on('combat:critical', () => {
+      try {
+        if (isBattleSceneActive()) {
+          updateBattleState({ action: 'player_attack', isCrit: true });
+        }
+      } catch {}
+    });
+    eventBus.on('combat:player_hurt', () => {
+      try {
+        if (isBattleSceneActive()) {
+          updateBattleState({ action: 'enemy_attack' });
+        }
+      } catch {}
+    });
+    eventBus.on('combat:boss_phase', (data) => {
+      try {
+        if (isBattleSceneActive()) {
+          updateBattleState({ bossPhase: data.phase });
+        }
+      } catch {}
+    });
+    eventBus.on('combat:sync_attack', () => {
+      try {
+        if (isBattleSceneActive()) {
+          updateBattleState({ action: 'player_skill', actionData: { color: '#ffcc44' } });
+        }
+      } catch {}
+    });
+  } catch(e) { console.warn('BattleScene events:', e); }
 
   chapter = generateChapter1();
   // 初始化大气效果
@@ -4449,6 +4495,11 @@ async function startCombat(enemy, preScaledEnemy) {
     const hpBeforeCombat = p.hp;
   // 在执行战斗前创建HUD，这样combat:log_update事件可以实时更新HP条
   _showCombatHUD(gameState.player, enemy, scaledEnemy, hpBeforeCombat);
+  // 启动战斗场景演出
+  try {
+    const _isBoss = !!(enemy.type === 'boss' || enemy.isBoss || enemy.bossId);
+    startBattleScene(gameState.player, scaledEnemy, gameState.chapter, _isBoss);
+  } catch(e) { console.warn('BattleScene start:', e); }
   // 记录遭遇的敌人供训练房使用（在战斗前记录，避免死亡后被移除）
   try { recordEncounteredEnemy(scaledEnemy); } catch {}
   // 情报系统：记录遭遇
@@ -4482,6 +4533,7 @@ async function startCombat(enemy, preScaledEnemy) {
     renderer.addFloatText('💨 成功脱离！', p.x, p.y - 0.5, '#ffaa44');
     audioEngine.playMove();
     hideLiveBattleLog();
+    try { stopBattleScene(); } catch {}
     return;
   }
 
@@ -4499,6 +4551,13 @@ async function startCombat(enemy, preScaledEnemy) {
     });
     // 连杀记录在主战斗流程中更新，这里不再重复
     updateHighestLevel(p.level || 1);
+  } catch {}
+
+  // 战斗场景演出结果
+  try {
+    playBattleResult(result.victory);
+    // 延迟停止，让胜利/失败动画播放
+    setTimeout(() => { try { stopBattleScene(); } catch {} }, 1500);
   } catch {}
 
   if (result.victory) {

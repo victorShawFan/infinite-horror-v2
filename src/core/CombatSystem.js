@@ -42,6 +42,8 @@ import { getEnemyIntent } from './EnemyIntentSystem.js';
 import { random as seededRandom, chance as seededChance } from './RandomSystem.js';
 import { addSyncGauge, getSyncGauge, executeSyncAttack, resetSyncGauge } from './SyncAttack.js';
 import { getIntelCombatBonus, recordDiscovery } from './EnemyIntelSystem.js';
+import { resetChainState, recordElementHit, recordStatusApplied, applyChainDamage, formatChainLog, getChainStats } from './ChainReaction.js';
+import { resetTactics, recordTacticalAction, onDefendChosen, consumeCharge, addCharge, getPositionModifier, switchPosition, isCounterWindow } from './CombatTactics.js';
 
 // ── 伤害计算 ──
 export function calcDamage(attacker, defender, damageType = DAMAGE_TYPE.PHYSICAL, minDmg = 1) {
@@ -321,6 +323,8 @@ export async function executeBattle(enemy) {
   // 初始化同伴技能
   try { initCombatAbilities(); } catch {}
   try { initComboState(); } catch {}
+  try { resetChainState(); } catch {}
+  try { resetTactics(); } catch {}
 
   // ── 业力系统战斗修正 ──
   let karmaHealBonus = 0;
@@ -981,7 +985,29 @@ if (chipFx.hasIceChip && enemy.atk !== enemyEffAtk) {
         const defendResult = applyDefendAction();
         _defendActive = true;
         log.push(defendResult.log);
-        // 防御回合跳过攻击阶段，但仍然处理被动效果
+        // 防御蓄力
+        try {
+          const chargeLog = onDefendChosen();
+          log.push(chargeLog);
+        } catch {}
+        // 记录战术行动
+        try { recordTacticalAction('defend'); } catch {}
+      }
+      // 处理位置切换
+      if (_actionChoice.type === ACTION_TYPE.SWITCH_POS) {
+        try {
+          const posMod = switchPosition();
+          log.push({ text: posMod.icon + ' 切换至' + posMod.desc, type: 'position' });
+        } catch {}
+      }
+      // 处理蓄力攻击
+      if (_actionChoice.type === ACTION_TYPE.CHARGE_ATTACK) {
+        try {
+          const charge = consumeCharge();
+          if (charge.level > 0) {
+            log.push({ text: charge.icon + ' ' + charge.desc + '！', type: 'charge_attack' });
+          }
+        } catch {}
       }
       // 处理道具使用
       if (_actionChoice.type === ACTION_TYPE.ITEM && _actionChoice.data?.item) {
@@ -1183,7 +1209,21 @@ if (chipFx.hasIceChip && enemy.atk !== enemyEffAtk) {
         try { addSyncGauge(10, 'crit'); eventBus.emit('combat:crit'); } catch {} }
       try { recordCrit(pHit.isCrit); } catch {}
       try { if (pHit.isWeak) recordWeaknessHit(); } catch {}
-      try { if (pHit.elemAdvantage) { recordElementalHit(); addSyncGauge(8, 'element'); eventBus.emit('combat:elemental_advantage'); } } catch {}
+      try {
+        if (pHit.elemAdvantage) {
+          recordElementalHit(); addSyncGauge(8, 'element'); eventBus.emit('combat:elemental_advantage');
+          // 连锁反应检测
+          const chainResult = recordElementHit(playerDamageType);
+          if (chainResult) {
+            const chainDmg = applyChainDamage(chainResult, playerDmg, p.geneLock || 0);
+            enemyHp = Math.max(0, enemyHp - chainDmg);
+            _totalDmgDealt += chainDmg;
+            log.push(formatChainLog(chainResult));
+            log.push({ text: '连锁追加伤害: ' + chainDmg, type: 'chain_damage' });
+            eventBus.emit('combat:log_update', { log: [...log], round, playerHp, enemyHp, playerMaxHp: p.maxHp, enemyMaxHp, playerMana });
+          }
+        }
+      } catch {}
       // 情报系统: 弱点/元素发现
       try { if (pHit.isWeak) { recordDiscovery(enemy, 'weakness', '弱点攻击效果显著'); addSyncGauge(15, 'weakness'); eventBus.emit('combat:weakness_hit'); } } catch {}
       try { if (round >= 3 && !pHit.isCrit) recordDiscovery(enemy, 'stats'); } catch {}
