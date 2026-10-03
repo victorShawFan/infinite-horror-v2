@@ -1452,8 +1452,26 @@ eventBus.on('combat:player_hurt', (data) => {
   if (canvas) screenFlash(canvas.parentElement || document.body, '#ff000033', 100);
 });
 
-function gameLoop() {
+let _lastFrameTime = 0;
+let _fpsCounter = 0;
+let _fpsDisplay = 0;
+let _fpsAccum = 0;
+
+function gameLoop(timestamp) {
   if (!gameStarted) { gameLoopRunning = false; return; }
+  
+  // FPS tracking
+  if (timestamp) {
+    const dt = timestamp - _lastFrameTime;
+    _lastFrameTime = timestamp;
+    _fpsAccum += dt;
+    _fpsCounter++;
+    if (_fpsAccum >= 1000) {
+      _fpsDisplay = _fpsCounter;
+      _fpsCounter = 0;
+      _fpsAccum = 0;
+    }
+  }
 
   const floor = chapter.floors[currentFloorIndex];
   renderer._chapter = gameState.chapter || 1;
@@ -1469,6 +1487,16 @@ function gameLoop() {
     try { drawQuestHUD(renderer.ctx, renderer.canvas.width, renderer.canvas.height); } catch {}
     try { renderAutoBattleIndicator(renderer.ctx, 12, renderer.canvas.height - 52); } catch {}
     try { drawEnemyRadar(renderer.ctx, entities, gameState.player, gameState.chapter); } catch {}
+    // FPS指示器（右下角小字）
+    if (_fpsDisplay > 0) {
+      const fpsCtx = renderer.ctx;
+      fpsCtx.save();
+      fpsCtx.font = '9px monospace';
+      fpsCtx.textAlign = 'right';
+      fpsCtx.fillStyle = _fpsDisplay >= 55 ? 'rgba(68,204,136,0.3)' : _fpsDisplay >= 30 ? 'rgba(255,204,68,0.4)' : 'rgba(255,68,68,0.5)';
+      fpsCtx.fillText(_fpsDisplay + ' FPS', renderer.canvas.width - 8, 12);
+      fpsCtx.restore();
+    }
   }
 
   requestAnimationFrame(gameLoop);
