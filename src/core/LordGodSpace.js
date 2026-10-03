@@ -24,6 +24,7 @@ import { generateRelicChoices, addRelic, hasRelic, getOwnedRelics, getRelicDef, 
 import { renderJournalPanel } from './StoryJournal.js';
 import { renderIntelPanel } from './EnemyIntelSystem.js';
 import { renderWorldMap } from './WorldMap.js';
+import { renderProgressDashboard } from './ProgressDashboard.js';
 
 /** 主神空间商店/强化项目 */
 // 每次回到主神空间，每人只可替另一名队员承担一次强化
@@ -276,6 +277,7 @@ export function renderLordGodSpace(onClose) {
       { key: 'journal', name: '📖 轮回手记', color: '#886644' },
       { key: 'intel', name: '📋 敌人情报', color: '#44aaff' },
       { key: 'worldmap', name: '🌍 轮回之路', color: '#ff4444' },
+      { key: 'progress', name: '📊 成长面板', color: '#aa88ff' },
     ];
 
     overlay.innerHTML = `
@@ -360,6 +362,44 @@ export function renderLordGodSpace(onClose) {
     // ── 基因锁特殊页面 ──
     
     // ── 附魔（元素附魔系统） ──
+    
+    // ── 轮回手记 ──
+    if (cat === 'journal') {
+      try {
+        contentEl.innerHTML = renderJournalPanel();
+      } catch (e) {
+        contentEl.innerHTML = '<p style="color:#666;text-align:center;padding:20px;">手记系统加载中…</p>';
+      }
+      return;
+    }
+    // ── 敌人情报 ──
+    if (cat === 'intel') {
+      try {
+        contentEl.innerHTML = renderIntelPanel();
+      } catch (e) {
+        contentEl.innerHTML = '<p style="color:#666;text-align:center;padding:20px;">情报系统加载中…</p>';
+      }
+      return;
+    }
+    // ── 世界地图（轮回之路） ──
+    if (cat === 'worldmap') {
+      try {
+        contentEl.innerHTML = renderWorldMap();
+      } catch (e) {
+        contentEl.innerHTML = '<p style="color:#666;text-align:center;padding:20px;">地图加载中…</p>';
+      }
+      return;
+    }
+    // ── 成长仪表盘 ──
+    if (cat === 'progress') {
+      try {
+        contentEl.innerHTML = renderProgressDashboard();
+      } catch (e) {
+        contentEl.innerHTML = '<p style="color:#666;text-align:center;padding:20px;">成长面板加载中…</p>';
+      }
+      return;
+    }
+
     if (cat === 'enchant') {
       const p = gameState.player;
       const shards = gameState.soulShards || 0;

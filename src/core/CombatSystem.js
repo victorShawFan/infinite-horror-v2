@@ -347,6 +347,8 @@ export async function executeBattle(enemy) {
   let playerHp = p.hp;
   let playerMana = p.mana || 0;
   let round = 0;
+    try { resetSyncGauge(); } catch {} // 战斗开始重置协同值
+
   let _totalDmgDealt = 0, _totalDmgTaken = 0, _critHits = 0;
   let _lootDrops = [];
   const _isTraining = !!(enemy._noReward || enemy.isTraining);
@@ -1021,8 +1023,26 @@ if (chipFx.hasIceChip && enemy.atk !== enemyEffAtk) {
       }
     }
 
+    // 处理协同攻击
+      if (_actionChoice && _actionChoice.type === ACTION_TYPE.SYNC) {
+        try {
+          const syncResult = executeSyncAttack(p, enemy, combatState);
+          if (syncResult && syncResult.log) {
+            for (const entry of syncResult.log) log.push(entry);
+          }
+          if (syncResult && syncResult.damage) {
+            enemyHp -= syncResult.damage;
+            eventBus.emit('combat:sync_attack', { damage: syncResult.damage });
+          }
+          // 协同攻击后跳过普攻
+          _actionChoice = { type: '_sync_done' };
+        } catch (e) {
+          log.push({ text: '协同攻击失败！', type: 'info' });
+          _actionChoice = { type: ACTION_TYPE.ATTACK };
+        }
+      }
     // ── 玩家回合：尝试使用技能 ──
-    const _skipPlayerAttack = _defendActive || (_actionChoice && _actionChoice.type === '_flee_failed');
+    const _skipPlayerAttack = _defendActive || (_actionChoice && (_actionChoice.type === '_flee_failed' || _actionChoice.type === '_sync_done'));
     let skill = null;
     if (!_skipPlayerAttack) {
       if (_actionChoice && _actionChoice.type === ACTION_TYPE.SKILL && _actionChoice.data?.skillId) {

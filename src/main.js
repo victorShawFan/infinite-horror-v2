@@ -165,6 +165,7 @@ import { announce, autoAnnounce, clearAnnouncements } from './core/CombatAnnounc
 import { showBossVictoryScreen } from './core/VictoryScreen.js';
 import { addSyncGauge, getSyncGauge, executeSyncAttack, renderSyncGaugeHTML, resetSyncGauge, serializeSync, deserializeSync } from './core/SyncAttack.js';
 import { renderWorldMap } from './core/WorldMap.js';
+import { renderProgressDashboard } from './core/ProgressDashboard.js';
 import { recordEncounter, recordKill, recordDiscovery, getIntelCombatBonus, getEnemyIntel, getPreBattleIntelHTML, renderIntelPanel, serializeIntel, deserializeIntel, INTEL_LEVEL } from './core/EnemyIntelSystem.js';
 import { showChapterBriefing } from './core/ChapterBriefing.js';
 import { initCombatFXListeners, drawAllCombatFX, isHitStopped, updateAndDrawGhosts } from './core/CombatFX.js';
@@ -3792,6 +3793,10 @@ function _showPauseMenu() {
             background:rgba(255,68,68,0.06);border:1px solid #ff444422;color:#ff6666;
             padding:10px;cursor:pointer;font-size:13px;font-family:inherit;
             border-radius:8px;letter-spacing:2px;">🌍 轮回之路</button>
+          <button class="pause-btn" id="pause-progress" style="
+            background:rgba(170,136,255,0.06);border:1px solid #aa88ff22;color:#aa88ff;
+            padding:10px;cursor:pointer;font-size:13px;font-family:inherit;
+            border-radius:8px;letter-spacing:2px;">📊 成长面板</button>
           <button class="pause-btn" id="pause-help" style="
             background:rgba(100,100,100,0.08);border:1px solid #55555533;color:#888;
             padding:10px;cursor:pointer;font-size:13px;font-family:inherit;
@@ -3816,7 +3821,19 @@ function _showPauseMenu() {
     close();
     showSettingsPanel();
   });
-  document.getElementById('pause-worldmap')?.addEventListener('click', () => {
+  document.getElementById('pause-progress')?.addEventListener('click', () => {
+    const phtml = renderProgressDashboard();
+    overlay.innerHTML = '<div style="position:absolute;top:0;left:0;right:0;bottom:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.85);" id="progress-backdrop">' +
+      '<div style="background:rgba(8,5,12,0.98);border:1px solid #aa88ff;border-radius:12px;padding:24px;max-width:460px;width:92%;max-height:80vh;overflow-y:auto;">' +
+      phtml +
+      '<p style="color:#555;font-size:10px;text-align:center;margin-top:12px;">Esc / 点击空白关闭</p>' +
+      '</div></div>';
+    const closeP = () => { _showPauseMenu(); document.removeEventListener('keydown', pkh); };
+    const pkh = (e) => { if (e.key === 'Escape') closeP(); };
+    document.addEventListener('keydown', pkh);
+    document.getElementById('progress-backdrop')?.addEventListener('click', (e) => { if (e.target.id === 'progress-backdrop') closeP(); });
+  });
+    document.getElementById('pause-worldmap')?.addEventListener('click', () => {
     const whtml = renderWorldMap();
     overlay.innerHTML = '<div style="position:absolute;top:0;left:0;right:0;bottom:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.85);" id="worldmap-backdrop">' +
       '<div style="background:rgba(8,5,10,0.98);border:1px solid #ff4444;border-radius:12px;padding:24px;max-width:500px;width:94%;max-height:85vh;overflow-y:auto;">' +
@@ -4379,6 +4396,8 @@ async function startCombat(enemy, preScaledEnemy) {
   _showCombatHUD(gameState.player, enemy, scaledEnemy, hpBeforeCombat);
   // 记录遭遇的敌人供训练房使用（在战斗前记录，避免死亡后被移除）
   try { recordEncounteredEnemy(scaledEnemy); } catch {}
+  // 情报系统：记录遭遇
+  try { recordEncounter(scaledEnemy || enemy); } catch {}
   // 战斗入场特写
   try {
     if (shouldPlayEncounterIntro(scaledEnemy)) {
@@ -4440,6 +4459,7 @@ async function startCombat(enemy, preScaledEnemy) {
 
 // 连杀记录
     killStreak.recordKill();
+    try { recordKill(scaledEnemy || enemy); } catch {} // 情报系统击杀记录
     recordMaxStreak(killStreak.kills || 0);
     // 成就追踪: 击杀
     try {
@@ -4490,6 +4510,8 @@ async function startCombat(enemy, preScaledEnemy) {
     // 隐藏战斗HUD和实时战报
     _hideCombatHUD();
     hideLiveBattleLog();
+    // ── 战斗播报 ──
+    try { autoAnnounce(result); } catch {}
     // ── 战斗评级（先于奖励面板，以便奖励等级正确） ──
     const battleRating = result.victory ? rateBattle(result, gameState.player) : null;
     if (battleRating) { recordRating(battleRating); result.rating = battleRating; }
@@ -4770,6 +4792,23 @@ async function startCombat(enemy, preScaledEnemy) {
           const closeBossPanel = () => {
             overlay.innerHTML = '';
             document.removeEventListener('keydown', bkh);
+            // ── Boss击败电影级特写 ──
+            try {
+              showBossVictoryScreen({
+                bossName: enemy.name || scaledEnemy?.name || 'Boss',
+                bossSprite: enemy.sprite || '💀',
+                chapter: gameState.chapter,
+                rating: result.rating || { grade: 'C' },
+                stats: {
+                  rounds: result.rounds || 0,
+                  damageDealt: result.totalDamageDealt || 0,
+                  damageTaken: result.totalDamageTaken || 0,
+                  critHits: result.critCount || 0,
+                },
+                rewards: result.rewards || {},
+                onClose: () => {},
+              });
+            } catch (e) { console.warn('BossVictoryScreen:', e); }
             autoSave('击败Boss: ' + (enemy.name || 'unknown'));
             
             // ── Boss击杀后掉落遗物（3选1） ──
