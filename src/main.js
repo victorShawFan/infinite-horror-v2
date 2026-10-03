@@ -130,6 +130,7 @@ import { showWorldDashboard } from './core/WorldDashboard.js';
 import { showKeybindHelp } from './core/KeybindHelp.js';
 import { generateDamageBreakdownHTML } from './core/DamageBreakdown.js';
 import { ScreenEffects } from './core/ScreenEffects.js';
+import { getRandomTip, getContextualTip } from './core/GameplayTips.js';
 import { toggleAutoBattle, isAutoBattleEnabled, shouldAutoBattle, renderAutoBattleIndicator } from './core/AutoBattleSystem.js';
 import { drawEnemyRadar } from './core/EnemyRadar.js';
 import { renderAbilitiesPanel } from './core/CompanionAbilities.js';
@@ -1290,6 +1291,10 @@ function showFloorTitle(floor) {
         <p style="font-size: 16px; color: #aaa; max-width: 600px; text-align: center; line-height: 1.8;
           text-shadow: 0 0 10px rgba(0,0,0,0.8);">
           ${floor.subtitle}
+        </p>
+        <p style="font-size: 11px; color: #555; max-width: 500px; text-align: center; margin-top: 16px;
+          font-style: italic; line-height: 1.5;">
+          💡 ${getContextualTip(gameState.player, gameState.chapter)}
         </p>
       </div>
     </div>
