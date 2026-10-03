@@ -152,6 +152,7 @@ import { initStatAllocation, grantStatPoints, allocateStat, autoAllocate, getPen
 import { getEnchantCombatBonus, serializeEnchant, deserializeEnchant } from './core/EnchantSystem.js';
 import { getChapterNarrative, markNarrativeTriggered, applyNarrativeResult, serializeNarratives, deserializeNarratives } from './core/ChapterNarrativeEvents.js';
 import { getCanonState, resetCanonState } from './core/CanonState.js';
+import { showChapterBriefing } from './core/ChapterBriefing.js';
 
 // ── 全局状态 ──
 let renderer;
@@ -1010,7 +1011,10 @@ function startGame() {
   // 初始化大气效果
   atmosphereRenderer.setChapter(1);
   currentFloorIndex = gameState.nodeIndex || 0;
-  loadFloor(currentFloorIndex);
+  // 章节任务简报 — 电影式过场
+  showChapterBriefing(gameState.chapter).then(() => {
+    loadFloor(currentFloorIndex);
+  });
 
   gameState.setState(GAME_STATE.EXPLORING);
   gameStarted = true;
@@ -5526,10 +5530,13 @@ function showChapterComplete() {
           gameState.worldName = chapter.world;
           currentFloorIndex = 0;
           overlay.innerHTML = '';
-          loadFloor(0);
-          gameStarted = true;
-          if (!gameLoopRunning) { gameLoopRunning = true; gameLoop(); }
-          gameState.save(0);
+          // 章节任务简报
+          showChapterBriefing(gameState.chapter).then(() => {
+            loadFloor(0);
+            gameStarted = true;
+            if (!gameLoopRunning) { gameLoopRunning = true; gameLoop(); }
+            gameState.save(0);
+          });
           };
           if (cutsceneFn) cutsceneFn(doStart);
           else doStart();
