@@ -14,23 +14,23 @@ import { random as seededRandom } from './RandomSystem.js';
 import { gameState } from './GameState.js';
 
 const EXPLORATION_EVENTS = {
-  // ── 第1章：异形 ──
+  // ── 第1章：生化危机 ──
   1: [
     {
-      id: 'alien_corpse',
-      title: '走廊尽头的尸体',
-      text: '你发现一具穿着太空服的尸体。面罩碎裂，表情扭曲——死前经历了极度恐惧。手里紧握着一张便签。',
+      id: 'zombie_corpse',
+      title: '实验室中的遗骸',
+      text: '蜂巢实验室走廊尽头，一具穿着白大褂的研究员尸体靠墙而坐。胸口有撕裂的咬痕，手里紧握着一张实验记录。',
       choices: [
-        { text: '📋 检查便签', result: { type: 'info', text: '"他们不怕火……但怕酸。左边的管道里有应急清洗液。" — 获得战术情报', effect: { nextBattleCritBonus: 10 } } },
-        { text: '🔍 搜索装备', result: { type: 'loot', text: '在尸体的工具腰带里找到一瓶修复液。', effect: { heal: 15 } } },
-        { text: '🚶 默哀后离开', result: { type: 'karma', text: '"愿你安息。" 业力微微上升。', effect: { karma: 5 } } },
+        { text: '📋 检查记录', result: { type: 'info', text: '"T-病毒变异体对火焰有明显弱点。红后安保系统可通过C-2走廊绕过。" — 获得战术情报', effect: { nextBattleCritBonus: 10 } } },
+        { text: '🔍 搜索装备', result: { type: 'loot', text: '在研究员的口袋里找到一支急救针和安保卡。', effect: { heal: 15 } } },
+        { text: '🚶 默哀后离开', result: { type: 'karma', text: '"愿你安息。" 你为这位无辜的牺牲者合上了眼睛。', effect: { karma: 5 } } },
       ],
       weight: 10,
     },
     {
       id: 'emergency_cache',
-      title: '应急物资柜',
-      text: '一个印有 USCSS 标志的应急柜，密码锁已被暴力破坏。里面还剩下一些物资。',
+      title: '安保室物资柜',
+      text: '一个印有 Umbrella 标志的安保物资柜，密码锁已被暴力破坏。里面还剩下一些物资。',
       choices: [
         { text: '💊 拿走医疗包', result: { type: 'heal', text: '使用医疗包，恢复了一些生命。', effect: { healPercent: 0.2 } } },
         { text: '⚡ 拿走能量棒', result: { type: 'buff', text: '能量棒让你感觉力量充沛。下场战斗ATK+3', effect: { nextBattleAtkBonus: 3 } } },
@@ -39,38 +39,38 @@ const EXPLORATION_EVENTS = {
       weight: 8,
     },
     {
-      id: 'alien_nest_warning',
-      title: '粘液痕迹',
-      text: '地板上出现了大片暗色粘液，空气中弥漫着刺鼻的酸味。这是异形巢穴的边缘。',
+      id: 'laser_corridor',
+      title: '红后激光走廊',
+      text: '走廊尽头亮起红色警报灯。地面散落着被激光切割的金属碎片——红后防御系统仍在运转。',
       choices: [
-        { text: '⚠ 小心前进', result: { type: 'info', text: '你提高了警惕，下场战斗中更容易发现敌人弱点。', effect: { nextBattleCritBonus: 15 } } },
-        { text: '🔥 制作简易火把', result: { type: 'buff', text: '火光让异形暂时退避。下场战斗敌人ATK-2', effect: { nextBattleEnemyAtkReduce: 2 } } },
-        { text: '↩ 寻找绕路', result: { type: 'safe', text: '多走了一段路，但避开了直接冲突。', effect: { exp: 5 } } },
+        { text: '🏃 冲过激光阵', result: { type: 'info', text: '你观察好间隙，飞身穿过。基因锁感知被激活。', effect: { nextBattleCritBonus: 15 } } },
+        { text: '🔧 关闭安保系统', result: { type: 'buff', text: '你找到控制面板，关闭了激光防御。获得安保卡。', effect: { nextBattleEnemyAtkReduce: 2 } } },
+        { text: '↩ 从维修通道绕行', result: { type: 'safe', text: '绕道虽远，但安全通过了。', effect: { exp: 5 } } },
       ],
       weight: 6,
     },
   ],
-  // ── 第2章：咒怨 ──
+  // ── 第2章：异形 ──
   2: [
     {
-      id: 'haunted_room',
-      title: '诡异的日式房间',
-      text: '推开门，里面是一间传统和室。茶杯中的茶还是温的，角落的电视机自动开启，画面是一个黑发女人……',
+      id: 'acid_corridor',
+      title: '酸蚀走廊',
+      text: '飞船走廊的金属墙壁满是腐蚀痕迹。浓烈的酸性气味刺痛鼻腔——异形曾从这里经过。地上有绿色血液。',
       choices: [
-        { text: '📺 继续观看', result: { type: 'info', text: '画面中隐约出现了逃生路线图。获得 +8% 暴击', effect: { nextBattleCritBonus: 8 } } },
-        { text: '🔇 关掉电视', result: { type: 'safe', text: '及时切断了诅咒传播。避免了精神伤害。', effect: { karma: 3 } } },
-        { text: '🏃 立刻离开', result: { type: 'escape', text: '直觉救了你。身后传来指甲抓地板的声音。', effect: { exp: 8 } } },
+        { text: '🔥 准备火攻', result: { type: 'info', text: '你从应急柜找到火焰喷射器备件。异形惧火。', effect: { nextBattleCritBonus: 8 } } },
+        { text: '🔍 追踪血迹', result: { type: 'safe', text: '血迹指向通风管——你标记了异形移动路线。', effect: { karma: 3 } } },
+        { text: '⏪ 换条路走', result: { type: 'escape', text: '迂回前进虽慢，但安全第一。', effect: { exp: 8 } } },
       ],
       weight: 10,
     },
     {
-      id: 'ghost_child',
-      title: '楼梯间的孩子',
-      text: '一个苍白的小男孩蜷缩在楼梯角。他抬头看着你，嘴巴张开又闭上，像是想说什么。',
+      id: 'facehugger_eggs',
+      title: '异形卵室',
+      text: '通风管尽头是一个闷热潮湿的空间。地面排列着数十个半透明的异形卵，卵顶在微微张合。',
       choices: [
-        { text: '🗣 蹲下问他', result: { type: 'info', text: '"妈妈……在阁楼……不要……去……" 他消失了。获得Boss情报。', effect: { nextBattleBossDmgBonus: 5 } } },
-        { text: '🤲 递出食物', result: { type: 'karma', text: '孩子眼中闪过一丝温暖，随后化为光点消散。业力显著上升。', effect: { karma: 10, heal: 5 } } },
-        { text: '🚶 无视通过', result: { type: 'neutral', text: '你选择不与未知交互。安全但错过了什么。', effect: {} } },
+        { text: '🔥 焚烧虫卵', result: { type: 'info', text: '你用火焰将卵室烧成焦炭。减少了后续遭遇抱脸虫的风险。', effect: { nextBattleBossDmgBonus: 5 } } },
+        { text: '🔍 小心取样', result: { type: 'karma', text: '楚轩说样本也许对分析异形弱点有用。你冒险取了一份。', effect: { karma: 10, heal: 5 } } },
+        { text: '⚡ 全力破坏', result: { type: 'neutral', text: '你暴力摧毁了整个卵室，在废墟中发现了士兵装备。', effect: { nextBattleAtkBonus: 5 } } },
       ],
       weight: 8,
     },
@@ -339,7 +339,7 @@ export function deserializeExplorationEvents(data) {
 // 第3章: 神鬼秘宝
 EXPLORATION_EVENTS[3] = [
   {
-    id: 'ancient_trap',
+    id: 'cursed_apartment',
     title: '古代机关',
     text: '墙壁上的浮雕开始缓缓移动，似乎触发了某种古代防御机制。沙子从天花板的缝隙中倾泻而下。',
     choices: [
@@ -350,7 +350,7 @@ EXPLORATION_EVENTS[3] = [
     weight: 8,
   },
   {
-    id: 'mummy_warning',
+    id: 'ghost_child_stairs',
     title: '壁画上的警告',
     text: '一面保存完好的壁画描述着守墓者的力量。最后一幅画中，入侵者被吞噬在金色的光芒中。',
     choices: [

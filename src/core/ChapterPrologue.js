@@ -12,7 +12,7 @@ import { audioEngine } from './AudioEngine.js';
 const PROLOGUES = {
   1: {
     title: '第一章·生化蜂巢',
-    subtitle: '── 异形 ──',
+    subtitle: '── 生化蜂巢 ──',
     lines: [
       '白光消退的瞬间，郑吒感到一阵剧烈的眩晕。',
       '空气中弥漫着金属与硫磺的气味。四周是冰冷的钢铁走廊，头顶的应急灯明灭不定。',
