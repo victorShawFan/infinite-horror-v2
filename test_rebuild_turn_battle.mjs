@@ -221,4 +221,16 @@ test('最后一个敌人死亡后立即判定胜利且奖励只可领取一次',
   assert.equal(e.claimResult().ok, false);
 });
 
+test('击杀最后敌人但被死亡反噬带走时判定失败而不是误报胜利', () => {
+  const e = engine({
+    party: [hero({ hp: 5, maxHp: 120 })],
+    enemies: [zombie('acid-enemy', { hp: 10, maxHp: 10, onDefeatDamage: 8 })],
+  });
+  const result = e.act({ actorId: 'zheng', kind: ACTION_KIND.ATTACK, targetId: 'acid-enemy' });
+  assert.equal(result.ok, true);
+  assert.equal(e.getLiving('party').length, 0);
+  assert.equal(e.status, 'defeat');
+  assert.equal(result.events.at(-1).result, 'defeat');
+});
+
 console.log('\n✅ ' + passed + ' turn battle checks passed');

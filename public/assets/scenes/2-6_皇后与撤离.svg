@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 900">
+ <defs><radialGradient id="r"><stop stop-color="#5c171d"/><stop offset=".55" stop-color="#17090d"/><stop offset="1" stop-color="#020204"/></radialGradient><filter id="d"><feTurbulence baseFrequency=".025" numOctaves="4" seed="41" result="n"/><feDisplacementMap in="SourceGraphic" in2="n" scale="18"/></filter></defs><rect width="1600" height="900" fill="url(#r)"/>
+ <g stroke="#6c3438" fill="none" opacity=".55"><path d="M0 90h1600M0 810h1600" stroke-width="28"/><path d="M160 0v900M1440 0v900" stroke-width="38"/><path d="M0 760L630 540h340l630 220M0 130l630 220h340l630-220" stroke-width="13"/></g>
+ <g filter="url(#d)" fill="#020203"><path d="M800 118l-244 139 112 4-179 214 186-64-106 252 231-126 231 126-106-252 186 64-179-214 112-4z"/><path d="M650 442l-179 300 247-158M950 442l179 300-247-158" stroke="#020203" stroke-width="54"/><path d="M731 438q69-86 138 0l-14 211H745z"/></g>
+ <g fill="#ff394b"><rect x="260" y="152" width="170" height="16"/><rect x="1170" y="152" width="170" height="16"/><circle cx="800" cy="368" r="8"/></g><g fill="#d6f6ff"><rect x="638" y="552" width="324" height="12" opacity=".7"/><rect x="703" y="589" width="194" height="7" opacity=".45"/></g>
+ <path d="M0 830h1600" stroke="#ff5260" stroke-width="5" stroke-dasharray="22 14"/>
+</svg>

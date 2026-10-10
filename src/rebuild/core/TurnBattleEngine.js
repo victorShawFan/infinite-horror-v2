@@ -167,6 +167,19 @@ export class TurnBattleEngine {
       skillId, amount, critical, defeated: target.hp === 0,
     });
     this._checkBossPhase(target, events);
+    const skill = skillId ? this.skills[skillId] : null;
+    const closeRange = (skill?.range || actor.attackRange || 'melee') !== 'ranged';
+    if (target.hp === 0 && closeRange && Number(target.onDefeatDamage || 0) > 0) {
+      const retaliation = Math.max(1, Math.floor(Number(target.onDefeatDamage)));
+      actor.hp = Math.max(0, actor.hp - retaliation);
+      events.push({
+        type: 'retaliation_damage',
+        sourceId: target.id,
+        targetId: actor.id,
+        amount: retaliation,
+        defeated: actor.hp === 0,
+      });
+    }
   }
 
   _checkBossPhase(target, events) {
@@ -179,6 +192,7 @@ export class TurnBattleEngine {
     events.push({
       type: 'boss_phase',
       actorId: target.id,
+      actorName: target.name,
       phase: 2,
       atkBonus,
     });
@@ -192,12 +206,12 @@ export class TurnBattleEngine {
   }
 
   _checkOutcome(events) {
-    if (this.getLiving('enemy').length === 0) {
-      this.status = 'victory';
-      events.push({ type: 'battle_end', result: 'victory' });
-    } else if (this.getLiving('party').length === 0) {
+    if (this.getLiving('party').length === 0) {
       this.status = 'defeat';
       events.push({ type: 'battle_end', result: 'defeat' });
+    } else if (this.getLiving('enemy').length === 0) {
+      this.status = 'victory';
+      events.push({ type: 'battle_end', result: 'victory' });
     }
   }
 

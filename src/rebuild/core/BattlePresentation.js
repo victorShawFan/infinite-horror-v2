@@ -21,14 +21,17 @@ export function buildPresentationCues(events = []) {
       if (event.amount > 0) cues.push({ type: 'popup', targetId: event.targetId, text: '+' + event.amount, tone: 'heal' });
     } else if (event.type === 'boss_phase') {
       cues.push({ type: 'boss_phase', actorId: event.actorId, phase: event.phase });
-      cues.push({ type: 'banner', text: '警告 · 生化体进入狂暴阶段', tone: 'danger' });
+      cues.push({ type: 'banner', text: '警告 · ' + (event.actorName || '首领') + '进入狂暴二阶段', tone: 'danger' });
     } else if (event.type === 'guard') {
       cues.push({ type: 'guard', actorId: event.actorId });
     } else if (event.type === 'protection') {
       cues.push({ type: 'protection', targetId: event.targetId, protectorIds: event.protectorIds });
     } else if (event.type === 'hazard_damage') {
       cues.push({ type: 'hazard', targetId: event.targetId, hazardId: event.hazardId });
-      cues.push({ type: 'popup', targetId: event.targetId, text: '激光 -' + event.amount, tone: 'hazard' });
+      cues.push({ type: 'popup', targetId: event.targetId, text: (event.hazardName || '环境') + ' -' + event.amount, tone: 'hazard' });
+    } else if (event.type === 'retaliation_damage') {
+      cues.push({ type: 'retaliation', sourceId: event.sourceId, targetId: event.targetId });
+      cues.push({ type: 'popup', targetId: event.targetId, text: '酸血 -' + event.amount, tone: 'acid' });
     }
   }
   return cues;

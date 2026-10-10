@@ -12,12 +12,15 @@ export function createCampaignProgress(source = {}, encounters = CHAPTER_ONE_ENC
     : ids.slice(0, Math.min(Number(source.battlesWon || 0), ids.length));
   completed = [...new Set(completed)];
 
-  const inferredUnlock = Math.min(completed.length, Math.max(0, ids.length - 1));
+  let contiguousCompleted = 0;
+  while (contiguousCompleted < ids.length && completed.includes(ids[contiguousCompleted])) contiguousCompleted++;
+  const inferredUnlock = Math.min(contiguousCompleted, Math.max(0, ids.length - 1));
   const unlockedIndex = Math.max(0, Math.min(
-    Number.isInteger(saved.unlockedIndex) ? saved.unlockedIndex : inferredUnlock,
+    Math.max(Number.isInteger(saved.unlockedIndex) ? saved.unlockedIndex : 0, inferredUnlock),
     Math.max(0, ids.length - 1),
   ));
-  return { chapter: 1, unlockedIndex, completed };
+  const chapter = Number(encounters[unlockedIndex]?.chapterNumber || 1);
+  return { chapter, unlockedIndex, completed };
 }
 
 export function canLaunchEncounter(progress, encounterId, encounters = CHAPTER_ONE_ENCOUNTERS) {
@@ -44,10 +47,11 @@ export function settleEncounter(progress, encounterId, result, encounters = CHAP
   const nextUnlocked = firstClear
     ? Math.min(Math.max(normalized.unlockedIndex, index + 1), encounters.length - 1)
     : normalized.unlockedIndex;
+  const nextProgress = createCampaignProgress({ unlockedIndex: nextUnlocked, completed }, encounters);
   return {
     ok: true,
     firstClear,
-    progress: { ...normalized, unlockedIndex: nextUnlocked, completed },
+    progress: nextProgress,
     rewards: { ...(firstClear ? encounter.rewards : encounter.repeatRewards) },
   };
 }

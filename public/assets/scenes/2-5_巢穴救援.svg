@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 900">
+ <defs><radialGradient id="h"><stop stop-color="#4b291f"/><stop offset=".52" stop-color="#171411"/><stop offset="1" stop-color="#020304"/></radialGradient><filter id="o"><feTurbulence baseFrequency=".022" numOctaves="5" seed="33" result="n"/><feDisplacementMap in="SourceGraphic" in2="n" scale="32"/></filter></defs><rect width="1600" height="900" fill="url(#h)"/>
+ <g fill="none" stroke="#3a2924" stroke-width="70" filter="url(#o)"><path d="M-20 850Q130 230 420 0M250 900Q380 300 650 0M1620 850Q1470 230 1180 0M1350 900Q1220 300 950 0"/><path d="M0 180q800 390 1600 0M0 430q800 350 1600 0"/></g>
+ <g fill="none" stroke="#5c4235" stroke-width="13" opacity=".7"><path d="M80 900Q290 240 550 0M1520 900Q1310 240 1050 0"/><path d="M360 900Q500 380 760 70M1240 900Q1100 380 840 70"/></g>
+ <path d="M0 710q260-100 510 10t530-10 560 25v165H0z" fill="#455228" opacity=".32"/><g fill="#b9e768" opacity=".5"><circle cx="244" cy="614" r="9"/><circle cx="1280" cy="540" r="7"/><circle cx="931" cy="728" r="6"/></g>
+ <path d="M755 745q45-142 94-12l41-92 37 103 97 19-126 38-49 85-50-82-132-34z" fill="#080706"/>
+</svg>

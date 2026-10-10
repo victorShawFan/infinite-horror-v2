@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 900">
+ <defs><radialGradient id="v"><stop stop-color="#213b43"/><stop offset=".45" stop-color="#0a151b"/><stop offset="1" stop-color="#010304"/></radialGradient><filter id="t"><feTurbulence baseFrequency=".08 .3" numOctaves="4" seed="21" result="n"/><feDisplacementMap in="SourceGraphic" in2="n" scale="12"/></filter></defs><rect width="1600" height="900" fill="url(#v)"/>
+ <g fill="none" stroke="#344c56"><rect x="80" y="60" width="1440" height="780" rx="130" stroke-width="44"/><rect x="300" y="175" width="1000" height="550" rx="80" stroke-width="24"/><rect x="570" y="315" width="460" height="270" rx="34" stroke-width="13"/></g>
+ <g stroke="#1a2a30" stroke-width="22"><path d="M160 0v900M430 0v900M1170 0v900M1440 0v900"/><path d="M0 170h1600M0 730h1600"/></g>
+ <path d="M1015 95q146 82 54 252l-55-98-86-47 38-82z" fill="#020304" filter="url(#t)"/><path d="M958 195l-107 124M1045 236l124 87" stroke="#020304" stroke-width="26"/>
+ <g fill="#8ee7d5"><circle cx="521" cy="450" r="5"/><circle cx="1130" cy="421" r="4"/></g><path d="M450 450h700" stroke="#72c6b6" stroke-width="2" stroke-dasharray="14 18" opacity=".35"/>
+</svg>

@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 1080">
+  <defs>
+    <linearGradient id="bg" x2="1" y2="1"><stop stop-color="#192327"/><stop offset="1" stop-color="#06090c"/></linearGradient>
+    <linearGradient id="coat" x2="0" y2="1"><stop stop-color="#59666a"/><stop offset="1" stop-color="#171d21"/></linearGradient>
+    <radialGradient id="skin"><stop stop-color="#d2b398"/><stop offset="1" stop-color="#725d52"/></radialGradient>
+    <filter id="grain"><feTurbulence baseFrequency=".72" numOctaves="3" seed="18" result="n"/><feBlend in="SourceGraphic" in2="n" mode="soft-light"/></filter>
+  </defs>
+  <rect width="720" height="1080" fill="url(#bg)"/>
+  <g opacity=".2" stroke="#b9e6a7"><path d="M0 170h720M0 430h720M0 700h720"/><path d="M105 0v1080M360 0v1080M615 0v1080"/></g>
+  <circle cx="360" cy="355" r="224" fill="#a2d37d" opacity=".05"/>
+  <g filter="url(#grain)">
+    <path d="M128 1080l47-376 117-100h142l116 100 48 376z" fill="url(#coat)" stroke="#90a097" stroke-width="5"/>
+    <path d="M288 599l-45 127 117 91 119-91-46-127z" fill="#c6aa92"/>
+    <path d="M264 636l96 181 97-181 25 38-34 406H274l-34-406z" fill="#10161a"/>
+    <path d="M245 240q17-144 117-148 110 7 117 151l-18 231q-15 124-101 153-84-28-102-153z" fill="url(#skin)" stroke="#3c3130" stroke-width="6"/>
+    <path d="M244 294q-7-186 114-205 125 28 123 185l-48-86-172 83z" fill="#101416"/>
+    <path d="M273 336q35-24 80 1M374 337q43-24 78 1" fill="none" stroke="#3a2c2c" stroke-width="9"/>
+    <g fill="none" stroke="#e2eef0" stroke-width="9"><rect x="256" y="316" width="101" height="65" rx="17"/><rect x="366" y="316" width="101" height="65" rx="17"/><path d="M357 340h12"/></g>
+    <path d="M281 338h65M383 338h66" stroke="#a7efb6" stroke-width="8" opacity=".7"/>
+    <path d="M341 394l-13 81 48 7" fill="none" stroke="#6b5148" stroke-width="7"/><path d="M311 530q49 17 97-1" fill="none" stroke="#6c3f42" stroke-width="7"/>
+    <path d="M180 759l115 91M540 759l-114 91" stroke="#8da29a" stroke-width="8"/>
+    <path d="M232 727l-49 353M490 727l49 353" stroke="#b8cdba" stroke-width="4" opacity=".55"/>
+  </g>
+  <g fill="#b7ff8d"><circle cx="76" cy="92" r="4"/><circle cx="646" cy="180" r="3"/><circle cx="610" cy="814" r="5"/></g>
+</svg>

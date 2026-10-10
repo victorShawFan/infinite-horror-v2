@@ -7,7 +7,12 @@ import { RebuildAudio, getAudioCueForPresentation } from './core/RebuildAudio.js
 import { applyExperience, experienceToNextLevel } from './core/PlayerProgression.js';
 import { ITEM_CATALOG, purchaseItem, syncInventoryFromCombatant } from './core/ItemSystem.js';
 import { SKILL_CATALOG } from './data/SkillCatalog.js';
-import { DEFAULT_PROFILE, CHAPTER_ONE_ENCOUNTERS, createParty, createEncounter } from './data/ChapterOneBattle.js';
+import { DEFAULT_PROFILE, CHAPTER_ONE_ENCOUNTERS } from './data/ChapterOneBattle.js';
+import {
+  ALL_REBUILD_ENCOUNTERS,
+  createRebuildEncounter,
+  createRebuildParty,
+} from './data/RebuildCampaign.js';
 
 const app = document.getElementById('rebuild-app');
 const STORAGE_KEY = 'ih_rebuild_profile_v1';
@@ -32,7 +37,7 @@ function loadProfile() {
       learnedSkills: [...(saved.learnedSkills || DEFAULT_PROFILE.learnedSkills)],
       equippedSkills: [...(saved.equippedSkills || DEFAULT_PROFILE.equippedSkills)],
       inventory: { ...DEFAULT_PROFILE.inventory, ...(saved.inventory || {}) },
-      campaign: createCampaignProgress(saved),
+      campaign: createCampaignProgress(saved, ALL_REBUILD_ENCOUNTERS),
     };
   } catch {}
   const fresh = {
@@ -41,7 +46,7 @@ function loadProfile() {
     equippedSkills: [...DEFAULT_PROFILE.equippedSkills],
     inventory: { ...DEFAULT_PROFILE.inventory },
   };
-  return { ...fresh, campaign: createCampaignProgress(fresh) };
+  return { ...fresh, campaign: createCampaignProgress(fresh, ALL_REBUILD_ENCOUNTERS) };
 }
 
 function saveProfile() {
@@ -87,12 +92,12 @@ function renderTitle() {
     '      <button class="primary" id="enter-hub">进入主神空间</button>',
     '      <button class="secondary" id="quick-battle">直接体验回合战斗</button>',
     '    </div>',
-    '    <p class="version-note">回合制重构 · 第一章六场完整任务</p>',
+    '    <p class="version-note">回合制重构 · 两章十二场完整任务</p>',
     '  </div>',
     '</section>',
   ].join('');
   document.getElementById('enter-hub').onclick = renderHub;
-  document.getElementById('quick-battle').onclick = () => showBriefing(getCampaignStatus(profile.campaign).nextEncounter?.id || CHAPTER_ONE_ENCOUNTERS[0].id);
+  document.getElementById('quick-battle').onclick = () => showBriefing(getCampaignStatus(profile.campaign, ALL_REBUILD_ENCOUNTERS).nextEncounter?.id || ALL_REBUILD_ENCOUNTERS[0].id);
 }
 
 function schoolColor(school) {
@@ -102,7 +107,7 @@ function schoolColor(school) {
 function renderHub() {
   const equipped = profile.equippedSkills.map(id => SKILL_CATALOG[id]).filter(Boolean);
   const skills = Object.values(SKILL_CATALOG).filter(skill => skill.learnable !== false && !['precision_shot', 'suppressive_fire'].includes(skill.id));
-  const campaignStatus = getCampaignStatus(profile.campaign);
+  const campaignStatus = getCampaignStatus(profile.campaign, ALL_REBUILD_ENCOUNTERS);
   const nextLevelExp = experienceToNextLevel(profile.level);
   const items = Object.values(ITEM_CATALOG);
   app.innerHTML = [
@@ -121,8 +126,8 @@ function renderHub() {
       return '<div class="build-slot"><span>' + (skill ? skill.icon + ' · ' + skill.name : '空技能槽') + '</span><small>' + (skill ? (skill.target === TARGET_KIND.ALL_ENEMIES ? '群体' : '单体') + ' / MP ' + skill.mpCost : '等待装备') + '</small></div>';
     }).join('') + '</div>',
     '      <div style="display:flex;justify-content:space-between;color:#8190a6;font-size:10px"><span>章节推进</span><strong style="color:#dbe3ee">' + campaignStatus.completedCount + ' / ' + campaignStatus.totalCount + '</strong></div>',
-    '      <div class="mission-list">' + CHAPTER_ONE_ENCOUNTERS.map(renderMissionCard).join('') + '</div>',
-    campaignStatus.completed ? '<div class="chapter-clear">第一章已完成 · 后续章节迁移中</div>' : '',
+    '      <div class="mission-list">' + renderMissionGroups() + '</div>',
+    campaignStatus.completed ? '<div class="chapter-clear">前两章已完成 · 第三章「咒怨」迁移中</div>' : '',
     '      <button class="secondary hub-launch" id="back-title">返回标题</button>',
     '    </aside>',
     '    <section class="skills-panel glass">',
@@ -151,6 +156,21 @@ function renderHub() {
   });
 }
 
+function renderMissionGroups() {
+  const groups = [
+    { number: 1, name: '第一章 · 名为生化' },
+    { number: 2, name: '第二章 · 异形杀戮' },
+  ];
+  return groups.map(group => {
+    const missions = ALL_REBUILD_ENCOUNTERS.filter(item => Number(item.chapterNumber || 1) === group.number);
+    const cleared = missions.filter(item => profile.campaign.completed.includes(item.id)).length;
+    return [
+      '<div class="mission-group-head"><span>' + group.name + '</span><strong>' + cleared + ' / ' + missions.length + '</strong></div>',
+      missions.map(renderMissionCard).join(''),
+    ].join('');
+  }).join('');
+}
+
 function renderSupplyCard(item) {
   const count = profile.inventory?.[item.id] || 0;
   const affordable = profile.rewardPoints >= item.cost;
@@ -176,11 +196,11 @@ function handlePurchaseItem(itemId) {
 }
 
 function showBriefing(encounterId) {
-  if (!canLaunchEncounter(profile.campaign, encounterId)) {
+  if (!canLaunchEncounter(profile.campaign, encounterId, ALL_REBUILD_ENCOUNTERS)) {
     toast('该任务尚未解锁', 'error');
     return;
   }
-  const mission = createEncounter(encounterId);
+  const mission = createRebuildEncounter(encounterId);
   app.innerHTML = [
     '<section class="screen briefing-screen" style="--briefing-bg:url(\'' + mission.background + '\')">',
     '  <div class="briefing-layout">',
@@ -200,11 +220,11 @@ function showBriefing(encounterId) {
 }
 
 function renderMissionCard(encounter) {
-  const unlocked = canLaunchEncounter(profile.campaign, encounter.id);
+  const unlocked = canLaunchEncounter(profile.campaign, encounter.id, ALL_REBUILD_ENCOUNTERS);
   const completed = profile.campaign.completed.includes(encounter.id);
   return [
     '<button class="mission-card ' + (completed ? 'complete ' : '') + (!unlocked ? 'locked' : '') + '" data-encounter="' + encounter.id + '" ' + (!unlocked ? 'disabled' : '') + '>',
-    '  <span class="mission-order">0' + encounter.order + '</span>',
+    '  <span class="mission-order">' + String(encounter.chapterOrder || encounter.order).padStart(2, '0') + '</span>',
     '  <span class="mission-copy"><b>' + encounter.title + '</b><small>' + encounter.briefing + '</small></span>',
     '  <span class="mission-state">' + (!unlocked ? '锁定' : completed ? '重返' : encounter.threat) + '</span>',
     '</button>',
@@ -266,21 +286,21 @@ function handleEquip(skillId) {
   toast('技能已装备', 'good');
 }
 
-function startBattle(encounterId = CHAPTER_ONE_ENCOUNTERS[0].id) {
-  if (!canLaunchEncounter(profile.campaign, encounterId)) {
+function startBattle(encounterId = ALL_REBUILD_ENCOUNTERS[0].id) {
+  if (!canLaunchEncounter(profile.campaign, encounterId, ALL_REBUILD_ENCOUNTERS)) {
     toast('该任务尚未解锁', 'error');
     return;
   }
-  encounter = createEncounter(encounterId);
+  encounter = createRebuildEncounter(encounterId);
   engine = new TurnBattleEngine({
-    party: createParty(profile),
+    party: createRebuildParty(profile, encounter),
     enemies: encounter.enemies,
     skills: SKILL_CATALOG,
     items: ITEM_CATALOG,
     rewards: previewEncounterRewards(encounter),
     rules: encounter.rules,
   });
-  logs = ['蜂巢站台封锁。敌方生命信号 × ' + encounter.enemies.length + '。', '战斗开始：请选择当前角色的行动。'];
+  logs = [encounter.title + '。敌方生命信号 × ' + encounter.enemies.length + '。', '战斗开始：请选择当前角色的行动。'];
   selectedAction = null;
   resultRecorded = false;
   enemyBusy = false;
@@ -305,7 +325,7 @@ function renderBattle() {
     '    <div class="timeline">' + engine.turnOrder.map(unit => '<div class="turn-chip ' + (current?.id === unit.id ? 'active' : '') + ' ' + (unit.hp <= 0 ? 'dead' : '') + '"><img src="' + unit.portrait + '" alt="' + unit.name + '"></div>').join('') + '</div>',
     '  </header>',
     '  <div class="arena">',
-    '    <div class="formation party">' + party.map(unit => renderUnit(unit, current)).join('') + '</div>',
+    '    <div class="formation party ' + (party.length > 3 ? 'party-large' : '') + '">' + party.map(unit => renderUnit(unit, current)).join('') + '</div>',
     '    <div class="versus"><div class="round-num">ROUND ' + engine.round + '</div><strong>VS</strong><div class="intent">敌方意图<br>' + enemyIntentText(enemies) + '</div></div>',
     '    <div class="formation enemies">' + enemies.map(unit => renderUnit(unit, current)).join('') + '</div>',
     '  </div>',
@@ -484,9 +504,9 @@ async function playPresentation(events) {
       targetCard?.classList.add('fx-protected');
       await delay(190);
       targetCard?.classList.remove('fx-protected');
-    } else if (cue.type === 'hazard') {
+    } else if (cue.type === 'hazard' || cue.type === 'retaliation') {
       targetCard?.classList.add('fx-hazard');
-      document.querySelector('.battle-screen')?.classList.add('fx-laser-screen');
+      if (cue.hazardId === 'laser') document.querySelector('.battle-screen')?.classList.add('fx-laser-screen');
       await delay(210);
       targetCard?.classList.remove('fx-hazard');
       document.querySelector('.battle-screen')?.classList.remove('fx-laser-screen');
@@ -540,11 +560,15 @@ function appendEvents(events) {
     } else if (event.type === 'hazard_damage') {
       const target = engine.getCombatant(event.targetId);
       logs.push('<strong class="accent">' + event.hazardName + '</strong> 命中 <strong>' + target.name + '</strong>，造成 ' + event.amount + ' 环境伤害。');
+    } else if (event.type === 'retaliation_damage') {
+      const source = engine.getCombatant(event.sourceId);
+      const target = engine.getCombatant(event.targetId);
+      logs.push('<strong>' + source.name + '</strong> 的酸血溅中 <strong>' + target.name + '</strong>，造成 <span class="acid-text">' + event.amount + '</span> 反噬伤害。');
     } else if (event.type === 'boss_phase') {
       const boss = engine.getCombatant(event.actorId);
       logs.push('<strong class="accent">' + boss.name + '进入狂暴阶段！</strong> 肌肉组织突破限制，ATK +' + event.atkBonus + '。');
     } else if (event.type === 'battle_end') {
-      logs.push(event.result === 'victory' ? '<strong>敌方战线崩溃，蜂巢入口已清理。</strong>' : '<strong>中洲队失去战斗能力。</strong>');
+      logs.push(event.result === 'victory' ? '<strong>敌方战线崩溃，任务目标已完成。</strong>' : '<strong>中洲队失去战斗能力。</strong>');
       rebuildAudio.play(event.result === 'victory' ? 'victory' : 'defeat');
     }
   }
@@ -580,7 +604,7 @@ function claimBattleResult() {
   const result = engine.claimResult();
   if (!result.ok) return;
   resultRecorded = true;
-  const settlement = settleEncounter(profile.campaign, encounter.id, result.result);
+  const settlement = settleEncounter(profile.campaign, encounter.id, result.result, ALL_REBUILD_ENCOUNTERS);
   if (!settlement.ok) {
     resultRecorded = false;
     toast('任务结算失败：' + settlement.error, 'error');
@@ -605,14 +629,21 @@ function claimBattleResult() {
 }
 
 function renderChapterEpilogue(epilogue) {
+  const chapterLabel = epilogue.chapterLabel || 'CHAPTER ONE COMPLETE';
+  const title = epilogue.title || '名为生化';
+  const stats = epilogue.stats || [
+    '第一章任务 ' + CHAPTER_ONE_ENCOUNTERS.length + ' / ' + CHAPTER_ONE_ENCOUNTERS.length,
+    '中洲队存活 3',
+    '下一世界：异形',
+  ];
   app.innerHTML = [
     '<section class="screen epilogue-screen">',
     '  <div class="epilogue-card glass">',
-    '    <div class="eyebrow">CHAPTER ONE COMPLETE</div>',
-    '    <h1>名为生化 <span>· 完</span></h1>',
+    '    <div class="eyebrow">' + chapterLabel + '</div>',
+    '    <h1>' + title + ' <span>· ' + (epilogue.suffix || '完') + '</span></h1>',
     '    <blockquote>' + epilogue.quote + '</blockquote>',
     '    <p>' + epilogue.text + '</p>',
-    '    <div class="epilogue-stats"><span>任务完成 ' + CHAPTER_ONE_ENCOUNTERS.length + ' / ' + CHAPTER_ONE_ENCOUNTERS.length + '</span><span>中洲队存活 3</span><span>下一世界：异形</span></div>',
+    '    <div class="epilogue-stats">' + stats.map(stat => '<span>' + stat + '</span>').join('') + '</div>',
     '    <button class="primary" id="epilogue-return">返回主神空间</button>',
     '  </div>',
     '</section>',

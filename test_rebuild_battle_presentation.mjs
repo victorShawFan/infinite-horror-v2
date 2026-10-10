@@ -43,7 +43,17 @@ test('保护与环境危害生成独立视觉提示', () => {
   ]);
   assert.equal(cues.some(cue => cue.type === 'protection'), true);
   assert.equal(cues.some(cue => cue.type === 'hazard'), true);
-  assert.equal(cues.find(cue => cue.type === 'popup')?.text, '激光 -12');
+  assert.equal(cues.find(cue => cue.type === 'popup')?.text, '激光扫射 -12');
+});
+
+test('异形酸血反噬与蜂巢环境使用真实名称而非固定激光文案', () => {
+  const cues = buildPresentationCues([
+    { type: 'retaliation_damage', sourceId: 'xeno', targetId: 'hero', amount: 9 },
+    { type: 'hazard_damage', hazardId: 'hive-hunt', hazardName: '蜂巢追猎', targetId: 'hero', amount: 11 },
+  ]);
+  assert.equal(cues.some(cue => cue.type === 'retaliation' && cue.targetId === 'hero'), true);
+  assert.equal(cues.find(cue => cue.tone === 'acid')?.text, '酸血 -9');
+  assert.equal(cues.find(cue => cue.tone === 'hazard')?.text, '蜂巢追猎 -11');
 });
 
 test('零治疗量不显示误导性的加血数字', () => {

@@ -21,11 +21,13 @@ export const SKILL_CATALOG = Object.freeze({
   psychic_lance: {
     id: 'psychic_lance', name: '精神穿刺', icon: '念', school: '精神', tier: 1,
     target: TARGET_KIND.SINGLE_ENEMY, power: 1.35, mpCost: 7, cooldown: 1, cost: 220,
+    range: 'ranged',
     desc: '凝聚精神力攻击一个目标，无视部分常规防御。',
   },
   mind_storm: {
     id: 'mind_storm', name: '心灵风暴', icon: '暴', school: '精神', tier: 2,
     target: TARGET_KIND.ALL_ENEMIES, power: 0.72, mpCost: 13, cooldown: 2, cost: 460,
+    range: 'ranged',
     prerequisite: 'psychic_lance',
     desc: '精神波动覆盖敌阵，对全体敌人造成伤害。',
   },
@@ -37,12 +39,32 @@ export const SKILL_CATALOG = Object.freeze({
   precision_shot: {
     id: 'precision_shot', name: '弱点点射', icon: '准', school: '枪械', tier: 1,
     target: TARGET_KIND.SINGLE_ENEMY, power: 1.42, mpCost: 6, cooldown: 1, cost: 0,
+    range: 'ranged',
     desc: '张杰锁定敌人弱点，进行一次高精度射击。',
   },
   suppressive_fire: {
     id: 'suppressive_fire', name: '扇面压制', icon: '火', school: '枪械', tier: 2,
     target: TARGET_KIND.ALL_ENEMIES, power: 0.68, mpCost: 11, cooldown: 2, cost: 0,
+    range: 'ranged',
     desc: '向敌方阵线倾泻火力，对全体敌人造成伤害。',
+  },
+  tactical_burst: {
+    id: 'tactical_burst', name: '三点战术射', icon: '算', school: '枪械', tier: 2,
+    target: TARGET_KIND.SINGLE_ENEMY, power: 1.38, mpCost: 6, cooldown: 1, cost: 0, learnable: false,
+    range: 'ranged',
+    desc: '楚轩根据敌人运动轨迹计算提前量，连续命中结构弱点。',
+  },
+  sniper_execution: {
+    id: 'sniper_execution', name: '视界终结', icon: '狙', school: '枪械', tier: 3,
+    target: TARGET_KIND.SINGLE_ENEMY, power: 1.72, mpCost: 8, cooldown: 1, cost: 0, learnable: false,
+    range: 'ranged',
+    desc: '零点屏住呼吸，将全部注意力压缩为一发致命狙击。',
+  },
+  crossfire: {
+    id: 'crossfire', name: '交叉火力', icon: '网', school: '枪械', tier: 2,
+    target: TARGET_KIND.ALL_ENEMIES, power: 0.62, mpCost: 12, cooldown: 2, cost: 0, learnable: false,
+    range: 'ranged',
+    desc: '零点与张杰建立交叉射界，压制敌方全体。',
   },
   tyrant_crush: {
     id: 'tyrant_crush', name: '粉碎重击', icon: '碎', school: '生化', tier: 3,
@@ -53,6 +75,17 @@ export const SKILL_CATALOG = Object.freeze({
     id: 'tyrant_roar', name: '毁灭咆哮', icon: '吼', school: '生化', tier: 4,
     target: TARGET_KIND.ALL_ENEMIES, power: 0.7, mpCost: 14, cooldown: 2, cost: 0, learnable: false,
     desc: '狂暴阶段释放冲击波，对中洲队全体造成伤害。',
+  },
+  queen_impale: {
+    id: 'queen_impale', name: '尾刃贯穿', icon: '刺', school: '异形', tier: 4,
+    target: TARGET_KIND.SINGLE_ENEMY, power: 1.5, mpCost: 8, cooldown: 1, cost: 0, learnable: false,
+    desc: '异形皇后以尾刃锁定最虚弱的猎物，发动贯穿攻击。',
+  },
+  queen_screech: {
+    id: 'queen_screech', name: '蜂巢尖啸', icon: '啸', school: '异形', tier: 4,
+    target: TARGET_KIND.ALL_ENEMIES, power: 0.72, mpCost: 14, cooldown: 2, cost: 0, learnable: false,
+    range: 'ranged',
+    desc: '二阶段以蜂巢意志冲击所有敌人的神经。',
   },
 });
 

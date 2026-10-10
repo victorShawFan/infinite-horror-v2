@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 900">
+ <defs><linearGradient id="q" y2="1"><stop stop-color="#16242a"/><stop offset="1" stop-color="#05070a"/></linearGradient><radialGradient id="e"><stop stop-color="#d5e780"/><stop offset=".6" stop-color="#6c7441"/><stop offset="1" stop-color="#232719"/></radialGradient><filter id="goo"><feTurbulence baseFrequency=".035" numOctaves="4" seed="13" result="n"/><feDisplacementMap in="SourceGraphic" in2="n" scale="25"/></filter></defs><rect width="1600" height="900" fill="url(#q)"/>
+ <path d="M0 690h1600M0 180h1600M190 0v900M1410 0v900" stroke="#44535b" stroke-width="18"/><g fill="#13232a" stroke="#658592" stroke-width="9"><path d="M210 160h340l55 565H155z"/><path d="M630 100h340l35 650H595z"/><path d="M1050 160h340l55 565h-450z"/></g>
+ <g filter="url(#goo)"><ellipse cx="380" cy="581" rx="113" ry="165" fill="url(#e)"/><ellipse cx="800" cy="540" rx="132" ry="205" fill="url(#e)"/><ellipse cx="1220" cy="581" rx="113" ry="165" fill="url(#e)"/></g>
+ <g fill="none" stroke="#d7f99f" stroke-width="7" opacity=".75"><path d="M320 500l60-80 60 80-60 70zM725 440l75-95 75 95-75 85zM1160 500l60-80 60 80-60 70z"/></g>
+ <path d="M957 100l-180 256 136-54-48 234 250-324-140 53z" fill="#d6f0f7" opacity=".34"/><path d="M0 760q250-70 480 0t480 0 480 0 320 0v140H0z" fill="#789744" opacity=".15"/>
+</svg>

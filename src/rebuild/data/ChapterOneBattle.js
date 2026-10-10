@@ -19,11 +19,13 @@ export const PARTY_BLUEPRINTS = Object.freeze([
   {
     id: 'zhang', name: '张杰', role: '远程压制', portrait: '/assets/characters/zhang_jie.jpg',
     hp: 126, maxHp: 126, mp: 28, maxMp: 28, atk: 29, def: 8, spd: 16, crit: 12,
+    attackRange: 'ranged',
     skills: ['precision_shot', 'suppressive_fire'],
   },
   {
     id: 'zhan', name: '詹岚', role: '精神辅助', portrait: '/assets/characters/zhan_lan.jpg',
     hp: 108, maxHp: 108, mp: 40, maxMp: 40, atk: 23, def: 7, spd: 12, crit: 5,
+    attackRange: 'ranged',
     skills: ['psychic_lance', 'emergency_heal'],
   },
 ]);
