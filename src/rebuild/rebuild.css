@@ -250,6 +250,20 @@ button { font: inherit; }
 .map-decoration.alarm, .map-decoration.signal, .map-decoration.emitter, .map-decoration.speaker, .map-decoration.vent { border-radius: 50%; background: radial-gradient(circle, var(--map-glow) 0 15%, #15181d 17% 48%, var(--map-glow) 52% 57%, #07090c 60%); animation: mapSignal 1.6s ease-in-out infinite; }
 .map-decoration.scorch, .map-decoration.blood, .map-decoration.fluid { border: 0; border-radius: 50%; background: radial-gradient(ellipse, color-mix(in srgb, var(--map-glow) 36%, #060606), transparent 70%); filter: blur(2px); }
 .map-decoration.coolant { background: linear-gradient(90deg, transparent, color-mix(in srgb, #74e9ff 48%, transparent), transparent); border-color: rgba(116,233,255,.35); }
+.map-decoration.cryo, .map-decoration.pod { border-radius: 46% 46% 14% 14%; background: linear-gradient(90deg, rgba(6,12,16,.96), color-mix(in srgb, var(--map-ambient) 24%, #09151a) 18% 82%, rgba(3,7,10,.98)); box-shadow: inset 0 0 0 3px rgba(255,255,255,.035), inset 0 -8px 14px rgba(0,0,0,.72), 0 0 13px color-mix(in srgb, var(--map-ambient) 19%, transparent); }
+.map-decoration.cryo::after, .map-decoration.pod::after { content:""; position:absolute; inset:17% 13% 27%; border-radius:48% 48% 22% 22%; background:linear-gradient(155deg,rgba(218,249,255,.28),rgba(45,104,116,.05) 55%,rgba(255,255,255,.2)); border:1px solid color-mix(in srgb,var(--map-ambient) 42%,transparent); }
+.map-decoration.deckline { align-self:center; height:8%; margin-block:auto; border:0; background:repeating-linear-gradient(90deg,var(--map-ambient) 0 18%,transparent 18% 25%); box-shadow:0 0 7px color-mix(in srgb,var(--map-ambient) 34%,transparent); }
+.map-decoration.bulkhead, .map-decoration.junction { background:repeating-linear-gradient(135deg,#2a3438 0 12%,#11171a 12% 24%); border:2px ridge color-mix(in srgb,var(--map-ambient) 38%,#23292c); }
+.map-decoration.duct { align-self:center; height:54%; margin-block:auto; border-radius:10px; background:repeating-linear-gradient(90deg,#111a1e 0 8%,#34434a 8% 12%,#10171a 12% 20%); box-shadow:inset 0 3px 8px #000,0 0 9px color-mix(in srgb,var(--map-ambient) 18%,transparent); }
+.map-decoration.fan { border-radius:50%; background:repeating-conic-gradient(from 12deg,color-mix(in srgb,var(--map-ambient) 58%,#111) 0 12deg,#071014 12deg 42deg); border:3px double color-mix(in srgb,var(--map-ambient) 48%,#222); animation:fanSpin 4.8s linear infinite; }
+.map-decoration.scratch { border:0; background:repeating-linear-gradient(164deg,transparent 0 21%,color-mix(in srgb,var(--map-glow) 62%,transparent) 22% 25%,transparent 26% 43%); filter:drop-shadow(0 0 3px var(--map-glow)); }
+.map-decoration.acid { border:0; border-radius:52% 34% 58% 41%; background:radial-gradient(ellipse at 35% 35%,#e2ff8a 0 7%,#7ecf42 9% 22%,rgba(54,118,29,.64) 35%,transparent 72%); filter:blur(.4px); box-shadow:0 0 10px rgba(157,255,88,.35); }
+.map-decoration.egg { border-radius:52% 52% 43% 43%; background:radial-gradient(ellipse at 38% 28%,rgba(225,255,168,.42),rgba(54,72,35,.96) 46%,#12170f 78%); border-color:rgba(196,255,112,.36); animation:hivePulse 2.7s ease-in-out infinite; }
+.map-decoration.egg::before { content:""; position:absolute; inset:8% 13% 43%; background:conic-gradient(from 45deg,transparent 0 10%,rgba(226,255,182,.33) 11% 18%,transparent 19% 35%,rgba(226,255,182,.28) 36% 44%,transparent 45%); border-radius:50%; }
+.map-decoration.cocoon { border-radius:48% 52% 43% 46%; background:repeating-linear-gradient(74deg,rgba(197,226,119,.16) 0 8%,rgba(25,36,20,.86) 8% 18%),radial-gradient(ellipse,#53683c,#11170e 72%); border-color:rgba(202,255,116,.28); animation:hivePulse 3.4s ease-in-out infinite reverse; }
+.map-decoration.resin { border:0; border-radius:38% 62% 46% 54%; background:repeating-radial-gradient(ellipse at 20% 40%,rgba(153,181,83,.2) 0 7%,rgba(20,28,16,.9) 8% 19%); box-shadow:inset 0 0 10px #050704,0 0 7px rgba(172,225,83,.18); }
+.map-decoration.vein, .map-decoration.ovipositor { align-self:center; height:26%; margin-block:auto; border:0; border-radius:50%; background:repeating-linear-gradient(90deg,rgba(52,69,34,.4) 0 7%,color-mix(in srgb,var(--map-glow) 42%,#26321e) 8% 11%,rgba(17,24,14,.8) 12% 19%); box-shadow:0 0 9px rgba(191,255,97,.24); animation:hivePulse 2.3s ease-in-out infinite; }
+.map-decoration.ovipositor { height:48%; background:repeating-linear-gradient(90deg,#171d12 0 6%,#73834d 7% 10%,#252e1b 11% 18%); }
 .map-entity { position: relative; z-index: 6; min-width: 0; min-height: 0; margin: 5%; padding: 0; display: grid; place-items: center; overflow: visible; color: #fff; background: radial-gradient(circle, color-mix(in srgb, var(--entity-color) 32%, #10141c), rgba(4,6,10,.92)); border: 1px solid color-mix(in srgb, var(--entity-color) 64%, transparent); border-radius: 8px; box-shadow: 0 0 18px color-mix(in srgb, var(--entity-color) 30%, transparent); pointer-events: none; }
 .map-entity span { font-family: "ZCOOL QingKe HuangYou"; color: var(--entity-color); font-size: clamp(12px,1.5vw,23px); text-shadow: 0 0 12px var(--entity-color); }
 .map-entity.item { animation:itemHover 2.1s ease-in-out infinite; }
@@ -281,6 +295,8 @@ button { font: inherit; }
 .touch-controls { display: none; }
 @keyframes exitBeacon { 50% { transform: scale(.9); box-shadow: 0 0 34px var(--entity-color); filter: brightness(1.5); } }
 @keyframes mapSignal { 50% { opacity: .35; filter: brightness(1.55); } }
+@keyframes fanSpin { to { transform:rotate(360deg); } }
+@keyframes hivePulse { 50% { opacity:.58; filter:brightness(1.28) saturate(1.2); transform:scale(.94); } }
 @keyframes lordGodFloat { 50% { transform:translateY(calc(-50% - 5px)) scale(1.025); filter:brightness(1.12); } }
 @keyframes lordGodOrbit { to { transform:rotate(360deg); } }
 @keyframes lordGodPulse { 50% { opacity:.45; transform:scale(1.2); } }
@@ -408,7 +424,7 @@ button { font: inherit; }
   .explore-layout { grid-template-columns: 1fr; }
   .explore-stage { grid-row: 1; }
   .explore-journal { grid-row: 2; min-height: 0; }
-  .touch-controls { position: relative; z-index: 25; display: flex; justify-content: center; align-items: center; gap: 26px; width: min(360px,94vw); margin: 14px auto 0; padding: 10px; border-radius: 15px; }
+  .touch-controls { position: fixed; left: 50%; bottom: max(10px, env(safe-area-inset-bottom)); z-index: 60; transform: translateX(-50%); display: flex; justify-content: center; align-items: center; gap: 26px; width: min(360px,94vw); margin: 0; padding: 10px; border-radius: 15px; box-shadow: 0 16px 50px rgba(0,0,0,.72), 0 0 0 1px rgba(255,255,255,.07); }
   .touch-controls > div { display: grid; justify-items: center; gap: 4px; }
   .touch-controls > div > span { display: flex; gap: 4px; }
   .touch-controls button { min-width: 52px; min-height: 48px; color: #dce4ed; background: rgba(255,255,255,.07); border: 1px solid rgba(255,255,255,.18); border-radius: 8px; }
@@ -431,7 +447,7 @@ button { font: inherit; }
   .lord-god-orb { left:16px; width:78px; height:78px; }
   .lord-god-presence > span { display:none; }
   .growth-summary { grid-template-columns:1fr; }
-  .exploration-screen { padding: 12px 10px 18px; }
+  .exploration-screen { padding: 12px 10px 150px; }
   .explore-header { display: block; margin-bottom: 10px; }
   .explore-header h1 { font-size: 23px; }
   .explore-header p { font-size: 9px; line-height: 1.55; }

@@ -1,4 +1,5 @@
 import { createChapterOneExplorationScenario } from './ChapterOneExploration.js';
+import { createChapterTwoExplorationScenario } from './ChapterTwoExploration.js';
 
 const THEMES = Object.freeze({
   1: { id:'bio', floor:'#202a2d', wall:'#4d5f5e', glow:'#ff5757', label:'蜂巢设施' },
@@ -39,6 +40,8 @@ export function createExplorationScenario(encounter) {
   const theme = THEMES[chapter] || THEMES[1];
   const chapterOneScenario = createChapterOneExplorationScenario(encounter, theme);
   if (chapterOneScenario) return chapterOneScenario;
+  const chapterTwoScenario = createChapterTwoExplorationScenario(encounter, theme);
+  if (chapterTwoScenario) return chapterTwoScenario;
   const npcOne = `${encounter.id}-npc-1`;
   const npcTwo = `${encounter.id}-npc-2`;
   return {
