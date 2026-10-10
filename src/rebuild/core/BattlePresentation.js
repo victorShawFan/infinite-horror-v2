@@ -32,6 +32,16 @@ export function buildPresentationCues(events = []) {
     } else if (event.type === 'retaliation_damage') {
       cues.push({ type: 'retaliation', sourceId: event.sourceId, targetId: event.targetId });
       cues.push({ type: 'popup', targetId: event.targetId, text: '酸血 -' + event.amount, tone: 'acid' });
+    } else if (event.type === 'resistance') {
+      cues.push({ type: 'resistance', targetId: event.targetId, reduction: event.reduction });
+      cues.push({ type: 'popup', targetId: event.targetId, text: '灵体减伤 ' + Math.round(event.reduction * 100) + '%', tone: 'spirit' });
+    } else if (event.type === 'curse_seal') {
+      cues.push({ type: 'curse_seal', targetId: event.targetId, reduction: event.reduction });
+    } else if (event.type === 'curse_wave') {
+      cues.push({ type: 'banner', text: '诅咒 · 第 ' + event.level + ' 波 / ' + event.maxLevel, tone: 'curse' });
+    } else if (event.type === 'curse_reveal') {
+      cues.push({ type: 'curse_reveal', actorId: event.actorId, level: event.level });
+      cues.push({ type: 'banner', text: (event.actorName || '怨灵') + '真身显形 · 封印解除', tone: 'curse-break' });
     }
   }
   return cues;

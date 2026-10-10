@@ -233,4 +233,59 @@ test('击杀最后敌人但被死亡反噬带走时判定失败而不是误报�
   assert.equal(result.events.at(-1).result, 'defeat');
 });
 
+test('灵体减免物理伤害但灵力技能可完整穿透', () => {
+  const spiritSkill = {
+    id: 'spirit_test', target: TARGET_KIND.SINGLE_ENEMY, power: 1,
+    mpCost: 0, cooldown: 0, damageType: 'spirit',
+  };
+  const physicalEngine = engine({
+    party: [hero({ atk: 50 })],
+    enemies: [zombie('ghost', { hp: 100, maxHp: 100, def: 0, physicalResist: 0.6 })],
+  });
+  const physical = physicalEngine.act({ actorId: 'zheng', kind: ACTION_KIND.ATTACK, targetId: 'ghost' });
+  assert.equal(physicalEngine.getCombatant('ghost').hp, 80);
+  assert.equal(physical.events.some(event => event.type === 'resistance' && event.reduction === 0.6), true);
+
+  const spiritEngine = new TurnBattleEngine({
+    party: [hero({ atk: 50, skills: ['spirit_test'] })],
+    enemies: [zombie('ghost', { hp: 100, maxHp: 100, def: 0, physicalResist: 0.6 })],
+    skills: { spirit_test: spiritSkill },
+    rng: () => 0.99,
+  });
+  const spirit = spiritEngine.act({ actorId: 'zheng', kind: ACTION_KIND.SKILL, skillId: 'spirit_test', targetId: 'ghost' });
+  assert.equal(spiritEngine.getCombatant('ghost').hp, 50);
+  assert.equal(spirit.events.some(event => event.type === 'resistance'), false);
+});
+
+test('七波诅咒逐波强化灵体并在第七波解除Boss封印', () => {
+  const ghost = zombie('ghost', { hp: 999, maxHp: 999, atk: 10, spd: 1 });
+  const boss = zombie('kayako', {
+    name: '伽椰子', hp: 999, maxHp: 999, atk: 20, def: 16, spd: 0,
+    boss: true, physicalResist: 0.7,
+  });
+  const e = engine({
+    party: [hero({ hp: 999, maxHp: 999, atk: 500, spd: 20 })],
+    enemies: [ghost, boss],
+    rules: {
+      curseWave: {
+        interval: 1, maxLevel: 7, targetSide: 'enemy', atkBonus: 2,
+        bossId: 'kayako', revealAt: 7, sealedReduction: 0.85,
+        defLoss: 10, afterPhysicalResist: 0.2,
+      },
+    },
+  });
+  const sealedHit = e.act({ actorId: 'zheng', kind: ACTION_KIND.ATTACK, targetId: 'kayako' });
+  assert.equal(sealedHit.events.some(event => event.type === 'curse_seal'), true);
+  assert.equal(sealedHit.events.find(event => event.type === 'damage').amount, 1);
+  while (e.ruleState.curseLevel < 7 && e.status === 'active') {
+    const actor = e.getCurrentActor();
+    e.act({ actorId: actor.id, kind: ACTION_KIND.DEFEND });
+  }
+  assert.equal(e.ruleState.curseLevel, 7);
+  assert.equal(e.getCombatant('ghost').atk, 24);
+  assert.equal(e.getCombatant('kayako').def, 6);
+  assert.equal(e.getCombatant('kayako').physicalResist, 0.2);
+  assert.equal(e.getCombatant('kayako').curseSealed, false);
+});
+
 console.log('\n✅ ' + passed + ' turn battle checks passed');

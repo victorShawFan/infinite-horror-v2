@@ -46,6 +46,7 @@ export class TurnBattleEngine {
     this.rng = rng;
     this.rewards = { exp: 0, points: 0, ...rewards };
     this.rules = rules || {};
+    this.ruleState = { curseLevel: 0 };
     this.round = 1;
     this.status = 'active';
     this.resultClaimed = false;
@@ -55,6 +56,14 @@ export class TurnBattleEngine {
     ];
     this.turnOrder = this._createTurnOrder();
     this.turnCursor = 0;
+    const curseRule = this.rules.curseWave;
+    if (curseRule?.bossId) {
+      const boss = this.getCombatant(curseRule.bossId);
+      if (boss) {
+        boss.curseSealed = true;
+        boss.curseSealReduction = Math.min(0.98, Math.max(0, Number(curseRule.sealedReduction || 0)));
+      }
+    }
   }
 
   _createTurnOrder() {
@@ -112,21 +121,52 @@ export class TurnBattleEngine {
 
   _applyRoundRules(events) {
     const hazard = this.rules.roundHazard;
-    if (!hazard || this.round % Math.max(1, Number(hazard.interval || 1)) !== 0) return;
-    const side = hazard.targetSide || 'party';
-    for (const target of this.getLiving(side)) {
-      let amount = Math.max(1, Number(hazard.damage || 1));
-      if (target.guarding) amount = Math.max(1, Math.floor(amount * 0.5));
-      target.hp = Math.max(0, target.hp - amount);
-      events.push({
-        type: 'hazard_damage',
-        hazardId: hazard.id,
-        hazardName: hazard.name,
-        targetId: target.id,
-        amount,
-        defeated: target.hp === 0,
-      });
+    if (hazard && this.round % Math.max(1, Number(hazard.interval || 1)) === 0) {
+      const side = hazard.targetSide || 'party';
+      for (const target of this.getLiving(side)) {
+        let amount = Math.max(1, Number(hazard.damage || 1));
+        if (target.guarding) amount = Math.max(1, Math.floor(amount * 0.5));
+        target.hp = Math.max(0, target.hp - amount);
+        events.push({
+          type: 'hazard_damage',
+          hazardId: hazard.id,
+          hazardName: hazard.name,
+          targetId: target.id,
+          amount,
+          defeated: target.hp === 0,
+        });
+      }
     }
+    this._applyCurseWave(events);
+  }
+
+  _applyCurseWave(events) {
+    const rule = this.rules.curseWave;
+    if (!rule || this.round % Math.max(1, Number(rule.interval || 1)) !== 0) return;
+    const maxLevel = Math.max(1, Number(rule.maxLevel || 7));
+    if (this.ruleState.curseLevel >= maxLevel) return;
+    this.ruleState.curseLevel++;
+    const targets = this.getLiving(rule.targetSide || 'enemy');
+    const atkBonus = Math.max(0, Number(rule.atkBonus || 0));
+    for (const target of targets) target.atk += atkBonus;
+    events.push({
+      type: 'curse_wave',
+      level: this.ruleState.curseLevel,
+      maxLevel,
+      atkBonus,
+      targetIds: targets.map(target => target.id),
+    });
+    if (this.ruleState.curseLevel !== Number(rule.revealAt || maxLevel)) return;
+    const boss = this.getCombatant(rule.bossId);
+    if (!boss || boss.hp <= 0) return;
+    boss.curseSealed = false;
+    const defLoss = Math.max(0, Number(rule.defLoss || 0));
+    boss.def = Math.max(0, boss.def - defLoss);
+    boss.physicalResist = Math.min(0.95, Math.max(0, Number(rule.afterPhysicalResist || 0)));
+    events.push({
+      type: 'curse_reveal', actorId: boss.id, actorName: boss.name,
+      level: this.ruleState.curseLevel, defLoss, physicalResist: boss.physicalResist,
+    });
   }
 
   _oppositeSide(side) {
@@ -144,10 +184,22 @@ export class TurnBattleEngine {
   }
 
   _dealDamage(actor, target, power, events, skillId = null) {
+    const skill = skillId ? this.skills[skillId] : null;
+    const damageType = skill?.damageType || actor.damageType || 'physical';
     const raw = Math.floor(actor.atk * power);
     const critical = this.rng() < actor.crit / 100;
     const critMultiplier = critical ? 1.5 : 1;
     let amount = Math.max(1, Math.floor(raw * critMultiplier) - target.def);
+    if (target.curseSealed) {
+      const reduction = Math.min(0.98, Math.max(0, Number(target.curseSealReduction || 0.8)));
+      amount = 1;
+      events.push({ type: 'curse_seal', targetId: target.id, reduction });
+    }
+    if (damageType !== 'spirit' && Number(target.physicalResist || 0) > 0) {
+      const reduction = Math.min(0.95, Math.max(0, Number(target.physicalResist)));
+      amount = Math.max(1, Math.floor(amount * (1 - reduction)));
+      events.push({ type: 'resistance', targetId: target.id, damageType, reduction });
+    }
     const protectorIds = Array.isArray(target.protectedBy) ? target.protectedBy : [];
     const activeProtectors = protectorIds.filter(id => this.getCombatant(id)?.hp > 0);
     if (activeProtectors.length > 0) {
@@ -167,7 +219,6 @@ export class TurnBattleEngine {
       skillId, amount, critical, defeated: target.hp === 0,
     });
     this._checkBossPhase(target, events);
-    const skill = skillId ? this.skills[skillId] : null;
     const closeRange = (skill?.range || actor.attackRange || 'melee') !== 'ranged';
     if (target.hp === 0 && closeRange && Number(target.onDefeatDamage || 0) > 0) {
       const retaliation = Math.max(1, Math.floor(Number(target.onDefeatDamage)));

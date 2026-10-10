@@ -147,7 +147,8 @@ test('第二章六场可按顺序真实通关且皇后进入二阶段', () => {
     assert.equal(settlement.ok, true);
     progress = settlement.progress;
   }
-  assert.equal(progress.completed.length, ALL_REBUILD_ENCOUNTERS.length);
+  const throughChapterTwo = ALL_REBUILD_ENCOUNTERS.filter(item => Number(item.chapterNumber || 1) <= 2).length;
+  assert.equal(progress.completed.length, throughChapterTwo);
 });
 
 console.log('\n✅ ' + passed + ' Chapter 2 checks passed');

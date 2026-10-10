@@ -71,4 +71,18 @@ test('道具治疗使用独立施放提示并复用治疗反馈', () => {
   assert.equal(cues[2].text, '+35');
 });
 
+test('灵体抗性、诅咒波次和第七波显形都有独立视觉信息', () => {
+  const cues = buildPresentationCues([
+    { type: 'resistance', targetId: 'ghost', damageType: 'physical', reduction: 0.6 },
+    { type: 'curse_seal', targetId: 'kayako', reduction: 0.85 },
+    { type: 'curse_wave', level: 3, maxLevel: 7, atkBonus: 2 },
+    { type: 'curse_reveal', actorId: 'kayako', actorName: '伽椰子', level: 7 },
+  ]);
+  assert.equal(cues.some(cue => cue.type === 'resistance' && cue.targetId === 'ghost'), true);
+  assert.equal(cues.some(cue => cue.type === 'curse_seal' && cue.targetId === 'kayako'), true);
+  assert.equal(cues.some(cue => cue.type === 'banner' && /第 3 波/.test(cue.text)), true);
+  assert.equal(cues.some(cue => cue.type === 'curse_reveal' && cue.actorId === 'kayako'), true);
+  assert.equal(cues.some(cue => cue.type === 'banner' && /显形/.test(cue.text)), true);
+});
+
 console.log('\n✅ ' + passed + ' presentation checks passed');

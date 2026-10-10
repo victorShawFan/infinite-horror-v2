@@ -92,7 +92,7 @@ function renderTitle() {
     '      <button class="primary" id="enter-hub">进入主神空间</button>',
     '      <button class="secondary" id="quick-battle">直接体验回合战斗</button>',
     '    </div>',
-    '    <p class="version-note">回合制重构 · 两章十二场完整任务</p>',
+    '    <p class="version-note">回合制重构 · 三章十八场完整任务</p>',
     '  </div>',
     '</section>',
   ].join('');
@@ -127,7 +127,7 @@ function renderHub() {
     }).join('') + '</div>',
     '      <div style="display:flex;justify-content:space-between;color:#8190a6;font-size:10px"><span>章节推进</span><strong style="color:#dbe3ee">' + campaignStatus.completedCount + ' / ' + campaignStatus.totalCount + '</strong></div>',
     '      <div class="mission-list">' + renderMissionGroups() + '</div>',
-    campaignStatus.completed ? '<div class="chapter-clear">前两章已完成 · 第三章「咒怨」迁移中</div>' : '',
+    campaignStatus.completed ? '<div class="chapter-clear">前三章已完成 · 第四章「神鬼传奇」迁移中</div>' : '',
     '      <button class="secondary hub-launch" id="back-title">返回标题</button>',
     '    </aside>',
     '    <section class="skills-panel glass">',
@@ -160,6 +160,7 @@ function renderMissionGroups() {
   const groups = [
     { number: 1, name: '第一章 · 名为生化' },
     { number: 2, name: '第二章 · 异形杀戮' },
+    { number: 3, name: '第三章 · 咒怨阴影' },
   ];
   return groups.map(group => {
     const missions = ALL_REBUILD_ENCOUNTERS.filter(item => Number(item.chapterNumber || 1) === group.number);
@@ -326,7 +327,7 @@ function renderBattle() {
     '  </header>',
     '  <div class="arena">',
     '    <div class="formation party ' + (party.length > 3 ? 'party-large' : '') + '">' + party.map(unit => renderUnit(unit, current)).join('') + '</div>',
-    '    <div class="versus"><div class="round-num">ROUND ' + engine.round + '</div><strong>VS</strong><div class="intent">敌方意图<br>' + enemyIntentText(enemies) + '</div></div>',
+    '    <div class="versus"><div class="round-num">ROUND ' + engine.round + '</div>' + renderRuleStatus() + '<strong>VS</strong><div class="intent">敌方意图<br>' + enemyIntentText(enemies) + '</div></div>',
     '    <div class="formation enemies">' + enemies.map(unit => renderUnit(unit, current)).join('') + '</div>',
     '  </div>',
     '  <div id="battle-fx-layer"></div>',
@@ -340,11 +341,18 @@ function renderBattle() {
   bindBattleControls();
 }
 
+function renderRuleStatus() {
+  const rule = engine.rules?.curseWave;
+  if (!rule) return '';
+  return '<div class="curse-counter"><span>CURSE</span><b>' + engine.ruleState.curseLevel + ' / ' + (rule.maxLevel || 7) + '</b><i style="--curse-progress:' + (engine.ruleState.curseLevel / (rule.maxLevel || 7) * 100) + '%"></i></div>';
+}
+
 function renderUnit(unit, current) {
   const selectable = selectedAction && unit.hp > 0 && isValidTarget(unit, selectedAction);
   return [
     '<article class="unit-card ' + unit.side + ' ' + (unit.boss ? 'boss ' : '') + (current?.id === unit.id ? 'actor ' : '') + (selectable ? 'selectable ' : '') + (unit.hp <= 0 ? 'dead' : '') + '" data-target="' + unit.id + '">',
     unit.guarding ? '<span class="guard-tag">防御中</span>' : '',
+    unit.curseSealed ? '<span class="curse-seal-tag">封印中</span>' : '',
     '  <img class="unit-portrait" src="' + unit.portrait + '" alt="' + unit.name + '">',
     '  <div class="unit-info"><div class="unit-name"><span>' + unit.name + '</span><span>SPD ' + unit.spd + '</span></div><div class="unit-role">' + (unit.role || (unit.side === 'enemy' ? '敌对单位' : '中洲队')) + '</div>',
     '    <div class="bar" style="--value:' + Math.max(0, unit.hp / unit.maxHp * 100) + '%"><i></i></div><div class="unit-stats"><span>HP ' + unit.hp + ' / ' + unit.maxHp + '</span><span>ATK ' + unit.atk + '</span></div>',
@@ -367,7 +375,7 @@ function renderCommands(actor) {
   return [
     '<div class="command-title"><span><strong>' + actor.name + '</strong> 的行动回合</span><span>请选择指令</span></div>',
     '<div class="command-grid">',
-    '  <button class="command-btn" id="basic-attack"><b>普通攻击</b><span>零消耗 · 单体物理攻击</span></button>',
+    '  <button class="command-btn" id="basic-attack"><b>普通攻击</b><span>零消耗 · 单体' + (actor.damageType === 'spirit' ? '灵类' : '物理') + '攻击</span></button>',
     skills.map(skill => {
       const cooldown = actor.cooldowns?.[skill.id] || 0;
       const disabled = actor.mp < skill.mpCost || cooldown > 0;
@@ -504,6 +512,10 @@ async function playPresentation(events) {
       targetCard?.classList.add('fx-protected');
       await delay(190);
       targetCard?.classList.remove('fx-protected');
+    } else if (cue.type === 'resistance' || cue.type === 'curse_seal') {
+      targetCard?.classList.add(cue.type === 'resistance' ? 'fx-spirit-resist' : 'fx-curse-seal');
+      await delay(190);
+      targetCard?.classList.remove('fx-spirit-resist', 'fx-curse-seal');
     } else if (cue.type === 'hazard' || cue.type === 'retaliation') {
       targetCard?.classList.add('fx-hazard');
       if (cue.hazardId === 'laser') document.querySelector('.battle-screen')?.classList.add('fx-laser-screen');
@@ -516,6 +528,12 @@ async function playPresentation(events) {
       await delay(360);
       actorCard?.classList.remove('fx-boss-phase');
       document.querySelector('.battle-screen')?.classList.remove('fx-danger-screen');
+    } else if (cue.type === 'curse_reveal') {
+      actorCard?.classList.add('fx-curse-break');
+      document.querySelector('.battle-screen')?.classList.add('fx-curse-screen');
+      await delay(420);
+      actorCard?.classList.remove('fx-curse-break');
+      document.querySelector('.battle-screen')?.classList.remove('fx-curse-screen');
     } else if (cue.type === 'popup' && targetCard) {
       const popup = document.createElement('span');
       popup.className = 'combat-popup ' + cue.tone;
@@ -564,6 +582,16 @@ function appendEvents(events) {
       const source = engine.getCombatant(event.sourceId);
       const target = engine.getCombatant(event.targetId);
       logs.push('<strong>' + source.name + '</strong> 的酸血溅中 <strong>' + target.name + '</strong>，造成 <span class="acid-text">' + event.amount + '</span> 反噬伤害。');
+    } else if (event.type === 'resistance') {
+      const target = engine.getCombatant(event.targetId);
+      logs.push('<strong>' + target.name + '</strong> 的灵体本质削减了 ' + Math.round(event.reduction * 100) + '% 物理伤害。');
+    } else if (event.type === 'curse_seal') {
+      const target = engine.getCombatant(event.targetId);
+      logs.push('<strong>' + target.name + '</strong> 尚未显形，诅咒封印吞没了本次攻击。');
+    } else if (event.type === 'curse_wave') {
+      logs.push('<strong class="curse-text">第 ' + event.level + ' 波诅咒降临。</strong> 灵体攻击力继续增强。');
+    } else if (event.type === 'curse_reveal') {
+      logs.push('<strong class="curse-text">第七波结束，' + event.actorName + '真身显形！封印已经解除。</strong>');
     } else if (event.type === 'boss_phase') {
       const boss = engine.getCombatant(event.actorId);
       logs.push('<strong class="accent">' + boss.name + '进入狂暴阶段！</strong> 肌肉组织突破限制，ATK +' + event.atkBonus + '。');

@@ -66,6 +66,42 @@ export const SKILL_CATALOG = Object.freeze({
     range: 'ranged',
     desc: '零点与张杰建立交叉射界，压制敌方全体。',
   },
+  spirit_sniper: {
+    id: 'spirit_sniper', name: '灵类狙杀', icon: '灵', school: '灵能', tier: 3,
+    target: TARGET_KIND.SINGLE_ENEMY, power: 1.58, mpCost: 7, cooldown: 1, cost: 0, learnable: false,
+    range: 'ranged', damageType: 'spirit',
+    desc: '零点以灵力弹锁定怨念核心，穿透灵体的物理减伤。',
+  },
+  soul_sever: {
+    id: 'soul_sever', name: '断魂刃', icon: '断', school: '灵能', tier: 3,
+    target: TARGET_KIND.SINGLE_ENEMY, power: 1.52, mpCost: 7, cooldown: 1, cost: 0, learnable: false,
+    damageType: 'spirit',
+    desc: '赵樱空以精神感应捕捉怨念缝隙，斩断灵体核心。',
+  },
+  ward_break: {
+    id: 'ward_break', name: '破邪结界', icon: '界', school: '灵能', tier: 3,
+    target: TARGET_KIND.ALL_ENEMIES, power: 0.7, mpCost: 12, cooldown: 2, cost: 0, learnable: false,
+    range: 'ranged', damageType: 'spirit',
+    desc: '赵樱空展开精神结界，对所有灵体造成灵类伤害。',
+  },
+  spirit_volley: {
+    id: 'spirit_volley', name: '符弹连射', icon: '符', school: '灵能', tier: 2,
+    target: TARGET_KIND.ALL_ENEMIES, power: 0.62, mpCost: 11, cooldown: 2, cost: 0, learnable: false,
+    range: 'ranged', damageType: 'spirit',
+    desc: '齐腾一以符文弹药覆盖战场，压制成群怨灵。',
+  },
+  kayako_grasp: {
+    id: 'kayako_grasp', name: '怨发缠杀', icon: '发', school: '诅咒', tier: 4,
+    target: TARGET_KIND.SINGLE_ENEMY, power: 1.42, mpCost: 8, cooldown: 1, cost: 0, learnable: false,
+    range: 'ranged', damageType: 'spirit',
+    desc: '黑发从阴影中涌出，扼住生命最微弱的人。',
+  },
+  curse_howl: {
+    id: 'curse_howl', name: '七日哀鸣', icon: '怨', school: '诅咒', tier: 4,
+    target: TARGET_KIND.ALL_ENEMIES, power: 0.6, mpCost: 13, cooldown: 2, cost: 0, learnable: false,
+    range: 'ranged', damageType: 'spirit',
+    desc: '伽椰子的哀鸣穿透墙壁，对所有活人造成精神冲击。',
+  },
   tyrant_crush: {
     id: 'tyrant_crush', name: '粉碎重击', icon: '碎', school: '生化', tier: 3,
     target: TARGET_KIND.SINGLE_ENEMY, power: 1.45, mpCost: 8, cooldown: 1, cost: 0, learnable: false,
