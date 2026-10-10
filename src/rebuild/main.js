@@ -2,6 +2,7 @@ import { TurnBattleEngine, ACTION_KIND, TARGET_KIND } from './core/TurnBattleEng
 import { learnSkill, equipSkill } from './core/SkillLearning.js';
 import { createCampaignProgress, canLaunchEncounter, settleEncounter, getCampaignStatus } from './core/CampaignProgress.js';
 import { chooseEnemyAction, describeEnemyIntent } from './core/EnemyTurnAI.js';
+import { buildPresentationCues } from './core/BattlePresentation.js';
 import { SKILL_CATALOG } from './data/SkillCatalog.js';
 import { DEFAULT_PROFILE, CHAPTER_ONE_ENCOUNTERS, createParty, createEncounter } from './data/ChapterOneBattle.js';
 
@@ -15,6 +16,7 @@ let selectedAction = null;
 let logs = [];
 let resultRecorded = false;
 let enemyBusy = false;
+let presentationBusy = false;
 
 function loadProfile() {
   try {
@@ -207,6 +209,7 @@ function renderBattle() {
     '    <div class="versus"><div class="round-num">ROUND ' + engine.round + '</div><strong>VS</strong><div class="intent">敌方意图<br>' + enemyIntentText(enemies) + '</div></div>',
     '    <div class="formation enemies">' + enemies.map(unit => renderUnit(unit, current)).join('') + '</div>',
     '  </div>',
+    '  <div id="battle-fx-layer"></div>',
     '  <footer class="battle-console">',
     '    <div class="combat-log glass">' + logs.slice(-8).map(line => '<div>' + line + '</div>').join('') + '</div>',
     '    <div class="command-panel glass">' + renderCommands(current) + '</div>',
@@ -233,7 +236,7 @@ function renderUnit(unit, current) {
 
 function renderCommands(actor) {
   if (!actor || engine.status !== 'active') return '<div class="command-title"><span>战斗已经结束</span></div>';
-  if (actor.side === 'enemy' || enemyBusy) return '<div class="command-title"><span>敌方正在行动……</span><span>' + actor.name + '</span></div>';
+  if (actor.side === 'enemy' || enemyBusy || presentationBusy) return '<div class="command-title"><span>行动演算中……</span><span>' + actor.name + '</span></div>';
   if (selectedAction) {
     const label = selectedAction.skill ? selectedAction.skill.name : '普通攻击';
     return '<div class="command-title"><span class="target-hint">为「' + label + '」选择目标</span><button class="secondary" id="cancel-target">取消</button></div>';
@@ -287,9 +290,9 @@ function isValidTarget(unit, action) {
   return unit.side === expected;
 }
 
-function executePlayerAction(action) {
+async function executePlayerAction(action) {
   const actor = engine.getCurrentActor();
-  if (!actor || actor.side !== 'party') return;
+  if (!actor || actor.side !== 'party' || presentationBusy) return;
   const result = engine.act({ actorId: actor.id, ...action });
   if (!result.ok) {
     toast('行动失败：' + result.error, 'error');
@@ -297,6 +300,10 @@ function executePlayerAction(action) {
   }
   selectedAction = null;
   appendEvents(result.events);
+  presentationBusy = true;
+  renderBattle();
+  await playPresentation(result.events);
+  presentationBusy = false;
   renderBattle();
   runEnemyTurns();
 }
@@ -311,11 +318,60 @@ async function runEnemyTurns() {
     const action = chooseEnemyAction({ actor, round: engine.round, opponents: engine.getLiving('party'), skills: SKILL_CATALOG });
     const result = engine.act(action);
     appendEvents(result.events);
+    presentationBusy = true;
     renderBattle();
-    await delay(420);
+    await playPresentation(result.events);
+    presentationBusy = false;
+    renderBattle();
+    await delay(180);
   }
   enemyBusy = false;
   renderBattle();
+}
+
+async function playPresentation(events) {
+  const cues = buildPresentationCues(events);
+  for (const cue of cues) {
+    const actorCard = cue.actorId ? document.querySelector('[data-target="' + cue.actorId + '"]') : null;
+    const targetCard = cue.targetId ? document.querySelector('[data-target="' + cue.targetId + '"]') : null;
+    if (cue.type === 'attack' || cue.type === 'cast') {
+      actorCard?.classList.add(cue.type === 'cast' ? 'fx-cast' : 'fx-attack');
+      await delay(150);
+      actorCard?.classList.remove('fx-cast', 'fx-attack');
+    } else if (cue.type === 'hit') {
+      targetCard?.classList.add(cue.intensity === 'critical' ? 'fx-critical-hit' : 'fx-hit');
+      await delay(cue.intensity === 'critical' ? 210 : 150);
+      targetCard?.classList.remove('fx-hit', 'fx-critical-hit');
+    } else if (cue.type === 'heal') {
+      targetCard?.classList.add('fx-heal');
+      await delay(180);
+      targetCard?.classList.remove('fx-heal');
+    } else if (cue.type === 'guard') {
+      actorCard?.classList.add('fx-guard');
+      await delay(170);
+      actorCard?.classList.remove('fx-guard');
+    } else if (cue.type === 'boss_phase') {
+      actorCard?.classList.add('fx-boss-phase');
+      document.querySelector('.battle-screen')?.classList.add('fx-danger-screen');
+      await delay(360);
+      actorCard?.classList.remove('fx-boss-phase');
+      document.querySelector('.battle-screen')?.classList.remove('fx-danger-screen');
+    } else if (cue.type === 'popup' && targetCard) {
+      const popup = document.createElement('span');
+      popup.className = 'combat-popup ' + cue.tone;
+      popup.textContent = cue.text;
+      targetCard.appendChild(popup);
+      await delay(230);
+      popup.remove();
+    } else if (cue.type === 'banner') {
+      const banner = document.createElement('div');
+      banner.className = 'battle-banner ' + cue.tone;
+      banner.textContent = cue.text;
+      document.querySelector('.battle-screen')?.appendChild(banner);
+      await delay(420);
+      banner.remove();
+    }
+  }
 }
 
 function appendEvents(events) {

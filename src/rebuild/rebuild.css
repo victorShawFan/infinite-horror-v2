@@ -159,9 +159,34 @@ button { font: inherit; }
 .reward-row { display: flex; justify-content: center; gap: 12px; margin: 20px 0; }
 .reward-pill { padding: 9px 14px; color: var(--amber); border: 1px solid rgba(255,201,103,.3); background: rgba(255,201,103,.06); border-radius: 20px; }
 .toast { position: fixed; top: 24px; left: 50%; transform: translateX(-50%); z-index: 60; padding: 10px 18px; border-radius: 9px; background: rgba(12,16,24,.96); border: 1px solid rgba(255,255,255,.2); box-shadow: 0 14px 40px rgba(0,0,0,.5); animation: toastIn .25s ease; font-size: 12px; }
+#battle-fx-layer { position: fixed; inset: 0; pointer-events: none; z-index: 25; }
+.unit-card.fx-attack.party { animation: partyLunge .28s ease; }
+.unit-card.fx-attack.enemy { animation: enemyLunge .28s ease; }
+.unit-card.fx-cast { animation: castPulse .32s ease; }
+.unit-card.fx-hit { animation: hitShake .24s ease; filter: brightness(1.5) saturate(.45); }
+.unit-card.fx-critical-hit { animation: criticalHit .34s ease; filter: brightness(1.8) saturate(.25); }
+.unit-card.fx-heal { animation: healPulse .38s ease; box-shadow: 0 0 55px rgba(121,230,163,.55); }
+.unit-card.fx-guard { animation: guardPulse .35s ease; box-shadow: 0 0 48px rgba(105,221,255,.45); }
+.unit-card.fx-boss-phase { animation: bossPhase .65s ease; z-index: 8; }
+.battle-screen.fx-danger-screen::before { background: radial-gradient(circle, rgba(150,0,20,.35), rgba(3,4,8,.94)); }
+.combat-popup { position: absolute; left: 50%; top: 30%; z-index: 30; transform: translate(-50%,-50%); pointer-events: none; font-family: "ZCOOL QingKe HuangYou"; font-size: 28px; font-weight: 900; letter-spacing: .04em; text-shadow: 0 4px 12px #000; animation: popupFloat .5s ease forwards; }
+.combat-popup.damage { color: #ff7373; }
+.combat-popup.critical { color: #ffd36f; font-size: 34px; }
+.combat-popup.heal { color: #79e6a3; }
+.battle-banner { position: fixed; top: 38%; left: 50%; z-index: 50; transform: translate(-50%,-50%); padding: 14px 42px; color: #fff0e8; border: 1px solid rgba(255,76,76,.6); background: linear-gradient(90deg, transparent, rgba(120,0,16,.92), transparent); font-size: 18px; font-weight: 900; letter-spacing: .22em; white-space: nowrap; animation: bannerIn .55s ease; }
 
 @keyframes targetPulse { 50% { box-shadow: 0 0 30px rgba(255,76,76,.28); } }
 @keyframes toastIn { from { transform: translate(-50%,-12px); opacity: 0; } }
+@keyframes partyLunge { 50% { transform: translate(34px,-18px) scale(1.04); } }
+@keyframes enemyLunge { 50% { transform: translate(-34px,-8px) scale(1.04); } }
+@keyframes castPulse { 50% { transform: translateY(-24px) scale(1.05); filter: brightness(1.45); } }
+@keyframes hitShake { 25% { transform: translateX(-9px); } 75% { transform: translateX(8px); } }
+@keyframes criticalHit { 30% { transform: translate(-14px,-4px) rotate(-2deg); } 70% { transform: translate(12px,3px) rotate(2deg); } }
+@keyframes healPulse { 50% { transform: translateY(-12px); filter: brightness(1.35); } }
+@keyframes guardPulse { 50% { transform: scale(.96); } }
+@keyframes bossPhase { 40% { transform: translateY(-22px) scale(1.16); filter: brightness(1.5) contrast(1.3); } }
+@keyframes popupFloat { from { opacity: 0; transform: translate(-50%,0) scale(.7); } 35% { opacity: 1; } to { opacity: 0; transform: translate(-50%,-68px) scale(1.12); } }
+@keyframes bannerIn { from { opacity: 0; transform: translate(-50%,-50%) scaleX(.4); } 35% { opacity: 1; } to { opacity: .1; transform: translate(-50%,-50%) scaleX(1.05); } }
 
 @media (max-width: 980px) {
   .hub-screen { padding: 20px; }
