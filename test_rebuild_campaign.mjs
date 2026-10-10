@@ -53,7 +53,7 @@ test('重复挑战只获得明确配置的较低奖励', () => {
   assert.deepEqual(repeat.progress.completed, [ids[0]]);
 });
 
-test('依次完成三场后章节状态为完成', () => {
+test('依次完成全部六场后章节状态为完成', () => {
   let progress = createCampaignProgress();
   for (const id of ids) progress = settleEncounter(progress, id, 'victory', CHAPTER_ONE_ENCOUNTERS).progress;
   const status = getCampaignStatus(progress, CHAPTER_ONE_ENCOUNTERS);

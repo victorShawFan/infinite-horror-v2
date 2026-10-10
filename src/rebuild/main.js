@@ -53,7 +53,7 @@ function renderTitle() {
     '      <button class="primary" id="enter-hub">进入主神空间</button>',
     '      <button class="secondary" id="quick-battle">直接体验回合战斗</button>',
     '    </div>',
-    '    <p class="version-note">回合制重构垂直切片 · 第一章 / 蜂巢封锁突破</p>',
+    '    <p class="version-note">回合制重构 · 第一章六场完整任务</p>',
     '  </div>',
     '</section>',
   ].join('');
@@ -487,7 +487,7 @@ function renderChapterEpilogue(epilogue) {
     '    <h1>名为生化 <span>· 完</span></h1>',
     '    <blockquote>' + epilogue.quote + '</blockquote>',
     '    <p>' + epilogue.text + '</p>',
-    '    <div class="epilogue-stats"><span>任务完成 3 / 3</span><span>中洲队存活 3</span><span>下一世界：异形</span></div>',
+    '    <div class="epilogue-stats"><span>任务完成 ' + CHAPTER_ONE_ENCOUNTERS.length + ' / ' + CHAPTER_ONE_ENCOUNTERS.length + '</span><span>中洲队存活 3</span><span>下一世界：异形</span></div>',
     '    <button class="primary" id="epilogue-return">返回主神空间</button>',
     '  </div>',
     '</section>',

@@ -2,6 +2,8 @@ import assert from 'node:assert/strict';
 import { CHAPTER_ONE_ENCOUNTERS } from './src/rebuild/data/ChapterOneBattle.js';
 
 console.log('\n[ Rebuild Chapter 1 story content ]');
+assert.equal(CHAPTER_ONE_ENCOUNTERS.length, 6, 'chapter one must contain six complete missions');
+assert.deepEqual(CHAPTER_ONE_ENCOUNTERS.map(encounter => encounter.order), [1, 2, 3, 4, 5, 6]);
 for (const encounter of CHAPTER_ONE_ENCOUNTERS) {
   assert.ok(Array.isArray(encounter.intro) && encounter.intro.length >= 2, encounter.id + ' needs at least two briefing beats');
   for (const beat of encounter.intro) {

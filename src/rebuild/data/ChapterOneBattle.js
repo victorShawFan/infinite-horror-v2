@@ -91,8 +91,109 @@ export const CHAPTER_ONE_ENCOUNTERS = Object.freeze([
     ],
   },
   {
-    id: 'tyrant-final',
+    id: 'red-queen-core',
     order: 3,
+    chapter: '第一章 · 名为生化',
+    title: '红后机房 · 关闭防御',
+    subtitle: '红后将维护机器人改写成杀戮程序，机房正在逐段封死。',
+    briefing: '优先击破高速防卫节点，再集中火力摧毁主控守卫。',
+    intro: [
+      { speaker: '红后', text: '你们都会死在这里。概率已经计算完毕，继续前进没有意义。' },
+      { speaker: '詹岚', text: '她在逼我们慌乱。两个高速节点负责锁定目标，中间那个才是主控。' },
+      { speaker: '郑吒', text: '概率不是结果。只要我们还在行动，她的计算就没有结束。' },
+    ],
+    victory: {
+      title: '让机器重新计算',
+      text: '最后一个防卫节点熄灭时，红后的声音第一次出现停顿。中洲队用行动制造了计算之外的答案。',
+    },
+    background: '/assets/scenes/1-3_红后机房_背景.jpg',
+    threat: '中危',
+    rewards: { exp: 220, points: 280 },
+    repeatRewards: { exp: 65, points: 80 },
+    enemies: [
+      {
+        id: 'node-left', name: '防卫节点α', role: '高速锁定', portrait: '/assets/enemies/zombie_guard.jpg',
+        hp: 78, maxHp: 78, mp: 0, maxMp: 0, atk: 22, def: 7, spd: 16, crit: 6, skills: [],
+      },
+      {
+        id: 'core-guard', name: '主控守卫', role: '重甲镇压', portrait: '/assets/enemies/zombie_worker.jpg',
+        hp: 148, maxHp: 148, mp: 0, maxMp: 0, atk: 27, def: 13, spd: 7, crit: 3, skills: [],
+      },
+      {
+        id: 'node-right', name: '防卫节点β', role: '高速锁定', portrait: '/assets/enemies/zombie_guard.jpg',
+        hp: 78, maxHp: 78, mp: 0, maxMp: 0, atk: 22, def: 7, spd: 15, crit: 6, skills: [],
+      },
+    ],
+  },
+  {
+    id: 'laser-corridor',
+    order: 4,
+    chapter: '第一章 · 名为生化',
+    title: '激光走廊 · 生存判定',
+    subtitle: '红色光束封闭了走廊，安保单元正将所有活体标记为入侵者。',
+    briefing: '敌方速度极高。观察意图，利用防御承受锁定攻击，再抓住冷却空档反击。',
+    intro: [
+      { speaker: '张杰', text: '别只看伤害。高速敌人先出手，轮到你时要判断是攻击，还是先把人保下来。' },
+      { speaker: '詹岚', text: '激光在重复三段循环。防住第一轮，我们就能找到它的攻击空档。' },
+      { speaker: '郑吒', text: '力量不是每一回合都向前冲。该挡的时候挡住，也是为了让所有人走出去。' },
+    ],
+    victory: {
+      title: '通过不可能的走廊',
+      text: '最后一道激光从背后合拢。郑吒没有回头，因为这一次走廊里没有留下任何同伴。',
+    },
+    background: '/assets/scenes/1-4_激光走廊_背景.jpg',
+    threat: '高危',
+    rewards: { exp: 270, points: 340 },
+    repeatRewards: { exp: 78, points: 95 },
+    enemies: [
+      {
+        id: 'laser-a', name: '激光安保α', role: '高速切割', portrait: '/assets/enemies/zombie_guard.jpg',
+        hp: 96, maxHp: 96, mp: 0, maxMp: 0, atk: 30, def: 8, spd: 19, crit: 7, skills: [],
+      },
+      {
+        id: 'laser-b', name: '激光安保β', role: '交叉锁定', portrait: '/assets/enemies/zombie_guard.jpg',
+        hp: 112, maxHp: 112, mp: 0, maxMp: 0, atk: 28, def: 10, spd: 18, crit: 5, skills: [],
+      },
+    ],
+  },
+  {
+    id: 'crawler-outbreak',
+    order: 5,
+    chapter: '第一章 · 名为生化',
+    title: '终端控制室 · 爬行者爆发',
+    subtitle: '培养槽全部破裂，爬行者在天花板与管线之间高速移动。',
+    briefing: '先用群体技能清理感染者，避免爬行者在低血目标上完成连续猎杀。',
+    intro: [
+      { speaker: '詹岚', text: '它们不是普通丧尸。速度、力量、攻击方式都已经越过了人的范围。' },
+      { speaker: '张杰', text: '别让伤员单独暴露。爬行者会盯住最虚弱的人，一旦倒一个，阵线就会崩。' },
+      { speaker: '郑吒', text: '那就不让任何人落单。中洲队，一起杀出去。' },
+    ],
+    victory: {
+      title: '中洲队第一次并肩',
+      text: '爬行者从天花板坠落，中洲队仍站在同一条战线上。郑吒第一次真正喊出了“我们”。',
+    },
+    background: '/assets/scenes/1-5_终端控制室_背景.jpg',
+    threat: '高危',
+    rewards: { exp: 330, points: 410 },
+    repeatRewards: { exp: 90, points: 115 },
+    enemies: [
+      {
+        id: 'crawler-a', name: '爬行者α', role: '弱点猎杀', portrait: '/assets/enemies/crawler.jpg',
+        hp: 142, maxHp: 142, mp: 0, maxMp: 0, atk: 30, def: 10, spd: 18, crit: 8, skills: [],
+      },
+      {
+        id: 'infected-support', name: '感染维护员', role: '腐化纠缠', portrait: '/assets/enemies/zombie_worker.jpg',
+        hp: 118, maxHp: 118, mp: 0, maxMp: 0, atk: 25, def: 10, spd: 8, crit: 3, skills: [],
+      },
+      {
+        id: 'crawler-b', name: '爬行者β', role: '弱点猎杀', portrait: '/assets/enemies/crawler.jpg',
+        hp: 132, maxHp: 132, mp: 0, maxMp: 0, atk: 29, def: 9, spd: 17, crit: 8, skills: [],
+      },
+    ],
+  },
+  {
+    id: 'tyrant-final',
+    order: 6,
     chapter: '第一章 · 名为生化',
     title: '六小时归途 · 暴君追猎',
     subtitle: '倒计时最后三分钟，T-002撕开闸门挡住了回归列车。',
