@@ -101,6 +101,17 @@ button { font: inherit; }
 .mission-copy small { display: block; margin-top: 4px; color: #69768b; font-size: 8px; line-height: 1.5; }
 .mission-state { color: var(--amber); font-size: 9px; white-space: nowrap; }
 .chapter-clear { margin-top: 12px; padding: 9px; text-align: center; color: var(--green); border: 1px solid rgba(121,230,163,.24); background: rgba(121,230,163,.05); font-size: 10px; }
+.supply-heading { display: flex; justify-content: space-between; align-items: end; gap: 16px; margin: 28px 0 12px; padding-top: 22px; border-top: 1px solid var(--line); }
+.supply-heading h2 { margin: 5px 0 0; }
+.supply-heading > span { color: #68758a; font-size: 9px; }
+.supply-shop { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.supply-card { display: grid; grid-template-columns: 42px minmax(0,1fr) auto; align-items: center; gap: 12px; min-height: 96px; padding: 13px; border: 1px solid rgba(105,221,255,.2); border-radius: 12px; background: linear-gradient(135deg, rgba(105,221,255,.075), rgba(255,255,255,.025)); }
+.supply-icon { display: grid; place-items: center; width: 42px; height: 42px; color: var(--cyan); border: 1px solid rgba(105,221,255,.45); border-radius: 50%; font-weight: 900; }
+.supply-copy > div { display: flex; justify-content: space-between; gap: 8px; }
+.supply-copy b { color: #e9edf3; font-size: 12px; }
+.supply-copy strong { color: var(--green); font-size: 9px; white-space: nowrap; }
+.supply-copy p { margin: 6px 0 0; color: #7f8ca2; font-size: 9px; line-height: 1.55; }
+.supply-buy { min-height: 48px; padding: 10px 13px; color: var(--amber); font-size: 9px; white-space: nowrap; }
 
 /* mission briefing and chapter ending */
 .briefing-screen { display: grid; align-items: center; padding: 5vh 7vw; background-image: var(--briefing-bg); }
@@ -185,6 +196,9 @@ button { font: inherit; }
 .skill-card b em { float: right; padding: 2px 6px; border-radius: 10px; color: var(--red); background: rgba(255,76,76,.1); font-style: normal; font-size: 8px; }
 .command-btn span, .skill-card span { color: #7d8a9d; font-size: 9px; line-height: 1.5; }
 .skill-card .tag { color: var(--cyan); }
+.item-card { border-color: rgba(105,221,255,.26); background: rgba(23,85,102,.12); }
+.item-card b { color: #d8f8ff; }
+.item-card b em { color: var(--green); background: rgba(121,230,163,.1); }
 .target-hint { color: var(--amber); }
 
 .result-overlay { position: fixed; inset: 0; z-index: 40; display: grid; place-items: center; background: rgba(2,4,8,.8); backdrop-filter: blur(12px); }
@@ -241,7 +255,9 @@ button { font: inherit; }
 @media (max-width: 620px) {
   .title-wrap { padding: 28px; }
   .title-screen h1 { font-size: 58px; }
-  .skill-tree, .command-grid { grid-template-columns: 1fr; }
+  .skill-tree, .supply-shop, .command-grid { grid-template-columns: 1fr; }
+  .supply-card { grid-template-columns: 38px minmax(0,1fr); }
+  .supply-buy { grid-column: 1 / -1; }
   .battle-header { grid-template-columns: 1fr; }
   .timeline { justify-content: start; }
   .unit-card { min-width: 96px; padding: 6px; }

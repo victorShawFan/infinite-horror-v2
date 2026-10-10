@@ -14,6 +14,11 @@ export function buildPresentationCues(events = []) {
       cues.push({ type: 'cast', actorId: event.actorId });
       cues.push({ type: 'heal', targetId: event.targetId });
       if (event.amount > 0) cues.push({ type: 'popup', targetId: event.targetId, text: '+' + event.amount, tone: 'heal' });
+    } else if (event.type === 'item_use') {
+      cues.push({ type: 'item', actorId: event.actorId, itemId: event.itemId });
+    } else if (event.type === 'item_heal') {
+      cues.push({ type: 'heal', targetId: event.targetId });
+      if (event.amount > 0) cues.push({ type: 'popup', targetId: event.targetId, text: '+' + event.amount, tone: 'heal' });
     } else if (event.type === 'boss_phase') {
       cues.push({ type: 'boss_phase', actorId: event.actorId, phase: event.phase });
       cues.push({ type: 'banner', text: '警告 · 生化体进入狂暴阶段', tone: 'danger' });

@@ -30,17 +30,19 @@ function cloneCombatant(source, side, stableIndex) {
     spd: Math.max(0, Number(source.spd ?? 0)),
     crit: Math.max(0, Number(source.crit ?? 0)),
     skills: [...(source.skills || [])],
+    inventory: { ...(source.inventory || {}) },
     cooldowns: { ...(source.cooldowns || {}) },
     guarding: false,
   };
 }
 
 export class TurnBattleEngine {
-  constructor({ party, enemies, skills = {}, rng = Math.random, rewards = {}, rules = {} }) {
+  constructor({ party, enemies, skills = {}, items = {}, rng = Math.random, rewards = {}, rules = {} }) {
     if (!Array.isArray(party) || party.length === 0) throw new Error('party_required');
     if (!Array.isArray(enemies) || enemies.length === 0) throw new Error('enemies_required');
 
     this.skills = skills;
+    this.items = items;
     this.rng = rng;
     this.rewards = { exp: 0, points: 0, ...rewards };
     this.rules = rules || {};
@@ -242,6 +244,35 @@ export class TurnBattleEngine {
       for (const target of targets) {
         if (skill.healPower) this._heal(actor, target, skill.healPower, events, skill.id);
         else this._dealDamage(actor, target, skill.power || 1, events, skill.id);
+      }
+    } else if (action.kind === ACTION_KIND.ITEM) {
+      const item = this.items[action.itemId];
+      if (!item || (actor.inventory?.[action.itemId] || 0) <= 0) {
+        return { ok: false, error: 'item_unavailable', events: [] };
+      }
+      let targets;
+      if (item.target === TARGET_KIND.SINGLE_ALLY) {
+        const validation = this._validateSingleTarget(actor, action, actor.side);
+        if (validation.error) return { ok: false, error: validation.error, events: [] };
+        targets = [validation.target];
+      } else if (item.target === TARGET_KIND.ALL_ALLIES) {
+        targets = this.getLiving(actor.side);
+      } else {
+        return { ok: false, error: 'invalid_item_target', events: [] };
+      }
+      if (!targets.some(target => target.hp < target.maxHp)) {
+        return { ok: false, error: 'no_effect', events: [] };
+      }
+      actor.guarding = false;
+      actor.inventory[action.itemId]--;
+      events[0].itemId = item.id;
+      events.push({ type: 'item_use', actorId: actor.id, itemId: item.id });
+      for (const target of targets) {
+        const applied = Math.min(item.healFlat || 0, target.maxHp - target.hp);
+        target.hp += applied;
+        if (applied > 0) {
+          events.push({ type: 'item_heal', actorId: actor.id, targetId: target.id, itemId: item.id, amount: applied });
+        }
       }
     } else {
       return { ok: false, error: 'unsupported_action', events: [] };

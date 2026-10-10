@@ -5,6 +5,7 @@ import { chooseEnemyAction, describeEnemyIntent } from './core/EnemyTurnAI.js';
 import { buildPresentationCues } from './core/BattlePresentation.js';
 import { RebuildAudio, getAudioCueForPresentation } from './core/RebuildAudio.js';
 import { applyExperience, experienceToNextLevel } from './core/PlayerProgression.js';
+import { ITEM_CATALOG, purchaseItem, syncInventoryFromCombatant } from './core/ItemSystem.js';
 import { SKILL_CATALOG } from './data/SkillCatalog.js';
 import { DEFAULT_PROFILE, CHAPTER_ONE_ENCOUNTERS, createParty, createEncounter } from './data/ChapterOneBattle.js';
 
@@ -25,9 +26,21 @@ let presentationBusy = false;
 function loadProfile() {
   try {
     const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || 'null');
-    if (saved) return { ...DEFAULT_PROFILE, ...saved, campaign: createCampaignProgress(saved) };
+    if (saved) return {
+      ...DEFAULT_PROFILE,
+      ...saved,
+      learnedSkills: [...(saved.learnedSkills || DEFAULT_PROFILE.learnedSkills)],
+      equippedSkills: [...(saved.equippedSkills || DEFAULT_PROFILE.equippedSkills)],
+      inventory: { ...DEFAULT_PROFILE.inventory, ...(saved.inventory || {}) },
+      campaign: createCampaignProgress(saved),
+    };
   } catch {}
-  const fresh = { ...DEFAULT_PROFILE, learnedSkills: [...DEFAULT_PROFILE.learnedSkills], equippedSkills: [...DEFAULT_PROFILE.equippedSkills] };
+  const fresh = {
+    ...DEFAULT_PROFILE,
+    learnedSkills: [...DEFAULT_PROFILE.learnedSkills],
+    equippedSkills: [...DEFAULT_PROFILE.equippedSkills],
+    inventory: { ...DEFAULT_PROFILE.inventory },
+  };
   return { ...fresh, campaign: createCampaignProgress(fresh) };
 }
 
@@ -91,6 +104,7 @@ function renderHub() {
   const skills = Object.values(SKILL_CATALOG).filter(skill => skill.learnable !== false && !['precision_shot', 'suppressive_fire'].includes(skill.id));
   const campaignStatus = getCampaignStatus(profile.campaign);
   const nextLevelExp = experienceToNextLevel(profile.level);
+  const items = Object.values(ITEM_CATALOG);
   app.innerHTML = [
     '<section class="screen hub-screen">',
     '  <header class="topbar">',
@@ -115,6 +129,8 @@ function renderHub() {
     '      <div class="eyebrow">Skill Archive / 技能并非自动生效，需要学习并装入技能栏</div>',
     '      <h2 style="margin:6px 0 18px">可兑换技能</h2>',
     '      <div class="skill-tree">' + skills.map(skill => renderLearnCard(skill)).join('') + '</div>',
+    '      <div class="supply-heading"><div><div class="eyebrow">Survival Supplies / 消耗品会带入下一场战斗</div><h2>轮回补给</h2></div><span>库存会在战斗结算后保存</span></div>',
+    '      <div class="supply-shop">' + items.map(renderSupplyCard).join('') + '</div>',
     '    </section>',
     '  </div>',
     '</section>',
@@ -130,6 +146,33 @@ function renderHub() {
   document.querySelectorAll('[data-equip]').forEach(button => {
     button.onclick = () => handleEquip(button.dataset.equip);
   });
+  document.querySelectorAll('[data-buy-item]').forEach(button => {
+    button.onclick = () => handlePurchaseItem(button.dataset.buyItem);
+  });
+}
+
+function renderSupplyCard(item) {
+  const count = profile.inventory?.[item.id] || 0;
+  const affordable = profile.rewardPoints >= item.cost;
+  return [
+    '<article class="supply-card">',
+    '  <span class="supply-icon">' + item.icon + '</span>',
+    '  <div class="supply-copy"><div><b>' + item.name + '</b><strong>持有 ×' + count + '</strong></div><p>' + item.desc + '</p></div>',
+    '  <button class="secondary supply-buy" data-buy-item="' + item.id + '" ' + (!affordable ? 'disabled' : '') + '>⬡ ' + item.cost + ' · 购买</button>',
+    '</article>',
+  ].join('');
+}
+
+function handlePurchaseItem(itemId) {
+  const result = purchaseItem(profile, itemId, 1, ITEM_CATALOG);
+  if (!result.ok) {
+    toast(result.error === 'insufficient_points' ? '奖励点不足' : '无法购买该补给', 'error');
+    return;
+  }
+  profile = result.profile;
+  saveProfile();
+  renderHub();
+  toast('已购买「' + result.item.name + '」×' + result.quantity, 'good');
 }
 
 function showBriefing(encounterId) {
@@ -233,6 +276,7 @@ function startBattle(encounterId = CHAPTER_ONE_ENCOUNTERS[0].id) {
     party: createParty(profile),
     enemies: encounter.enemies,
     skills: SKILL_CATALOG,
+    items: ITEM_CATALOG,
     rewards: previewEncounterRewards(encounter),
     rules: encounter.rules,
   });
@@ -294,10 +338,12 @@ function renderCommands(actor) {
   if (!actor || engine.status !== 'active') return '<div class="command-title"><span>战斗已经结束</span></div>';
   if (actor.side === 'enemy' || enemyBusy || presentationBusy) return '<div class="command-title"><span>行动演算中……</span><span>' + actor.name + '</span></div>';
   if (selectedAction) {
-    const label = selectedAction.skill ? selectedAction.skill.name : '普通攻击';
+    const label = selectedAction.skill?.name || selectedAction.item?.name || '普通攻击';
     return '<div class="command-title"><span class="target-hint">为「' + label + '」选择目标</span><button class="secondary" id="cancel-target">取消</button></div>';
   }
   const skills = actor.skills.map(id => SKILL_CATALOG[id]).filter(Boolean);
+  const items = Object.values(ITEM_CATALOG).filter(item => (actor.inventory?.[item.id] || 0) > 0);
+  const hasInjuredAlly = engine.getLiving(actor.side).some(unit => unit.hp < unit.maxHp);
   return [
     '<div class="command-title"><span><strong>' + actor.name + '</strong> 的行动回合</span><span>请选择指令</span></div>',
     '<div class="command-grid">',
@@ -307,6 +353,7 @@ function renderCommands(actor) {
       const disabled = actor.mp < skill.mpCost || cooldown > 0;
       return '<button class="skill-card" data-skill="' + skill.id + '" ' + (disabled ? 'disabled' : '') + '><b>' + skill.icon + ' · ' + skill.name + (cooldown > 0 ? '<em>CD ' + cooldown + '</em>' : '') + '</b><span class="tag">' + (skill.target === TARGET_KIND.ALL_ENEMIES ? '群体' : skill.healPower ? '治疗' : '单体') + ' · MP ' + skill.mpCost + ' · 冷却 ' + skill.cooldown + '</span><span>' + skill.desc + '</span></button>';
     }).join(''),
+    items.map(item => '<button class="skill-card item-card" data-item="' + item.id + '" ' + (!hasInjuredAlly ? 'disabled title="全队生命值已满"' : '') + '><b>' + item.icon + ' · ' + item.name + '<em>×' + actor.inventory[item.id] + '</em></b><span class="tag">补给 · ' + (item.target === TARGET_KIND.ALL_ALLIES ? '我方全体' : '我方单体') + '</span><span>' + item.desc + '</span></button>').join(''),
     '  <button class="command-btn" id="defend"><b>防御</b><span>承受伤害降低50%，持续到下一次行动</span></button>',
     '</div>',
   ].join('');
@@ -322,12 +369,20 @@ function bindBattleControls() {
   document.querySelectorAll('[data-skill]').forEach(button => {
     button.addEventListener('click', () => chooseSkill(button.dataset.skill));
   });
+  document.querySelectorAll('[data-item]').forEach(button => {
+    button.addEventListener('click', () => chooseItem(button.dataset.item));
+  });
   document.querySelectorAll('[data-target]').forEach(card => {
     card.addEventListener('click', () => {
       if (!selectedAction) return;
       const target = engine.getCombatant(card.dataset.target);
       if (!target || !isValidTarget(target, selectedAction)) return;
-      executePlayerAction({ kind: selectedAction.kind, skillId: selectedAction.skill?.id, targetId: target.id });
+      executePlayerAction({
+        kind: selectedAction.kind,
+        skillId: selectedAction.skill?.id,
+        itemId: selectedAction.item?.id,
+        targetId: target.id,
+      });
     });
   });
   document.getElementById('claim-result')?.addEventListener('click', claimBattleResult);
@@ -344,9 +399,22 @@ function chooseSkill(skillId) {
   renderBattle();
 }
 
+function chooseItem(itemId) {
+  const item = ITEM_CATALOG[itemId];
+  const actor = engine.getCurrentActor();
+  if (!item || !actor || (actor.inventory?.[itemId] || 0) <= 0) return;
+  if (item.target === TARGET_KIND.ALL_ALLIES) {
+    executePlayerAction({ kind: ACTION_KIND.ITEM, itemId });
+    return;
+  }
+  selectedAction = { kind: ACTION_KIND.ITEM, item, target: item.target };
+  renderBattle();
+}
+
 function isValidTarget(unit, action) {
   const actor = engine.getCurrentActor();
   const expected = action.target === TARGET_KIND.SINGLE_ALLY ? actor.side : actor.side === 'party' ? 'enemy' : 'party';
+  if (action.kind === ACTION_KIND.ITEM) return unit.side === expected && unit.hp < unit.maxHp;
   return unit.side === expected;
 }
 
@@ -396,7 +464,7 @@ async function playPresentation(events) {
     if (audioCue) rebuildAudio.play(audioCue);
     const actorCard = cue.actorId ? document.querySelector('[data-target="' + cue.actorId + '"]') : null;
     const targetCard = cue.targetId ? document.querySelector('[data-target="' + cue.targetId + '"]') : null;
-    if (cue.type === 'attack' || cue.type === 'cast') {
+    if (cue.type === 'attack' || cue.type === 'cast' || cue.type === 'item') {
       actorCard?.classList.add(cue.type === 'cast' ? 'fx-cast' : 'fx-attack');
       await delay(150);
       actorCard?.classList.remove('fx-cast', 'fx-attack');
@@ -457,6 +525,13 @@ function appendEvents(events) {
       const actor = engine.getCombatant(event.actorId);
       const target = engine.getCombatant(event.targetId);
       logs.push('<strong>' + actor.name + '</strong> 为 <strong>' + target.name + '</strong> 恢复 <span style="color:var(--green)">' + event.amount + '</span> HP。');
+    } else if (event.type === 'item_use') {
+      const actor = engine.getCombatant(event.actorId);
+      const item = ITEM_CATALOG[event.itemId];
+      logs.push('<strong>' + actor.name + '</strong> 使用补给「' + (item?.name || event.itemId) + '」。');
+    } else if (event.type === 'item_heal') {
+      const target = engine.getCombatant(event.targetId);
+      logs.push('<strong>' + target.name + '</strong> 恢复 <span style="color:var(--green)">' + event.amount + '</span> HP。');
     } else if (event.type === 'guard') {
       logs.push('<strong>' + engine.getCombatant(event.actorId).name + '</strong> 架起防御，等待敌方冲击。');
     } else if (event.type === 'protection') {
@@ -512,6 +587,7 @@ function claimBattleResult() {
     return;
   }
   profile.campaign = settlement.progress;
+  profile = syncInventoryFromCombatant(profile, engine.getCombatant('zheng'));
   let progression = null;
   if (result.result === 'victory') {
     profile.rewardPoints += settlement.rewards.points || 0;

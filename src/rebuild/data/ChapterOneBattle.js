@@ -8,6 +8,7 @@ export const DEFAULT_PROFILE = Object.freeze({
   equippedSkills: ['heavy_slash'],
   skillSlots: 4,
   battlesWon: 0,
+  inventory: { first_aid: 1, team_spray: 0 },
 });
 
 export const PARTY_BLUEPRINTS = Object.freeze([
@@ -259,6 +260,7 @@ export function createParty(profile) {
       atk: unit.atk + bonuses.atk,
       def: unit.def + bonuses.def,
       skills: [...(profile.equippedSkills || [])],
+      inventory: { ...(profile.inventory || {}) },
     };
   });
 }

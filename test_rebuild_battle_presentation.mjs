@@ -51,4 +51,14 @@ test('零治疗量不显示误导性的加血数字', () => {
   assert.equal(cues.some(cue => cue.type === 'popup'), false);
 });
 
+test('道具治疗使用独立施放提示并复用治疗反馈', () => {
+  const cues = buildPresentationCues([
+    { type: 'item_use', actorId: 'hero', itemId: 'first_aid' },
+    { type: 'item_heal', actorId: 'hero', targetId: 'ally', itemId: 'first_aid', amount: 35 },
+  ]);
+  assert.deepEqual(cues.map(cue => cue.type), ['item', 'heal', 'popup']);
+  assert.equal(cues[0].actorId, 'hero');
+  assert.equal(cues[2].text, '+35');
+});
+
 console.log('\n✅ ' + passed + ' presentation checks passed');
