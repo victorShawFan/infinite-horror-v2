@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { learnSkill, equipSkill } from './src/rebuild/core/SkillLearning.js';
+import { learnSkill, equipSkill, unequipSkill, replaceEquippedSkill } from './src/rebuild/core/SkillLearning.js';
 import { SKILL_CATALOG } from './src/rebuild/data/SkillCatalog.js';
 
 let passed = 0;
@@ -61,6 +61,28 @@ test('技能栏满时拒绝装备', () => {
   const result = equipSkill(p, 'arc_sweep');
   assert.equal(result.ok, false);
   assert.equal(result.error, 'slots_full');
+});
+
+test('已装备技能可以卸下并释放技能槽', () => {
+  const result = unequipSkill(profile(), 'heavy_slash');
+  assert.equal(result.ok, true);
+  assert.deepEqual(result.profile.equippedSkills, []);
+});
+
+test('替换技能保持槽位顺序且要求新技能已学习', () => {
+  const p = profile({ learnedSkills: ['heavy_slash', 'arc_sweep'], equippedSkills: ['heavy_slash'] });
+  const result = replaceEquippedSkill(p, 'heavy_slash', 'arc_sweep');
+  assert.equal(result.ok, true);
+  assert.deepEqual(result.profile.equippedSkills, ['arc_sweep']);
+  const invalid = replaceEquippedSkill(p, 'heavy_slash', 'blood_burst');
+  assert.equal(invalid.ok, false);
+  assert.equal(invalid.error, 'not_learned');
+});
+
+test('不能卸下未装备技能', () => {
+  const result = unequipSkill(profile(), 'arc_sweep');
+  assert.equal(result.ok, false);
+  assert.equal(result.error, 'not_equipped');
 });
 
 console.log('\n✅ ' + passed + ' skill learning checks passed');

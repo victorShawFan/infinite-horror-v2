@@ -1,5 +1,5 @@
 import { TurnBattleEngine, ACTION_KIND, TARGET_KIND } from './core/TurnBattleEngine.js';
-import { learnSkill, equipSkill } from './core/SkillLearning.js';
+import { learnSkill, equipSkill, unequipSkill } from './core/SkillLearning.js';
 import { createCampaignProgress, canLaunchEncounter, settleEncounter, getCampaignStatus } from './core/CampaignProgress.js';
 import { chooseEnemyAction, describeEnemyIntent } from './core/EnemyTurnAI.js';
 import { buildPresentationCues } from './core/BattlePresentation.js';
@@ -126,7 +126,7 @@ function renderLearnCard(skill) {
   const equipped = profile.equippedSkills.includes(skill.id);
   const prerequisite = skill.prerequisite ? SKILL_CATALOG[skill.prerequisite]?.name : null;
   const action = learned
-    ? '<span class="skill-cost">' + (equipped ? '已装备' : '点击装备') + '</span>'
+    ? '<span class="skill-cost">' + (equipped ? '点击卸下' : '点击装备') + '</span>'
     : '<span class="skill-cost">⬡ ' + skill.cost + '</span>';
   return [
     '<button class="learn-btn ' + (learned ? 'learned ' : '') + (equipped ? 'equipped' : '') + '" style="--school:' + schoolColor(skill.school) + '" ' + (learned ? 'data-equip' : 'data-learn') + '="' + skill.id + '">',
@@ -154,7 +154,15 @@ function handleLearn(skillId) {
 
 function handleEquip(skillId) {
   if (profile.equippedSkills.includes(skillId)) {
-    toast('该技能已经装备');
+    const result = unequipSkill(profile, skillId);
+    if (!result.ok) {
+      toast('无法卸下该技能', 'error');
+      return;
+    }
+    profile = result.profile;
+    saveProfile();
+    renderHub();
+    toast('技能已从技能栏卸下');
     return;
   }
   const result = equipSkill(profile, skillId);

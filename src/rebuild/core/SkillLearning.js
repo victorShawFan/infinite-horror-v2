@@ -33,6 +33,18 @@ export function equipSkill(profile, skillId) {
 
 export function unequipSkill(profile, skillId) {
   const next = cloneProfile(profile);
+  if (!next.equippedSkills.includes(skillId)) return { ok: false, error: 'not_equipped', profile: next };
   next.equippedSkills = next.equippedSkills.filter(id => id !== skillId);
+  return { ok: true, profile: next };
+}
+
+export function replaceEquippedSkill(profile, oldSkillId, newSkillId) {
+  const next = cloneProfile(profile);
+  const slotIndex = next.equippedSkills.indexOf(oldSkillId);
+  if (slotIndex < 0) return { ok: false, error: 'not_equipped', profile: next };
+  if (!next.learnedSkills.includes(newSkillId)) return { ok: false, error: 'not_learned', profile: next };
+  const duplicateIndex = next.equippedSkills.indexOf(newSkillId);
+  if (duplicateIndex >= 0 && duplicateIndex !== slotIndex) return { ok: false, error: 'already_equipped', profile: next };
+  next.equippedSkills[slotIndex] = newSkillId;
   return { ok: true, profile: next };
 }
