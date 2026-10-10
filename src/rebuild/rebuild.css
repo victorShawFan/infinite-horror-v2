@@ -83,6 +83,17 @@ button { font: inherit; }
 .build-slot { display: flex; align-items: center; justify-content: space-between; min-height: 46px; padding: 9px 12px; border-left: 2px solid #8b3943; background: rgba(255,255,255,.035); color: #ccd4e2; }
 .build-slot small { color: #677387; }
 .hub-launch { width: 100%; margin-top: 14px; }
+.mission-list { display: grid; gap: 9px; margin-top: 18px; }
+.mission-card { width: 100%; display: grid; grid-template-columns: 34px 1fr auto; align-items: center; gap: 11px; padding: 11px; text-align: left; color: #dce3ee; background: rgba(255,255,255,.035); border: 1px solid rgba(255,255,255,.1); cursor: pointer; transition: .18s ease; }
+.mission-card:hover:not(:disabled) { transform: translateX(3px); border-color: rgba(255,201,103,.5); background: rgba(255,201,103,.055); }
+.mission-card.complete { border-color: rgba(121,230,163,.25); }
+.mission-card.locked { opacity: .35; cursor: not-allowed; }
+.mission-order { font-family: "ZCOOL QingKe HuangYou"; font-size: 22px; color: #68758a; }
+.mission-copy { min-width: 0; }
+.mission-copy b { display: block; font-size: 11px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.mission-copy small { display: block; margin-top: 4px; color: #69768b; font-size: 8px; line-height: 1.5; }
+.mission-state { color: var(--amber); font-size: 9px; white-space: nowrap; }
+.chapter-clear { margin-top: 12px; padding: 9px; text-align: center; color: var(--green); border: 1px solid rgba(121,230,163,.24); background: rgba(121,230,163,.05); font-size: 10px; }
 .skill-tree { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
 .learn-btn { position: relative; text-align: left; min-height: 128px; padding: 16px; border-radius: 12px; overflow: hidden; }
 .learn-btn::before { content: ""; position: absolute; inset: 0 auto 0 0; width: 3px; background: var(--school, var(--red)); }

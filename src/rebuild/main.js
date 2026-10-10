@@ -1,7 +1,8 @@
 import { TurnBattleEngine, ACTION_KIND, TARGET_KIND } from './core/TurnBattleEngine.js';
 import { learnSkill, equipSkill } from './core/SkillLearning.js';
+import { createCampaignProgress, canLaunchEncounter, settleEncounter, getCampaignStatus } from './core/CampaignProgress.js';
 import { SKILL_CATALOG } from './data/SkillCatalog.js';
-import { DEFAULT_PROFILE, PARTY_BLUEPRINTS, createParty, createEncounter } from './data/ChapterOneBattle.js';
+import { DEFAULT_PROFILE, CHAPTER_ONE_ENCOUNTERS, createParty, createEncounter } from './data/ChapterOneBattle.js';
 
 const app = document.getElementById('rebuild-app');
 const STORAGE_KEY = 'ih_rebuild_profile_v1';
@@ -17,9 +18,10 @@ let enemyBusy = false;
 function loadProfile() {
   try {
     const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || 'null');
-    if (saved) return { ...DEFAULT_PROFILE, ...saved };
+    if (saved) return { ...DEFAULT_PROFILE, ...saved, campaign: createCampaignProgress(saved) };
   } catch {}
-  return { ...DEFAULT_PROFILE, learnedSkills: [...DEFAULT_PROFILE.learnedSkills], equippedSkills: [...DEFAULT_PROFILE.equippedSkills] };
+  const fresh = { ...DEFAULT_PROFILE, learnedSkills: [...DEFAULT_PROFILE.learnedSkills], equippedSkills: [...DEFAULT_PROFILE.equippedSkills] };
+  return { ...fresh, campaign: createCampaignProgress(fresh) };
 }
 
 function saveProfile() {
@@ -53,7 +55,7 @@ function renderTitle() {
     '</section>',
   ].join('');
   document.getElementById('enter-hub').onclick = renderHub;
-  document.getElementById('quick-battle').onclick = startBattle;
+  document.getElementById('quick-battle').onclick = () => startBattle(getCampaignStatus(profile.campaign).nextEncounter?.id || CHAPTER_ONE_ENCOUNTERS[0].id);
 }
 
 function schoolColor(school) {
@@ -63,6 +65,7 @@ function schoolColor(school) {
 function renderHub() {
   const equipped = profile.equippedSkills.map(id => SKILL_CATALOG[id]).filter(Boolean);
   const skills = Object.values(SKILL_CATALOG).filter(skill => !['precision_shot', 'suppressive_fire'].includes(skill.id));
+  const campaignStatus = getCampaignStatus(profile.campaign);
   app.innerHTML = [
     '<section class="screen hub-screen">',
     '  <header class="topbar">',
@@ -77,8 +80,9 @@ function renderHub() {
       const skill = equipped[index];
       return '<div class="build-slot"><span>' + (skill ? skill.icon + ' · ' + skill.name : '空技能槽') + '</span><small>' + (skill ? (skill.target === TARGET_KIND.ALL_ENEMIES ? '群体' : '单体') + ' / MP ' + skill.mpCost : '等待装备') + '</small></div>';
     }).join('') + '</div>',
-    '      <div style="display:flex;justify-content:space-between;color:#8190a6;font-size:10px"><span>已完成战斗</span><strong style="color:#dbe3ee">' + profile.battlesWon + '</strong></div>',
-    '      <button class="primary hub-launch" id="launch-encounter">进入蜂巢任务</button>',
+    '      <div style="display:flex;justify-content:space-between;color:#8190a6;font-size:10px"><span>章节推进</span><strong style="color:#dbe3ee">' + campaignStatus.completedCount + ' / ' + campaignStatus.totalCount + '</strong></div>',
+    '      <div class="mission-list">' + CHAPTER_ONE_ENCOUNTERS.map(renderMissionCard).join('') + '</div>',
+    campaignStatus.completed ? '<div class="chapter-clear">第一章已完成 · 后续章节迁移中</div>' : '',
     '      <button class="secondary hub-launch" id="back-title">返回标题</button>',
     '    </aside>',
     '    <section class="skills-panel glass">',
@@ -90,14 +94,28 @@ function renderHub() {
     '</section>',
   ].join('');
 
-  document.getElementById('launch-encounter').onclick = startBattle;
   document.getElementById('back-title').onclick = renderTitle;
+  document.querySelectorAll('[data-encounter]').forEach(button => {
+    button.onclick = () => startBattle(button.dataset.encounter);
+  });
   document.querySelectorAll('[data-learn]').forEach(button => {
     button.onclick = () => handleLearn(button.dataset.learn);
   });
   document.querySelectorAll('[data-equip]').forEach(button => {
     button.onclick = () => handleEquip(button.dataset.equip);
   });
+}
+
+function renderMissionCard(encounter) {
+  const unlocked = canLaunchEncounter(profile.campaign, encounter.id);
+  const completed = profile.campaign.completed.includes(encounter.id);
+  return [
+    '<button class="mission-card ' + (completed ? 'complete ' : '') + (!unlocked ? 'locked' : '') + '" data-encounter="' + encounter.id + '" ' + (!unlocked ? 'disabled' : '') + '>',
+    '  <span class="mission-order">0' + encounter.order + '</span>',
+    '  <span class="mission-copy"><b>' + encounter.title + '</b><small>' + encounter.briefing + '</small></span>',
+    '  <span class="mission-state">' + (!unlocked ? '锁定' : completed ? '重返' : encounter.threat) + '</span>',
+    '</button>',
+  ].join('');
 }
 
 function renderLearnCard(skill) {
@@ -147,13 +165,17 @@ function handleEquip(skillId) {
   toast('技能已装备', 'good');
 }
 
-function startBattle() {
-  encounter = createEncounter();
+function startBattle(encounterId = CHAPTER_ONE_ENCOUNTERS[0].id) {
+  if (!canLaunchEncounter(profile.campaign, encounterId)) {
+    toast('该任务尚未解锁', 'error');
+    return;
+  }
+  encounter = createEncounter(encounterId);
   engine = new TurnBattleEngine({
     party: createParty(profile),
     enemies: encounter.enemies,
     skills: SKILL_CATALOG,
-    rewards: encounter.rewards,
+    rewards: previewEncounterRewards(encounter),
   });
   logs = ['蜂巢站台封锁。敌方生命信号 × ' + encounter.enemies.length + '。', '战斗开始：请选择当前角色的行动。'];
   selectedAction = null;
@@ -161,6 +183,12 @@ function startBattle() {
   enemyBusy = false;
   renderBattle();
   runEnemyTurns();
+}
+
+function previewEncounterRewards(targetEncounter) {
+  return profile.campaign.completed.includes(targetEncounter.id)
+    ? { ...targetEncounter.repeatRewards }
+    : { ...targetEncounter.rewards };
 }
 
 function renderBattle() {
@@ -303,6 +331,9 @@ function appendEvents(events) {
       logs.push('<strong>' + actor.name + '</strong> 为 <strong>' + target.name + '</strong> 恢复 <span style="color:var(--green)">' + event.amount + '</span> HP。');
     } else if (event.type === 'guard') {
       logs.push('<strong>' + engine.getCombatant(event.actorId).name + '</strong> 架起防御，等待敌方冲击。');
+    } else if (event.type === 'boss_phase') {
+      const boss = engine.getCombatant(event.actorId);
+      logs.push('<strong class="accent">' + boss.name + '进入狂暴阶段！</strong> 肌肉组织突破限制，ATK +' + event.atkBonus + '。');
     } else if (event.type === 'battle_end') {
       logs.push(event.result === 'victory' ? '<strong>敌方战线崩溃，蜂巢入口已清理。</strong>' : '<strong>中洲队失去战斗能力。</strong>');
     }
@@ -318,12 +349,13 @@ function enemyIntentText(enemies) {
 function renderResult() {
   if (!engine || engine.status === 'active') return '';
   const victory = engine.status === 'victory';
+  const rewards = victory ? previewEncounterRewards(encounter) : { exp: 0, points: 0 };
   return [
     '<div class="result-overlay"><div class="result-card glass">',
     '  <div class="eyebrow">Battle Result</div>',
     '  <h2 style="color:' + (victory ? 'var(--amber)' : 'var(--red)') + '">' + (victory ? '突破封锁' : '轮回终止') + '</h2>',
     '  <p>' + (victory ? '蜂巢入口的尸群被压制。主神确认中洲队完成了本次战斗目标。' : '这一次选择没能让所有人活下来。调整技能构筑，再次进入战斗。') + '</p>',
-    victory ? '<div class="reward-row"><div class="reward-pill">EXP +' + encounter.rewards.exp + '</div><div class="reward-pill">⬡ +' + encounter.rewards.points + '</div></div>' : '',
+    victory ? '<div class="reward-row"><div class="reward-pill">EXP +' + rewards.exp + '</div><div class="reward-pill">⬡ +' + rewards.points + '</div></div>' : '',
     '  <button class="primary" id="claim-result">' + (victory ? '领取奖励并返回主神空间' : '返回主神空间整备') + '</button>',
     '</div></div>',
   ].join('');
@@ -334,11 +366,18 @@ function claimBattleResult() {
   const result = engine.claimResult();
   if (!result.ok) return;
   resultRecorded = true;
-  if (result.result === 'victory') {
-    profile.rewardPoints += result.rewards.points || 0;
-    profile.battlesWon += 1;
-    saveProfile();
+  const settlement = settleEncounter(profile.campaign, encounter.id, result.result);
+  if (!settlement.ok) {
+    resultRecorded = false;
+    toast('任务结算失败：' + settlement.error, 'error');
+    return;
   }
+  profile.campaign = settlement.progress;
+  if (result.result === 'victory') {
+    profile.rewardPoints += settlement.rewards.points || 0;
+    profile.battlesWon += 1;
+  }
+  saveProfile();
   renderHub();
   toast(result.result === 'victory' ? '奖励已写入轮回档案' : '已返回主神空间', result.result === 'victory' ? 'good' : 'normal');
 }

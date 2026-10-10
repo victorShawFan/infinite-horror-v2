@@ -121,6 +121,22 @@ export class TurnBattleEngine {
       type: 'damage', actorId: actor.id, targetId: target.id,
       skillId, amount, critical, defeated: target.hp === 0,
     });
+    this._checkBossPhase(target, events);
+  }
+
+  _checkBossPhase(target, events) {
+    if (!target.boss || target.hp <= 0 || Number(target.phase || 1) >= 2) return;
+    const threshold = Number(target.phaseThreshold ?? 0.5);
+    if (target.hp / target.maxHp > threshold) return;
+    target.phase = 2;
+    const atkBonus = Math.max(0, Number(target.phaseAtkBonus || 0));
+    target.atk += atkBonus;
+    events.push({
+      type: 'boss_phase',
+      actorId: target.id,
+      phase: 2,
+      atkBonus,
+    });
   }
 
   _heal(actor, target, healPower, events, skillId) {

@@ -6,10 +6,10 @@
 
 ## 当前开发状态
 
-默认入口现为回合制重构垂直切片：玩家在主神空间消耗奖励点学习技能并装入
-技能栏，随后进入第一章蜂巢战斗；每个我方回合主动选择普通攻击、单体技能、
-群体技能或防御，并可看到速度行动序列和敌方意图。战斗奖励会写回主神空间，
-形成第一条完整成长闭环。
+默认入口现为回合制重构首章切片：玩家在主神空间消耗奖励点学习技能并装入
+技能栏，依次推进“列车醒来、蜂巢封锁、暴君追猎”三场任务；每个我方回合
+主动选择普通攻击、单体技能、群体技能、治疗或防御，并可看到速度行动序列、
+敌方意图和Boss阶段变化。战斗奖励会写回主神空间并解锁下一场任务。
 
 旧版完整 12 章代码、地图、剧情和系统仍保留，用于逐步迁移：
 
@@ -84,6 +84,8 @@ for t in test_*.mjs; do node "$t" || exit 1; done
 # 单项测试
 node test_rebuild_turn_battle.mjs    # 新回合制引擎
 node test_rebuild_skill_learning.mjs # 主神空间技能学习
+node test_rebuild_campaign.mjs       # 首章任务解锁与奖励
+node test_rebuild_chapter_playthrough.mjs # 首章三战完整通关
 node test_full_playthrough.mjs       # 旧版 Ch1-12 通关回归
 node test_entity_placement.mjs  # 实体位置 + Renderer契约
 node test_bfs_ch7.mjs           # 单章 BFS 可达性

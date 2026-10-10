@@ -111,6 +111,25 @@ test('群体技能不会命中已倒下目标', () => {
   assert.equal(e.getCombatant('z1').hp, 0);
 });
 
+test('Boss生命低于阈值时只触发一次阶段强化', () => {
+  const boss = zombie('boss', {
+    name: '暴君', hp: 60, maxHp: 100, def: 0, boss: true,
+    phase: 1, phaseThreshold: 0.5, phaseAtkBonus: 10,
+  });
+  const e = engine({ enemies: [boss] });
+  const first = e.act({ actorId: 'zheng', kind: ACTION_KIND.ATTACK, targetId: 'boss' });
+  assert.equal(e.getCombatant('boss').phase, 2);
+  assert.equal(e.getCombatant('boss').atk, 28);
+  assert.equal(first.events.filter(event => event.type === 'boss_phase').length, 1);
+
+  e.act({ actorId: 'zhan', kind: ACTION_KIND.DEFEND });
+  const enemyTurn = e.getCurrentActor();
+  e.act({ actorId: enemyTurn.id, kind: ACTION_KIND.ATTACK, targetId: 'zhan' });
+  const second = e.act({ actorId: 'zheng', kind: ACTION_KIND.ATTACK, targetId: 'boss' });
+  assert.equal(second.events.filter(event => event.type === 'boss_phase').length, 0);
+  assert.equal(e.getCombatant('boss').atk, 28);
+});
+
 test('治疗技能不能超过最大生命', () => {
   const e = engine({ party: [ally({ spd: 20 }), hero({ hp: 110 })] });
   const result = e.act({ actorId: 'zhan', kind: ACTION_KIND.SKILL, skillId: 'heal', targetId: 'zheng' });
