@@ -274,6 +274,16 @@ button { font: inherit; }
 .map-decoration.lantern, .map-decoration.candle, .map-decoration.incense, .map-decoration.curse-eye { border-radius:50%; background:radial-gradient(circle,#fff6c8 0 9%,var(--map-glow) 10% 20%,rgba(51,25,55,.88) 22% 55%,transparent 58%); border:0; box-shadow:0 0 13px color-mix(in srgb,var(--map-glow) 42%,transparent); animation:mapSignal 2.3s ease-in-out infinite; }
 .map-decoration.seal, .map-decoration.footprint, .map-decoration.stain, .map-decoration.shoe { border:0; background:repeating-radial-gradient(circle at 35% 50%,color-mix(in srgb,var(--map-glow) 25%,transparent) 0 6%,transparent 7% 18%); opacity:.54; filter:blur(.4px); }
 .map-decoration.beamwood, .map-decoration.box { background:repeating-linear-gradient(90deg,#171319 0 10%,#3c303d 10% 14%,#171319 15% 26%); border-color:rgba(204,175,214,.2); }
+.map-decoration.dune, .map-decoration.sandvortex { border:0;border-radius:50%;background:radial-gradient(ellipse at 45% 75%,color-mix(in srgb,var(--map-glow) 34%,#5c3c1d),rgba(42,26,13,.18) 52%,transparent 70%);filter:blur(.6px);animation:desertShimmer 3.8s ease-in-out infinite; }
+.map-decoration.sandvortex { background:repeating-radial-gradient(ellipse at center,transparent 0 12%,color-mix(in srgb,var(--map-glow) 26%,transparent) 13% 18%,transparent 19% 28%);animation-duration:2.7s; }
+.map-decoration.awning, .map-decoration.market { background:repeating-linear-gradient(135deg,#6f2d27 0 12%,#d4a25e 12% 24%,#2d1c18 24% 36%);border-color:rgba(255,202,117,.35);box-shadow:0 4px 8px rgba(0,0,0,.65); }
+.map-decoration.hieroglyph { background:repeating-linear-gradient(90deg,rgba(255,210,106,.12) 0 7%,rgba(42,30,15,.94) 8% 12%);border-color:rgba(255,210,106,.28);box-shadow:inset 0 0 9px #070402,0 0 9px rgba(255,197,80,.12); }
+.map-decoration.sarcophagus { border-radius:50% 50% 12% 12%;background:linear-gradient(90deg,#3a2916,#a17835 18%,#49321a 48%,#a17835 82%,#21160d);border:2px ridge #9b793f;box-shadow:inset 0 0 12px #100a04,0 0 12px rgba(255,202,82,.22); }
+.map-decoration.scarab { border-radius:48%;background:radial-gradient(ellipse,#e1b64c 0 9%,#2f2012 10% 32%,#b48735 34% 42%,#090604 44%);border:0;box-shadow:0 0 12px rgba(255,202,78,.32);animation:desertShimmer 2s ease-in-out infinite; }
+.map-decoration.scripture { background:linear-gradient(90deg,#15100a,#e2bf65 10% 16%,#4b3518 17% 82%,#e2bf65 83% 89%,#15100a);border-color:#c59a43;box-shadow:0 0 15px rgba(255,220,109,.32),inset 0 0 10px #0c0703; }
+.map-decoration.torch, .map-decoration.sun, .map-decoration.beacon { border-radius:50%;background:radial-gradient(circle,#fff8bf 0 8%,#ffcc55 9% 22%,#8d4319 23% 47%,transparent 49%);border:0;box-shadow:0 0 16px color-mix(in srgb,var(--map-glow) 55%,transparent);animation:mapSignal 1.8s ease-in-out infinite; }
+.map-decoration.wagon, .map-decoration.crate, .map-decoration.barricade, .map-decoration.collapse { background:repeating-linear-gradient(90deg,#21170e 0 10%,#71502e 10% 14%,#2d1e11 15% 27%);border-color:rgba(204,150,78,.28); }
+.map-decoration.track, .map-decoration.footprint, .map-decoration.laundry, .map-decoration.gold, .map-decoration.mummywrap, .map-decoration.rune, .map-decoration.weapon, .map-decoration.crossroad, .map-decoration.minaret { background:repeating-linear-gradient(90deg,color-mix(in srgb,var(--map-glow) 22%,transparent) 0 5%,transparent 6% 15%);border-color:rgba(255,205,112,.18);opacity:.63; }
 .map-entity { position: relative; z-index: 6; min-width: 0; min-height: 0; margin: 5%; padding: 0; display: grid; place-items: center; overflow: visible; color: #fff; background: radial-gradient(circle, color-mix(in srgb, var(--entity-color) 32%, #10141c), rgba(4,6,10,.92)); border: 1px solid color-mix(in srgb, var(--entity-color) 64%, transparent); border-radius: 8px; box-shadow: 0 0 18px color-mix(in srgb, var(--entity-color) 30%, transparent); pointer-events: none; }
 .map-entity span { font-family: "ZCOOL QingKe HuangYou"; color: var(--entity-color); font-size: clamp(12px,1.5vw,23px); text-shadow: 0 0 12px var(--entity-color); }
 .map-entity.item { animation:itemHover 2.1s ease-in-out infinite; }
@@ -308,6 +318,7 @@ button { font: inherit; }
 @keyframes fanSpin { to { transform:rotate(360deg); } }
 @keyframes hivePulse { 50% { opacity:.58; filter:brightness(1.28) saturate(1.2); transform:scale(.94); } }
 @keyframes curseDrift { 50% { opacity:.46; transform:translateY(-3px) scale(1.05); filter:drop-shadow(0 0 9px color-mix(in srgb,var(--map-glow) 48%,transparent)); } }
+@keyframes desertShimmer { 50% { opacity:.52;filter:brightness(1.22) blur(1px);transform:translateX(3px) scale(.98); } }
 @keyframes lordGodFloat { 50% { transform:translateY(calc(-50% - 5px)) scale(1.025); filter:brightness(1.12); } }
 @keyframes lordGodOrbit { to { transform:rotate(360deg); } }
 @keyframes lordGodPulse { 50% { opacity:.45; transform:scale(1.2); } }

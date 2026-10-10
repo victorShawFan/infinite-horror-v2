@@ -1,6 +1,7 @@
 import { createChapterOneExplorationScenario } from './ChapterOneExploration.js';
 import { createChapterTwoExplorationScenario } from './ChapterTwoExploration.js';
 import { createChapterThreeExplorationScenario } from './ChapterThreeExploration.js';
+import { createChapterFourExplorationScenario } from './ChapterFourExploration.js';
 
 const THEMES = Object.freeze({
   1: { id:'bio', floor:'#202a2d', wall:'#4d5f5e', glow:'#ff5757', label:'蜂巢设施' },
@@ -45,6 +46,8 @@ export function createExplorationScenario(encounter) {
   if (chapterTwoScenario) return chapterTwoScenario;
   const chapterThreeScenario = createChapterThreeExplorationScenario(encounter, theme);
   if (chapterThreeScenario) return chapterThreeScenario;
+  const chapterFourScenario = createChapterFourExplorationScenario(encounter, theme);
+  if (chapterFourScenario) return chapterFourScenario;
   const npcOne = `${encounter.id}-npc-1`;
   const npcTwo = `${encounter.id}-npc-2`;
   return {

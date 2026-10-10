@@ -10,6 +10,7 @@ console.log('\n[ Rebuild Exploration Policy Rollouts ]');
 const chapterOne=ALL_REBUILD_ENCOUNTERS.filter(encounter=>Number(encounter.chapterNumber||1)===1);
 const chapterTwo=ALL_REBUILD_ENCOUNTERS.filter(encounter=>Number(encounter.chapterNumber||1)===2);
 const chapterThree=ALL_REBUILD_ENCOUNTERS.filter(encounter=>Number(encounter.chapterNumber||1)===3);
+const chapterFour=ALL_REBUILD_ENCOUNTERS.filter(encounter=>Number(encounter.chapterNumber||1)===4);
 
 test('主线策略跑完第一章六场的调查、接敌、返图与撤离',()=>{
   for(const encounter of chapterOne){
@@ -59,6 +60,20 @@ test('第二章六张异形飞船地图可完成主线与全调查路线',()=>{
 
 test('第三章六张咒怨地图可完成主线、调查战术线索并撤离',()=>{
   for(const encounter of chapterThree){
+    const scenario=createExplorationScenario(encounter);
+    const mainline=runExplorationPolicy({scenario,strategy:'mainline'});
+    assert.equal(mainline.status,'completed',encounter.id+' mainline '+mainline.termination);
+    assert.equal(mainline.metrics.requiredCompletion,1,encounter.id+' required');
+    const completionist=runExplorationPolicy({scenario,strategy:'completionist'});
+    assert.equal(completionist.status,'completed',encounter.id+' completionist '+completionist.termination);
+    assert.equal(completionist.metrics.cluesFound>=1,true,encounter.id+' clue');
+    assert.equal(completionist.battlePreparation.notes.length>=1,true,encounter.id+' preparation');
+    assert.equal(completionist.metrics.entityCoverage,1,encounter.id+' coverage');
+  }
+});
+
+test('第四章六张神鬼秘宝地图可完成主线、调查战术线索并撤离',()=>{
+  for(const encounter of chapterFour){
     const scenario=createExplorationScenario(encounter);
     const mainline=runExplorationPolicy({scenario,strategy:'mainline'});
     assert.equal(mainline.status,'completed',encounter.id+' mainline '+mainline.termination);
