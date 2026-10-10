@@ -1,6 +1,11 @@
 const DESERT = '/assets/enemies/desert_raider.svg';
 const MUMMY = '/assets/enemies/mummy_guard.svg';
 const IMHOTEP = '/assets/enemies/imhotep.svg';
+const SCORPION = '/assets/enemies/desert_scorpion.svg';
+const SCARAB = '/assets/enemies/scarab_swarm.svg';
+const INDIA_WARRIOR = '/assets/enemies/india_warrior.svg';
+const INDIA_ASSASSIN = '/assets/enemies/india_assassin.svg';
+const INDIA_MAGE = '/assets/enemies/india_mage.svg';
 
 const foe = data => ({ mp:0,maxMp:0,crit:5,skills:[],portrait:DESERT,attackRange:'melee',...data });
 const mummy = data => foe({ portrait:MUMMY, weaknesses:['fire','holy'], ...data });
@@ -12,7 +17,7 @@ export const CHAPTER_FOUR_ENCOUNTERS = Object.freeze([
   rules:{roundHazard:{id:'sandstorm',name:'沙暴侵蚀',interval:3,damage:12,targetSide:'party'}},
   intro:[{speaker:'主神',text:'特殊任务：取得复活真经。警告：印洲队将争夺同一目标。'},{speaker:'张恒',text:'张恒。古武和火器都会一点，别问过去。'},{speaker:'萧宏律',text:'先说好，我不是累赘。我只是比较擅长让别人以为我是累赘。'},{speaker:'赵樱空',text:'沙丘后有三组生命信号。不是商人——准备战斗。'}],
   victory:{title:'死亡之城的坐标',text:'车队在落日前穿过沙暴，老人用颤抖的手指向哈姆纳塔。另一串脚印却早已通往同一方向。'},rewards:{exp:2040,points:2050},repeatRewards:{exp:510,points:515},
-  enemies:[foe({id:'sand-scorpion',name:'巨型沙蝎',role:'钳击压制',hp:188,maxHp:188,atk:38,def:13,spd:14}),foe({id:'venom-scorpion',name:'毒蝎',role:'高速毒刺',hp:142,maxHp:142,atk:40,def:9,spd:20}),foe({id:'desert-raider',name:'沙匪头目',role:'车队劫掠',hp:206,maxHp:206,atk:39,def:14,spd:13})]
+  enemies:[foe({id:'sand-scorpion',name:'巨型沙蝎',role:'钳击压制',portrait:SCORPION,hp:188,maxHp:188,atk:38,def:13,spd:14}),foe({id:'venom-scorpion',name:'毒蝎',role:'高速毒刺',portrait:SCORPION,hp:142,maxHp:142,atk:40,def:9,spd:20}),foe({id:'desert-raider',name:'沙匪头目',role:'车队劫掠',hp:206,maxHp:206,atk:39,def:14,spd:13})]
  },
  {
   id:'cairo-intel',order:20,chapterOrder:2,chapterNumber:4,chapter:'第四章 · 神鬼秘宝',title:'开罗情报 · 被跟踪的地图',threat:'高危',
@@ -26,21 +31,21 @@ export const CHAPTER_FOUR_ENCOUNTERS = Object.freeze([
   subtitle:'象形文字在火光中转动，选错一步就会唤醒整条甬道的亡者。',briefing:'利用张恒的圣火攻击木乃伊弱点，并在圣甲虫包围前完成机关。',background:'/assets/scenes/4-3_陵墓机关.svg',
   intro:[{speaker:'赵樱空',text:'太阳、鹰、蛇、甲虫。按照亡灵之书的次序触碰。'},{speaker:'萧宏律',text:'地砖下面全是空的。答错的话，我们会和机关一起掉下去。'},{speaker:'张恒',text:'棺椁开了。都站到火炬后面，它们怕火。'},{speaker:'主神',text:'元素弱点激活：火焰攻击木乃伊时造成额外伤害。'}],
   victory:{title:'活人的火穿过死者长廊',text:'圣火烧尽绷带与诅咒，机关在众人身后永久闭合。复活真经的金光从更深处透来。'},rewards:{exp:2320,points:2350},repeatRewards:{exp:580,points:590},
-  enemies:[mummy({id:'mummy-guard',name:'木乃伊守卫',role:'重甲复苏',hp:238,maxHp:238,atk:42,def:18,spd:10}),mummy({id:'mummy-archer',name:'木乃伊弓手',role:'诅咒箭雨',hp:184,maxHp:184,atk:43,def:12,spd:16,attackRange:'ranged'}),foe({id:'scarab-swarm',name:'圣甲虫群',role:'吞噬血肉',portrait:MUMMY,hp:156,maxHp:156,atk:39,def:8,spd:21,weaknesses:['fire']})]
+  enemies:[mummy({id:'mummy-guard',name:'木乃伊守卫',role:'重甲复苏',hp:238,maxHp:238,atk:42,def:18,spd:10}),mummy({id:'mummy-archer',name:'木乃伊弓手',role:'诅咒箭雨',hp:184,maxHp:184,atk:43,def:12,spd:16,attackRange:'ranged'}),foe({id:'scarab-swarm',name:'圣甲虫群',role:'吞噬血肉',portrait:SCARAB,hp:156,maxHp:156,atk:39,def:8,spd:21,weaknesses:['fire']})]
  },
  {
   id:'india-ambush',order:22,chapterOrder:4,chapterNumber:4,chapter:'第四章 · 神鬼秘宝',title:'印洲队伏击 · 团战第一次流血',threat:'极危',teamBattle:true,
   subtitle:'十字墓道的四面同时亮起武器冷光，主神终于让两支队伍正面相撞。',briefing:'优先处理高速刺客与法师，避免后排被集中击穿。',background:'/assets/scenes/4-4_印洲队伏击.svg',
   intro:[{speaker:'达帕拉',text:'欢迎来到哈姆纳塔，中洲队。你们替我们解开机关，做得很好。'},{speaker:'齐腾一',text:'左侧刺客交给我。队长，别让那个法师完成施法。'},{speaker:'郑吒',text:'这不是积分游戏。所有人互相看住，不许有人掉队！'},{speaker:'主神',text:'团队战开始。击败敌对轮回者可获得额外奖励点。'}],
   victory:{title:'团战没有真正的赢家',text:'印洲队撤入墓道深处，齐腾一却再也没有站起来。他最后一发符弹仍钉在刺客胸口。'},rewards:{exp:2500,points:2700},repeatRewards:{exp:625,points:675},
-  enemies:[foe({id:'india-warrior',name:'印洲队·战士',role:'正面强攻',faction:'india',hp:246,maxHp:246,atk:45,def:17,spd:14}),foe({id:'india-assassin',name:'印洲队·刺客',role:'后排猎杀',faction:'india',hp:198,maxHp:198,atk:49,def:12,spd:22,crit:12}),foe({id:'india-mage',name:'印洲队·法师',role:'黑暗术法',faction:'india',hp:186,maxHp:186,atk:46,def:10,spd:17,attackRange:'ranged',damageType:'dark'})]
+  enemies:[foe({id:'india-warrior',name:'印洲队·战士',role:'正面强攻',portrait:INDIA_WARRIOR,faction:'india',hp:246,maxHp:246,atk:45,def:17,spd:14}),foe({id:'india-assassin',name:'印洲队·刺客',role:'后排猎杀',portrait:INDIA_ASSASSIN,faction:'india',hp:198,maxHp:198,atk:49,def:12,spd:22,crit:12}),foe({id:'india-mage',name:'印洲队·法师',role:'黑暗术法',portrait:INDIA_MAGE,faction:'india',hp:186,maxHp:186,atk:46,def:10,spd:17,attackRange:'ranged',damageType:'dark'})]
  },
  {
   id:'resurrection-scripture',order:23,chapterOrder:5,chapterNumber:4,chapter:'第四章 · 神鬼秘宝',title:'复活真经 · 零点最后一枪',threat:'极危',afterQiSacrifice:true,
   subtitle:'真经已经到手，达帕拉却截断撤退路线；零点独自留在最后一个射击位。',briefing:'突破印洲精锐与祭司，保护复活真经撤出内殿。',background:'/assets/scenes/4-5_复活真经.svg',
   intro:[{speaker:'赵樱空',text:'就是它。复活真经——能让已经牺牲的人重新回来。'},{speaker:'零点',text:'拿上书先走。我留下看住达帕拉。'},{speaker:'郑吒',text:'不行，我们一起撤。已经没有人可以再被留下！'},{speaker:'零点',text:'队长，这次不是被留下。是我选择这个位置。'}],
   victory:{title:'枪声留在坍塌的内殿',text:'零点最后一枪击中达帕拉，自己也消失在落石后。郑吒抱紧真经，那重量像所有死者的名字。'},rewards:{exp:2680,points:2900},repeatRewards:{exp:670,points:725},
-  enemies:[foe({id:'india-elite',name:'印洲队·精锐',role:'真经夺取',faction:'india',hp:278,maxHp:278,atk:48,def:18,spd:17}),mummy({id:'mummy-priest',name:'木乃伊祭司',role:'亡者召唤',hp:244,maxHp:244,atk:46,def:15,spd:13,attackRange:'ranged',damageType:'dark'})]
+  enemies:[foe({id:'india-elite',name:'印洲队·精锐',role:'真经夺取',portrait:INDIA_WARRIOR,faction:'india',hp:278,maxHp:278,atk:48,def:18,spd:17}),mummy({id:'mummy-priest',name:'木乃伊祭司',role:'亡者召唤',hp:244,maxHp:244,atk:46,def:15,spd:13,attackRange:'ranged',damageType:'dark'})]
  },
  {
   id:'imhotep-final',order:24,chapterOrder:6,chapterNumber:4,chapter:'第四章 · 神鬼秘宝',title:'伊莫顿 · 沙尘复生终局',threat:'首领',boss:true,postDualSacrifice:true,
