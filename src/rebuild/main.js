@@ -1,0 +1,350 @@
+import { TurnBattleEngine, ACTION_KIND, TARGET_KIND } from './core/TurnBattleEngine.js';
+import { learnSkill, equipSkill } from './core/SkillLearning.js';
+import { SKILL_CATALOG } from './data/SkillCatalog.js';
+import { DEFAULT_PROFILE, PARTY_BLUEPRINTS, createParty, createEncounter } from './data/ChapterOneBattle.js';
+
+const app = document.getElementById('rebuild-app');
+const STORAGE_KEY = 'ih_rebuild_profile_v1';
+
+let profile = loadProfile();
+let engine = null;
+let encounter = null;
+let selectedAction = null;
+let logs = [];
+let resultRecorded = false;
+let enemyBusy = false;
+
+function loadProfile() {
+  try {
+    const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || 'null');
+    if (saved) return { ...DEFAULT_PROFILE, ...saved };
+  } catch {}
+  return { ...DEFAULT_PROFILE, learnedSkills: [...DEFAULT_PROFILE.learnedSkills], equippedSkills: [...DEFAULT_PROFILE.equippedSkills] };
+}
+
+function saveProfile() {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(profile));
+}
+
+function toast(message, tone = 'normal') {
+  document.querySelector('.toast')?.remove();
+  const node = document.createElement('div');
+  node.className = 'toast';
+  node.style.borderColor = tone === 'error' ? 'rgba(255,76,76,.55)' : tone === 'good' ? 'rgba(121,230,163,.55)' : 'rgba(255,255,255,.2)';
+  node.textContent = message;
+  document.body.appendChild(node);
+  setTimeout(() => node.remove(), 2200);
+}
+
+function renderTitle() {
+  app.innerHTML = [
+    '<section class="screen title-screen">',
+    '  <div class="title-wrap">',
+    '    <div class="title-mark"></div>',
+    '    <div class="eyebrow">Project Rebirth · Turn-Based Role Playing</div>',
+    '    <h1>无限<span>恐怖</span></h1>',
+    '    <p class="title-copy">在主神的倒计时中学习力量、编排技能，与中洲队共同面对无法逃避的恐怖世界。每一次行动都由你决定，每一次代价都会被记住。</p>',
+    '    <div class="title-actions">',
+    '      <button class="primary" id="enter-hub">进入主神空间</button>',
+    '      <button class="secondary" id="quick-battle">直接体验回合战斗</button>',
+    '    </div>',
+    '    <p class="version-note">回合制重构垂直切片 · 第一章 / 蜂巢封锁突破</p>',
+    '  </div>',
+    '</section>',
+  ].join('');
+  document.getElementById('enter-hub').onclick = renderHub;
+  document.getElementById('quick-battle').onclick = startBattle;
+}
+
+function schoolColor(school) {
+  return { '近战': '#ff6a64', '血统': '#bd4bff', '精神': '#69ddff', '辅助': '#79e6a3', '枪械': '#ffc967' }[school] || '#ff6a64';
+}
+
+function renderHub() {
+  const equipped = profile.equippedSkills.map(id => SKILL_CATALOG[id]).filter(Boolean);
+  const skills = Object.values(SKILL_CATALOG).filter(skill => !['precision_shot', 'suppressive_fire'].includes(skill.id));
+  app.innerHTML = [
+    '<section class="screen hub-screen">',
+    '  <header class="topbar">',
+    '    <div><div class="eyebrow">Lord God Space / 00:09:42:17</div><h1>强化大厅 <span class="accent">·</span> 技能兑换</h1></div>',
+    '    <div class="currency glass">⬡ 奖励点 <strong>' + profile.rewardPoints + '</strong></div>',
+    '  </header>',
+    '  <div class="hub-grid">',
+    '    <aside class="profile-panel glass">',
+    '      <div class="profile-hero"><img src="/assets/characters/zheng_zha.jpg" alt="郑吒"><div><div class="eyebrow">中洲队 · 近战核心</div><h2>郑吒</h2><p style="color:#8390a3;font-size:11px;line-height:1.7">主神不会替你选择道路。进入恐怖片前，决定这一次要带上哪些力量。</p></div></div>',
+    '      <div class="eyebrow" style="margin-top:20px">已装备技能 ' + equipped.length + ' / ' + profile.skillSlots + '</div>',
+    '      <div class="build-list">' + Array.from({ length: profile.skillSlots }, (_, index) => {
+      const skill = equipped[index];
+      return '<div class="build-slot"><span>' + (skill ? skill.icon + ' · ' + skill.name : '空技能槽') + '</span><small>' + (skill ? (skill.target === TARGET_KIND.ALL_ENEMIES ? '群体' : '单体') + ' / MP ' + skill.mpCost : '等待装备') + '</small></div>';
+    }).join('') + '</div>',
+    '      <div style="display:flex;justify-content:space-between;color:#8190a6;font-size:10px"><span>已完成战斗</span><strong style="color:#dbe3ee">' + profile.battlesWon + '</strong></div>',
+    '      <button class="primary hub-launch" id="launch-encounter">进入蜂巢任务</button>',
+    '      <button class="secondary hub-launch" id="back-title">返回标题</button>',
+    '    </aside>',
+    '    <section class="skills-panel glass">',
+    '      <div class="eyebrow">Skill Archive / 技能并非自动生效，需要学习并装入技能栏</div>',
+    '      <h2 style="margin:6px 0 18px">可兑换技能</h2>',
+    '      <div class="skill-tree">' + skills.map(skill => renderLearnCard(skill)).join('') + '</div>',
+    '    </section>',
+    '  </div>',
+    '</section>',
+  ].join('');
+
+  document.getElementById('launch-encounter').onclick = startBattle;
+  document.getElementById('back-title').onclick = renderTitle;
+  document.querySelectorAll('[data-learn]').forEach(button => {
+    button.onclick = () => handleLearn(button.dataset.learn);
+  });
+  document.querySelectorAll('[data-equip]').forEach(button => {
+    button.onclick = () => handleEquip(button.dataset.equip);
+  });
+}
+
+function renderLearnCard(skill) {
+  const learned = profile.learnedSkills.includes(skill.id);
+  const equipped = profile.equippedSkills.includes(skill.id);
+  const prerequisite = skill.prerequisite ? SKILL_CATALOG[skill.prerequisite]?.name : null;
+  const action = learned
+    ? '<span class="skill-cost">' + (equipped ? '已装备' : '点击装备') + '</span>'
+    : '<span class="skill-cost">⬡ ' + skill.cost + '</span>';
+  return [
+    '<button class="learn-btn ' + (learned ? 'learned ' : '') + (equipped ? 'equipped' : '') + '" style="--school:' + schoolColor(skill.school) + '" ' + (learned ? 'data-equip' : 'data-learn') + '="' + skill.id + '">',
+    '  <div class="skill-head"><span class="skill-icon">' + skill.icon + '</span><span class="skill-name">' + skill.name + '</span>' + action + '</div>',
+    '  <div class="skill-meta">' + skill.school + ' · ' + (skill.target === TARGET_KIND.ALL_ENEMIES ? '群体攻击' : skill.healPower ? '单体治疗' : '单体攻击') + ' · MP ' + skill.mpCost + (prerequisite ? ' · 前置 ' + prerequisite : '') + '</div>',
+    '  <div class="skill-desc">' + skill.desc + '</div>',
+    '</button>',
+  ].join('');
+}
+
+function handleLearn(skillId) {
+  const result = learnSkill(profile, skillId, SKILL_CATALOG);
+  if (!result.ok) {
+    const messages = { prerequisite_missing: '尚未学会前置技能', insufficient_points: '奖励点不足', already_learned: '已经掌握该技能' };
+    toast(messages[result.error] || '无法学习该技能', 'error');
+    return;
+  }
+  profile = result.profile;
+  const equip = equipSkill(profile, skillId);
+  if (equip.ok) profile = equip.profile;
+  saveProfile();
+  renderHub();
+  toast('已学会 ' + result.skill.name + (equip.ok ? '，并装入技能栏' : ''), 'good');
+}
+
+function handleEquip(skillId) {
+  if (profile.equippedSkills.includes(skillId)) {
+    toast('该技能已经装备');
+    return;
+  }
+  const result = equipSkill(profile, skillId);
+  if (!result.ok) {
+    toast(result.error === 'slots_full' ? '技能栏已满' : '无法装备', 'error');
+    return;
+  }
+  profile = result.profile;
+  saveProfile();
+  renderHub();
+  toast('技能已装备', 'good');
+}
+
+function startBattle() {
+  encounter = createEncounter();
+  engine = new TurnBattleEngine({
+    party: createParty(profile),
+    enemies: encounter.enemies,
+    skills: SKILL_CATALOG,
+    rewards: encounter.rewards,
+  });
+  logs = ['蜂巢站台封锁。敌方生命信号 × ' + encounter.enemies.length + '。', '战斗开始：请选择当前角色的行动。'];
+  selectedAction = null;
+  resultRecorded = false;
+  enemyBusy = false;
+  renderBattle();
+  runEnemyTurns();
+}
+
+function renderBattle() {
+  const current = engine.getCurrentActor();
+  const party = engine.combatants.filter(unit => unit.side === 'party');
+  const enemies = engine.combatants.filter(unit => unit.side === 'enemy');
+  app.innerHTML = [
+    '<section class="screen battle-screen" style="--battle-bg:url(\'' + encounter.background + '\')">',
+    '  <header class="battle-header">',
+    '    <div class="battle-title"><div class="eyebrow">' + encounter.chapter + '</div><h1>' + encounter.title + '</h1><p>' + encounter.subtitle + '</p></div>',
+    '    <div class="timeline">' + engine.turnOrder.map(unit => '<div class="turn-chip ' + (current?.id === unit.id ? 'active' : '') + ' ' + (unit.hp <= 0 ? 'dead' : '') + '"><img src="' + unit.portrait + '" alt="' + unit.name + '"></div>').join('') + '</div>',
+    '  </header>',
+    '  <div class="arena">',
+    '    <div class="formation party">' + party.map(unit => renderUnit(unit, current)).join('') + '</div>',
+    '    <div class="versus"><div class="round-num">ROUND ' + engine.round + '</div><strong>VS</strong><div class="intent">敌方意图<br>' + enemyIntentText(enemies) + '</div></div>',
+    '    <div class="formation enemies">' + enemies.map(unit => renderUnit(unit, current)).join('') + '</div>',
+    '  </div>',
+    '  <footer class="battle-console">',
+    '    <div class="combat-log glass">' + logs.slice(-8).map(line => '<div>' + line + '</div>').join('') + '</div>',
+    '    <div class="command-panel glass">' + renderCommands(current) + '</div>',
+    '  </footer>',
+    '</section>',
+    renderResult(),
+  ].join('');
+  bindBattleControls();
+}
+
+function renderUnit(unit, current) {
+  const selectable = selectedAction && unit.hp > 0 && isValidTarget(unit, selectedAction);
+  return [
+    '<article class="unit-card ' + unit.side + ' ' + (current?.id === unit.id ? 'actor ' : '') + (selectable ? 'selectable ' : '') + (unit.hp <= 0 ? 'dead' : '') + '" data-target="' + unit.id + '">',
+    unit.guarding ? '<span class="guard-tag">防御中</span>' : '',
+    '  <img class="unit-portrait" src="' + unit.portrait + '" alt="' + unit.name + '">',
+    '  <div class="unit-info"><div class="unit-name"><span>' + unit.name + '</span><span>SPD ' + unit.spd + '</span></div><div class="unit-role">' + (unit.role || (unit.side === 'enemy' ? '敌对单位' : '中洲队')) + '</div>',
+    '    <div class="bar" style="--value:' + Math.max(0, unit.hp / unit.maxHp * 100) + '%"><i></i></div><div class="unit-stats"><span>HP ' + unit.hp + ' / ' + unit.maxHp + '</span><span>ATK ' + unit.atk + '</span></div>',
+    unit.maxMp > 0 ? '<div class="bar mp" style="--value:' + Math.max(0, unit.mp / unit.maxMp * 100) + '%"><i></i></div><div class="unit-stats"><span>MP ' + unit.mp + ' / ' + unit.maxMp + '</span><span>DEF ' + unit.def + '</span></div>' : '',
+    '  </div>',
+    '</article>',
+  ].join('');
+}
+
+function renderCommands(actor) {
+  if (!actor || engine.status !== 'active') return '<div class="command-title"><span>战斗已经结束</span></div>';
+  if (actor.side === 'enemy' || enemyBusy) return '<div class="command-title"><span>敌方正在行动……</span><span>' + actor.name + '</span></div>';
+  if (selectedAction) {
+    const label = selectedAction.skill ? selectedAction.skill.name : '普通攻击';
+    return '<div class="command-title"><span class="target-hint">为「' + label + '」选择目标</span><button class="secondary" id="cancel-target">取消</button></div>';
+  }
+  const skills = actor.skills.map(id => SKILL_CATALOG[id]).filter(Boolean);
+  return [
+    '<div class="command-title"><span><strong>' + actor.name + '</strong> 的行动回合</span><span>请选择指令</span></div>',
+    '<div class="command-grid">',
+    '  <button class="command-btn" id="basic-attack"><b>普通攻击</b><span>零消耗 · 单体物理攻击</span></button>',
+    skills.map(skill => '<button class="skill-card" data-skill="' + skill.id + '" ' + (actor.mp < skill.mpCost ? 'disabled' : '') + '><b>' + skill.icon + ' · ' + skill.name + '</b><span class="tag">' + (skill.target === TARGET_KIND.ALL_ENEMIES ? '群体' : skill.healPower ? '治疗' : '单体') + ' · MP ' + skill.mpCost + '</span><span>' + skill.desc + '</span></button>').join(''),
+    '  <button class="command-btn" id="defend"><b>防御</b><span>承受伤害降低50%，持续到下一次行动</span></button>',
+    '</div>',
+  ].join('');
+}
+
+function bindBattleControls() {
+  document.getElementById('basic-attack')?.addEventListener('click', () => {
+    selectedAction = { kind: ACTION_KIND.ATTACK, target: TARGET_KIND.SINGLE_ENEMY };
+    renderBattle();
+  });
+  document.getElementById('defend')?.addEventListener('click', () => executePlayerAction({ kind: ACTION_KIND.DEFEND }));
+  document.getElementById('cancel-target')?.addEventListener('click', () => { selectedAction = null; renderBattle(); });
+  document.querySelectorAll('[data-skill]').forEach(button => {
+    button.addEventListener('click', () => chooseSkill(button.dataset.skill));
+  });
+  document.querySelectorAll('[data-target]').forEach(card => {
+    card.addEventListener('click', () => {
+      if (!selectedAction) return;
+      const target = engine.getCombatant(card.dataset.target);
+      if (!target || !isValidTarget(target, selectedAction)) return;
+      executePlayerAction({ kind: selectedAction.kind, skillId: selectedAction.skill?.id, targetId: target.id });
+    });
+  });
+  document.getElementById('claim-result')?.addEventListener('click', claimBattleResult);
+}
+
+function chooseSkill(skillId) {
+  const skill = SKILL_CATALOG[skillId];
+  if (!skill) return;
+  if (skill.target === TARGET_KIND.ALL_ENEMIES || skill.target === TARGET_KIND.ALL_ALLIES || skill.target === TARGET_KIND.SELF) {
+    executePlayerAction({ kind: ACTION_KIND.SKILL, skillId });
+    return;
+  }
+  selectedAction = { kind: ACTION_KIND.SKILL, skill, target: skill.target };
+  renderBattle();
+}
+
+function isValidTarget(unit, action) {
+  const actor = engine.getCurrentActor();
+  const expected = action.target === TARGET_KIND.SINGLE_ALLY ? actor.side : actor.side === 'party' ? 'enemy' : 'party';
+  return unit.side === expected;
+}
+
+function executePlayerAction(action) {
+  const actor = engine.getCurrentActor();
+  if (!actor || actor.side !== 'party') return;
+  const result = engine.act({ actorId: actor.id, ...action });
+  if (!result.ok) {
+    toast('行动失败：' + result.error, 'error');
+    return;
+  }
+  selectedAction = null;
+  appendEvents(result.events);
+  renderBattle();
+  runEnemyTurns();
+}
+
+async function runEnemyTurns() {
+  if (enemyBusy || engine.status !== 'active') return;
+  enemyBusy = true;
+  while (engine.status === 'active' && engine.getCurrentActor()?.side === 'enemy') {
+    renderBattle();
+    await delay(520);
+    const actor = engine.getCurrentActor();
+    const targets = engine.getLiving('party');
+    const target = [...targets].sort((a, b) => a.hp / a.maxHp - b.hp / b.maxHp || a.stableIndex - b.stableIndex)[0];
+    const result = engine.act({ actorId: actor.id, kind: ACTION_KIND.ATTACK, targetId: target.id });
+    appendEvents(result.events);
+    renderBattle();
+    await delay(420);
+  }
+  enemyBusy = false;
+  renderBattle();
+}
+
+function appendEvents(events) {
+  for (const event of events) {
+    if (event.type === 'damage') {
+      const actor = engine.getCombatant(event.actorId);
+      const target = engine.getCombatant(event.targetId);
+      const skill = event.skillId ? SKILL_CATALOG[event.skillId] : null;
+      logs.push('<strong>' + actor.name + '</strong> 使用' + (skill ? '「' + skill.name + '」' : '普通攻击') + '，对 <strong>' + target.name + '</strong> 造成 <span class="accent">' + event.amount + '</span> 伤害' + (event.critical ? '（暴击）' : '') + (event.defeated ? '，目标倒下' : '') + '。');
+    } else if (event.type === 'heal') {
+      const actor = engine.getCombatant(event.actorId);
+      const target = engine.getCombatant(event.targetId);
+      logs.push('<strong>' + actor.name + '</strong> 为 <strong>' + target.name + '</strong> 恢复 <span style="color:var(--green)">' + event.amount + '</span> HP。');
+    } else if (event.type === 'guard') {
+      logs.push('<strong>' + engine.getCombatant(event.actorId).name + '</strong> 架起防御，等待敌方冲击。');
+    } else if (event.type === 'battle_end') {
+      logs.push(event.result === 'victory' ? '<strong>敌方战线崩溃，蜂巢入口已清理。</strong>' : '<strong>中洲队失去战斗能力。</strong>');
+    }
+  }
+}
+
+function enemyIntentText(enemies) {
+  const living = enemies.filter(enemy => enemy.hp > 0);
+  if (!living.length) return '无生命信号';
+  return living.map(enemy => enemy.name + '：攻击生命最低者').join('<br>');
+}
+
+function renderResult() {
+  if (!engine || engine.status === 'active') return '';
+  const victory = engine.status === 'victory';
+  return [
+    '<div class="result-overlay"><div class="result-card glass">',
+    '  <div class="eyebrow">Battle Result</div>',
+    '  <h2 style="color:' + (victory ? 'var(--amber)' : 'var(--red)') + '">' + (victory ? '突破封锁' : '轮回终止') + '</h2>',
+    '  <p>' + (victory ? '蜂巢入口的尸群被压制。主神确认中洲队完成了本次战斗目标。' : '这一次选择没能让所有人活下来。调整技能构筑，再次进入战斗。') + '</p>',
+    victory ? '<div class="reward-row"><div class="reward-pill">EXP +' + encounter.rewards.exp + '</div><div class="reward-pill">⬡ +' + encounter.rewards.points + '</div></div>' : '',
+    '  <button class="primary" id="claim-result">' + (victory ? '领取奖励并返回主神空间' : '返回主神空间整备') + '</button>',
+    '</div></div>',
+  ].join('');
+}
+
+function claimBattleResult() {
+  if (resultRecorded) return;
+  const result = engine.claimResult();
+  if (!result.ok) return;
+  resultRecorded = true;
+  if (result.result === 'victory') {
+    profile.rewardPoints += result.rewards.points || 0;
+    profile.battlesWon += 1;
+    saveProfile();
+  }
+  renderHub();
+  toast(result.result === 'victory' ? '奖励已写入轮回档案' : '已返回主神空间', result.result === 'victory' ? 'good' : 'normal');
+}
+
+function delay(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+renderTitle();

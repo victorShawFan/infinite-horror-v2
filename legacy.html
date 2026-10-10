@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="theme-color" content="#050508">
+  <title>无限恐怖：中洲轮回 · 旧版存档</title>
+  <link rel="icon" type="image/jpeg" href="./assets/characters/zheng_zha.jpg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;700;900&family=ZCOOL+QingKe+HuangYou&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      background: #050508;
+      overflow: hidden;
+      touch-action: none;
+      font-family: 'Noto Serif SC', 'Microsoft YaHei', 'PingFang SC', serif;
+      color: #e0e0e0;
+      user-select: none;
+    }
+    #game-canvas {
+      display: block;
+      margin: 0 auto;
+      image-rendering: pixelated;
+      cursor: crosshair;
+      filter: contrast(1.05) brightness(1.02);
+      box-shadow: 0 0 80px rgba(255,68,68,0.05), 0 0 160px rgba(0,0,0,0.5);
+      border-radius: 2px;
+    }
+    /* 微妙的扫描线效果 */
+    #game-canvas::after {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: repeating-linear-gradient(
+        0deg,
+        rgba(0,0,0,0) 0px,
+        rgba(0,0,0,0) 2px,
+        rgba(0,0,0,0.03) 2px,
+        rgba(0,0,0,0.03) 4px
+      );
+      pointer-events: none;
+    }
+    #ui-overlay {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      pointer-events: none;
+      z-index: 10;
+    }
+    #ui-overlay > * { pointer-events: auto; }
+    #loading-screen {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: url('/assets/scenes/1-1_列车醒来_背景.jpg') center/cover no-repeat;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+      transition: opacity 1s;
+    }
+    #loading-screen::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: radial-gradient(ellipse at center, rgba(5,5,10,0.7) 0%, rgba(2,2,5,0.95) 100%);
+    }
+    #loading-screen.hidden { opacity: 0; pointer-events: none; }
+    #loading-screen h1 {
+      position: relative;
+      font-family: 'ZCOOL QingKe HuangYou', 'Noto Serif SC', serif;
+      font-size: 56px;
+      color: #ff4444;
+      text-shadow: 0 0 40px rgba(255,68,68,0.5), 0 0 80px rgba(255,68,68,0.3), 0 2px 4px rgba(0,0,0,0.8);
+      margin-bottom: 8px;
+      letter-spacing: 12px;
+    }
+    #loading-screen .subtitle {
+      position: relative;
+      font-size: 20px;
+      color: #666;
+      letter-spacing: 6px;
+    }
+    #loading-bar {
+      position: relative;
+      width: 320px;
+      height: 3px;
+      background: #1a1a2a;
+      margin-top: 50px;
+      border-radius: 2px;
+      overflow: hidden;
+    }
+    #loading-bar .fill {
+      width: 0%;
+      height: 100%;
+      background: linear-gradient(90deg, #ff4444, #ff8844, #ffcc44);
+      transition: width 0.5s ease;
+      box-shadow: 0 0 10px rgba(255,68,68,0.5);
+    }
+    #loading-screen .loading-text {
+      position: relative;
+      margin-top: 12px;
+      font-size: 12px;
+      color: #444;
+      letter-spacing: 3px;
+    }
+      /* 战斗信息提示 */
+    .combat-tooltip {
+      position: absolute;
+      background: rgba(5, 5, 15, 0.95);
+      border: 1px solid rgba(255, 68, 68, 0.3);
+      border-radius: 6px;
+      padding: 8px 12px;
+      color: #e0e0e0;
+      font-size: 12px;
+      pointer-events: none;
+      z-index: 20;
+    }
+    /* ── 全局动画关键帧 ── */
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    @keyframes fadeOut { from { opacity: 1; } to { opacity: 0; } }
+    @keyframes pulse { 0%, 100% { opacity: 0.6; } 50% { opacity: 1; } }
+    @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes slideDown { from { opacity: 0; transform: translateY(-20px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes scaleIn { from { opacity: 0; transform: scale(0.5); } to { opacity: 1; transform: scale(1); } }
+    @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-4px); } 75% { transform: translateX(4px); } }
+    @keyframes glow { 0%, 100% { text-shadow: 0 0 10px currentColor; } 50% { text-shadow: 0 0 20px currentColor, 0 0 40px currentColor; } }
+    @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
+    .title-fx-glow { animation: glow 2s infinite; }
+    .title-fx-subtitle { animation: fadeIn 2s ease; }
+    /* ── 滚动条美化 ── */
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: rgba(0,0,0,0.2); border-radius: 3px; }
+    ::-webkit-scrollbar-thumb { background: rgba(255,68,68,0.2); border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: rgba(255,68,68,0.4); }
+    /* ── 按钮通用样式 ── */
+    .bam-btn { transition: all 0.15s; border-radius: 6px; font-family: inherit; }
+    .bam-btn:hover { filter: brightness(1.2); transform: scale(1.02); }
+    .bam-btn:active { transform: scale(0.98); }
+    .pause-btn { transition: all 0.15s; }
+    .pause-btn:hover { filter: brightness(1.15); transform: translateX(2px); }
+  </style>
+</head>
+<body>
+  <div id="loading-screen">
+    <h1>无限恐怖</h1>
+    <div class="subtitle">中 洲 轮 回</div>
+    <div id="loading-bar"><div class="fill"></div></div>
+    <div class="loading-text">正在载入轮回世界...</div>
+  </div>
+  <canvas id="game-canvas"></canvas>
+  <div id="ui-overlay"></div>
+  <script type="module" src="/src/main.js"></script>
+</body>
+</html>

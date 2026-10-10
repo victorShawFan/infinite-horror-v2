@@ -1729,9 +1729,9 @@ function showFloorTitle(floor) {
   // ── 星级挑战：为新楼层生成挑战目标 ──
   try {
     const isBossFloor = !!(floor.entities && floor.entities.some(e => e.type === 'boss' || e.isBoss || e.bossId));
-    const floorChallenges = generateFloorChallenges(gameState.chapter, index, isBossFloor);
+    const floorChallenges = generateFloorChallenges(gameState.chapter, currentFloorIndex, isBossFloor);
     gameState._currentFloorChallenges = floorChallenges;
-    setFloorStarData(gameState.chapter, index, floorChallenges);
+    setFloorStarData(gameState.chapter, currentFloorIndex, floorChallenges);
   } catch(e) { console.warn('StarChallenge gen:', e); }
   // ── 命运抉择检查 ──
   try {

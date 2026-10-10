@@ -156,7 +156,7 @@ export class Renderer {
     }
   }
 
-  render(floor, entities, hoveredEntity = null, dialogueState = null, combatResult = null) {
+  render(floor, entities, hoveredEntity = null, dialogueState = null, combatResult = null, floorIndex = 0) {
     this._time++;
     const ctx = this.ctx;
     ctx.save();
