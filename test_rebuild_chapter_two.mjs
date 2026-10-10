@@ -90,6 +90,14 @@ test('异形、抱脸虫与皇后使用各自独立画像而不是复用爬行�
   }
 });
 
+test('孵化卵囊拥有独立画像而不是伪装成抱脸虫', () => {
+  const cluster = CHAPTER_TWO_ENCOUNTERS.find(encounter => encounter.id === 'quarantine-lab').enemies.find(enemy => enemy.id === 'egg-cluster');
+  assert.equal(cluster.portrait, '/assets/enemies/alien_egg_cluster.svg');
+  const svg = readFileSync('./public/assets/enemies/alien_egg_cluster.svg', 'utf8');
+  assert.match(svg, /^<svg/);
+  assert.equal(svg.length > 1200, true);
+});
+
 test('旧存档完成第一章后自动解锁第二章第一场', () => {
   const firstChapterIds = CHAPTER_ONE_ENCOUNTERS.map(item => item.id);
   const saved = { campaign: { chapter: 1, unlockedIndex: 5, completed: firstChapterIds } };

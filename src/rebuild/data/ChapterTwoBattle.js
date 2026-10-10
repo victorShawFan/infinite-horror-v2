@@ -1,6 +1,7 @@
 const XENO = '/assets/enemies/alien_drone.svg';
 const FACEHUGGER = '/assets/enemies/facehugger.svg';
 const QUEEN = '/assets/enemies/alien_queen.svg';
+const EGG_CLUSTER = '/assets/enemies/alien_egg_cluster.svg';
 
 const enemy = (data) => ({
   mp: 0, maxMp: 0, crit: 4, skills: [], portrait: XENO, attackRange: 'melee',
@@ -85,7 +86,7 @@ export const CHAPTER_TWO_ENCOUNTERS = Object.freeze([
     rules: { roundHazard: { id: 'hatch-pulse', name: '孵化脉冲', interval: 3, damage: 10, targetSide: 'party' } },
     enemies: [
       enemy({ id: 'lab-facehugger-a', name: '抱脸虫α', role: '寄生突袭', portrait: FACEHUGGER, hp: 72, maxHp: 72, atk: 29, def: 5, spd: 23, onDefeatDamage: 5 }),
-      enemy({ id: 'egg-cluster', name: '异形卵囊群', role: '持续孵化', portrait: FACEHUGGER, hp: 178, maxHp: 178, atk: 25, def: 13, spd: 6, protectedBy: ['lab-facehugger-a', 'lab-facehugger-b'], protectionReduction: 0.55 }),
+      enemy({ id: 'egg-cluster', name: '异形卵囊群', role: '持续孵化', portrait: EGG_CLUSTER, hp: 178, maxHp: 178, atk: 25, def: 13, spd: 6, protectedBy: ['lab-facehugger-a', 'lab-facehugger-b'], protectionReduction: 0.55 }),
       enemy({ id: 'lab-facehugger-b', name: '抱脸虫β', role: '寄生突袭', portrait: FACEHUGGER, hp: 72, maxHp: 72, atk: 29, def: 5, spd: 22, onDefeatDamage: 5 }),
     ],
   },

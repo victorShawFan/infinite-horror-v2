@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import { CHAPTER_ONE_ENCOUNTERS } from './src/rebuild/data/ChapterOneBattle.js';
 
 console.log('\n[ Rebuild Chapter 1 story content ]');
@@ -16,4 +17,13 @@ for (const encounter of CHAPTER_ONE_ENCOUNTERS) {
 
 const finale = CHAPTER_ONE_ENCOUNTERS.at(-1);
 assert.ok(finale.epilogue?.quote && finale.epilogue?.text, 'final encounter needs chapter epilogue');
+const tyrant = finale.enemies.find(enemy => enemy.id === 'tyrant');
+assert.equal(tyrant.portrait, '/assets/enemies/tyrant_t002.svg', 'T-002 must use a dedicated tyrant portrait');
+const securityUnits = CHAPTER_ONE_ENCOUNTERS.flatMap(encounter => encounter.enemies).filter(enemy => /防卫节点|主控守卫|激光安保/.test(enemy.name));
+assert.equal(securityUnits.every(enemy => enemy.portrait === '/assets/enemies/security_drone.svg'), true, 'Red Queen security units must not look like infected humans');
+for (const asset of ['/assets/enemies/tyrant_t002.svg', '/assets/enemies/security_drone.svg']) {
+  const svg = readFileSync('./public' + asset, 'utf8');
+  assert.match(svg, /^<svg/);
+  assert.equal(svg.length > 1200, true, asset + ' detailed artwork');
+}
 console.log('\n✅ Chapter 1 narrative content complete');

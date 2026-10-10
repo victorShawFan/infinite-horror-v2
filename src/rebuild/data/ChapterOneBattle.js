@@ -2,6 +2,8 @@ import { getProgressionBonuses } from '../core/PlayerProgression.js';
 import { getLordGodBonuses } from '../core/LordGodExchange.js';
 import { getGeneLockBonuses } from '../core/RebuildGeneLock.js';
 
+const SECURITY_DRONE = '/assets/enemies/security_drone.svg';
+
 export const DEFAULT_PROFILE = Object.freeze({
   rewardPoints: 900,
   level: 1,
@@ -124,16 +126,16 @@ export const CHAPTER_ONE_ENCOUNTERS = Object.freeze([
     repeatRewards: { exp: 65, points: 80 },
     enemies: [
       {
-        id: 'node-left', name: '防卫节点α', role: '高速锁定', portrait: '/assets/enemies/zombie_guard.jpg',
+        id: 'node-left', name: '防卫节点α', role: '高速锁定', portrait: SECURITY_DRONE,
         hp: 78, maxHp: 78, mp: 0, maxMp: 0, atk: 22, def: 7, spd: 16, crit: 6, skills: [],
       },
       {
-        id: 'core-guard', name: '主控守卫', role: '重甲镇压', portrait: '/assets/enemies/zombie_worker.jpg',
+        id: 'core-guard', name: '主控守卫', role: '重甲镇压', portrait: SECURITY_DRONE,
         hp: 148, maxHp: 148, mp: 0, maxMp: 0, atk: 27, def: 13, spd: 7, crit: 3, skills: [],
         protectedBy: ['node-left', 'node-right'], protectionReduction: 0.7,
       },
       {
-        id: 'node-right', name: '防卫节点β', role: '高速锁定', portrait: '/assets/enemies/zombie_guard.jpg',
+        id: 'node-right', name: '防卫节点β', role: '高速锁定', portrait: SECURITY_DRONE,
         hp: 78, maxHp: 78, mp: 0, maxMp: 0, atk: 22, def: 7, spd: 15, crit: 6, skills: [],
       },
     ],
@@ -163,11 +165,11 @@ export const CHAPTER_ONE_ENCOUNTERS = Object.freeze([
     },
     enemies: [
       {
-        id: 'laser-a', name: '激光安保α', role: '高速切割', portrait: '/assets/enemies/zombie_guard.jpg',
+        id: 'laser-a', name: '激光安保α', role: '高速切割', portrait: SECURITY_DRONE,
         hp: 96, maxHp: 96, mp: 0, maxMp: 0, atk: 30, def: 8, spd: 19, crit: 7, skills: [],
       },
       {
-        id: 'laser-b', name: '激光安保β', role: '交叉锁定', portrait: '/assets/enemies/zombie_guard.jpg',
+        id: 'laser-b', name: '激光安保β', role: '交叉锁定', portrait: SECURITY_DRONE,
         hp: 112, maxHp: 112, mp: 0, maxMp: 0, atk: 28, def: 10, spd: 18, crit: 5, skills: [],
       },
     ],
@@ -235,9 +237,7 @@ export const CHAPTER_ONE_ENCOUNTERS = Object.freeze([
     repeatRewards: { exp: 100, points: 150 },
     enemies: [
       {
-        // 旧 tyrant.jpg 内容实际是蜘蛛怪，禁止继续误用；在原创暴君资产完成前
-        // 使用感染者全身图配合 Boss 卡视觉处理，避免错误物种直接进入成品。
-        id: 'tyrant', name: '暴君 T-002', role: '生化终结者', portrait: '/assets/enemies/zombie_worker.jpg',
+        id: 'tyrant', name: '暴君 T-002', role: '生化终结者', portrait: '/assets/enemies/tyrant_t002.svg',
         hp: 370, maxHp: 370, mp: 40, maxMp: 40, atk: 34, def: 13, spd: 10, crit: 7,
         skills: ['tyrant_crush', 'tyrant_roar'], boss: true, phase: 1,
         phaseThreshold: 0.5, phaseAtkBonus: 8,
