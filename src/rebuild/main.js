@@ -1,6 +1,7 @@
 import { TurnBattleEngine, ACTION_KIND, TARGET_KIND } from './core/TurnBattleEngine.js';
 import { learnSkill, equipSkill } from './core/SkillLearning.js';
 import { createCampaignProgress, canLaunchEncounter, settleEncounter, getCampaignStatus } from './core/CampaignProgress.js';
+import { chooseEnemyAction, describeEnemyIntent } from './core/EnemyTurnAI.js';
 import { SKILL_CATALOG } from './data/SkillCatalog.js';
 import { DEFAULT_PROFILE, CHAPTER_ONE_ENCOUNTERS, createParty, createEncounter } from './data/ChapterOneBattle.js';
 
@@ -64,7 +65,7 @@ function schoolColor(school) {
 
 function renderHub() {
   const equipped = profile.equippedSkills.map(id => SKILL_CATALOG[id]).filter(Boolean);
-  const skills = Object.values(SKILL_CATALOG).filter(skill => !['precision_shot', 'suppressive_fire'].includes(skill.id));
+  const skills = Object.values(SKILL_CATALOG).filter(skill => skill.learnable !== false && !['precision_shot', 'suppressive_fire'].includes(skill.id));
   const campaignStatus = getCampaignStatus(profile.campaign);
   app.innerHTML = [
     '<section class="screen hub-screen">',
@@ -219,7 +220,7 @@ function renderBattle() {
 function renderUnit(unit, current) {
   const selectable = selectedAction && unit.hp > 0 && isValidTarget(unit, selectedAction);
   return [
-    '<article class="unit-card ' + unit.side + ' ' + (current?.id === unit.id ? 'actor ' : '') + (selectable ? 'selectable ' : '') + (unit.hp <= 0 ? 'dead' : '') + '" data-target="' + unit.id + '">',
+    '<article class="unit-card ' + unit.side + ' ' + (unit.boss ? 'boss ' : '') + (current?.id === unit.id ? 'actor ' : '') + (selectable ? 'selectable ' : '') + (unit.hp <= 0 ? 'dead' : '') + '" data-target="' + unit.id + '">',
     unit.guarding ? '<span class="guard-tag">防御中</span>' : '',
     '  <img class="unit-portrait" src="' + unit.portrait + '" alt="' + unit.name + '">',
     '  <div class="unit-info"><div class="unit-name"><span>' + unit.name + '</span><span>SPD ' + unit.spd + '</span></div><div class="unit-role">' + (unit.role || (unit.side === 'enemy' ? '敌对单位' : '中洲队')) + '</div>',
@@ -307,9 +308,8 @@ async function runEnemyTurns() {
     renderBattle();
     await delay(520);
     const actor = engine.getCurrentActor();
-    const targets = engine.getLiving('party');
-    const target = [...targets].sort((a, b) => a.hp / a.maxHp - b.hp / b.maxHp || a.stableIndex - b.stableIndex)[0];
-    const result = engine.act({ actorId: actor.id, kind: ACTION_KIND.ATTACK, targetId: target.id });
+    const action = chooseEnemyAction({ actor, round: engine.round, opponents: engine.getLiving('party'), skills: SKILL_CATALOG });
+    const result = engine.act(action);
     appendEvents(result.events);
     renderBattle();
     await delay(420);
@@ -343,7 +343,11 @@ function appendEvents(events) {
 function enemyIntentText(enemies) {
   const living = enemies.filter(enemy => enemy.hp > 0);
   if (!living.length) return '无生命信号';
-  return living.map(enemy => enemy.name + '：攻击生命最低者').join('<br>');
+  const opponents = engine.getLiving('party');
+  return living.map(enemy => {
+    const action = chooseEnemyAction({ actor: enemy, round: engine.round, opponents, skills: SKILL_CATALOG });
+    return describeEnemyIntent(action, enemy, opponents, SKILL_CATALOG);
+  }).join('<br>');
 }
 
 function renderResult() {

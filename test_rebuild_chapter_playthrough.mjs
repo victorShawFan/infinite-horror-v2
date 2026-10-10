@@ -3,6 +3,7 @@ import { TurnBattleEngine, ACTION_KIND, TARGET_KIND } from './src/rebuild/core/T
 import { SKILL_CATALOG } from './src/rebuild/data/SkillCatalog.js';
 import { CHAPTER_ONE_ENCOUNTERS, createEncounter, createParty } from './src/rebuild/data/ChapterOneBattle.js';
 import { createCampaignProgress, settleEncounter } from './src/rebuild/core/CampaignProgress.js';
+import { chooseEnemyAction } from './src/rebuild/core/EnemyTurnAI.js';
 
 const profile = {
   equippedSkills: ['heavy_slash', 'arc_sweep', 'emergency_heal'],
@@ -40,11 +41,7 @@ function playEncounter(encounter) {
     const actor = engine.getCurrentActor();
     const action = actor.side === 'party'
       ? choosePartyAction(engine, actor)
-      : {
-          actorId: actor.id,
-          kind: ACTION_KIND.ATTACK,
-          targetId: [...engine.getLiving('party')].sort((a, b) => a.hp / a.maxHp - b.hp / b.maxHp)[0].id,
-        };
+      : chooseEnemyAction({ actor, round: engine.round, opponents: engine.getLiving('party'), skills: SKILL_CATALOG });
     const result = engine.act(action);
     assert.equal(result.ok, true, encounter.id + ' action must be valid');
     if (result.events.some(event => event.type === 'boss_phase')) bossPhaseTriggered = true;

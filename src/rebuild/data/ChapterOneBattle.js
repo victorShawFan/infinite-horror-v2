@@ -86,7 +86,9 @@ export const CHAPTER_ONE_ENCOUNTERS = Object.freeze([
     repeatRewards: { exp: 100, points: 150 },
     enemies: [
       {
-        id: 'tyrant', name: '暴君 T-002', role: '生化终结者', portrait: '/assets/enemies/tyrant.jpg',
+        // 旧 tyrant.jpg 内容实际是蜘蛛怪，禁止继续误用；在原创暴君资产完成前
+        // 使用感染者全身图配合 Boss 卡视觉处理，避免错误物种直接进入成品。
+        id: 'tyrant', name: '暴君 T-002', role: '生化终结者', portrait: '/assets/enemies/zombie_worker.jpg',
         hp: 390, maxHp: 390, mp: 40, maxMp: 40, atk: 34, def: 13, spd: 10, crit: 7,
         skills: ['tyrant_crush', 'tyrant_roar'], boss: true, phase: 1,
         phaseThreshold: 0.5, phaseAtkBonus: 10,

@@ -44,5 +44,15 @@ export const SKILL_CATALOG = Object.freeze({
     target: TARGET_KIND.ALL_ENEMIES, power: 0.68, mpCost: 11, cost: 0,
     desc: '向敌方阵线倾泻火力，对全体敌人造成伤害。',
   },
+  tyrant_crush: {
+    id: 'tyrant_crush', name: '粉碎重击', icon: '碎', school: '生化', tier: 3,
+    target: TARGET_KIND.SINGLE_ENEMY, power: 1.45, mpCost: 8, cost: 0, learnable: false,
+    desc: '暴君锁定受伤最重的目标，发动势大力沉的粉碎攻击。',
+  },
+  tyrant_roar: {
+    id: 'tyrant_roar', name: '毁灭咆哮', icon: '吼', school: '生化', tier: 4,
+    target: TARGET_KIND.ALL_ENEMIES, power: 0.7, mpCost: 14, cost: 0, learnable: false,
+    desc: '狂暴阶段释放冲击波，对中洲队全体造成伤害。',
+  },
 });
 

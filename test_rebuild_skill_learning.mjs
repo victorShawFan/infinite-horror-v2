@@ -41,6 +41,13 @@ test('不能重复学习同一技能', () => {
   assert.equal(result.error, 'already_learned');
 });
 
+test('敌方专属技能不能被玩家学习', () => {
+  const result = learnSkill(profile(), 'tyrant_crush', SKILL_CATALOG);
+  assert.equal(result.ok, false);
+  assert.equal(result.error, 'skill_not_learnable');
+  assert.equal(result.profile.learnedSkills.includes('tyrant_crush'), false);
+});
+
 test('已学习技能可装备且不重复占槽', () => {
   const p = profile({ learnedSkills: ['heavy_slash', 'arc_sweep'] });
   const first = equipSkill(p, 'arc_sweep');
