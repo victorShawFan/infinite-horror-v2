@@ -30,6 +30,7 @@ function cloneCombatant(source, side, stableIndex) {
     spd: Math.max(0, Number(source.spd ?? 0)),
     crit: Math.max(0, Number(source.crit ?? 0)),
     skills: [...(source.skills || [])],
+    cooldowns: { ...(source.cooldowns || {}) },
     guarding: false,
   };
 }
@@ -88,6 +89,14 @@ export class TurnBattleEngine {
     if (this.turnCursor >= this.turnOrder.length) {
       this.turnCursor = 0;
       this.round++;
+    }
+    const nextActor = this.turnOrder[this.turnCursor];
+    if (nextActor?.hp > 0) this._tickCooldowns(nextActor);
+  }
+
+  _tickCooldowns(actor) {
+    for (const [skillId, remaining] of Object.entries(actor.cooldowns || {})) {
+      actor.cooldowns[skillId] = Math.max(0, Number(remaining || 0) - 1);
     }
   }
 
@@ -173,6 +182,7 @@ export class TurnBattleEngine {
     } else if (action.kind === ACTION_KIND.SKILL) {
       const skill = this.skills[action.skillId];
       if (!skill || !actor.skills.includes(skill.id)) return { ok: false, error: 'skill_unavailable', events: [] };
+      if ((actor.cooldowns?.[skill.id] || 0) > 0) return { ok: false, error: 'skill_on_cooldown', events: [] };
       if (actor.mp < (skill.mpCost || 0)) return { ok: false, error: 'insufficient_mp', events: [] };
 
       let targets;
@@ -193,6 +203,7 @@ export class TurnBattleEngine {
 
       actor.guarding = false;
       actor.mp -= skill.mpCost || 0;
+      actor.cooldowns[skill.id] = Math.max(0, Number(skill.cooldown || 0));
       events[0].skillId = skill.id;
       for (const target of targets) {
         if (skill.healPower) this._heal(actor, target, skill.healPower, events, skill.id);

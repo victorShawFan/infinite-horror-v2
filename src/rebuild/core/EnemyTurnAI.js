@@ -9,7 +9,7 @@ function lowestHealth(opponents) {
 function availableSkills(actor, catalog) {
   return (actor.skills || [])
     .map(id => catalog[id])
-    .filter(skill => skill && actor.mp >= (skill.mpCost || 0));
+    .filter(skill => skill && actor.mp >= (skill.mpCost || 0) && (actor.cooldowns?.[skill.id] || 0) <= 0);
 }
 
 export function chooseEnemyAction({ actor, round, opponents, skills }) {

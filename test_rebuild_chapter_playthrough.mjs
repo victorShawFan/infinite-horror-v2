@@ -13,7 +13,9 @@ function choosePartyAction(engine, actor) {
   const allies = engine.getLiving('party');
   const enemies = engine.getLiving('enemy');
   const lowAlly = [...allies].sort((a, b) => a.hp / a.maxHp - b.hp / b.maxHp)[0];
-  const available = actor.skills.map(id => SKILL_CATALOG[id]).filter(skill => skill && actor.mp >= skill.mpCost);
+  const available = actor.skills.map(id => SKILL_CATALOG[id]).filter(skill =>
+    skill && actor.mp >= skill.mpCost && (actor.cooldowns?.[skill.id] || 0) <= 0
+  );
 
   const heal = available.find(skill => skill.healPower && lowAlly.hp / lowAlly.maxHp < 0.55);
   if (heal) return { actorId: actor.id, kind: ACTION_KIND.SKILL, skillId: heal.id, targetId: lowAlly.id };

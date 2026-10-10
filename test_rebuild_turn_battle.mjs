@@ -14,8 +14,8 @@ function test(name, fn) {
 }
 
 const skills = {
-  slash: { id: 'slash', name: '重斩', target: TARGET_KIND.SINGLE_ENEMY, power: 1.5, mpCost: 6 },
-  sweep: { id: 'sweep', name: '横扫', target: TARGET_KIND.ALL_ENEMIES, power: 0.8, mpCost: 10 },
+  slash: { id: 'slash', name: '重斩', target: TARGET_KIND.SINGLE_ENEMY, power: 1.5, mpCost: 6, cooldown: 1 },
+  sweep: { id: 'sweep', name: '横扫', target: TARGET_KIND.ALL_ENEMIES, power: 0.8, mpCost: 10, cooldown: 2 },
   heal: { id: 'heal', name: '治疗', target: TARGET_KIND.SINGLE_ALLY, healPower: 1.2, mpCost: 8 },
 };
 
@@ -83,6 +83,40 @@ test('MP不足拒绝技能且不消耗回合', () => {
   assert.equal(result.error, 'insufficient_mp');
   assert.equal(e.getCombatant('zheng').mp, 5);
   assert.equal(e.getCurrentActor().id, 'zheng');
+});
+
+test('使用技能后进入独立冷却且重复使用不消耗MP或回合', () => {
+  const e = engine();
+  e.act({ actorId: 'zheng', kind: ACTION_KIND.SKILL, skillId: 'sweep' });
+  assert.equal(e.getCombatant('zheng').cooldowns.sweep, 2);
+  e.act({ actorId: 'zhan', kind: ACTION_KIND.DEFEND });
+  e.act({ actorId: 'z1', kind: ACTION_KIND.ATTACK, targetId: 'zheng' });
+  e.act({ actorId: 'z2', kind: ACTION_KIND.ATTACK, targetId: 'zheng' });
+  assert.equal(e.getCurrentActor().id, 'zheng');
+  assert.equal(e.getCombatant('zheng').cooldowns.sweep, 1);
+  const mpBefore = e.getCombatant('zheng').mp;
+  const result = e.act({ actorId: 'zheng', kind: ACTION_KIND.SKILL, skillId: 'sweep' });
+  assert.equal(result.ok, false);
+  assert.equal(result.error, 'skill_on_cooldown');
+  assert.equal(e.getCombatant('zheng').mp, mpBefore);
+  assert.equal(e.getCurrentActor().id, 'zheng');
+});
+
+test('冷却在角色自己的后续回合递减并最终恢复', () => {
+  const e = engine();
+  e.act({ actorId: 'zheng', kind: ACTION_KIND.SKILL, skillId: 'sweep' });
+  for (let cycle = 0; cycle < 2; cycle++) {
+    while (e.status === 'active' && e.getCurrentActor().id !== 'zheng') {
+      const actor = e.getCurrentActor();
+      if (actor.side === 'party') e.act({ actorId: actor.id, kind: ACTION_KIND.DEFEND });
+      else e.act({ actorId: actor.id, kind: ACTION_KIND.ATTACK, targetId: 'zheng' });
+    }
+    if (cycle === 0) {
+      assert.equal(e.getCombatant('zheng').cooldowns.sweep, 1);
+      e.act({ actorId: 'zheng', kind: ACTION_KIND.ATTACK, targetId: 'z1' });
+    }
+  }
+  assert.equal(e.getCombatant('zheng').cooldowns.sweep, 0);
 });
 
 test('防御使下一次受到的伤害减半', () => {

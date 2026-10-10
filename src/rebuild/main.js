@@ -246,7 +246,11 @@ function renderCommands(actor) {
     '<div class="command-title"><span><strong>' + actor.name + '</strong> 的行动回合</span><span>请选择指令</span></div>',
     '<div class="command-grid">',
     '  <button class="command-btn" id="basic-attack"><b>普通攻击</b><span>零消耗 · 单体物理攻击</span></button>',
-    skills.map(skill => '<button class="skill-card" data-skill="' + skill.id + '" ' + (actor.mp < skill.mpCost ? 'disabled' : '') + '><b>' + skill.icon + ' · ' + skill.name + '</b><span class="tag">' + (skill.target === TARGET_KIND.ALL_ENEMIES ? '群体' : skill.healPower ? '治疗' : '单体') + ' · MP ' + skill.mpCost + '</span><span>' + skill.desc + '</span></button>').join(''),
+    skills.map(skill => {
+      const cooldown = actor.cooldowns?.[skill.id] || 0;
+      const disabled = actor.mp < skill.mpCost || cooldown > 0;
+      return '<button class="skill-card" data-skill="' + skill.id + '" ' + (disabled ? 'disabled' : '') + '><b>' + skill.icon + ' · ' + skill.name + (cooldown > 0 ? '<em>CD ' + cooldown + '</em>' : '') + '</b><span class="tag">' + (skill.target === TARGET_KIND.ALL_ENEMIES ? '群体' : skill.healPower ? '治疗' : '单体') + ' · MP ' + skill.mpCost + ' · 冷却 ' + skill.cooldown + '</span><span>' + skill.desc + '</span></button>';
+    }).join(''),
     '  <button class="command-btn" id="defend"><b>防御</b><span>承受伤害降低50%，持续到下一次行动</span></button>',
     '</div>',
   ].join('');
