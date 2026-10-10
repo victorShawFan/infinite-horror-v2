@@ -94,6 +94,33 @@ button { font: inherit; }
 .mission-copy small { display: block; margin-top: 4px; color: #69768b; font-size: 8px; line-height: 1.5; }
 .mission-state { color: var(--amber); font-size: 9px; white-space: nowrap; }
 .chapter-clear { margin-top: 12px; padding: 9px; text-align: center; color: var(--green); border: 1px solid rgba(121,230,163,.24); background: rgba(121,230,163,.05); font-size: 10px; }
+
+/* mission briefing and chapter ending */
+.briefing-screen { display: grid; align-items: center; padding: 5vh 7vw; background-image: var(--briefing-bg); }
+.briefing-screen::before { background: linear-gradient(90deg, rgba(3,5,9,.97), rgba(3,5,9,.76) 56%, rgba(3,5,9,.92)); }
+.briefing-layout { width: min(840px, 92vw); }
+.briefing-heading { margin-bottom: 22px; }
+.briefing-heading h1 { margin: 7px 0 8px; font-size: clamp(32px,5vw,64px); letter-spacing: .08em; }
+.briefing-heading p { color: #9ba7b9; line-height: 1.8; }
+.briefing-dialogue { border-radius: 16px; padding: 10px 24px; }
+.story-beat { display: grid; grid-template-columns: 38px 1fr; gap: 13px; padding: 16px 0; border-bottom: 1px solid rgba(255,255,255,.075); }
+.story-beat:last-child { border-bottom: 0; }
+.story-beat > span { font-family: "ZCOOL QingKe HuangYou"; font-size: 20px; color: #515f74; }
+.story-beat b { color: var(--amber); font-size: 11px; letter-spacing: .12em; }
+.story-beat p { margin: 5px 0 0; color: #c3cad6; font-size: 13px; line-height: 1.8; }
+.briefing-footer { display: flex; justify-content: space-between; align-items: center; gap: 20px; margin-top: 18px; }
+.briefing-footer > div:last-child { display: flex; gap: 10px; }
+.mission-reward { display: flex; gap: 12px; align-items: center; color: #7b889d; font-size: 10px; }
+.mission-reward strong { color: var(--amber); }
+.epilogue-screen { display: grid; place-items: center; padding: 40px; background-image: url('/assets/scenes/lord_god_space.jpg'); }
+.epilogue-screen::before { background: radial-gradient(circle at 50% 35%, rgba(222,235,255,.14), rgba(3,5,9,.94) 57%); }
+.epilogue-card { width: min(740px, 92vw); padding: 48px; border-radius: 20px; text-align: center; }
+.epilogue-card h1 { margin: 10px 0 26px; font-size: 46px; letter-spacing: .14em; }
+.epilogue-card h1 span { color: var(--red); }
+.epilogue-card blockquote { margin: 0 auto 22px; color: #f0dfbf; font-size: 17px; line-height: 2; }
+.epilogue-card > p { color: #9aa6b8; line-height: 2.1; }
+.epilogue-stats { display: flex; justify-content: center; gap: 12px; flex-wrap: wrap; margin: 26px 0; }
+.epilogue-stats span { padding: 8px 12px; border: 1px solid rgba(255,255,255,.12); color: #aab5c5; font-size: 10px; }
 .skill-tree { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
 .learn-btn { position: relative; text-align: left; min-height: 128px; padding: 16px; border-radius: 12px; overflow: hidden; }
 .learn-btn::before { content: ""; position: absolute; inset: 0 auto 0 0; width: 3px; background: var(--school, var(--red)); }

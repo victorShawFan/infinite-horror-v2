@@ -31,6 +31,15 @@ export const CHAPTER_ONE_ENCOUNTERS = Object.freeze([
     title: '列车醒来 · 第一次杀戮',
     subtitle: '车厢门被撞开。规则尚未听完，死亡已经闯入了列车。',
     briefing: '保护仍在昏迷的新人，适应主神赋予的战斗本能。',
+    intro: [
+      { speaker: '张杰', text: '想活下去，就别把这里当成电影。被它们咬中，你连后悔的时间都没有。' },
+      { speaker: '詹岚', text: '后面的新人还没醒。郑吒，我们必须把感染者挡在这节车厢外。' },
+      { speaker: '郑吒', text: '我明白了……害怕没有用。至少这一次，我要自己选择怎么活。' },
+    ],
+    victory: {
+      title: '第一次握紧武器',
+      text: '尸体倒在车门前，郑吒的双手仍在发抖。但这一次，他没有闭上眼睛。',
+    },
     background: '/assets/scenes/1-1_列车醒来_背景.jpg',
     threat: '低危',
     rewards: { exp: 90, points: 160 },
@@ -53,6 +62,15 @@ export const CHAPTER_ONE_ENCOUNTERS = Object.freeze([
     title: '蜂巢站台 · 封锁突破',
     subtitle: '红后的封锁系统已经启动。丧尸群正在从隧道两侧逼近。',
     briefing: '利用群体技能撕开包围，在更多感染者抵达前进入蜂巢。',
+    intro: [
+      { speaker: '主神', text: '支线目标更新：在红后封锁完成前突破蜂巢站台。失败扣除奖励点。' },
+      { speaker: '张杰', text: '数量太多，别一个一个磨。用你刚从主神那里换来的招式，撕开一条路。' },
+      { speaker: '郑吒', text: '原来强化不是纸面上的数字……我能感觉到那股力量正在身体里等待。' },
+    ],
+    victory: {
+      title: '力量开始有了形状',
+      text: '横扫的冲击撕开尸群，中洲队第一次用主动选择的强化改变了原本的死亡路线。',
+    },
     background: '/assets/scenes/1-2_蜂巢入口_背景.jpg',
     threat: '中危',
     rewards: { exp: 180, points: 240 },
@@ -79,6 +97,20 @@ export const CHAPTER_ONE_ENCOUNTERS = Object.freeze([
     title: '六小时归途 · 暴君追猎',
     subtitle: '倒计时最后三分钟，T-002撕开闸门挡住了回归列车。',
     briefing: '暴君拥有极高生命和阶段爆发。保留治疗与MP，撑过它的狂暴期。',
+    intro: [
+      { speaker: '红后', text: '警告。T-002限制解除。目标：消灭所有未经授权的生命体。' },
+      { speaker: '詹岚', text: '列车还有三分钟启动。如果在这里倒下，前面做的一切都没有意义。' },
+      { speaker: '张杰', text: '它半血以后会更危险。别贪攻击，留住治疗和防御，这不是一个人的战斗。' },
+      { speaker: '郑吒', text: '我不会再让任何人替我决定谁该死。三分钟——足够了。' },
+    ],
+    victory: {
+      title: '活着回到主神空间',
+      text: '暴君在列车灯光中倒下。白色光柱落下时，郑吒终于明白：力量的意义不是活得更久，而是让身边的人也能回去。',
+    },
+    epilogue: {
+      quote: '“欢迎回到主神空间。存活人数：三。”',
+      text: '这是中洲队第一次以自己的选择改变轮回。十天之后，他们仍会被送往下一个恐怖世界；但从这一刻起，他们不再只是等待剧情发生的人。',
+    },
     background: '/assets/scenes/1-6_六小时回归_背景.jpg',
     threat: '首领',
     boss: true,

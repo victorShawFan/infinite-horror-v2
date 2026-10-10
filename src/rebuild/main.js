@@ -58,7 +58,7 @@ function renderTitle() {
     '</section>',
   ].join('');
   document.getElementById('enter-hub').onclick = renderHub;
-  document.getElementById('quick-battle').onclick = () => startBattle(getCampaignStatus(profile.campaign).nextEncounter?.id || CHAPTER_ONE_ENCOUNTERS[0].id);
+  document.getElementById('quick-battle').onclick = () => showBriefing(getCampaignStatus(profile.campaign).nextEncounter?.id || CHAPTER_ONE_ENCOUNTERS[0].id);
 }
 
 function schoolColor(school) {
@@ -99,7 +99,7 @@ function renderHub() {
 
   document.getElementById('back-title').onclick = renderTitle;
   document.querySelectorAll('[data-encounter]').forEach(button => {
-    button.onclick = () => startBattle(button.dataset.encounter);
+    button.onclick = () => showBriefing(button.dataset.encounter);
   });
   document.querySelectorAll('[data-learn]').forEach(button => {
     button.onclick = () => handleLearn(button.dataset.learn);
@@ -107,6 +107,30 @@ function renderHub() {
   document.querySelectorAll('[data-equip]').forEach(button => {
     button.onclick = () => handleEquip(button.dataset.equip);
   });
+}
+
+function showBriefing(encounterId) {
+  if (!canLaunchEncounter(profile.campaign, encounterId)) {
+    toast('该任务尚未解锁', 'error');
+    return;
+  }
+  const mission = createEncounter(encounterId);
+  app.innerHTML = [
+    '<section class="screen briefing-screen" style="--briefing-bg:url(\'' + mission.background + '\')">',
+    '  <div class="briefing-layout">',
+    '    <div class="briefing-heading"><div class="eyebrow">MISSION 0' + mission.order + ' · ' + mission.threat + '</div><h1>' + mission.title + '</h1><p>' + mission.briefing + '</p></div>',
+    '    <div class="briefing-dialogue glass">' + mission.intro.map((beat, index) => [
+      '<div class="story-beat"><span>0' + (index + 1) + '</span><div><b>' + beat.speaker + '</b><p>' + beat.text + '</p></div></div>',
+    ].join('')).join('') + '</div>',
+    '    <div class="briefing-footer">',
+    '      <div class="mission-reward">首通奖励 <strong>EXP +' + mission.rewards.exp + '</strong><strong>⬡ +' + mission.rewards.points + '</strong></div>',
+    '      <div><button class="secondary" id="briefing-back">返回整备</button><button class="primary" id="briefing-start">开始任务</button></div>',
+    '    </div>',
+    '  </div>',
+    '</section>',
+  ].join('');
+  document.getElementById('briefing-back').onclick = renderHub;
+  document.getElementById('briefing-start').onclick = () => startBattle(encounterId);
 }
 
 function renderMissionCard(encounter) {
@@ -425,8 +449,8 @@ function renderResult() {
   return [
     '<div class="result-overlay"><div class="result-card glass">',
     '  <div class="eyebrow">Battle Result</div>',
-    '  <h2 style="color:' + (victory ? 'var(--amber)' : 'var(--red)') + '">' + (victory ? '突破封锁' : '轮回终止') + '</h2>',
-    '  <p>' + (victory ? '蜂巢入口的尸群被压制。主神确认中洲队完成了本次战斗目标。' : '这一次选择没能让所有人活下来。调整技能构筑，再次进入战斗。') + '</p>',
+    '  <h2 style="color:' + (victory ? 'var(--amber)' : 'var(--red)') + '">' + (victory ? encounter.victory.title : '轮回终止') + '</h2>',
+    '  <p>' + (victory ? encounter.victory.text : '这一次选择没能让所有人活下来。调整技能构筑，再次进入战斗。') + '</p>',
     victory ? '<div class="reward-row"><div class="reward-pill">EXP +' + rewards.exp + '</div><div class="reward-pill">⬡ +' + rewards.points + '</div></div>' : '',
     '  <button class="primary" id="claim-result">' + (victory ? '领取奖励并返回主神空间' : '返回主神空间整备') + '</button>',
     '</div></div>',
@@ -450,8 +474,25 @@ function claimBattleResult() {
     profile.battlesWon += 1;
   }
   saveProfile();
-  renderHub();
+  if (settlement.firstClear && encounter.epilogue) renderChapterEpilogue(encounter.epilogue);
+  else renderHub();
   toast(result.result === 'victory' ? '奖励已写入轮回档案' : '已返回主神空间', result.result === 'victory' ? 'good' : 'normal');
+}
+
+function renderChapterEpilogue(epilogue) {
+  app.innerHTML = [
+    '<section class="screen epilogue-screen">',
+    '  <div class="epilogue-card glass">',
+    '    <div class="eyebrow">CHAPTER ONE COMPLETE</div>',
+    '    <h1>名为生化 <span>· 完</span></h1>',
+    '    <blockquote>' + epilogue.quote + '</blockquote>',
+    '    <p>' + epilogue.text + '</p>',
+    '    <div class="epilogue-stats"><span>任务完成 3 / 3</span><span>中洲队存活 3</span><span>下一世界：异形</span></div>',
+    '    <button class="primary" id="epilogue-return">返回主神空间</button>',
+    '  </div>',
+    '</section>',
+  ].join('');
+  document.getElementById('epilogue-return').onclick = renderHub;
 }
 
 function delay(ms) {
