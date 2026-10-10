@@ -1,13 +1,15 @@
 import { CHAPTER_ONE_ENCOUNTERS, createParty } from './ChapterOneBattle.js';
 import { CHAPTER_TWO_ENCOUNTERS } from './ChapterTwoBattle.js';
 import { CHAPTER_THREE_ENCOUNTERS } from './ChapterThreeBattle.js';
+import { CHAPTER_FOUR_ENCOUNTERS } from './ChapterFourBattle.js';
 
-export { CHAPTER_TWO_ENCOUNTERS, CHAPTER_THREE_ENCOUNTERS };
+export { CHAPTER_TWO_ENCOUNTERS, CHAPTER_THREE_ENCOUNTERS, CHAPTER_FOUR_ENCOUNTERS };
 
 export const ALL_REBUILD_ENCOUNTERS = Object.freeze([
   ...CHAPTER_ONE_ENCOUNTERS,
   ...CHAPTER_TWO_ENCOUNTERS,
   ...CHAPTER_THREE_ENCOUNTERS,
+  ...CHAPTER_FOUR_ENCOUNTERS,
 ]);
 
 const CHAPTER_TWO_REINFORCEMENTS = Object.freeze([
@@ -34,6 +36,11 @@ const CHAPTER_THREE_REINFORCEMENTS = Object.freeze([
     hp: 148, maxHp: 148, mp: 38, maxMp: 38, atk: 34, def: 11, spd: 16, crit: 12,
     attackRange: 'ranged', damageType: 'spirit', skills: ['spirit_volley'],
   },
+]);
+
+const CHAPTER_FOUR_REINFORCEMENTS = Object.freeze([
+  {id:'zhangheng',name:'张恒',role:'古武圣火',portrait:'/assets/characters/zhang_heng.svg',hp:176,maxHp:176,mp:42,maxMp:42,atk:41,def:14,spd:17,crit:13,skills:['sacred_flame','sunfire_arc']},
+  {id:'xiaohonglv',name:'萧宏律',role:'战术奇谋',portrait:'/assets/characters/xiao_honglv.svg',hp:164,maxHp:164,mp:40,maxMp:40,atk:33,def:13,spd:18,crit:10,attackRange:'ranged',skills:['tactical_burst']},
 ]);
 
 export function createRebuildEncounter(encounterId = ALL_REBUILD_ENCOUNTERS[0].id) {
@@ -68,6 +75,14 @@ export function createRebuildParty(profile, encounter) {
   const zhao = { ...CHAPTER_THREE_REINFORCEMENTS[0], skills: [...CHAPTER_THREE_REINFORCEMENTS[0].skills] };
   const qiteng = { ...CHAPTER_THREE_REINFORCEMENTS[1], skills: [...CHAPTER_THREE_REINFORCEMENTS[1].skills] };
   const lingdian = { ...byId.lingdian, skills: ['spirit_sniper', 'crossfire'] };
-  if (encounter?.postSacrifice) return [byId.zheng, byId.zhan, lingdian, zhao, qiteng];
-  return [byId.zheng, byId.zhan, byId.chuxuan, lingdian, zhao];
+  if (chapter === 3) {
+    if (encounter?.postSacrifice) return [byId.zheng, byId.zhan, lingdian, zhao, qiteng];
+    return [byId.zheng, byId.zhan, byId.chuxuan, lingdian, zhao];
+  }
+  const zhangheng={...CHAPTER_FOUR_REINFORCEMENTS[0],skills:[...CHAPTER_FOUR_REINFORCEMENTS[0].skills]};
+  const xiaohonglv={...CHAPTER_FOUR_REINFORCEMENTS[1],skills:[...CHAPTER_FOUR_REINFORCEMENTS[1].skills]};
+  if(encounter?.postDualSacrifice)return[byId.zheng,byId.zhan,zhao,zhangheng,xiaohonglv];
+  if(encounter?.afterQiSacrifice)return[byId.zheng,byId.zhan,zhao,lingdian,zhangheng];
+  if(encounter?.id==='india-ambush')return[byId.zheng,zhao,lingdian,qiteng,zhangheng];
+  return[byId.zheng,zhao,lingdian,zhangheng,xiaohonglv];
 }

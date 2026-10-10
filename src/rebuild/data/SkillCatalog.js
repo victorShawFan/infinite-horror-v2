@@ -102,6 +102,30 @@ export const SKILL_CATALOG = Object.freeze({
     range: 'ranged', damageType: 'spirit',
     desc: '伽椰子的哀鸣穿透墙壁，对所有活人造成精神冲击。',
   },
+  sacred_flame: {
+    id: 'sacred_flame', name: '太阳圣焰', icon: '焰', school: '圣火', tier: 3,
+    target: TARGET_KIND.SINGLE_ENEMY, power: 1.62, mpCost: 7, cooldown: 1, cost: 0, learnable: false,
+    range: 'ranged', damageType: 'fire',
+    desc: '张恒引燃刻有太阳神纹的火炬，对木乃伊造成弱点伤害。',
+  },
+  sunfire_arc: {
+    id: 'sunfire_arc', name: '圣火环流', icon: '阳', school: '圣火', tier: 3,
+    target: TARGET_KIND.ALL_ENEMIES, power: 0.68, mpCost: 12, cooldown: 2, cost: 0, learnable: false,
+    range: 'ranged', damageType: 'fire',
+    desc: '太阳纹火焰沿地面扩散，焚烧所有亡者。',
+  },
+  sand_spear: {
+    id: 'sand_spear', name: '沙矛穿心', icon: '沙', school: '亡灵', tier: 4,
+    target: TARGET_KIND.SINGLE_ENEMY, power: 1.45, mpCost: 8, cooldown: 1, cost: 0, learnable: false,
+    range: 'ranged', damageType: 'dark',
+    desc: '伊莫顿将沙尘凝成尖矛，刺向生命最微弱的人。',
+  },
+  plague_wind: {
+    id: 'plague_wind', name: '瘟疫风暴', icon: '疫', school: '亡灵', tier: 4,
+    target: TARGET_KIND.ALL_ENEMIES, power: 0.62, mpCost: 13, cooldown: 2, cost: 0, learnable: false,
+    range: 'ranged', damageType: 'dark',
+    desc: '伊莫顿召唤腐败风暴，对全队造成黑暗伤害。',
+  },
   tyrant_crush: {
     id: 'tyrant_crush', name: '粉碎重击', icon: '碎', school: '生化', tier: 3,
     target: TARGET_KIND.SINGLE_ENEMY, power: 1.45, mpCost: 8, cooldown: 1, cost: 0, learnable: false,

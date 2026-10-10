@@ -92,7 +92,7 @@ function renderTitle() {
     '      <button class="primary" id="enter-hub">进入主神空间</button>',
     '      <button class="secondary" id="quick-battle">直接体验回合战斗</button>',
     '    </div>',
-    '    <p class="version-note">回合制重构 · 三章十八场完整任务</p>',
+    '    <p class="version-note">回合制重构 · 四章二十四场完整任务</p>',
     '  </div>',
     '</section>',
   ].join('');
@@ -127,7 +127,7 @@ function renderHub() {
     }).join('') + '</div>',
     '      <div style="display:flex;justify-content:space-between;color:#8190a6;font-size:10px"><span>章节推进</span><strong style="color:#dbe3ee">' + campaignStatus.completedCount + ' / ' + campaignStatus.totalCount + '</strong></div>',
     '      <div class="mission-list">' + renderMissionGroups() + '</div>',
-    campaignStatus.completed ? '<div class="chapter-clear">前三章已完成 · 第四章「神鬼传奇」迁移中</div>' : '',
+    campaignStatus.completed ? '<div class="chapter-clear">前四章已完成 · 第五章「死神来了」迁移中</div>' : '',
     '      <button class="secondary hub-launch" id="back-title">返回标题</button>',
     '    </aside>',
     '    <section class="skills-panel glass">',
@@ -161,6 +161,7 @@ function renderMissionGroups() {
     { number: 1, name: '第一章 · 名为生化' },
     { number: 2, name: '第二章 · 异形杀戮' },
     { number: 3, name: '第三章 · 咒怨阴影' },
+    { number: 4, name: '第四章 · 神鬼秘宝' },
   ];
   return groups.map(group => {
     const missions = ALL_REBUILD_ENCOUNTERS.filter(item => Number(item.chapterNumber || 1) === group.number);
@@ -516,6 +517,10 @@ async function playPresentation(events) {
       targetCard?.classList.add(cue.type === 'resistance' ? 'fx-spirit-resist' : 'fx-curse-seal');
       await delay(190);
       targetCard?.classList.remove('fx-spirit-resist', 'fx-curse-seal');
+    } else if (cue.type === 'weakness') {
+      targetCard?.classList.add('fx-weakness');
+      await delay(190);
+      targetCard?.classList.remove('fx-weakness');
     } else if (cue.type === 'hazard' || cue.type === 'retaliation') {
       targetCard?.classList.add('fx-hazard');
       if (cue.hazardId === 'laser') document.querySelector('.battle-screen')?.classList.add('fx-laser-screen');
@@ -592,6 +597,12 @@ function appendEvents(events) {
       logs.push('<strong class="curse-text">第 ' + event.level + ' 波诅咒降临。</strong> 灵体攻击力继续增强。');
     } else if (event.type === 'curse_reveal') {
       logs.push('<strong class="curse-text">第七波结束，' + event.actorName + '真身显形！封印已经解除。</strong>');
+    } else if (event.type === 'weakness') {
+      const target = engine.getCombatant(event.targetId);
+      logs.push('<strong class="weakness-text">命中 ' + target.name + ' 的「' + event.damageType + '」弱点，伤害倍率 ×' + Number(event.multiplier).toFixed(2) + '。</strong>');
+    } else if (event.type === 'regeneration') {
+      const target = engine.getCombatant(event.targetId);
+      logs.push('<strong>' + target.name + '</strong> 从沙尘中复生，恢复 <span class="regeneration-text">' + event.amount + '</span> HP。');
     } else if (event.type === 'boss_phase') {
       const boss = engine.getCombatant(event.actorId);
       logs.push('<strong class="accent">' + boss.name + '进入狂暴阶段！</strong> 肌肉组织突破限制，ATK +' + event.atkBonus + '。');

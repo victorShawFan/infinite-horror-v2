@@ -42,6 +42,12 @@ export function buildPresentationCues(events = []) {
     } else if (event.type === 'curse_reveal') {
       cues.push({ type: 'curse_reveal', actorId: event.actorId, level: event.level });
       cues.push({ type: 'banner', text: (event.actorName || '怨灵') + '真身显形 · 封印解除', tone: 'curse-break' });
+    } else if (event.type === 'weakness') {
+      cues.push({ type: 'weakness', targetId: event.targetId, damageType: event.damageType });
+      cues.push({ type: 'popup', targetId: event.targetId, text: '弱点 ×' + Number(event.multiplier).toFixed(2), tone: 'weakness' });
+    } else if (event.type === 'regeneration') {
+      cues.push({ type: 'heal', targetId: event.targetId });
+      cues.push({ type: 'popup', targetId: event.targetId, text: '复生 +' + event.amount, tone: 'regeneration' });
     }
   }
   return cues;

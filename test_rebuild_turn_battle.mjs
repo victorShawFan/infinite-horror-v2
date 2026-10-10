@@ -288,4 +288,30 @@ test('七波诅咒逐波强化灵体并在第七波解除Boss封印', () => {
   assert.equal(e.getCombatant('kayako').curseSealed, false);
 });
 
+test('元素弱点放大火焰伤害并产生可观测事件', () => {
+  const fireSkill = {
+    id: 'fire_test', target: TARGET_KIND.SINGLE_ENEMY, power: 1, mpCost: 0,
+    cooldown: 0, damageType: 'fire',
+  };
+  const e = new TurnBattleEngine({
+    party: [hero({ atk: 50, skills: ['fire_test'] })],
+    enemies: [zombie('mummy', { hp: 100, maxHp: 100, def: 0, weaknesses: ['fire'] })],
+    skills: { fire_test: fireSkill }, rng: () => 0.99,
+  });
+  const result = e.act({ actorId: 'zheng', kind: ACTION_KIND.SKILL, skillId: 'fire_test', targetId: 'mummy' });
+  assert.equal(e.getCombatant('mummy').hp, 33);
+  assert.equal(result.events.some(event => event.type === 'weakness' && event.damageType === 'fire'), true);
+});
+
+test('具有复生能力的Boss每轮恢复生命且不超过上限', () => {
+  const e = engine({
+    party: [hero()],
+    enemies: [zombie('imhotep', { hp: 90, maxHp: 100, roundRegen: 14, spd: 1 })],
+  });
+  e.act({ actorId: 'zheng', kind: ACTION_KIND.DEFEND });
+  const result = e.act({ actorId: 'imhotep', kind: ACTION_KIND.DEFEND });
+  assert.equal(e.getCombatant('imhotep').hp, 100);
+  assert.equal(result.events.some(event => event.type === 'regeneration' && event.amount === 10), true);
+});
+
 console.log('\n✅ ' + passed + ' turn battle checks passed');

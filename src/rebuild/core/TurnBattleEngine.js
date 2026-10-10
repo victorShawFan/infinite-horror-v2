@@ -138,6 +138,16 @@ export class TurnBattleEngine {
       }
     }
     this._applyCurseWave(events);
+    this._applyRegeneration(events);
+  }
+
+  _applyRegeneration(events) {
+    for (const target of this.combatants.filter(unit => unit.hp > 0 && Number(unit.roundRegen || 0) > 0)) {
+      const amount = Math.min(Math.max(1, Number(target.roundRegen)), target.maxHp - target.hp);
+      if (amount <= 0) continue;
+      target.hp += amount;
+      events.push({ type: 'regeneration', targetId: target.id, amount });
+    }
   }
 
   _applyCurseWave(events) {
@@ -190,12 +200,17 @@ export class TurnBattleEngine {
     const critical = this.rng() < actor.crit / 100;
     const critMultiplier = critical ? 1.5 : 1;
     let amount = Math.max(1, Math.floor(raw * critMultiplier) - target.def);
+    if (Array.isArray(target.weaknesses) && target.weaknesses.includes(damageType)) {
+      const multiplier = Math.max(1, Number(target.weaknessMultiplier || 1.35));
+      amount = Math.max(1, Math.floor(amount * multiplier));
+      events.push({ type: 'weakness', targetId: target.id, damageType, multiplier });
+    }
     if (target.curseSealed) {
       const reduction = Math.min(0.98, Math.max(0, Number(target.curseSealReduction || 0.8)));
       amount = 1;
       events.push({ type: 'curse_seal', targetId: target.id, reduction });
     }
-    if (damageType !== 'spirit' && Number(target.physicalResist || 0) > 0) {
+    if (damageType === 'physical' && Number(target.physicalResist || 0) > 0) {
       const reduction = Math.min(0.95, Math.max(0, Number(target.physicalResist)));
       amount = Math.max(1, Math.floor(amount * (1 - reduction)));
       events.push({ type: 'resistance', targetId: target.id, damageType, reduction });

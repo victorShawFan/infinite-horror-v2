@@ -85,4 +85,15 @@ test('灵体抗性、诅咒波次和第七波显形都有独立视觉信息', ()
   assert.equal(cues.some(cue => cue.type === 'banner' && /显形/.test(cue.text)), true);
 });
 
+test('弱点伤害和Boss复生生成不同战斗反馈', () => {
+  const cues = buildPresentationCues([
+    { type: 'weakness', targetId: 'mummy', damageType: 'fire', multiplier: 1.35 },
+    { type: 'regeneration', targetId: 'imhotep', amount: 18 },
+  ]);
+  assert.equal(cues.some(cue => cue.type === 'weakness' && cue.targetId === 'mummy'), true);
+  assert.equal(cues.some(cue => cue.type === 'popup' && /弱点/.test(cue.text)), true);
+  assert.equal(cues.some(cue => cue.type === 'heal' && cue.targetId === 'imhotep'), true);
+  assert.equal(cues.some(cue => cue.type === 'popup' && cue.text === '复生 +18'), true);
+});
+
 console.log('\n✅ ' + passed + ' presentation checks passed');

@@ -232,6 +232,7 @@ button { font: inherit; }
 .unit-card.fx-spirit-resist { animation: spiritFlicker .38s ease; filter: saturate(.15) brightness(1.45); box-shadow: 0 0 55px rgba(194,167,255,.5); }
 .unit-card.fx-curse-seal { animation: curseSeal .42s ease; box-shadow: inset 0 0 60px rgba(136,34,160,.55); }
 .unit-card.fx-curse-break { animation: curseBreak .65s ease; z-index: 8; box-shadow: 0 0 90px rgba(225,175,255,.72); }
+.unit-card.fx-weakness { animation: criticalHit .38s ease; box-shadow: 0 0 65px rgba(255,185,72,.62); border-color: #ffc060; }
 .unit-card.fx-hazard { animation: criticalHit .34s ease; filter: brightness(1.9) contrast(1.4); }
 .unit-card.fx-boss-phase { animation: bossPhase .65s ease; z-index: 8; }
 .battle-screen.fx-danger-screen::before { background: radial-gradient(circle, rgba(150,0,20,.35), rgba(3,4,8,.94)); }
@@ -244,6 +245,8 @@ button { font: inherit; }
 .combat-popup.hazard { color: #ffdfdf; font-size: 30px; }
 .combat-popup.acid, .acid-text { color: #9dff58; text-shadow: 0 0 16px rgba(157,255,88,.48); }
 .combat-popup.spirit, .curse-text { color: #d6b4ff; text-shadow: 0 0 18px rgba(202,142,255,.55); }
+.combat-popup.weakness, .weakness-text { color: #ffd073; text-shadow: 0 0 18px rgba(255,185,72,.55); }
+.combat-popup.regeneration, .regeneration-text { color: #8ff0c2; text-shadow: 0 0 18px rgba(84,225,156,.45); }
 .battle-banner { position: fixed; top: 38%; left: 50%; z-index: 50; transform: translate(-50%,-50%); padding: 14px 42px; color: #fff0e8; border: 1px solid rgba(255,76,76,.6); background: linear-gradient(90deg, transparent, rgba(120,0,16,.92), transparent); font-size: 18px; font-weight: 900; letter-spacing: .22em; white-space: nowrap; animation: bannerIn .55s ease; }
 
 @keyframes targetPulse { 50% { box-shadow: 0 0 30px rgba(255,76,76,.28); } }
