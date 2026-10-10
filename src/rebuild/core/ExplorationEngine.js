@@ -9,6 +9,7 @@ function cloneState(source, scenario) {
     interacted: [...new Set(source?.interacted || [])],
     pickedItems: [...new Set(source?.pickedItems || [])],
     battleCleared: Boolean(source?.battleCleared),
+    discoveries: Array.isArray(source?.discoveries) ? source.discoveries.map(entry => ({ ...entry })) : [],
   };
 }
 
@@ -17,6 +18,10 @@ export class ExplorationEngine {
     if (!scenario?.width || !scenario?.height || !Array.isArray(scenario.tiles)) throw new Error('scenario_required');
     this.scenario = scenario;
     this.state = cloneState(savedState, scenario);
+    const savedEntity = this._entityAt(this.state.player.x, this.state.player.y);
+    if (this._tile(this.state.player.x, this.state.player.y) === '#' || this._isEntityBlocking(savedEntity)) {
+      this.state.player = { ...scenario.playerStart };
+    }
   }
 
   _tile(x, y) {
@@ -54,17 +59,36 @@ export class ExplorationEngine {
     return { x: this.state.player.x + dx, y: this.state.player.y + dy };
   }
 
+  getInteractionTarget() {
+    const front = this._frontPosition();
+    const entity = this._entityAt(front.x, front.y);
+    if (!entity) return null;
+    if (entity.type === 'item' && this.state.pickedItems.includes(entity.id)) return null;
+    return entity;
+  }
+
+  _recordDiscovery(entity, kind = entity.type) {
+    if (this.state.discoveries.some(entry => entry.entityId === entity.id)) return;
+    this.state.discoveries.push({
+      entityId: entity.id, kind, name: entity.name || '未命名发现', clue: Boolean(entity.clue),
+    });
+  }
+
   interact() {
     const front = this._frontPosition();
     const entity = this._entityAt(front.x, front.y);
     if (!entity) return { type: 'none' };
     if (entity.type === 'npc' || entity.type === 'object') {
-      if (!this.state.interacted.includes(entity.id)) this.state.interacted.push(entity.id);
+      if (!this.state.interacted.includes(entity.id)) {
+        this.state.interacted.push(entity.id);
+        this._recordDiscovery(entity);
+      }
       return { type: 'dialogue', entityId: entity.id, name: entity.name, dialogue: [...(entity.dialogue || [])] };
     }
     if (entity.type === 'item') {
       if (this.state.pickedItems.includes(entity.id)) return { type: 'none' };
       this.state.pickedItems.push(entity.id);
+      this._recordDiscovery(entity, 'item');
       return { type: 'item', entityId: entity.id, itemId: entity.itemId, quantity: Math.max(1, Number(entity.quantity || 1)), name: entity.name };
     }
     if (entity.type === 'battle') {
@@ -82,27 +106,48 @@ export class ExplorationEngine {
 
   markBattleCleared() { this.state.battleCleared = true; }
 
+  getDiscoveries() {
+    const entries = this.state.discoveries.map(entry => ({ ...entry }));
+    return { entries, clues: entries.filter(entry => entry.clue).length };
+  }
+
+  getBattlePreparation() {
+    const effects = (this.scenario.entities || [])
+      .filter(entity => this.state.interacted.includes(entity.id) && entity.battleEffect)
+      .map(entity => ({ ...entity.battleEffect }));
+    return { effects, notes: effects.map(effect => effect.note).filter(Boolean) };
+  }
+
   snapshot() {
     return {
       player: { ...this.state.player }, facing: this.state.facing,
       interacted: [...this.state.interacted], pickedItems: [...this.state.pickedItems],
       battleCleared: this.state.battleCleared,
+      discoveries: this.state.discoveries.map(entry => ({ ...entry })),
     };
   }
 
   validateReachability() {
     const queue = [{ ...this.scenario.playerStart }];
     const seen = new Set([`${queue[0].x},${queue[0].y}`]);
+    const blockers = new Set((this.scenario.entities || [])
+      .filter(entity => ['npc', 'object', 'battle', 'exit'].includes(entity.type))
+      .map(entity => `${entity.x},${entity.y}`));
     while (queue.length) {
       const current = queue.shift();
       for (const [dx, dy] of [[0,-1],[0,1],[-1,0],[1,0]]) {
         const next = { x: current.x + dx, y: current.y + dy };
         const key = `${next.x},${next.y}`;
-        if (seen.has(key) || this._tile(next.x, next.y) === '#') continue;
+        if (seen.has(key) || this._tile(next.x, next.y) === '#' || blockers.has(key)) continue;
         seen.add(key); queue.push(next);
       }
     }
-    const unreachable = (this.scenario.entities || []).filter(entity => !seen.has(`${entity.x},${entity.y}`)).map(entity => entity.id);
+    const reachableNeighbor = entity => [[0,-1],[0,1],[-1,0],[1,0]]
+      .some(([dx,dy]) => seen.has(`${entity.x+dx},${entity.y+dy}`));
+    const unreachable = (this.scenario.entities || []).filter(entity => {
+      if (entity.type === 'item') return !seen.has(`${entity.x},${entity.y}`) && !reachableNeighbor(entity);
+      return !reachableNeighbor(entity);
+    }).map(entity => entity.id);
     return { ok: unreachable.length === 0, unreachable };
   }
 }

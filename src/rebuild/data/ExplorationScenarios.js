@@ -1,3 +1,5 @@
+import { createChapterOneExplorationScenario } from './ChapterOneExploration.js';
+
 const THEMES = Object.freeze({
   1: { id:'bio', floor:'#202a2d', wall:'#4d5f5e', glow:'#ff5757', label:'蜂巢设施' },
   2: { id:'alien', floor:'#142329', wall:'#31504f', glow:'#86ff9f', label:'异形飞船' },
@@ -35,6 +37,8 @@ function dialogueFor(encounter, start, end) {
 export function createExplorationScenario(encounter) {
   const chapter = Number(encounter.chapterNumber || 1);
   const theme = THEMES[chapter] || THEMES[1];
+  const chapterOneScenario = createChapterOneExplorationScenario(encounter, theme);
+  if (chapterOneScenario) return chapterOneScenario;
   const npcOne = `${encounter.id}-npc-1`;
   const npcTwo = `${encounter.id}-npc-2`;
   return {

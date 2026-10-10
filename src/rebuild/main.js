@@ -7,6 +7,8 @@ import { RebuildAudio, getAudioCueForPresentation } from './core/RebuildAudio.js
 import { applyExperience, experienceToNextLevel } from './core/PlayerProgression.js';
 import { ITEM_CATALOG, purchaseItem, syncInventoryFromCombatant } from './core/ItemSystem.js';
 import { ExplorationEngine } from './core/ExplorationEngine.js';
+import { applyBattlePreparation } from './core/ExplorationBattlePreparation.js';
+import { buildExplorationHUD } from './core/ExplorationPresentation.js';
 import { BattleViewLifecycle } from './core/BattleViewLifecycle.js';
 import { SKILL_CATALOG } from './data/SkillCatalog.js';
 import { createExplorationScenario } from './data/ExplorationScenarios.js';
@@ -335,9 +337,10 @@ function renderExplorationEntity(entity) {
   const resolved = (entity.type === 'npc' || entity.type === 'object') && exploration.state.interacted.includes(entity.id);
   const cleared = entity.type === 'battle' && exploration.state.battleCleared;
   const open = entity.type === 'exit' && exploration.state.battleCleared;
+  const focused = exploration.getInteractionTarget()?.id === entity.id;
   const portrait = entity.type === 'battle' ? encounter.enemies[0]?.portrait : null;
   return [
-    '<button class="map-entity ' + entity.type + ' ' + (resolved ? 'resolved ' : '') + (cleared ? 'cleared ' : '') + (open ? 'open ' : '') + '"',
+    '<button class="map-entity ' + entity.type + ' ' + (resolved ? 'resolved ' : '') + (cleared ? 'cleared ' : '') + (open ? 'open ' : '') + (focused ? 'focused ' : '') + '"',
     ' style="grid-column:' + (entity.x + 1) + ';grid-row:' + (entity.y + 1) + ';--entity-color:' + (entity.color || explorationScenario.theme.glow) + '"',
     ' data-map-entity="' + entity.id + '" aria-label="' + (entity.name || entity.type) + '">',
     portrait ? '<img src="' + portrait + '" alt="">' : '<span>' + (cleared ? '胜' : entity.icon || '?') + '</span>',
@@ -348,20 +351,23 @@ function renderExplorationEntity(entity) {
 
 function renderExploration() {
   if (!exploration || !explorationScenario) return;
-  const required = explorationScenario.entities.filter(entity => entity.required);
-  const completedRequired = required.filter(entity => exploration.state.interacted.includes(entity.id)).length;
+  const hud = buildExplorationHUD(exploration, explorationScenario);
+  const completedRequired = hud.required.completed;
+  const recentDiscoveries = hud.discoveries.entries.slice(-3).reverse();
   const currentDialogue = explorationDialogue[explorationDialogueIndex];
   app.innerHTML = [
     '<section class="screen exploration-screen theme-' + explorationScenario.theme.id + '" style="--explore-bg:url(\'' + encounter.background + '\');--map-floor:' + explorationScenario.theme.floor + ';--map-wall:' + explorationScenario.theme.wall + ';--map-glow:' + explorationScenario.theme.glow + '">',
     ' <header class="explore-header">',
     '  <div><div class="eyebrow">' + encounter.chapter + ' · ' + explorationScenario.theme.label + '</div><h1>' + encounter.title + '</h1><p>' + encounter.subtitle + '</p></div>',
-    '  <div class="explore-progress glass"><span>调查进度</span><b>' + completedRequired + ' / ' + required.length + '</b><small>' + (exploration.state.battleCleared ? '威胁已清除 · 寻找出口' : explorationScenario.objective) + '</small></div>',
+    '  <div class="explore-progress glass"><span>调查进度</span><b>' + completedRequired + ' / ' + hud.required.total + '</b><small>' + (exploration.state.battleCleared ? '威胁已清除 · 寻找出口' : explorationScenario.objective) + '</small></div>',
     ' </header>',
     ' <div class="explore-layout">',
     '  <aside class="explore-journal glass"><div class="eyebrow">Mission Journal</div><h2>任务记录</h2>',
-    '   <div class="journal-objective ' + (completedRequired===required.length?'done':'') + '"><span>01</span><p>与关键队员汇合 <b>' + completedRequired + '/' + required.length + '</b></p></div>',
+    '   <div class="journal-objective ' + (completedRequired===hud.required.total?'done':'') + '"><span>01</span><p>汇合队员并调查关键环境 <b>' + completedRequired + '/' + hud.required.total + '</b></p></div>',
     '   <div class="journal-objective ' + (exploration.state.battleCleared?'done':'') + '"><span>02</span><p>接触并击败威胁 <b>' + (exploration.state.battleCleared?'完成':'未完成') + '</b></p></div>',
     '   <div class="journal-objective"><span>03</span><p>从任务出口撤离</p></div>',
+    '   <div class="discovery-panel"><div><b>调查档案</b><span>战术线索 ' + hud.discoveries.clues + '</span></div>' + (recentDiscoveries.length ? recentDiscoveries.map(entry => '<p class="' + (entry.clue?'clue':'') + '"><i>' + (entry.clue?'◆':'·') + '</i>' + entry.name + '</p>').join('') : '<p class="empty">尚未记录现场发现</p>') + '</div>',
+    hud.battleNotes.length ? '<div class="battle-preparation"><b>战前优势</b>' + hud.battleNotes.map(note => '<p>' + note + '</p>').join('') + '</div>' : '',
     '   <div class="explore-help"><b>操作</b><p>WASD / 方向键移动<br>E / 空格互动<br>移动到目标旁并面向它</p></div>',
     '   <button class="secondary" id="explore-abort">返回主神空间</button>',
     '  </aside>',
@@ -371,10 +377,10 @@ function renderExploration() {
     explorationScenario.entities.map(renderExplorationEntity).join(''),
     '    <div class="explorer-player facing-' + exploration.state.facing + '" style="grid-column:' + (exploration.state.player.x+1) + ';grid-row:' + (exploration.state.player.y+1) + '"><img src="/assets/characters/zheng_zha.jpg" alt="郑吒"><i></i></div>',
     '   </div>',
-    '   <div class="map-caption"><span>当前位置 ' + String(exploration.state.player.x).padStart(2,'0') + ' : ' + String(exploration.state.player.y).padStart(2,'0') + '</span><b>' + (exploration.state.battleCleared?'出口信标已激活':'生命信号追踪中') + '</b></div>',
+    '   <div class="map-caption"><span>当前位置 ' + String(exploration.state.player.x).padStart(2,'0') + ' : ' + String(exploration.state.player.y).padStart(2,'0') + '</span><b>' + (hud.target ? 'E · ' + hud.target.name : exploration.state.battleCleared?'出口信标已激活':'面向目标后互动') + '</b></div>',
     '  </div></main>',
     ' </div>',
-    ' <div class="touch-controls glass"><div><button data-move="0,-1">▲</button><span><button data-move="-1,0">◀</button><button data-move="0,1">▼</button><button data-move="1,0">▶</button></span></div><button class="interact-key" id="touch-interact"><b>E</b><small>互动</small></button></div>',
+    ' <div class="touch-controls glass"><div><button data-move="0,-1">▲</button><span><button data-move="-1,0">◀</button><button data-move="0,1">▼</button><button data-move="1,0">▶</button></span></div><button class="interact-key ' + (hud.target?'ready':'') + '" id="touch-interact"><b>E</b><small>' + (hud.target ? hud.target.name : '互动') + '</small></button></div>',
     currentDialogue ? '<div class="dialogue-overlay"><div class="dialogue-box glass"><div class="dialogue-speaker">' + currentDialogue.speaker + '</div><p>' + currentDialogue.text + '</p><button class="primary" id="dialogue-next">' + (explorationDialogueIndex < explorationDialogue.length-1 ? '继续' : '结束对话') + '</button><small>E / 空格</small></div></div>' : '',
     '</section>',
   ].join('');
@@ -446,15 +452,27 @@ function startBattle(encounterId = ALL_REBUILD_ENCOUNTERS[0].id, fromExploration
   encounter = createRebuildEncounter(encounterId);
   battleFromExploration = fromExploration;
   battleViewToken = battleViewLifecycle.begin();
-  engine = new TurnBattleEngine({
+  const preparation = fromExploration && exploration
+    ? exploration.getBattlePreparation()
+    : { effects: [], notes: [] };
+  const prepared = applyBattlePreparation({
     party: createRebuildParty(profile, encounter),
     enemies: encounter.enemies,
+    preparation,
+  });
+  engine = new TurnBattleEngine({
+    party: prepared.party,
+    enemies: prepared.enemies,
     skills: SKILL_CATALOG,
     items: ITEM_CATALOG,
     rewards: previewEncounterRewards(encounter),
     rules: encounter.rules,
   });
-  logs = [encounter.title + '。敌方生命信号 × ' + encounter.enemies.length + '。', '战斗开始：请选择当前角色的行动。'];
+  logs = [
+    encounter.title + '。敌方生命信号 × ' + encounter.enemies.length + '。',
+    ...prepared.notes.map(note => '【探索优势】' + note),
+    '战斗开始：请选择当前角色的行动。',
+  ];
   selectedAction = null;
   resultRecorded = false;
   enemyBusy = false;
