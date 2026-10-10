@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { getAudioCueForPresentation, normalizeAudioPreference } from './src/rebuild/core/RebuildAudio.js';
+import { getAudioCueForPresentation, getMusicThemeForScene, normalizeAudioPreference } from './src/rebuild/core/RebuildAudio.js';
 
 let passed = 0;
 function test(name, fn) {
@@ -31,6 +31,15 @@ test('静音偏好兼容字符串和布尔值', () => {
   assert.equal(normalizeAudioPreference(false), false);
   assert.equal(normalizeAudioPreference('false'), false);
   assert.equal(normalizeAudioPreference(null), false);
+});
+
+test('标题、主神空间、探索与战斗使用不同持续音乐主题', () => {
+  assert.equal(getMusicThemeForScene('title'), 'title');
+  assert.equal(getMusicThemeForScene('hub'), 'lord-god');
+  assert.equal(getMusicThemeForScene('exploration', { chapter: 1 }), 'bio-horror');
+  assert.equal(getMusicThemeForScene('exploration', { chapter: 3 }), 'curse-horror');
+  assert.equal(getMusicThemeForScene('battle'), 'combat');
+  assert.equal(getMusicThemeForScene('battle', { boss: true }), 'boss');
 });
 
 console.log('\n✅ ' + passed + ' audio checks passed');

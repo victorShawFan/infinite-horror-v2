@@ -49,7 +49,7 @@ export function createExplorationScenario(encounter) {
     entities: [
       { id:npcOne, type:'npc', x:3, y:9, required:true, name:encounter.intro?.[0]?.speaker || '中洲队员', dialogue:dialogueFor(encounter,0,2), icon:'人', color:'#79d9ff' },
       { id:npcTwo, type:'npc', x:7, y:8, required:true, name:encounter.intro?.[2]?.speaker || '中洲队员', dialogue:dialogueFor(encounter,2,4), icon:'队', color:theme.glow },
-      { id:`${encounter.id}-supply`, type:'item', x:10, y:8, name:(encounter.order%2?'战术急救包':'群体止血喷雾'), itemId:(encounter.order%2?'first_aid':'team_spray'), quantity:1, icon:'补', color:'#79e6a3' },
+      { id:`${encounter.id}-supply`, type:'item', x:10, y:8, name:(encounter.order%2?'战术急救包':'群体止血喷雾'), itemId:(encounter.order%2?'first_aid':'team_spray'), visual:(encounter.order%2?'medkit':'spray'), quantity:1, icon:(encounter.order%2?'十':'雾'), color:'#79e6a3' },
       { id:`${encounter.id}-battle`, type:'battle', x:14, y:3, encounterId:encounter.id, requires:[npcOne,npcTwo], name:'威胁源', icon:'敌', color:'#ff5959', lockedText:'队伍尚未汇合，贸然接敌会打乱阵线。' },
       { id:`${encounter.id}-exit`, type:'exit', x:15, y:1, name:'任务出口', icon:'出', color:'#ffd16f', lockedText:'战斗目标尚未完成，撤离通道仍被封锁。' },
     ],

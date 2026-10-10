@@ -4,6 +4,7 @@ import {
   canLaunchEncounter,
   settleEncounter,
   getCampaignStatus,
+  getEncounterMode,
 } from './src/rebuild/core/CampaignProgress.js';
 import { CHAPTER_ONE_ENCOUNTERS } from './src/rebuild/data/ChapterOneBattle.js';
 
@@ -53,6 +54,8 @@ test('重复挑战只获得明确配置的较低奖励', () => {
   assert.deepEqual(repeat.progress.completed, [ids[0]]);
 });
 
+test('已完成任务明确标记为历史副本而非伪装成主线首通',()=>{const first=settleEncounter(createCampaignProgress(),ids[0],'victory',CHAPTER_ONE_ENCOUNTERS);assert.equal(getEncounterMode(first.progress,ids[0],CHAPTER_ONE_ENCOUNTERS),'replay');assert.equal(getEncounterMode(first.progress,ids[1],CHAPTER_ONE_ENCOUNTERS),'first-clear');});
+
 test('依次完成全部六场后章节状态为完成', () => {
   let progress = createCampaignProgress();
   for (const id of ids) progress = settleEncounter(progress, id, 'victory', CHAPTER_ONE_ENCOUNTERS).progress;
@@ -61,6 +64,8 @@ test('依次完成全部六场后章节状态为完成', () => {
   assert.equal(status.completedCount, ids.length);
   assert.equal(status.nextEncounter, null);
 });
+
+test('首领首通发放稀缺支线剧情而重复副本不复制',()=>{let progress=createCampaignProgress();let result;for(const id of ids){result=settleEncounter(progress,id,'victory',CHAPTER_ONE_ENCOUNTERS);progress=result.progress;}assert.equal(result.rewards.sideStories.D,1);const replay=settleEncounter(progress,ids.at(-1),'victory',CHAPTER_ONE_ENCOUNTERS);assert.deepEqual(replay.rewards.sideStories,{});});
 
 test('旧存档缺失campaign字段时可安全迁移', () => {
   const progress = createCampaignProgress({ battlesWon: 2 });

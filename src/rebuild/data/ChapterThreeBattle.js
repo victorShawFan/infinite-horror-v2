@@ -131,7 +131,7 @@ export const CHAPTER_THREE_ENCOUNTERS = Object.freeze([
       text: '楚轩用自己的生命留下唯一的窗口，铭烟薇用死亡让中洲队看清恐惧的代价。郑吒终于立下属于队长的原则：任何时候，都不先把同伴当成可以舍弃的数字。',
       stats: ['第三章任务 6 / 6', '七波诅咒已封印', '下一世界：神鬼传奇'],
     },
-    rewards: { exp: 1880, points: 1900 }, repeatRewards: { exp: 470, points: 475 },
+    rewards: { exp: 1880, points: 1900, sideStories: { C: 1 } }, repeatRewards: { exp: 470, points: 475 },
     enemies: [
       spirit({ id: 'curse-guard-a', name: '诅咒护卫α', role: '结界侵蚀', hp: 192, maxHp: 192, atk: 35, def: 13, spd: 17, physicalResist: 0.65 }),
       spirit({

@@ -2,6 +2,13 @@ const LAYOUTS = Object.freeze({
   'train-awakening': {
     region: '封闭列车 · 后部车厢',
     objective: '唤醒队友，检查破损车门，在感染者闯入前完成战斗准备。',
+    visualStyle: { id: 'sealed-train', floor: '#172126', wall: '#53636a', glow: '#ff655f', ambient: '#6ca2b6' },
+    decorations: [
+      { x:1, y:1, w:2, kind:'window', label:'隧道余光' }, { x:5, y:1, w:2, kind:'window' },
+      { x:9, y:1, w:2, kind:'window' }, { x:2, y:3, w:3, kind:'seat' },
+      { x:10, y:7, w:3, kind:'seat' }, { x:7, y:9, w:2, kind:'hazard', label:'车门警戒线' },
+      { x:14, y:3, kind:'alarm' },
+    ],
     tiles: [
       '#################',
       '#...............#',
@@ -16,7 +23,7 @@ const LAYOUTS = Object.freeze({
       '#################',
     ],
     playerStart: { x: 1, y: 9 },
-    npcNames: ['张杰', '郑吒'],
+    npcNames: ['张杰', '詹岚'],
     npcPositions: [{ x: 3, y: 9 }, { x: 7, y: 7 }],
     required: { x: 3, y: 1, name: '破损车门', icon: '门', dialogue: [
       { speaker: '郑吒', text: '门锁是从外侧被撞断的。它们不是偶然闯进来，而是在追逐这列车。' },
@@ -31,6 +38,13 @@ const LAYOUTS = Object.freeze({
   'hive-platform': {
     region: '蜂巢站台 · 封锁层',
     objective: '与队伍汇合，检查封锁闸机，选择是否启动站台广播制造突破口。',
+    visualStyle: { id: 'hive-platform', floor: '#142326', wall: '#43595a', glow: '#ff544f', ambient: '#72d0dc' },
+    decorations: [
+      { x:1, y:1, w:4, kind:'rail', label:'蜂巢专线' }, { x:6, y:1, w:4, kind:'rail' },
+      { x:11, y:1, w:3, kind:'rail' }, { x:2, y:4, w:3, kind:'hazard' },
+      { x:8, y:6, w:2, kind:'sign', label:'HIVE 01' }, { x:13, y:6, kind:'speaker' },
+      { x:14, y:9, kind:'signal' },
+    ],
     tiles: [
       '#################',
       '#...............#',
@@ -45,7 +59,7 @@ const LAYOUTS = Object.freeze({
       '#################',
     ],
     playerStart: { x: 1, y: 9 },
-    npcNames: ['张杰', '郑吒'],
+    npcNames: ['张杰', '詹岚'],
     npcPositions: [{ x: 3, y: 9 }, { x: 9, y: 7 }],
     required: { x: 4, y: 4, name: '封锁闸机', icon: '闸', dialogue: [
       { speaker: '詹岚', text: '闸机只剩一条机械传动臂。强行开启后，我们没有第二次机会。' },
@@ -60,6 +74,13 @@ const LAYOUTS = Object.freeze({
   'red-queen-core': {
     region: '红后机房 · 主控环廊',
     objective: '确认断路原因，读取防卫结构，关闭红后的杀戮节点。',
+    visualStyle: { id: 'red-queen-core', floor: '#171923', wall: '#493f52', glow: '#ff3f54', ambient: '#7b6cff' },
+    decorations: [
+      { x:1, y:1, w:3, kind:'server', label:'RQ-A' }, { x:9, y:1, w:3, kind:'server', label:'RQ-B' },
+      { x:4, y:5, w:3, kind:'cable' }, { x:9, y:5, w:3, kind:'cable' },
+      { x:2, y:7, kind:'monitor', label:'OFFLINE' }, { x:12, y:3, w:2, kind:'coolant' },
+      { x:14, y:5, kind:'alarm' },
+    ],
     tiles: [
       '#################',
       '#......#........#',
@@ -74,7 +95,7 @@ const LAYOUTS = Object.freeze({
       '#################',
     ],
     playerStart: { x: 1, y: 9 },
-    npcNames: ['詹岚', '郑吒'],
+    npcNames: ['詹岚', '张杰'],
     npcPositions: [{ x: 4, y: 9 }, { x: 9, y: 7 }],
     required: { x: 3, y: 5, name: '断路配电箱', icon: '电', dialogue: [
       { speaker: '詹岚', text: '不是故障。红后主动切断了人工控制，她在把我们赶向主机房。' },
@@ -89,6 +110,13 @@ const LAYOUTS = Object.freeze({
   'laser-corridor': {
     region: '激光走廊 · 三段杀阵',
     objective: '检查遇难者留下的痕迹，判断激光循环，再穿过安保杀阵。',
+    visualStyle: { id: 'laser-killzone', floor: '#1c1b20', wall: '#51464c', glow: '#ff293f', ambient: '#ff884f' },
+    decorations: [
+      { x:3, y:1, w:3, kind:'beam', label:'PHASE 03' }, { x:9, y:3, w:4, kind:'beam' },
+      { x:4, y:5, w:3, kind:'beam' }, { x:8, y:7, w:3, kind:'hazard' },
+      { x:3, y:5, kind:'scorch' }, { x:13, y:3, kind:'emitter' },
+      { x:8, y:1, kind:'monitor', label:'0.8 SEC' },
+    ],
     tiles: [
       '#################',
       '#...............#',
@@ -103,7 +131,7 @@ const LAYOUTS = Object.freeze({
       '#################',
     ],
     playerStart: { x: 1, y: 9 },
-    npcNames: ['张杰', '郑吒'],
+    npcNames: ['张杰', '詹岚'],
     npcPositions: [{ x: 4, y: 9 }, { x: 10, y: 7 }],
     required: { x: 3, y: 5, name: '焦黑遗骸', icon: '骸', dialogue: [
       { speaker: '郑吒', text: '切口没有任何挣扎痕迹……上一秒还活着，下一秒就结束了。' },
@@ -118,6 +146,13 @@ const LAYOUTS = Object.freeze({
   'crawler-outbreak': {
     region: '终端控制室 · 培养区',
     objective: '调查培养槽破裂原因，利用残存设施削弱爬行者。',
+    visualStyle: { id: 'broken-lab', floor: '#102523', wall: '#3e5c55', glow: '#72f0b2', ambient: '#36bfc4' },
+    decorations: [
+      { x:2, y:2, w:2, h:2, kind:'tank', label:'A-01' }, { x:8, y:2, w:2, h:2, kind:'tank', label:'A-03' },
+      { x:2, y:7, w:2, h:2, kind:'tank' }, { x:10, y:7, w:2, h:2, kind:'tank' },
+      { x:5, y:4, w:4, kind:'fluid' }, { x:11, y:6, w:3, kind:'pipe' },
+      { x:14, y:4, kind:'vent' },
+    ],
     tiles: [
       '#################',
       '#...............#',
@@ -132,7 +167,7 @@ const LAYOUTS = Object.freeze({
       '#################',
     ],
     playerStart: { x: 1, y: 9 },
-    npcNames: ['詹岚', '郑吒'],
+    npcNames: ['詹岚', '张杰'],
     npcPositions: [{ x: 4, y: 9 }, { x: 8, y: 6 }],
     required: { x: 3, y: 4, name: '破裂培养槽', icon: '槽', dialogue: [
       { speaker: '詹岚', text: '内壁上的爪痕在外侧。不是它自己逃出来的，有人提前释放了实验体。' },
@@ -147,6 +182,13 @@ const LAYOUTS = Object.freeze({
   'tyrant-final': {
     region: '回归列车 · 最终站台',
     objective: '启动回归列车，确认暴君资料，在倒计时归零前突破追猎。',
+    visualStyle: { id: 'tyrant-terminal', floor: '#211b1d', wall: '#5c4a46', glow: '#ff4747', ambient: '#ffc25f' },
+    decorations: [
+      { x:1, y:1, w:4, kind:'countdown', label:'02:59' }, { x:10, y:1, w:4, kind:'rail', label:'RETURN' },
+      { x:4, y:3, w:3, kind:'barricade' }, { x:10, y:7, w:3, kind:'barricade' },
+      { x:7, y:5, w:2, kind:'blood' }, { x:13, y:5, kind:'alarm' },
+      { x:14, y:9, kind:'signal' },
+    ],
     tiles: [
       '#################',
       '#...............#',
@@ -161,7 +203,7 @@ const LAYOUTS = Object.freeze({
       '#################',
     ],
     playerStart: { x: 1, y: 9 },
-    npcNames: ['詹岚', '郑吒'],
+    npcNames: ['詹岚', '张杰'],
     npcPositions: [{ x: 5, y: 9 }, { x: 11, y: 7 }],
     required: { x: 8, y: 5, name: '列车启动台', icon: '启', dialogue: [
       { speaker: '红后', text: '回归列车启动。三分钟后封锁全部通道。' },
@@ -186,16 +228,20 @@ export function createChapterOneExplorationScenario(encounter, theme) {
   const npcTwo = `${encounter.id}-npc-2`;
   const requiredObject = `${encounter.id}-required-object`;
   const [npcOnePosition, npcTwoPosition] = layout.npcPositions;
+  const portraitFor = name => name === '张杰' ? '/assets/characters/zhang_jie.jpg' : '/assets/characters/zhan_lan.jpg';
   return {
     id: encounter.id, title: encounter.title, subtitle: encounter.subtitle, region: layout.region,
     width: 17, height: 11, tiles: [...layout.tiles], playerStart: { ...layout.playerStart },
-    background: encounter.background, theme: { ...theme, label: layout.region }, objective: layout.objective,
+    background: encounter.background,
+    theme: { ...theme, floor: layout.visualStyle.floor, wall: layout.visualStyle.wall, glow: layout.visualStyle.glow, label: layout.region },
+    visualStyle: { ...layout.visualStyle }, decorations: layout.decorations.map(decoration => ({ ...decoration })),
+    objective: layout.objective,
     entities: [
-      { id: npcOne, type: 'npc', ...npcOnePosition, required: true, name: layout.npcNames[0], dialogue: dialogueSlice(encounter, 0, 2), icon: '人', color: '#79d9ff' },
-      { id: npcTwo, type: 'npc', ...npcTwoPosition, required: true, name: layout.npcNames[1], dialogue: dialogueSlice(encounter, 2, 4), icon: '队', color: theme.glow },
+      { id: npcOne, type: 'npc', ...npcOnePosition, required: true, name: layout.npcNames[0], portrait: portraitFor(layout.npcNames[0]), dialogue: dialogueSlice(encounter, 0, 2), icon: '人', color: '#79d9ff' },
+      { id: npcTwo, type: 'npc', ...npcTwoPosition, required: true, name: layout.npcNames[1], portrait: portraitFor(layout.npcNames[1]), dialogue: dialogueSlice(encounter, 2, 4), icon: '队', color: theme.glow },
       { id: requiredObject, type: 'object', ...layout.required, required: true, color: '#ffd16f' },
       { id: `${encounter.id}-tactical-clue`, type: 'object', ...layout.clue, clue: true, required: false, color: '#8fe7ff' },
-      { id: `${encounter.id}-supply`, type: 'item', ...layout.supply, name: encounter.order % 2 ? '战术急救包' : '群体止血喷雾', itemId: encounter.order % 2 ? 'first_aid' : 'team_spray', quantity: 1, icon: '补', color: '#79e6a3' },
+      { id: `${encounter.id}-supply`, type: 'item', ...layout.supply, name: encounter.order % 2 ? '战术急救包' : '群体止血喷雾', itemId: encounter.order % 2 ? 'first_aid' : 'team_spray', visual: encounter.order % 2 ? 'medkit' : 'spray', quantity: 1, icon: encounter.order % 2 ? '十' : '雾', color: '#79e6a3' },
       { id: `${encounter.id}-battle`, type: 'battle', ...layout.battle, encounterId: encounter.id, requires: [npcOne, npcTwo, requiredObject], icon: '敌', color: '#ff5959', lockedText: '队伍尚未汇合，现场也没有调查完毕。贸然接敌会让所有人送命。' },
       { id: `${encounter.id}-exit`, type: 'exit', ...layout.exit, icon: '出', color: '#ffd16f', lockedText: '战斗目标尚未完成，撤离通道仍被封锁。' },
     ],

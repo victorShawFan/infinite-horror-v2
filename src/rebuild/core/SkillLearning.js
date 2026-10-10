@@ -11,6 +11,7 @@ export function learnSkill(profile, skillId, catalog) {
   const skill = catalog[skillId];
   if (!skill) return { ok: false, error: 'skill_not_found', profile: next };
   if (skill.learnable === false) return { ok: false, error: 'skill_not_learnable', profile: next };
+  if (skill.exchangeOnly) return { ok: false, error: 'skill_requires_enhancement', profile: next };
   if (next.learnedSkills.includes(skillId)) return { ok: false, error: 'already_learned', profile: next };
   if (skill.prerequisite && !next.learnedSkills.includes(skill.prerequisite)) {
     return { ok: false, error: 'prerequisite_missing', prerequisite: skill.prerequisite, profile: next };

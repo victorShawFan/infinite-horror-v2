@@ -29,6 +29,12 @@ export function canLaunchEncounter(progress, encounterId, encounters = CHAPTER_O
   return index >= 0 && index <= normalized.unlockedIndex;
 }
 
+export function getEncounterMode(progress, encounterId, encounters = CHAPTER_ONE_ENCOUNTERS) {
+  const normalized=createCampaignProgress(progress,encounters);
+  if(!canLaunchEncounter(normalized,encounterId,encounters))return'locked';
+  return normalized.completed.includes(encounterId)?'replay':'first-clear';
+}
+
 export function settleEncounter(progress, encounterId, result, encounters = CHAPTER_ONE_ENCOUNTERS) {
   const normalized = createCampaignProgress(progress, encounters);
   const index = encounters.findIndex(encounter => encounter.id === encounterId);
@@ -52,7 +58,10 @@ export function settleEncounter(progress, encounterId, result, encounters = CHAP
     ok: true,
     firstClear,
     progress: nextProgress,
-    rewards: { ...(firstClear ? encounter.rewards : encounter.repeatRewards) },
+    rewards: {
+      ...(firstClear ? encounter.rewards : encounter.repeatRewards),
+      sideStories: { ...((firstClear ? encounter.rewards : encounter.repeatRewards)?.sideStories || {}) },
+    },
   };
 }
 

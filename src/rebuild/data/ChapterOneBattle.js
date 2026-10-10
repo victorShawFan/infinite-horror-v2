@@ -1,4 +1,6 @@
 import { getProgressionBonuses } from '../core/PlayerProgression.js';
+import { getLordGodBonuses } from '../core/LordGodExchange.js';
+import { getGeneLockBonuses } from '../core/RebuildGeneLock.js';
 
 export const DEFAULT_PROFILE = Object.freeze({
   rewardPoints: 900,
@@ -9,6 +11,9 @@ export const DEFAULT_PROFILE = Object.freeze({
   skillSlots: 4,
   battlesWon: 0,
   inventory: { first_aid: 1, team_spray: 0 },
+  sideStories: { D: 0, C: 0, B: 0, A: 0, S: 0 },
+  bodyRanks: {}, ownedEnhancements: [], ownedEquipment: [], equippedWeapon: null, equippedArmor: null,
+  geneLockStage: 0,
 });
 
 export const PARTY_BLUEPRINTS = Object.freeze([
@@ -226,7 +231,7 @@ export const CHAPTER_ONE_ENCOUNTERS = Object.freeze([
     background: '/assets/scenes/1-6_六小时回归_背景.jpg',
     threat: '首领',
     boss: true,
-    rewards: { exp: 420, points: 620 },
+    rewards: { exp: 420, points: 620, sideStories: { D: 1 } },
     repeatRewards: { exp: 100, points: 150 },
     enemies: [
       {
@@ -249,18 +254,23 @@ export const ENCOUNTER = CHAPTER_ONE_ENCOUNTERS[1];
 
 export function createParty(profile) {
   const bonuses = getProgressionBonuses(profile.level);
+  const lordGod = getLordGodBonuses(profile);
+  const geneLock = getGeneLockBonuses(profile.geneLockStage);
   return PARTY_BLUEPRINTS.map(unit => {
     if (unit.id !== 'zheng') return { ...unit, skills: [...(unit.skills || [])] };
-    const maxHp = unit.maxHp + bonuses.maxHp;
-    const maxMp = unit.maxMp + bonuses.maxMp;
+    const maxHp = unit.maxHp + bonuses.maxHp + lordGod.maxHp + geneLock.maxHp;
+    const maxMp = unit.maxMp + bonuses.maxMp + lordGod.maxMp;
     return {
       ...unit,
       hp: maxHp,
       maxHp,
       mp: maxMp,
       maxMp,
-      atk: unit.atk + bonuses.atk,
-      def: unit.def + bonuses.def,
+      atk: Math.max(1,unit.atk + bonuses.atk + lordGod.atk + geneLock.atk),
+      def: Math.max(0,unit.def + bonuses.def + lordGod.def + geneLock.def),
+      spd: Math.max(0,unit.spd + lordGod.spd + geneLock.spd), crit: Math.max(0,unit.crit + lordGod.crit + geneLock.crit),
+      ...(lordGod.attackRange?{attackRange:lordGod.attackRange}:{}),
+      ...(lordGod.damageType?{damageType:lordGod.damageType}:{}),
       skills: [...(profile.equippedSkills || [])],
       inventory: { ...(profile.inventory || {}) },
     };

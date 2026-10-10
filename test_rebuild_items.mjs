@@ -21,6 +21,7 @@ function engine(inventory) {
 }
 
 console.log('\n[ Rebuild ItemSystem ]');
+test('不同补给类型拥有不同素材标识而同类保持一致',()=>{assert.equal(ITEM_CATALOG.first_aid.visual,'medkit');assert.equal(ITEM_CATALOG.team_spray.visual,'spray');assert.notEqual(ITEM_CATALOG.first_aid.visual,ITEM_CATALOG.team_spray.visual);});
 
 test('主神空间购买补给扣除奖励点并增加库存', () => {
   const result = purchaseItem({ rewardPoints: 300, inventory: {} }, 'first_aid', 2, ITEM_CATALOG);

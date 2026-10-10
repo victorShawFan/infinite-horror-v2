@@ -13,11 +13,36 @@ export function normalizeAudioPreference(value) {
   return value === true || value === 'true';
 }
 
+export function getMusicThemeForScene(scene, context = {}) {
+  if (scene === 'hub') return 'lord-god';
+  if (scene === 'battle') return context.boss ? 'boss' : 'combat';
+  if (scene === 'exploration' || scene === 'briefing') {
+    return { 1:'bio-horror', 2:'alien-horror', 3:'curse-horror', 4:'tomb-horror' }[Number(context.chapter || 1)] || 'bio-horror';
+  }
+  if (scene === 'epilogue') return 'epilogue';
+  return 'title';
+}
+
+const MUSIC_THEMES = Object.freeze({
+  title:         { frequencies:[55,82.41,110], wave:'sine', gain:.052, pulse:.075 },
+  'lord-god':    { frequencies:[65.41,98,130.81,196], wave:'sine', gain:.047, pulse:.11 },
+  'bio-horror':  { frequencies:[46.25,69.3,92.5], wave:'triangle', gain:.045, pulse:.19 },
+  'alien-horror':{ frequencies:[43.65,65.41,87.31], wave:'sawtooth', gain:.028, pulse:.23 },
+  'curse-horror':{ frequencies:[41.2,61.74,77.78], wave:'sine', gain:.052, pulse:.13 },
+  'tomb-horror': { frequencies:[55,73.42,110], wave:'triangle', gain:.039, pulse:.09 },
+  combat:        { frequencies:[55,82.41,123.47], wave:'sawtooth', gain:.034, pulse:.36 },
+  boss:          { frequencies:[36.71,55,73.42,110], wave:'sawtooth', gain:.044, pulse:.48 },
+  epilogue:      { frequencies:[65.41,98,130.81,164.81], wave:'sine', gain:.052, pulse:.065 },
+});
+
 export class RebuildAudio {
   constructor({ muted = false } = {}) {
     this.ctx = null;
     this.master = null;
     this.muted = normalizeAudioPreference(muted);
+    this.musicTheme = 'title';
+    this.musicNodes = [];
+    this.musicBus = null;
   }
 
   init() {
@@ -29,6 +54,7 @@ export class RebuildAudio {
       this.master = this.ctx.createGain();
       this.master.gain.value = this.muted ? 0 : 0.24;
       this.master.connect(this.ctx.destination);
+      this._startMusic();
       return true;
     } catch {
       this.ctx = null;
@@ -48,6 +74,53 @@ export class RebuildAudio {
   toggleMuted() {
     this.setMuted(!this.muted);
     return this.muted;
+  }
+
+  setMusicTheme(theme) {
+    const resolved = MUSIC_THEMES[theme] ? theme : 'title';
+    if (resolved === this.musicTheme && this.musicNodes.length) return;
+    this.musicTheme = resolved;
+    if (this.ctx) this._startMusic();
+  }
+
+  _stopMusic() {
+    for (const node of this.musicNodes) {
+      try { node.stop?.(); } catch {}
+      try { node.disconnect?.(); } catch {}
+    }
+    this.musicNodes = [];
+    try { this.musicBus?.disconnect?.(); } catch {}
+    this.musicBus = null;
+  }
+
+  _startMusic() {
+    if (!this.ctx || !this.master) return;
+    this._stopMusic();
+    const theme = MUSIC_THEMES[this.musicTheme] || MUSIC_THEMES.title;
+    const now = this.ctx.currentTime;
+    const filter = this.ctx.createBiquadFilter();
+    filter.type = 'lowpass';
+    filter.frequency.value = this.musicTheme === 'combat' || this.musicTheme === 'boss' ? 520 : 310;
+    filter.Q.value = 1.2;
+    this.musicBus = this.ctx.createGain();
+    this.musicBus.gain.value = theme.gain;
+    filter.connect(this.musicBus);
+    this.musicBus.connect(this.master);
+    for (const [index, frequency] of theme.frequencies.entries()) {
+      const oscillator = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+      oscillator.type = theme.wave;
+      oscillator.frequency.value = frequency;
+      oscillator.detune.value = (index - theme.frequencies.length / 2) * 3;
+      gain.gain.value = 1 / theme.frequencies.length;
+      oscillator.connect(gain); gain.connect(filter); oscillator.start(now);
+      this.musicNodes.push(oscillator, gain);
+    }
+    const lfo = this.ctx.createOscillator();
+    const lfoGain = this.ctx.createGain();
+    lfo.type = 'sine'; lfo.frequency.value = theme.pulse; lfoGain.gain.value = theme.gain * .36;
+    lfo.connect(lfoGain); lfoGain.connect(this.musicBus.gain); lfo.start(now);
+    this.musicNodes.push(lfo, lfoGain, filter);
   }
 
   play(cue) {

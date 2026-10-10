@@ -18,6 +18,16 @@ export const SKILL_CATALOG = Object.freeze({
     prerequisite: 'arc_sweep',
     desc: '燃烧血能席卷敌阵，对全体敌人造成强力血炎伤害。',
   },
+  red_flame: {
+    id:'red_flame',name:'红炎',icon:'炎',school:'血统',tier:2,exchangeOnly:true,
+    target:TARGET_KIND.ALL_ENEMIES,power:.9,mpCost:12,cooldown:2,cost:0,damageType:'fire',
+    desc:'以意志将血族能量引出体外，化为克制灵体的血色火焰。',
+  },
+  inner_burst: {
+    id:'inner_burst',name:'内力爆发',icon:'气',school:'内力',tier:2,exchangeOnly:true,
+    target:TARGET_KIND.SINGLE_ENEMY,power:1.7,mpCost:9,cooldown:2,cost:0,
+    desc:'沿经脉瞬间释放内力，对单一目标造成强力近战冲击。',
+  },
   psychic_lance: {
     id: 'psychic_lance', name: '精神穿刺', icon: '念', school: '精神', tier: 1,
     target: TARGET_KIND.SINGLE_ENEMY, power: 1.35, mpCost: 7, cooldown: 1, cost: 220,

@@ -49,7 +49,7 @@ export const CHAPTER_FOUR_ENCOUNTERS = Object.freeze([
   intro:[{speaker:'伊莫顿',text:'三千年过去，活人的贪欲仍把祭品送到我的棺前。'},{speaker:'张恒',text:'近卫交给我。圣火能烧穿他的沙化，但别让他有喘息时间。'},{speaker:'詹岚',text:'印洲队还在附近。我们必须在陵墓彻底坍塌前结束。'},{speaker:'郑吒',text:'为了齐腾一和零点——真经和活着的人，我都要带回去！'}],
   victory:{title:'真经记住所有牺牲者',text:'伊莫顿在圣火中化作失去意志的黄沙。夕阳下，复活真经翻开第一页，死者的名字终于有了归路。'},
   epilogue:{chapterLabel:'CHAPTER FOUR COMPLETE',title:'神鬼秘宝',suffix:'完',quote:'“只要真经还在，他们就不只是回忆。”',text:'齐腾一和零点倒在真经近旁，张恒与萧宏律第一次真正成为中洲队的一员。郑吒带回的不只是一本书，而是未来向死亡讨回同伴的可能。',stats:['第四章任务 6 / 6','复活真经已取得','下一世界：死神来了']},
-  rewards:{exp:3200,points:3500},repeatRewards:{exp:800,points:875},
+  rewards:{exp:3200,points:3500,sideStories:{B:1}},repeatRewards:{exp:800,points:875},
   enemies:[mummy({id:'mummy-elite-a',name:'木乃伊近卫α',role:'棺椁守卫',hp:224,maxHp:224,atk:43,def:18,spd:13}),foe({id:'imhotep',name:'伊莫顿',role:'不死大祭司',portrait:IMHOTEP,hp:560,maxHp:560,mp:56,maxMp:56,atk:45,def:18,spd:14,crit:9,skills:['sand_spear','plague_wind'],boss:true,phase:1,phaseThreshold:.45,phaseAtkBonus:6,physicalResist:.3,weaknesses:['fire','holy'],roundRegen:18,damageType:'dark',attackRange:'ranged'}),mummy({id:'mummy-elite-b',name:'木乃伊近卫β',role:'棺椁守卫',hp:224,maxHp:224,atk:43,def:18,spd:12})]
  }
 ]);

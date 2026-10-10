@@ -127,7 +127,7 @@ export const CHAPTER_TWO_ENCOUNTERS = Object.freeze([
       text: '中洲队带着新的同伴回到主神空间，也带回了无法被奖励点抹平的名字。楚轩开始理解牺牲不是数学，郑吒则第一次看见自己必须成为怎样的队长。',
       stats: ['第二章任务 6 / 6', '基因锁二阶觉醒', '下一世界：咒怨'],
     },
-    rewards: { exp: 980, points: 1200 }, repeatRewards: { exp: 245, points: 300 },
+    rewards: { exp: 980, points: 1200, sideStories: { C: 1 } }, repeatRewards: { exp: 245, points: 300 },
     rules: { roundHazard: { id: 'self-destruct', name: '自毁冲击', interval: 2, damage: 14, targetSide: 'party' } },
     enemies: [
       enemy({ id: 'queen-guard-a', name: '皇后护卫α', role: '近卫封锁', hp: 168, maxHp: 168, atk: 36, def: 14, spd: 16, onDefeatDamage: 11 }),

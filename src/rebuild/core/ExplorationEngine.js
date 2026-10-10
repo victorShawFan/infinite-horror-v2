@@ -13,6 +13,10 @@ function cloneState(source, scenario) {
   };
 }
 
+export function getExplorationEntryState(savedState, replay = false) {
+  return replay ? null : (savedState || null);
+}
+
 export class ExplorationEngine {
   constructor(scenario, savedState = null) {
     if (!scenario?.width || !scenario?.height || !Array.isArray(scenario.tiles)) throw new Error('scenario_required');

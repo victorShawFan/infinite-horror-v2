@@ -1,12 +1,14 @@
 import { TurnBattleEngine, ACTION_KIND, TARGET_KIND } from './core/TurnBattleEngine.js';
 import { learnSkill, equipSkill, unequipSkill } from './core/SkillLearning.js';
-import { createCampaignProgress, canLaunchEncounter, settleEncounter, getCampaignStatus } from './core/CampaignProgress.js';
+import { createCampaignProgress, canLaunchEncounter, settleEncounter, getCampaignStatus, getEncounterMode } from './core/CampaignProgress.js';
+import { LORD_GOD_EXCHANGE, purchaseEnhancement, equipOwnedEquipment, getEnhancementPrice, getLordGodBonuses } from './core/LordGodExchange.js';
+import { applyGeneLockMilestone, inferGeneLockStage } from './core/RebuildGeneLock.js';
 import { chooseEnemyAction, describeEnemyIntent } from './core/EnemyTurnAI.js';
 import { buildPresentationCues } from './core/BattlePresentation.js';
-import { RebuildAudio, getAudioCueForPresentation } from './core/RebuildAudio.js';
+import { RebuildAudio, getAudioCueForPresentation, getMusicThemeForScene } from './core/RebuildAudio.js';
 import { applyExperience, experienceToNextLevel } from './core/PlayerProgression.js';
 import { ITEM_CATALOG, purchaseItem, syncInventoryFromCombatant } from './core/ItemSystem.js';
-import { ExplorationEngine } from './core/ExplorationEngine.js';
+import { ExplorationEngine, getExplorationEntryState } from './core/ExplorationEngine.js';
 import { applyBattlePreparation } from './core/ExplorationBattlePreparation.js';
 import { buildExplorationHUD } from './core/ExplorationPresentation.js';
 import { BattleViewLifecycle } from './core/BattleViewLifecycle.js';
@@ -43,22 +45,30 @@ let battleViewToken = null;
 function loadProfile() {
   try {
     const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || 'null');
-    if (saved) return {
+    if (saved) {
+      const campaign=createCampaignProgress(saved,ALL_REBUILD_ENCOUNTERS);
+      return {
       ...DEFAULT_PROFILE,
       ...saved,
       learnedSkills: [...(saved.learnedSkills || DEFAULT_PROFILE.learnedSkills)],
       equippedSkills: [...(saved.equippedSkills || DEFAULT_PROFILE.equippedSkills)],
       inventory: { ...DEFAULT_PROFILE.inventory, ...(saved.inventory || {}) },
+      sideStories: { ...DEFAULT_PROFILE.sideStories, ...(saved.sideStories || {}) },
+      bodyRanks: { ...(saved.bodyRanks || {}) },
+      ownedEnhancements: [...(saved.ownedEnhancements || [])],
+      ownedEquipment: [...(saved.ownedEquipment || [])],
       explorationStates: { ...(saved.explorationStates || {}) },
       viewedEpilogues: [...(saved.viewedEpilogues || [])],
-      campaign: createCampaignProgress(saved, ALL_REBUILD_ENCOUNTERS),
-    };
+      geneLockStage: inferGeneLockStage(campaign.completed,saved.geneLockStage),
+      campaign,
+    };}
   } catch {}
   const fresh = {
     ...DEFAULT_PROFILE,
     learnedSkills: [...DEFAULT_PROFILE.learnedSkills],
     equippedSkills: [...DEFAULT_PROFILE.equippedSkills],
     inventory: { ...DEFAULT_PROFILE.inventory },
+    sideStories: { ...DEFAULT_PROFILE.sideStories }, bodyRanks: {}, ownedEnhancements: [], ownedEquipment: [],
     explorationStates: {},
     viewedEpilogues: [],
   };
@@ -84,7 +94,7 @@ function createAudioToggle() {
   button.className = 'audio-toggle';
   button.type = 'button';
   button.setAttribute('aria-label', '切换声音');
-  const refresh = () => { button.textContent = rebuildAudio.muted ? '声音：关' : '声音：开'; };
+  const refresh = () => { button.textContent = rebuildAudio.muted ? 'BGM / 音效：关' : 'BGM / 音效：开'; };
   refresh();
   button.onclick = () => {
     rebuildAudio.init();
@@ -97,6 +107,7 @@ function createAudioToggle() {
 }
 
 function renderTitle() {
+  rebuildAudio.setMusicTheme(getMusicThemeForScene('title'));
   exploration = null;
   app.innerHTML = [
     '<section class="screen title-screen">',
@@ -122,22 +133,28 @@ function schoolColor(school) {
 }
 
 function renderHub() {
+  rebuildAudio.setMusicTheme(getMusicThemeForScene('hub'));
   exploration = null;
   const equipped = profile.equippedSkills.map(id => SKILL_CATALOG[id]).filter(Boolean);
-  const skills = Object.values(SKILL_CATALOG).filter(skill => skill.learnable !== false && !['precision_shot', 'suppressive_fire'].includes(skill.id));
+  const skills = Object.values(SKILL_CATALOG).filter(skill => skill.learnable !== false && (!skill.exchangeOnly || profile.learnedSkills.includes(skill.id)) && !['precision_shot', 'suppressive_fire'].includes(skill.id));
   const campaignStatus = getCampaignStatus(profile.campaign, ALL_REBUILD_ENCOUNTERS);
   const nextLevelExp = experienceToNextLevel(profile.level);
+  const lordGodBonuses = getLordGodBonuses(profile);
+  const equippedWeapon = LORD_GOD_EXCHANGE[profile.equippedWeapon];
+  const equippedArmor = LORD_GOD_EXCHANGE[profile.equippedArmor];
   const items = Object.values(ITEM_CATALOG);
   app.innerHTML = [
     '<section class="screen hub-screen">',
     '  <header class="topbar">',
-    '    <div><div class="eyebrow">Lord God Space / 00:09:42:17</div><h1>强化大厅 <span class="accent">·</span> 技能兑换</h1></div>',
-    '    <div class="currency glass">⬡ 奖励点 <strong>' + profile.rewardPoints + '</strong></div>',
+    '    <div><div class="eyebrow">Lord God Space / 00:09:42:17</div><h1>强化大厅 <span class="accent">·</span> 主神兑换</h1></div>',
+    '    <div class="currency glass">⬡ 奖励点 <strong>' + profile.rewardPoints + '</strong><small>D ' + (profile.sideStories.D||0) + ' · C ' + (profile.sideStories.C||0) + ' · B ' + (profile.sideStories.B||0) + '</small></div>',
     '  </header>',
+    '  <div class="lord-god-presence glass"><div class="lord-god-orb"><i></i><i></i><b></b></div><div><div class="eyebrow">LORD GOD ONLINE / 意识连接稳定</div><h2>向主神兑换力量</h2><p>身体六项 · 近战与远程装备 · 血统与能量体系 · 技能与防护道具 · 已通关世界重返</p></div><span>⬡</span></div>',
     '  <div class="hub-grid">',
     '    <aside class="profile-panel glass">',
     '      <div class="profile-hero"><img src="/assets/characters/zheng_zha.jpg" alt="郑吒"><div><div class="eyebrow">中洲队 · 近战核心</div><h2>郑吒 <small>Lv.' + profile.level + '</small></h2><p style="color:#8390a3;font-size:11px;line-height:1.7">主神不会替你选择道路。进入恐怖片前，决定这一次要带上哪些力量。</p></div></div>',
     '      <div class="level-progress"><span>轮回经验</span><div class="level-bar"><i style="width:' + Math.min(100, profile.exp / nextLevelExp * 100) + '%"></i></div><strong>' + profile.exp + ' / ' + nextLevelExp + '</strong></div>',
+    '      <div class="growth-summary"><div><span>主神永久强化 · 基因锁 ' + (profile.geneLockStage||0) + '阶</span><b>HP +' + lordGodBonuses.maxHp + ' · MP +' + lordGodBonuses.maxMp + '</b><b>ATK +' + lordGodBonuses.atk + ' · DEF +' + lordGodBonuses.def + ' · SPD +' + lordGodBonuses.spd + '</b></div><div><span>当前装备</span><b>' + (equippedWeapon?.name || '徒手 / 基础武器') + '</b><b>' + (equippedArmor?.name || '无额外防护') + '</b></div></div>',
     '      <div class="eyebrow" style="margin-top:20px">已装备技能 ' + equipped.length + ' / ' + profile.skillSlots + '</div>',
     '      <div class="build-list">' + Array.from({ length: profile.skillSlots }, (_, index) => {
       const skill = equipped[index];
@@ -149,6 +166,11 @@ function renderHub() {
     '      <button class="secondary hub-launch" id="back-title">返回标题</button>',
     '    </aside>',
     '    <section class="skills-panel glass">',
+    '      <div class="eyebrow">Lord God Exchange / 原著式多路线成长</div>',
+    '      <h2 style="margin:6px 0 18px">主神强化目录</h2>',
+    '      <div class="exchange-group"><div class="exchange-heading"><b>身体六项</b><span>可重复升级 · 每级价格递增</span></div><div class="exchange-grid body">' + Object.values(LORD_GOD_EXCHANGE).filter(entry=>entry.category==='body').map(renderExchangeCard).join('') + '</div></div>',
+    '      <div class="exchange-group"><div class="exchange-heading"><b>血统 / 能量 / 装备</b><span>支线剧情是稀有兑换凭证</span></div><div class="exchange-grid">' + Object.values(LORD_GOD_EXCHANGE).filter(entry=>entry.category!=='body').map(renderExchangeCard).join('') + '</div></div>',
+    '      <div class="exchange-divider"></div>',
     '      <div class="eyebrow">Skill Archive / 技能并非自动生效，需要学习并装入技能栏</div>',
     '      <h2 style="margin:6px 0 18px">可兑换技能</h2>',
     '      <div class="skill-tree">' + skills.map(skill => renderLearnCard(skill)).join('') + '</div>',
@@ -172,7 +194,37 @@ function renderHub() {
   document.querySelectorAll('[data-buy-item]').forEach(button => {
     button.onclick = () => handlePurchaseItem(button.dataset.buyItem);
   });
+  document.querySelectorAll('[data-enhancement]').forEach(button => {
+    button.onclick = () => handleEnhancementPurchase(button.dataset.enhancement);
+  });
+  document.querySelectorAll('[data-equip-owned]').forEach(button => {
+    button.onclick=()=>handleEquipmentSwitch(button.dataset.equipOwned);
+  });
 }
+
+function enhancementOwned(entry) {
+  if(entry.category==='body')return Number(profile.bodyRanks?.[entry.id]||0)>=entry.maxRank;
+  return (profile.ownedEnhancements||[]).includes(entry.id)||(profile.ownedEquipment||[]).includes(entry.id);
+}
+
+function renderExchangeCard(entry) {
+  const rank=Number(profile.bodyRanks?.[entry.id]||0);
+  const owned=enhancementOwned(entry);
+  const price=getEnhancementPrice(profile,entry.id);
+  const branch=Object.entries(entry.sideStory||{}).map(([grade,count])=>grade+'×'+count).join(' ');
+  const equipped=profile.equippedWeapon===entry.id||profile.equippedArmor===entry.id;
+  return ['<article class="exchange-card category-' + entry.category + ' ' + (owned?'owned ':'') + (equipped?'equipped':'') + '">',
+    '<span class="exchange-icon">'+entry.icon+'</span><div><small>'+({body:'身体素质',bloodline:'变异血统',energy:'能量体系',equipment:entry.range==='ranged'?'远程装备':entry.range==='melee'?'近战装备':'防护装备'}[entry.category]||entry.category)+'</small><b>'+entry.name+(entry.category==='body'?' · '+rank+'/'+entry.maxRank:'')+'</b><p>'+entry.desc+'</p></div>',
+    '<button class="secondary" '+(owned&&!equipped&&entry.category==='equipment'?'data-equip-owned="'+entry.id+'"':'data-enhancement="'+entry.id+'"')+' '+(owned&&(equipped||entry.category!=='equipment')?'disabled':'')+'>'+(equipped?'已装备':owned&&entry.category==='equipment'?'装备':owned?'已兑换':'⬡ '+price+(branch?' · '+branch:''))+'</button></article>'].join('');
+}
+
+function handleEnhancementPurchase(enhancementId) {
+  const result=purchaseEnhancement(profile,enhancementId);
+  if(!result.ok){const messages={insufficient_points:'奖励点不足',insufficient_side_story:'缺少对应等级的支线剧情',already_owned:'已经兑换',max_rank:'该项身体强化已满'};toast(messages[result.error]||'无法兑换该强化','error');return;}
+  profile=result.profile;saveProfile();renderHub();toast('主神兑换完成：「'+result.entry.name+'」','good');
+}
+
+function handleEquipmentSwitch(equipmentId){const result=equipOwnedEquipment(profile,equipmentId);if(!result.ok){toast('无法装备该物品','error');return;}profile=result.profile;saveProfile();renderHub();toast('已装备「'+result.entry.name+'」','good');}
 
 function renderMissionGroups() {
   const groups = [
@@ -196,8 +248,8 @@ function renderSupplyCard(item) {
   const affordable = profile.rewardPoints >= item.cost;
   return [
     '<article class="supply-card">',
-    '  <span class="supply-icon">' + item.icon + '</span>',
-    '  <div class="supply-copy"><div><b>' + item.name + '</b><strong>持有 ×' + count + '</strong></div><p>' + item.desc + '</p></div>',
+    '  <span class="supply-icon item-visual-' + item.visual + '"><i></i><em>' + item.icon + '</em></span>',
+    '  <div class="supply-copy"><small>' + item.category + '</small><div><b>' + item.name + '</b><strong>持有 ×' + count + '</strong></div><p>' + item.desc + '</p></div>',
     '  <button class="secondary supply-buy" data-buy-item="' + item.id + '" ' + (!affordable ? 'disabled' : '') + '>⬡ ' + item.cost + ' · 购买</button>',
     '</article>',
   ].join('');
@@ -221,15 +273,18 @@ function showBriefing(encounterId) {
     return;
   }
   const mission = createRebuildEncounter(encounterId);
+  const mode = getEncounterMode(profile.campaign, encounterId, ALL_REBUILD_ENCOUNTERS);
+  const shownRewards = mode === 'replay' ? mission.repeatRewards : mission.rewards;
+  rebuildAudio.setMusicTheme(getMusicThemeForScene('briefing', { chapter: mission.chapterNumber || 1 }));
   app.innerHTML = [
     '<section class="screen briefing-screen" style="--briefing-bg:url(\'' + mission.background + '\')">',
     '  <div class="briefing-layout">',
-    '    <div class="briefing-heading"><div class="eyebrow">MISSION 0' + mission.order + ' · ' + mission.threat + '</div><h1>' + mission.title + '</h1><p>' + mission.briefing + '</p></div>',
+    '    <div class="briefing-heading"><div class="eyebrow">' + (mode==='replay'?'HISTORICAL INSTANCE / 历史副本':'MISSION 0'+mission.order) + ' · ' + mission.threat + '</div><h1>' + mission.title + '</h1><p>' + (mode==='replay'?'再次进入已经历的恐怖片世界，重置调查与战斗，获取经验和奖励点强化构筑。':mission.briefing) + '</p></div>',
     '    <div class="briefing-dialogue glass">' + mission.intro.map((beat, index) => [
       '<div class="story-beat"><span>0' + (index + 1) + '</span><div><b>' + beat.speaker + '</b><p>' + beat.text + '</p></div></div>',
     ].join('')).join('') + '</div>',
     '    <div class="briefing-footer">',
-    '      <div class="mission-reward">首通奖励 <strong>EXP +' + mission.rewards.exp + '</strong><strong>⬡ +' + mission.rewards.points + '</strong></div>',
+    '      <div class="mission-reward">' + (mode==='replay'?'副本奖励':'首通奖励') + ' <strong>EXP +' + shownRewards.exp + '</strong><strong>⬡ +' + shownRewards.points + '</strong></div>',
     '      <div><button class="secondary" id="briefing-back">返回整备</button><button class="primary" id="briefing-start">开始任务</button></div>',
     '    </div>',
     '  </div>',
@@ -246,7 +301,7 @@ function renderMissionCard(encounter) {
     '<button class="mission-card ' + (completed ? 'complete ' : '') + (!unlocked ? 'locked' : '') + '" data-encounter="' + encounter.id + '" ' + (!unlocked ? 'disabled' : '') + '>',
     '  <span class="mission-order">' + String(encounter.chapterOrder || encounter.order).padStart(2, '0') + '</span>',
     '  <span class="mission-copy"><b>' + encounter.title + '</b><small>' + encounter.briefing + '</small></span>',
-    '  <span class="mission-state">' + (!unlocked ? '锁定' : completed ? '重返' : encounter.threat) + '</span>',
+    '  <span class="mission-state">' + (!unlocked ? '锁定' : completed ? '历史副本' : encounter.threat) + '</span>',
     '</button>',
   ].join('');
 }
@@ -312,9 +367,10 @@ function startExploration(encounterId) {
     return;
   }
   encounter = createRebuildEncounter(encounterId);
+  rebuildAudio.setMusicTheme(getMusicThemeForScene('exploration', { chapter: encounter.chapterNumber || 1 }));
   explorationScenario = createExplorationScenario(encounter);
-  exploration = new ExplorationEngine(explorationScenario, profile.explorationStates?.[encounterId]);
-  if (profile.campaign.completed.includes(encounterId)) exploration.markBattleCleared();
+  const replay = profile.campaign.completed.includes(encounterId);
+  exploration = new ExplorationEngine(explorationScenario, getExplorationEntryState(profile.explorationStates?.[encounterId], replay));
   explorationDialogue = [];
   explorationDialogueIndex = 0;
   persistExplorationState();
@@ -338,15 +394,21 @@ function renderExplorationEntity(entity) {
   const cleared = entity.type === 'battle' && exploration.state.battleCleared;
   const open = entity.type === 'exit' && exploration.state.battleCleared;
   const focused = exploration.getInteractionTarget()?.id === entity.id;
-  const portrait = entity.type === 'battle' ? encounter.enemies[0]?.portrait : null;
+  const portrait = entity.type === 'battle' ? encounter.enemies[0]?.portrait : entity.portrait;
   return [
-    '<button class="map-entity ' + entity.type + ' ' + (resolved ? 'resolved ' : '') + (cleared ? 'cleared ' : '') + (open ? 'open ' : '') + (focused ? 'focused ' : '') + '"',
+    '<button class="map-entity ' + entity.type + ' ' + (entity.visual ? 'item-visual-' + entity.visual + ' ' : '') + (resolved ? 'resolved ' : '') + (cleared ? 'cleared ' : '') + (open ? 'open ' : '') + (focused ? 'focused ' : '') + '"',
     ' style="grid-column:' + (entity.x + 1) + ';grid-row:' + (entity.y + 1) + ';--entity-color:' + (entity.color || explorationScenario.theme.glow) + '"',
     ' data-map-entity="' + entity.id + '" aria-label="' + (entity.name || entity.type) + '">',
     portrait ? '<img src="' + portrait + '" alt="">' : '<span>' + (cleared ? '胜' : entity.icon || '?') + '</span>',
     '<small>' + (cleared ? '已清除' : entity.name || '') + '</small>',
     '</button>',
   ].join('');
+}
+
+function renderExplorationDecoration(decoration) {
+  const width = Math.max(1, Number(decoration.w || 1));
+  const height = Math.max(1, Number(decoration.h || 1));
+  return '<span class="map-decoration ' + decoration.kind + '" style="grid-column:' + (decoration.x + 1) + '/span ' + width + ';grid-row:' + (decoration.y + 1) + '/span ' + height + '">' + (decoration.label ? '<i>' + decoration.label + '</i>' : '') + '</span>';
 }
 
 function renderExploration() {
@@ -356,7 +418,7 @@ function renderExploration() {
   const recentDiscoveries = hud.discoveries.entries.slice(-3).reverse();
   const currentDialogue = explorationDialogue[explorationDialogueIndex];
   app.innerHTML = [
-    '<section class="screen exploration-screen theme-' + explorationScenario.theme.id + '" style="--explore-bg:url(\'' + encounter.background + '\');--map-floor:' + explorationScenario.theme.floor + ';--map-wall:' + explorationScenario.theme.wall + ';--map-glow:' + explorationScenario.theme.glow + '">',
+    '<section class="screen exploration-screen theme-' + explorationScenario.theme.id + ' visual-' + (explorationScenario.visualStyle?.id || 'facility') + '" style="--explore-bg:url(\'' + encounter.background + '\');--map-floor:' + explorationScenario.theme.floor + ';--map-wall:' + explorationScenario.theme.wall + ';--map-glow:' + explorationScenario.theme.glow + ';--map-ambient:' + (explorationScenario.visualStyle?.ambient || explorationScenario.theme.glow) + '">',
     ' <header class="explore-header">',
     '  <div><div class="eyebrow">' + encounter.chapter + ' · ' + explorationScenario.theme.label + '</div><h1>' + encounter.title + '</h1><p>' + encounter.subtitle + '</p></div>',
     '  <div class="explore-progress glass"><span>调查进度</span><b>' + completedRequired + ' / ' + hud.required.total + '</b><small>' + (exploration.state.battleCleared ? '威胁已清除 · 寻找出口' : explorationScenario.objective) + '</small></div>',
@@ -374,6 +436,7 @@ function renderExploration() {
     '  <main class="explore-stage glass"><div class="map-frame">',
     '   <div class="explore-map" style="--map-cols:' + explorationScenario.width + ';--map-rows:' + explorationScenario.height + '">',
     explorationScenario.tiles.flatMap((row, y) => [...row].map((tile, x) => '<span class="map-tile ' + (tile==='#'?'wall':'floor') + '" style="grid-column:' + (x+1) + ';grid-row:' + (y+1) + '"></span>')).join(''),
+    (explorationScenario.decorations || []).map(renderExplorationDecoration).join(''),
     explorationScenario.entities.map(renderExplorationEntity).join(''),
     '    <div class="explorer-player facing-' + exploration.state.facing + '" style="grid-column:' + (exploration.state.player.x+1) + ';grid-row:' + (exploration.state.player.y+1) + '"><img src="/assets/characters/zheng_zha.jpg" alt="郑吒"><i></i></div>',
     '   </div>',
@@ -450,6 +513,7 @@ function startBattle(encounterId = ALL_REBUILD_ENCOUNTERS[0].id, fromExploration
     return;
   }
   encounter = createRebuildEncounter(encounterId);
+  rebuildAudio.setMusicTheme(getMusicThemeForScene('battle', { boss: encounter.boss }));
   battleFromExploration = fromExploration;
   battleViewToken = battleViewLifecycle.begin();
   const preparation = fromExploration && exploration
@@ -828,10 +892,16 @@ function claimBattleResult() {
     return;
   }
   profile.campaign = settlement.progress;
+  const geneLockResult = applyGeneLockMilestone(profile, encounter.id, settlement.firstClear && result.result === 'victory');
+  profile = geneLockResult.profile;
   profile = syncInventoryFromCombatant(profile, engine.getCombatant('zheng'));
   let progression = null;
   if (result.result === 'victory') {
     profile.rewardPoints += settlement.rewards.points || 0;
+    profile.sideStories = { ...DEFAULT_PROFILE.sideStories, ...(profile.sideStories || {}) };
+    for (const [grade, count] of Object.entries(settlement.rewards.sideStories || {})) {
+      profile.sideStories[grade] = Number(profile.sideStories[grade] || 0) + Number(count || 0);
+    }
     profile.battlesWon += 1;
     progression = applyExperience(profile, settlement.rewards.exp || 0);
     profile = progression.profile;
@@ -853,13 +923,16 @@ function claimBattleResult() {
     renderExploration();
   } else if (settlement.firstClear && encounter.epilogue) renderChapterEpilogue(encounter.epilogue);
   else renderHub();
-  const rewardMessage = progression?.levelsGained > 0
+  const rewardMessage = geneLockResult.unlocked
+    ? '生死本能突破：基因锁 ' + geneLockResult.stage + '阶已开启'
+    : progression?.levelsGained > 0
     ? '等级提升至 Lv.' + profile.level + '，属性成长已写入战斗档案'
     : result.result === 'victory' ? '奖励与经验已写入轮回档案' : '已返回主神空间';
   toast(rewardMessage, result.result === 'victory' ? 'good' : 'normal');
 }
 
 function renderChapterEpilogue(epilogue) {
+  rebuildAudio.setMusicTheme(getMusicThemeForScene('epilogue'));
   const chapterLabel = epilogue.chapterLabel || 'CHAPTER ONE COMPLETE';
   const title = epilogue.title || '名为生化';
   const stats = epilogue.stats || [
