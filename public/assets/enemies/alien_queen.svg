@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 1080">
+  <defs>
+    <radialGradient id="bg"><stop stop-color="#422827"/><stop offset=".48" stop-color="#160d10"/><stop offset="1" stop-color="#020203"/></radialGradient>
+    <linearGradient id="shell" x2=".8" y2="1"><stop stop-color="#a07968"/><stop offset=".2" stop-color="#4b3030"/><stop offset=".54" stop-color="#110d10"/><stop offset=".82" stop-color="#5a3c37"/><stop offset="1" stop-color="#080608"/></linearGradient>
+    <linearGradient id="bone"><stop stop-color="#1a1012"/><stop offset=".52" stop-color="#976d5b"/><stop offset="1" stop-color="#0a0709"/></linearGradient>
+    <filter id="grain"><feTurbulence baseFrequency=".34" numOctaves="5" seed="71" result="n"/><feColorMatrix in="n" type="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 .1 0" result="g"/><feBlend in="SourceGraphic" in2="g" mode="soft-light"/></filter>
+    <filter id="glow"><feGaussianBlur stdDeviation="12"/></filter>
+  </defs>
+  <rect width="720" height="1080" fill="url(#bg)"/>
+  <path d="M0 192h720M0 510h720M0 838h720M117 0v1080M360 0v1080M603 0v1080" stroke="#ff775f" opacity=".12"/>
+  <ellipse cx="360" cy="448" rx="315" ry="390" fill="#ff593f" opacity=".06" filter="url(#glow)"/>
+  <g filter="url(#grain)">
+    <path d="M88 1080l55-297 128-156h178l128 156 55 297z" fill="url(#shell)" stroke="#9c6f62" stroke-width="8"/>
+    <path d="M123 852L19 1021M597 852l104 169" fill="none" stroke="url(#bone)" stroke-width="84" stroke-linecap="round"/>
+    <path d="M170 205L71 67l164 72L360 18l125 121 164-72-99 138-52 86H222z" fill="url(#shell)" stroke="#a87968" stroke-width="10"/>
+    <path d="M214 226Q226 72 360 38q136 34 146 188l-24 347q-13 142-122 178-108-36-123-178z" fill="url(#shell)" stroke="#9f7464" stroke-width="9"/>
+    <path d="M164 247Q238 74 360 35q124 39 197 212l-96-67-101 112-100-112z" fill="#0b080a" stroke="#8e655d" stroke-width="9"/>
+    <path d="M203 247l42-132 37 105 78-177 78 177 38-105 41 132-93-54-64 100-63-100z" fill="url(#bone)"/>
+    <path d="M237 344q54-72 104-30M483 344q-54-72-104-30" fill="none" stroke="#c49782" stroke-width="16" opacity=".32"/>
+    <path d="M251 367q49-2 89 39-58 35-107 3zM469 367q-49-2-89 39 58 35 107 3z" fill="#040304" stroke="#b57d6e" stroke-width="7"/>
+    <path d="M275 431l-39 145 124 94 124-94-40-145-28 124-56 45-55-45z" fill="#080507"/>
+    <path d="M254 563q106 110 212 0l-23 115q-83 83-166 0z" fill="#16090b" stroke="#b17865" stroke-width="7"/>
+    <g fill="#f0c4a5"><path d="M273 590l25 74 22-57 22 80 18-65 19 65 22-80 22 57 25-74z"/><path d="M298 681l22-53 22 69 18-54 19 54 22-69 22 53z" opacity=".66"/></g>
+    <path d="M190 725l-98-102M530 725l98-102" stroke="#9a6d60" stroke-width="32" stroke-linecap="round"/>
+    <path d="M273 715l-39 212 126 153 128-153-41-212z" fill="#140e10" stroke="#87625a" stroke-width="7"/>
+    <path d="M238 824l122 103 124-103M360 927v153" fill="none" stroke="#bc8a75" stroke-width="10" opacity=".58"/>
+    <path d="M461 736q157-9 182 113 22 108-88 191" fill="none" stroke="url(#bone)" stroke-width="61" stroke-linecap="round"/>
+  </g>
+  <g fill="#ffb48c" filter="url(#glow)" opacity=".8"><circle cx="267" cy="394" r="9"/><circle cx="453" cy="394" r="9"/></g>
+  <g fill="#fff0d8"><circle cx="267" cy="394" r="3"/><circle cx="453" cy="394" r="3"/></g>
+</svg>

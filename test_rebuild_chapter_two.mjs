@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import { TurnBattleEngine, ACTION_KIND, TARGET_KIND } from './src/rebuild/core/TurnBattleEngine.js';
 import { chooseEnemyAction } from './src/rebuild/core/EnemyTurnAI.js';
 import { createCampaignProgress, canLaunchEncounter, settleEncounter } from './src/rebuild/core/CampaignProgress.js';
@@ -75,6 +76,17 @@ test('第二章保留旧版六节点且每场都有完整叙事与敌群', () =>
     assert.ok(encounter.intro.length >= 3, encounter.id + ' intro');
     assert.ok(encounter.enemies.length >= 2, encounter.id + ' enemies');
     assert.ok(encounter.victory?.text, encounter.id + ' victory text');
+  }
+});
+
+test('异形、抱脸虫与皇后使用各自独立画像而不是复用爬行者或暴君', () => {
+  const portraits = new Set(CHAPTER_TWO_ENCOUNTERS.flatMap(encounter => encounter.enemies.map(enemy => enemy.portrait)));
+  assert.equal([...portraits].some(path => /crawler.jpg|tyrant.jpg/.test(path)), false);
+  for (const asset of ['/assets/enemies/alien_drone.svg', '/assets/enemies/facehugger.svg', '/assets/enemies/alien_queen.svg']) {
+    assert.equal(portraits.has(asset), true, asset + ' referenced');
+    const svg = readFileSync('./public' + asset, 'utf8');
+    assert.match(svg, /^<svg/);
+    assert.equal(svg.length > 1200, true, asset + ' detailed artwork');
   }
 });
 

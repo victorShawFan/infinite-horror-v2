@@ -1,5 +1,6 @@
-const XENO = '/assets/enemies/crawler.jpg';
-const FACEHUGGER = '/assets/enemies/tyrant.jpg';
+const XENO = '/assets/enemies/alien_drone.svg';
+const FACEHUGGER = '/assets/enemies/facehugger.svg';
+const QUEEN = '/assets/enemies/alien_queen.svg';
 
 const enemy = (data) => ({
   mp: 0, maxMp: 0, crit: 4, skills: [], portrait: XENO, attackRange: 'melee',
@@ -132,7 +133,7 @@ export const CHAPTER_TWO_ENCOUNTERS = Object.freeze([
     enemies: [
       enemy({ id: 'queen-guard-a', name: '皇后护卫α', role: '近卫封锁', hp: 168, maxHp: 168, atk: 36, def: 14, spd: 16, onDefeatDamage: 11 }),
       enemy({
-        id: 'alien-queen', name: '异形皇后', role: '蜂巢母体', hp: 380, maxHp: 380, mp: 44, maxMp: 44, atk: 42, def: 19, spd: 12, crit: 10,
+        id: 'alien-queen', name: '异形皇后', role: '蜂巢母体', portrait: QUEEN, hp: 380, maxHp: 380, mp: 44, maxMp: 44, atk: 42, def: 19, spd: 12, crit: 10,
         skills: ['queen_impale', 'queen_screech'], boss: true, phase: 1, phaseThreshold: 0.5, phaseAtkBonus: 9, onDefeatDamage: 18,
       }),
       enemy({ id: 'queen-guard-b', name: '皇后护卫β', role: '近卫封锁', hp: 168, maxHp: 168, atk: 36, def: 14, spd: 15, onDefeatDamage: 11 }),
