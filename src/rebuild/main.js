@@ -6,7 +6,10 @@ import { buildPresentationCues } from './core/BattlePresentation.js';
 import { RebuildAudio, getAudioCueForPresentation } from './core/RebuildAudio.js';
 import { applyExperience, experienceToNextLevel } from './core/PlayerProgression.js';
 import { ITEM_CATALOG, purchaseItem, syncInventoryFromCombatant } from './core/ItemSystem.js';
+import { ExplorationEngine } from './core/ExplorationEngine.js';
+import { BattleViewLifecycle } from './core/BattleViewLifecycle.js';
 import { SKILL_CATALOG } from './data/SkillCatalog.js';
+import { createExplorationScenario } from './data/ExplorationScenarios.js';
 import { DEFAULT_PROFILE, CHAPTER_ONE_ENCOUNTERS } from './data/ChapterOneBattle.js';
 import {
   ALL_REBUILD_ENCOUNTERS,
@@ -18,6 +21,7 @@ const app = document.getElementById('rebuild-app');
 const STORAGE_KEY = 'ih_rebuild_profile_v1';
 const AUDIO_KEY = 'ih_rebuild_audio_muted';
 const rebuildAudio = new RebuildAudio({ muted: localStorage.getItem(AUDIO_KEY) });
+const battleViewLifecycle = new BattleViewLifecycle();
 
 let profile = loadProfile();
 let engine = null;
@@ -27,6 +31,12 @@ let logs = [];
 let resultRecorded = false;
 let enemyBusy = false;
 let presentationBusy = false;
+let exploration = null;
+let explorationScenario = null;
+let explorationDialogue = [];
+let explorationDialogueIndex = 0;
+let battleFromExploration = false;
+let battleViewToken = null;
 
 function loadProfile() {
   try {
@@ -37,6 +47,8 @@ function loadProfile() {
       learnedSkills: [...(saved.learnedSkills || DEFAULT_PROFILE.learnedSkills)],
       equippedSkills: [...(saved.equippedSkills || DEFAULT_PROFILE.equippedSkills)],
       inventory: { ...DEFAULT_PROFILE.inventory, ...(saved.inventory || {}) },
+      explorationStates: { ...(saved.explorationStates || {}) },
+      viewedEpilogues: [...(saved.viewedEpilogues || [])],
       campaign: createCampaignProgress(saved, ALL_REBUILD_ENCOUNTERS),
     };
   } catch {}
@@ -45,6 +57,8 @@ function loadProfile() {
     learnedSkills: [...DEFAULT_PROFILE.learnedSkills],
     equippedSkills: [...DEFAULT_PROFILE.equippedSkills],
     inventory: { ...DEFAULT_PROFILE.inventory },
+    explorationStates: {},
+    viewedEpilogues: [],
   };
   return { ...fresh, campaign: createCampaignProgress(fresh, ALL_REBUILD_ENCOUNTERS) };
 }
@@ -81,6 +95,7 @@ function createAudioToggle() {
 }
 
 function renderTitle() {
+  exploration = null;
   app.innerHTML = [
     '<section class="screen title-screen">',
     '  <div class="title-wrap">',
@@ -90,7 +105,7 @@ function renderTitle() {
     '    <p class="title-copy">在主神的倒计时中学习力量、编排技能，与中洲队共同面对无法逃避的恐怖世界。每一次行动都由你决定，每一次代价都会被记住。</p>',
     '    <div class="title-actions">',
     '      <button class="primary" id="enter-hub">进入主神空间</button>',
-    '      <button class="secondary" id="quick-battle">直接体验回合战斗</button>',
+    '      <button class="secondary" id="quick-battle">继续下一段轮回</button>',
     '    </div>',
     '    <p class="version-note">回合制重构 · 四章二十四场完整任务</p>',
     '  </div>',
@@ -105,6 +120,7 @@ function schoolColor(school) {
 }
 
 function renderHub() {
+  exploration = null;
   const equipped = profile.equippedSkills.map(id => SKILL_CATALOG[id]).filter(Boolean);
   const skills = Object.values(SKILL_CATALOG).filter(skill => skill.learnable !== false && !['precision_shot', 'suppressive_fire'].includes(skill.id));
   const campaignStatus = getCampaignStatus(profile.campaign, ALL_REBUILD_ENCOUNTERS);
@@ -218,7 +234,7 @@ function showBriefing(encounterId) {
     '</section>',
   ].join('');
   document.getElementById('briefing-back').onclick = renderHub;
-  document.getElementById('briefing-start').onclick = () => startBattle(encounterId);
+  document.getElementById('briefing-start').onclick = () => startExploration(encounterId);
 }
 
 function renderMissionCard(encounter) {
@@ -288,12 +304,148 @@ function handleEquip(skillId) {
   toast('技能已装备', 'good');
 }
 
-function startBattle(encounterId = ALL_REBUILD_ENCOUNTERS[0].id) {
+function startExploration(encounterId) {
   if (!canLaunchEncounter(profile.campaign, encounterId, ALL_REBUILD_ENCOUNTERS)) {
     toast('该任务尚未解锁', 'error');
     return;
   }
   encounter = createRebuildEncounter(encounterId);
+  explorationScenario = createExplorationScenario(encounter);
+  exploration = new ExplorationEngine(explorationScenario, profile.explorationStates?.[encounterId]);
+  if (profile.campaign.completed.includes(encounterId)) exploration.markBattleCleared();
+  explorationDialogue = [];
+  explorationDialogueIndex = 0;
+  persistExplorationState();
+  renderExploration();
+}
+
+function persistExplorationState() {
+  if (!exploration || !encounter) return;
+  profile.explorationStates = { ...(profile.explorationStates || {}), [encounter.id]: exploration.snapshot() };
+  saveProfile();
+}
+
+function explorationEntityVisible(entity) {
+  if (entity.type === 'item' && exploration.state.pickedItems.includes(entity.id)) return false;
+  return true;
+}
+
+function renderExplorationEntity(entity) {
+  if (!explorationEntityVisible(entity)) return '';
+  const resolved = (entity.type === 'npc' || entity.type === 'object') && exploration.state.interacted.includes(entity.id);
+  const cleared = entity.type === 'battle' && exploration.state.battleCleared;
+  const open = entity.type === 'exit' && exploration.state.battleCleared;
+  const portrait = entity.type === 'battle' ? encounter.enemies[0]?.portrait : null;
+  return [
+    '<button class="map-entity ' + entity.type + ' ' + (resolved ? 'resolved ' : '') + (cleared ? 'cleared ' : '') + (open ? 'open ' : '') + '"',
+    ' style="grid-column:' + (entity.x + 1) + ';grid-row:' + (entity.y + 1) + ';--entity-color:' + (entity.color || explorationScenario.theme.glow) + '"',
+    ' data-map-entity="' + entity.id + '" aria-label="' + (entity.name || entity.type) + '">',
+    portrait ? '<img src="' + portrait + '" alt="">' : '<span>' + (cleared ? '胜' : entity.icon || '?') + '</span>',
+    '<small>' + (cleared ? '已清除' : entity.name || '') + '</small>',
+    '</button>',
+  ].join('');
+}
+
+function renderExploration() {
+  if (!exploration || !explorationScenario) return;
+  const required = explorationScenario.entities.filter(entity => entity.required);
+  const completedRequired = required.filter(entity => exploration.state.interacted.includes(entity.id)).length;
+  const currentDialogue = explorationDialogue[explorationDialogueIndex];
+  app.innerHTML = [
+    '<section class="screen exploration-screen theme-' + explorationScenario.theme.id + '" style="--explore-bg:url(\'' + encounter.background + '\');--map-floor:' + explorationScenario.theme.floor + ';--map-wall:' + explorationScenario.theme.wall + ';--map-glow:' + explorationScenario.theme.glow + '">',
+    ' <header class="explore-header">',
+    '  <div><div class="eyebrow">' + encounter.chapter + ' · ' + explorationScenario.theme.label + '</div><h1>' + encounter.title + '</h1><p>' + encounter.subtitle + '</p></div>',
+    '  <div class="explore-progress glass"><span>调查进度</span><b>' + completedRequired + ' / ' + required.length + '</b><small>' + (exploration.state.battleCleared ? '威胁已清除 · 寻找出口' : explorationScenario.objective) + '</small></div>',
+    ' </header>',
+    ' <div class="explore-layout">',
+    '  <aside class="explore-journal glass"><div class="eyebrow">Mission Journal</div><h2>任务记录</h2>',
+    '   <div class="journal-objective ' + (completedRequired===required.length?'done':'') + '"><span>01</span><p>与关键队员汇合 <b>' + completedRequired + '/' + required.length + '</b></p></div>',
+    '   <div class="journal-objective ' + (exploration.state.battleCleared?'done':'') + '"><span>02</span><p>接触并击败威胁 <b>' + (exploration.state.battleCleared?'完成':'未完成') + '</b></p></div>',
+    '   <div class="journal-objective"><span>03</span><p>从任务出口撤离</p></div>',
+    '   <div class="explore-help"><b>操作</b><p>WASD / 方向键移动<br>E / 空格互动<br>移动到目标旁并面向它</p></div>',
+    '   <button class="secondary" id="explore-abort">返回主神空间</button>',
+    '  </aside>',
+    '  <main class="explore-stage glass"><div class="map-frame">',
+    '   <div class="explore-map" style="--map-cols:' + explorationScenario.width + ';--map-rows:' + explorationScenario.height + '">',
+    explorationScenario.tiles.flatMap((row, y) => [...row].map((tile, x) => '<span class="map-tile ' + (tile==='#'?'wall':'floor') + '" style="grid-column:' + (x+1) + ';grid-row:' + (y+1) + '"></span>')).join(''),
+    explorationScenario.entities.map(renderExplorationEntity).join(''),
+    '    <div class="explorer-player facing-' + exploration.state.facing + '" style="grid-column:' + (exploration.state.player.x+1) + ';grid-row:' + (exploration.state.player.y+1) + '"><img src="/assets/characters/zheng_zha.jpg" alt="郑吒"><i></i></div>',
+    '   </div>',
+    '   <div class="map-caption"><span>当前位置 ' + String(exploration.state.player.x).padStart(2,'0') + ' : ' + String(exploration.state.player.y).padStart(2,'0') + '</span><b>' + (exploration.state.battleCleared?'出口信标已激活':'生命信号追踪中') + '</b></div>',
+    '  </div></main>',
+    ' </div>',
+    ' <div class="touch-controls glass"><div><button data-move="0,-1">▲</button><span><button data-move="-1,0">◀</button><button data-move="0,1">▼</button><button data-move="1,0">▶</button></span></div><button class="interact-key" id="touch-interact"><b>E</b><small>互动</small></button></div>',
+    currentDialogue ? '<div class="dialogue-overlay"><div class="dialogue-box glass"><div class="dialogue-speaker">' + currentDialogue.speaker + '</div><p>' + currentDialogue.text + '</p><button class="primary" id="dialogue-next">' + (explorationDialogueIndex < explorationDialogue.length-1 ? '继续' : '结束对话') + '</button><small>E / 空格</small></div></div>' : '',
+    '</section>',
+  ].join('');
+  bindExplorationControls();
+}
+
+function bindExplorationControls() {
+  document.getElementById('explore-abort')?.addEventListener('click', renderHub);
+  document.getElementById('touch-interact')?.addEventListener('click', handleExplorationInteraction);
+  document.getElementById('dialogue-next')?.addEventListener('click', advanceExplorationDialogue);
+  document.querySelectorAll('[data-move]').forEach(button => button.addEventListener('click', () => {
+    const [dx,dy] = button.dataset.move.split(',').map(Number);
+    moveExplorer(dx,dy);
+  }));
+}
+
+function moveExplorer(dx,dy) {
+  if (!exploration || explorationDialogue.length) return;
+  const result = exploration.move(dx,dy);
+  if (!result.moved && result.reason === 'entity') rebuildAudio.play('click');
+  persistExplorationState();
+  renderExploration();
+}
+
+function startExplorationDialogue(dialogue) {
+  explorationDialogue = dialogue.length ? dialogue : [{speaker:'旁白',text:'这里没有留下更多线索。'}];
+  explorationDialogueIndex = 0;
+  renderExploration();
+}
+
+function advanceExplorationDialogue() {
+  if (!explorationDialogue.length) return;
+  if (explorationDialogueIndex < explorationDialogue.length-1) explorationDialogueIndex++;
+  else { explorationDialogue = []; explorationDialogueIndex = 0; }
+  renderExploration();
+}
+
+function handleExplorationInteraction() {
+  if (!exploration) return;
+  if (explorationDialogue.length) { advanceExplorationDialogue(); return; }
+  const result = exploration.interact();
+  persistExplorationState();
+  if (result.type === 'dialogue') startExplorationDialogue(result.dialogue);
+  else if (result.type === 'item') {
+    profile.inventory[result.itemId] = (profile.inventory[result.itemId] || 0) + result.quantity;
+    persistExplorationState();
+    const item = ITEM_CATALOG[result.itemId];
+    startExplorationDialogue([{speaker:'主神',text:'获得「' + (item?.name || result.name) + '」×' + result.quantity + '，已装入轮回背包。'}]);
+  } else if (result.type === 'battle') {
+    battleFromExploration = true;
+    startBattle(result.encounterId, true);
+  } else if (result.type === 'exit') {
+    const needsEpilogue = encounter.epilogue && !(profile.viewedEpilogues || []).includes(encounter.id);
+    if (needsEpilogue) {
+      profile.viewedEpilogues = [...(profile.viewedEpilogues || []), encounter.id];
+      saveProfile();
+      renderChapterEpilogue(encounter.epilogue);
+    } else { renderHub(); toast('任务撤离完成，已返回主神空间', 'good'); }
+  } else if (result.type === 'locked') toast(result.message, 'error');
+  else if (result.type === 'cleared') toast('该威胁已经被清除，请前往出口');
+  else toast('前方没有可互动目标');
+}
+
+function startBattle(encounterId = ALL_REBUILD_ENCOUNTERS[0].id, fromExploration = false) {
+  if (!canLaunchEncounter(profile.campaign, encounterId, ALL_REBUILD_ENCOUNTERS)) {
+    toast('该任务尚未解锁', 'error');
+    return;
+  }
+  encounter = createRebuildEncounter(encounterId);
+  battleFromExploration = fromExploration;
+  battleViewToken = battleViewLifecycle.begin();
   engine = new TurnBattleEngine({
     party: createRebuildParty(profile, encounter),
     enemies: encounter.enemies,
@@ -306,6 +458,7 @@ function startBattle(encounterId = ALL_REBUILD_ENCOUNTERS[0].id) {
   selectedAction = null;
   resultRecorded = false;
   enemyBusy = false;
+  presentationBusy = false;
   renderBattle();
   runEnemyTurns();
 }
@@ -317,6 +470,7 @@ function previewEncounterRewards(targetEncounter) {
 }
 
 function renderBattle() {
+  if (!battleViewLifecycle.isCurrent(battleViewToken)) return;
   const current = engine.getCurrentActor();
   const party = engine.combatants.filter(unit => unit.side === 'party');
   const enemies = engine.combatants.filter(unit => unit.side === 'enemy');
@@ -448,6 +602,7 @@ function isValidTarget(unit, action) {
 }
 
 async function executePlayerAction(action) {
+  const viewToken = battleViewToken;
   const actor = engine.getCurrentActor();
   if (!actor || actor.side !== 'party' || presentationBusy) return;
   const result = engine.act({ actorId: actor.id, ...action });
@@ -460,17 +615,21 @@ async function executePlayerAction(action) {
   presentationBusy = true;
   renderBattle();
   await playPresentation(result.events);
+  if (!battleViewLifecycle.isCurrent(viewToken)) return;
   presentationBusy = false;
   renderBattle();
-  runEnemyTurns();
+  runEnemyTurns(viewToken);
 }
 
-async function runEnemyTurns() {
+async function runEnemyTurns(viewToken = battleViewToken) {
+  if (!battleViewLifecycle.isCurrent(viewToken)) return;
   if (enemyBusy || engine.status !== 'active') return;
   enemyBusy = true;
   while (engine.status === 'active' && engine.getCurrentActor()?.side === 'enemy') {
+    if (!battleViewLifecycle.isCurrent(viewToken)) break;
     renderBattle();
     await delay(520);
+    if (!battleViewLifecycle.isCurrent(viewToken)) break;
     const actor = engine.getCurrentActor();
     const action = chooseEnemyAction({ actor, round: engine.round, opponents: engine.getLiving('party'), skills: SKILL_CATALOG });
     const result = engine.act(action);
@@ -478,6 +637,7 @@ async function runEnemyTurns() {
     presentationBusy = true;
     renderBattle();
     await playPresentation(result.events);
+    if (!battleViewLifecycle.isCurrent(viewToken)) break;
     presentationBusy = false;
     renderBattle();
     await delay(180);
@@ -624,7 +784,7 @@ function enemyIntentText(enemies) {
 }
 
 function renderResult() {
-  if (!engine || engine.status === 'active') return '';
+  if (!engine || engine.status === 'active' || presentationBusy) return '';
   const victory = engine.status === 'victory';
   const rewards = victory ? previewEncounterRewards(encounter) : { exp: 0, points: 0 };
   return [
@@ -633,7 +793,7 @@ function renderResult() {
     '  <h2 style="color:' + (victory ? 'var(--amber)' : 'var(--red)') + '">' + (victory ? encounter.victory.title : '轮回终止') + '</h2>',
     '  <p>' + (victory ? encounter.victory.text : '这一次选择没能让所有人活下来。调整技能构筑，再次进入战斗。') + '</p>',
     victory ? '<div class="reward-row"><div class="reward-pill">EXP +' + rewards.exp + '</div><div class="reward-pill">⬡ +' + rewards.points + '</div></div>' : '',
-    '  <button class="primary" id="claim-result">' + (victory ? '领取奖励并返回主神空间' : '返回主神空间整备') + '</button>',
+    '  <button class="primary" id="claim-result">' + (battleFromExploration ? (victory ? '领取奖励并返回探索地图' : '返回地图重新整备') : (victory ? '领取奖励并返回主神空间' : '返回主神空间整备')) + '</button>',
     '</div></div>',
   ].join('');
 }
@@ -658,8 +818,22 @@ function claimBattleResult() {
     progression = applyExperience(profile, settlement.rewards.exp || 0);
     profile = progression.profile;
   }
+  if (battleFromExploration && result.result === 'victory' && exploration) {
+    exploration.markBattleCleared();
+    profile.explorationStates = { ...(profile.explorationStates || {}), [encounter.id]: exploration.snapshot() };
+  }
   saveProfile();
-  if (settlement.firstClear && encounter.epilogue) renderChapterEpilogue(encounter.epilogue);
+  battleViewLifecycle.leave();
+  battleViewToken = null;
+  if (battleFromExploration && exploration) {
+    battleFromExploration = false;
+    explorationDialogue = [{
+      speaker: result.result === 'victory' ? '主神' : '詹岚',
+      text: result.result === 'victory' ? '威胁目标已清除。任务出口信标已经激活，继续探索并完成撤离。' : '战斗失败不会抹去我们得到的情报。重新检查技能与补给，再接触敌人。',
+    }];
+    explorationDialogueIndex = 0;
+    renderExploration();
+  } else if (settlement.firstClear && encounter.epilogue) renderChapterEpilogue(encounter.epilogue);
   else renderHub();
   const rewardMessage = progression?.levelsGained > 0
     ? '等级提升至 Lv.' + profile.level + '，属性成长已写入战斗档案'
@@ -694,8 +868,17 @@ function delay(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
 
+function handleExplorationKey(event) {
+  if (!exploration || !document.querySelector('.exploration-screen')) return;
+  const key = event.key.toLowerCase();
+  const movement = { w:[0,-1], arrowup:[0,-1], s:[0,1], arrowdown:[0,1], a:[-1,0], arrowleft:[-1,0], d:[1,0], arrowright:[1,0] }[key];
+  if (movement) { event.preventDefault(); moveExplorer(...movement); return; }
+  if (key === 'e' || key === ' ' || key === 'enter') { event.preventDefault(); handleExplorationInteraction(); }
+}
+
 renderTitle();
 createAudioToggle();
+document.addEventListener('keydown', handleExplorationKey);
 document.addEventListener('pointerdown', event => {
   if (!event.target.closest('button') || event.target.closest('.audio-toggle')) return;
   rebuildAudio.init();
