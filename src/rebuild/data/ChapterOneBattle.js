@@ -1,5 +1,9 @@
+import { getProgressionBonuses } from '../core/PlayerProgression.js';
+
 export const DEFAULT_PROFILE = Object.freeze({
   rewardPoints: 900,
+  level: 1,
+  exp: 0,
   learnedSkills: ['heavy_slash'],
   equippedSkills: ['heavy_slash'],
   skillSlots: 4,
@@ -241,10 +245,22 @@ export const CHAPTER_ONE_ENCOUNTERS = Object.freeze([
 export const ENCOUNTER = CHAPTER_ONE_ENCOUNTERS[1];
 
 export function createParty(profile) {
-  return PARTY_BLUEPRINTS.map(unit => ({
-    ...unit,
-    skills: unit.id === 'zheng' ? [...(profile.equippedSkills || [])] : [...(unit.skills || [])],
-  }));
+  const bonuses = getProgressionBonuses(profile.level);
+  return PARTY_BLUEPRINTS.map(unit => {
+    if (unit.id !== 'zheng') return { ...unit, skills: [...(unit.skills || [])] };
+    const maxHp = unit.maxHp + bonuses.maxHp;
+    const maxMp = unit.maxMp + bonuses.maxMp;
+    return {
+      ...unit,
+      hp: maxHp,
+      maxHp,
+      mp: maxMp,
+      maxMp,
+      atk: unit.atk + bonuses.atk,
+      def: unit.def + bonuses.def,
+      skills: [...(profile.equippedSkills || [])],
+    };
+  });
 }
 
 export function createEncounter(encounterId = ENCOUNTER.id) {

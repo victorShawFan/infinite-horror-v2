@@ -4,6 +4,7 @@ import { createCampaignProgress, canLaunchEncounter, settleEncounter, getCampaig
 import { chooseEnemyAction, describeEnemyIntent } from './core/EnemyTurnAI.js';
 import { buildPresentationCues } from './core/BattlePresentation.js';
 import { RebuildAudio, getAudioCueForPresentation } from './core/RebuildAudio.js';
+import { applyExperience, experienceToNextLevel } from './core/PlayerProgression.js';
 import { SKILL_CATALOG } from './data/SkillCatalog.js';
 import { DEFAULT_PROFILE, CHAPTER_ONE_ENCOUNTERS, createParty, createEncounter } from './data/ChapterOneBattle.js';
 
@@ -89,6 +90,7 @@ function renderHub() {
   const equipped = profile.equippedSkills.map(id => SKILL_CATALOG[id]).filter(Boolean);
   const skills = Object.values(SKILL_CATALOG).filter(skill => skill.learnable !== false && !['precision_shot', 'suppressive_fire'].includes(skill.id));
   const campaignStatus = getCampaignStatus(profile.campaign);
+  const nextLevelExp = experienceToNextLevel(profile.level);
   app.innerHTML = [
     '<section class="screen hub-screen">',
     '  <header class="topbar">',
@@ -97,7 +99,8 @@ function renderHub() {
     '  </header>',
     '  <div class="hub-grid">',
     '    <aside class="profile-panel glass">',
-    '      <div class="profile-hero"><img src="/assets/characters/zheng_zha.jpg" alt="郑吒"><div><div class="eyebrow">中洲队 · 近战核心</div><h2>郑吒</h2><p style="color:#8390a3;font-size:11px;line-height:1.7">主神不会替你选择道路。进入恐怖片前，决定这一次要带上哪些力量。</p></div></div>',
+    '      <div class="profile-hero"><img src="/assets/characters/zheng_zha.jpg" alt="郑吒"><div><div class="eyebrow">中洲队 · 近战核心</div><h2>郑吒 <small>Lv.' + profile.level + '</small></h2><p style="color:#8390a3;font-size:11px;line-height:1.7">主神不会替你选择道路。进入恐怖片前，决定这一次要带上哪些力量。</p></div></div>',
+    '      <div class="level-progress"><span>轮回经验</span><div class="level-bar"><i style="width:' + Math.min(100, profile.exp / nextLevelExp * 100) + '%"></i></div><strong>' + profile.exp + ' / ' + nextLevelExp + '</strong></div>',
     '      <div class="eyebrow" style="margin-top:20px">已装备技能 ' + equipped.length + ' / ' + profile.skillSlots + '</div>',
     '      <div class="build-list">' + Array.from({ length: profile.skillSlots }, (_, index) => {
       const skill = equipped[index];
@@ -509,14 +512,20 @@ function claimBattleResult() {
     return;
   }
   profile.campaign = settlement.progress;
+  let progression = null;
   if (result.result === 'victory') {
     profile.rewardPoints += settlement.rewards.points || 0;
     profile.battlesWon += 1;
+    progression = applyExperience(profile, settlement.rewards.exp || 0);
+    profile = progression.profile;
   }
   saveProfile();
   if (settlement.firstClear && encounter.epilogue) renderChapterEpilogue(encounter.epilogue);
   else renderHub();
-  toast(result.result === 'victory' ? '奖励已写入轮回档案' : '已返回主神空间', result.result === 'victory' ? 'good' : 'normal');
+  const rewardMessage = progression?.levelsGained > 0
+    ? '等级提升至 Lv.' + profile.level + '，属性成长已写入战斗档案'
+    : result.result === 'victory' ? '奖励与经验已写入轮回档案' : '已返回主神空间';
+  toast(rewardMessage, result.result === 'victory' ? 'good' : 'normal');
 }
 
 function renderChapterEpilogue(epilogue) {

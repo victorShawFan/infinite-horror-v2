@@ -81,6 +81,11 @@ button { font: inherit; }
 .profile-hero { display: grid; grid-template-columns: 112px 1fr; gap: 18px; align-items: center; padding-bottom: 20px; border-bottom: 1px solid var(--line); }
 .profile-hero img { width: 112px; height: 150px; object-fit: cover; object-position: top; border-radius: 10px; border: 1px solid rgba(255,255,255,.18); filter: saturate(.78) contrast(1.08); }
 .profile-panel h2, .skills-panel h2 { margin: 0; letter-spacing: .08em; }
+.profile-panel h2 small { color: var(--amber); font-size: 11px; vertical-align: middle; }
+.level-progress { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 9px; margin: 15px 0 4px; color: #7f8ca0; font-size: 9px; }
+.level-progress strong { color: #b8c2d0; font-weight: 500; }
+.level-bar { height: 4px; overflow: hidden; border-radius: 4px; background: rgba(255,255,255,.08); }
+.level-bar i { display: block; height: 100%; background: linear-gradient(90deg, #7955d9, #c18fff); box-shadow: 0 0 12px rgba(193,143,255,.45); transition: width .35s ease; }
 .build-list { display: grid; gap: 9px; margin: 20px 0; }
 .build-slot { display: flex; align-items: center; justify-content: space-between; min-height: 46px; padding: 9px 12px; border-left: 2px solid #8b3943; background: rgba(255,255,255,.035); color: #ccd4e2; }
 .build-slot small { color: #677387; }
