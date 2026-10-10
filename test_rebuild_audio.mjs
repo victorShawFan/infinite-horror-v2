@@ -15,6 +15,8 @@ test('演出事件映射为明确音效', () => {
   assert.equal(getAudioCueForPresentation({ type: 'hit', intensity: 'critical' }), 'critical');
   assert.equal(getAudioCueForPresentation({ type: 'heal' }), 'heal');
   assert.equal(getAudioCueForPresentation({ type: 'guard' }), 'guard');
+  assert.equal(getAudioCueForPresentation({ type: 'protection' }), 'guard');
+  assert.equal(getAudioCueForPresentation({ type: 'hazard' }), 'critical');
   assert.equal(getAudioCueForPresentation({ type: 'boss_phase' }), 'boss_phase');
 });
 

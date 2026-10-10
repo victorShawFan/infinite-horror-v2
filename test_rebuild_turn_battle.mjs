@@ -38,6 +38,7 @@ function engine(config = {}) {
     enemies: config.enemies || [zombie('z1'), zombie('z2')],
     skills,
     rng: () => 0.99,
+    rules: config.rules,
   });
 }
 
@@ -143,6 +144,47 @@ test('群体技能不会命中已倒下目标', () => {
   assert.equal(result.ok, true);
   assert.equal(result.events.filter(event => event.type === 'damage').length, 1);
   assert.equal(e.getCombatant('z1').hp, 0);
+});
+
+test('保护节点存活时主控目标获得减伤并产生保护事件', () => {
+  const core = zombie('core', {
+    hp: 100, maxHp: 100, def: 0,
+    protectedBy: ['node'], protectionReduction: 0.7,
+  });
+  const node = zombie('node', { hp: 20, maxHp: 20, def: 0 });
+  const e = engine({ enemies: [core, node] });
+  const protectedHit = e.act({ actorId: 'zheng', kind: ACTION_KIND.ATTACK, targetId: 'core' });
+  assert.equal(protectedHit.events.find(event => event.type === 'damage').amount, 9);
+  assert.equal(protectedHit.events.some(event => event.type === 'protection'), true);
+});
+
+test('保护节点死亡后主控目标恢复完整受伤', () => {
+  const core = zombie('core', {
+    hp: 100, maxHp: 100, def: 0,
+    protectedBy: ['node'], protectionReduction: 0.7,
+  });
+  const node = zombie('node', { hp: 0, maxHp: 20, def: 0 });
+  const e = engine({ enemies: [core, node] });
+  const hit = e.act({ actorId: 'zheng', kind: ACTION_KIND.ATTACK, targetId: 'core' });
+  assert.equal(hit.events.find(event => event.type === 'damage').amount, 30);
+  assert.equal(hit.events.some(event => event.type === 'protection'), false);
+});
+
+test('回合环境伤害按间隔命中全队并受防御减伤', () => {
+  const e = engine({
+    party: [hero(), ally()],
+    enemies: [zombie('z1')],
+    rules: { roundHazard: { id: 'laser', name: '激光扫射', interval: 2, damage: 12, targetSide: 'party' } },
+  });
+  e.act({ actorId: 'zheng', kind: ACTION_KIND.DEFEND });
+  e.act({ actorId: 'zhan', kind: ACTION_KIND.DEFEND });
+  const enemyResult = e.act({ actorId: 'z1', kind: ACTION_KIND.ATTACK, targetId: 'zheng' });
+  const hazardEvents = enemyResult.events.filter(event => event.type === 'hazard_damage');
+  assert.equal(e.round, 2);
+  assert.equal(hazardEvents.length, 2);
+  assert.deepEqual(hazardEvents.map(event => event.amount), [6, 6]);
+  assert.equal(e.getCombatant('zheng').hp, 109);
+  assert.equal(e.getCombatant('zhan').hp, 74);
 });
 
 test('Boss生命低于阈值时只触发一次阶段强化', () => {

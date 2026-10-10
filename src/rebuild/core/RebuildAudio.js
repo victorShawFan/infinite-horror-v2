@@ -3,6 +3,8 @@ export function getAudioCueForPresentation(cue) {
   if (cue.type === 'hit') return cue.intensity === 'critical' ? 'critical' : 'hit';
   if (cue.type === 'heal') return 'heal';
   if (cue.type === 'guard') return 'guard';
+  if (cue.type === 'protection') return 'guard';
+  if (cue.type === 'hazard') return 'critical';
   if (cue.type === 'boss_phase') return 'boss_phase';
   return null;
 }

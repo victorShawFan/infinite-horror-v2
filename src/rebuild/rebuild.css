@@ -197,12 +197,16 @@ button { font: inherit; }
 .unit-card.fx-critical-hit { animation: criticalHit .34s ease; filter: brightness(1.8) saturate(.25); }
 .unit-card.fx-heal { animation: healPulse .38s ease; box-shadow: 0 0 55px rgba(121,230,163,.55); }
 .unit-card.fx-guard { animation: guardPulse .35s ease; box-shadow: 0 0 48px rgba(105,221,255,.45); }
+.unit-card.fx-protected { animation: guardPulse .35s ease; box-shadow: 0 0 55px rgba(105,221,255,.65); border-color: var(--cyan); }
+.unit-card.fx-hazard { animation: criticalHit .34s ease; filter: brightness(1.9) contrast(1.4); }
 .unit-card.fx-boss-phase { animation: bossPhase .65s ease; z-index: 8; }
 .battle-screen.fx-danger-screen::before { background: radial-gradient(circle, rgba(150,0,20,.35), rgba(3,4,8,.94)); }
+.battle-screen.fx-laser-screen::before { background: linear-gradient(175deg, rgba(3,4,8,.92) 43%, rgba(255,35,35,.48) 48%, rgba(255,255,255,.72) 50%, rgba(255,35,35,.48) 52%, rgba(3,4,8,.92) 57%); }
 .combat-popup { position: absolute; left: 50%; top: 30%; z-index: 30; transform: translate(-50%,-50%); pointer-events: none; font-family: "ZCOOL QingKe HuangYou"; font-size: 28px; font-weight: 900; letter-spacing: .04em; text-shadow: 0 4px 12px #000; animation: popupFloat .5s ease forwards; }
 .combat-popup.damage { color: #ff7373; }
 .combat-popup.critical { color: #ffd36f; font-size: 34px; }
 .combat-popup.heal { color: #79e6a3; }
+.combat-popup.hazard { color: #ffdfdf; font-size: 30px; }
 .battle-banner { position: fixed; top: 38%; left: 50%; z-index: 50; transform: translate(-50%,-50%); padding: 14px 42px; color: #fff0e8; border: 1px solid rgba(255,76,76,.6); background: linear-gradient(90deg, transparent, rgba(120,0,16,.92), transparent); font-size: 18px; font-weight: 900; letter-spacing: .22em; white-space: nowrap; animation: bannerIn .55s ease; }
 
 @keyframes targetPulse { 50% { box-shadow: 0 0 30px rgba(255,76,76,.28); } }

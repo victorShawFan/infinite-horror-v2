@@ -118,6 +118,7 @@ export const CHAPTER_ONE_ENCOUNTERS = Object.freeze([
       {
         id: 'core-guard', name: '主控守卫', role: '重甲镇压', portrait: '/assets/enemies/zombie_worker.jpg',
         hp: 148, maxHp: 148, mp: 0, maxMp: 0, atk: 27, def: 13, spd: 7, crit: 3, skills: [],
+        protectedBy: ['node-left', 'node-right'], protectionReduction: 0.7,
       },
       {
         id: 'node-right', name: '防卫节点β', role: '高速锁定', portrait: '/assets/enemies/zombie_guard.jpg',
@@ -145,6 +146,9 @@ export const CHAPTER_ONE_ENCOUNTERS = Object.freeze([
     threat: '高危',
     rewards: { exp: 270, points: 340 },
     repeatRewards: { exp: 78, points: 95 },
+    rules: {
+      roundHazard: { id: 'laser', name: '激光扫射', interval: 2, damage: 12, targetSide: 'party' },
+    },
     enemies: [
       {
         id: 'laser-a', name: '激光安保α', role: '高速切割', portrait: '/assets/enemies/zombie_guard.jpg',
@@ -249,6 +253,7 @@ export function createEncounter(encounterId = ENCOUNTER.id) {
     ...source,
     rewards: { ...source.rewards },
     repeatRewards: { ...source.repeatRewards },
+    rules: source.rules ? JSON.parse(JSON.stringify(source.rules)) : {},
     enemies: source.enemies.map(enemy => ({ ...enemy, skills: [...enemy.skills] })),
   };
 }

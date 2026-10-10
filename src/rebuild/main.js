@@ -231,6 +231,7 @@ function startBattle(encounterId = CHAPTER_ONE_ENCOUNTERS[0].id) {
     enemies: encounter.enemies,
     skills: SKILL_CATALOG,
     rewards: previewEncounterRewards(encounter),
+    rules: encounter.rules,
   });
   logs = ['蜂巢站台封锁。敌方生命信号 × ' + encounter.enemies.length + '。', '战斗开始：请选择当前角色的行动。'];
   selectedAction = null;
@@ -408,6 +409,16 @@ async function playPresentation(events) {
       actorCard?.classList.add('fx-guard');
       await delay(170);
       actorCard?.classList.remove('fx-guard');
+    } else if (cue.type === 'protection') {
+      targetCard?.classList.add('fx-protected');
+      await delay(190);
+      targetCard?.classList.remove('fx-protected');
+    } else if (cue.type === 'hazard') {
+      targetCard?.classList.add('fx-hazard');
+      document.querySelector('.battle-screen')?.classList.add('fx-laser-screen');
+      await delay(210);
+      targetCard?.classList.remove('fx-hazard');
+      document.querySelector('.battle-screen')?.classList.remove('fx-laser-screen');
     } else if (cue.type === 'boss_phase') {
       actorCard?.classList.add('fx-boss-phase');
       document.querySelector('.battle-screen')?.classList.add('fx-danger-screen');
@@ -445,6 +456,12 @@ function appendEvents(events) {
       logs.push('<strong>' + actor.name + '</strong> 为 <strong>' + target.name + '</strong> 恢复 <span style="color:var(--green)">' + event.amount + '</span> HP。');
     } else if (event.type === 'guard') {
       logs.push('<strong>' + engine.getCombatant(event.actorId).name + '</strong> 架起防御，等待敌方冲击。');
+    } else if (event.type === 'protection') {
+      const target = engine.getCombatant(event.targetId);
+      logs.push('<strong>' + target.name + '</strong> 受到防卫节点保护，本次伤害被大幅削减。');
+    } else if (event.type === 'hazard_damage') {
+      const target = engine.getCombatant(event.targetId);
+      logs.push('<strong class="accent">' + event.hazardName + '</strong> 命中 <strong>' + target.name + '</strong>，造成 ' + event.amount + ' 环境伤害。');
     } else if (event.type === 'boss_phase') {
       const boss = engine.getCombatant(event.actorId);
       logs.push('<strong class="accent">' + boss.name + '进入狂暴阶段！</strong> 肌肉组织突破限制，ATK +' + event.atkBonus + '。');

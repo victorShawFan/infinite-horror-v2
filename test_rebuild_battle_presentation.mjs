@@ -36,6 +36,16 @@ test('Boss阶段事件生成全屏警报与Boss爆发', () => {
   assert.match(cues[1].text, /狂暴/);
 });
 
+test('保护与环境危害生成独立视觉提示', () => {
+  const cues = buildPresentationCues([
+    { type: 'protection', targetId: 'core', protectorIds: ['left', 'right'], reduction: 0.7 },
+    { type: 'hazard_damage', hazardId: 'laser', hazardName: '激光扫射', targetId: 'hero', amount: 12 },
+  ]);
+  assert.equal(cues.some(cue => cue.type === 'protection'), true);
+  assert.equal(cues.some(cue => cue.type === 'hazard'), true);
+  assert.equal(cues.find(cue => cue.type === 'popup')?.text, '激光 -12');
+});
+
 test('零治疗量不显示误导性的加血数字', () => {
   const cues = buildPresentationCues([{ type: 'heal', actorId: 'a', targetId: 'b', amount: 0 }]);
   assert.equal(cues.some(cue => cue.type === 'popup'), false);

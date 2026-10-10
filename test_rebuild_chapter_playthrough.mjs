@@ -35,6 +35,7 @@ function playEncounter(encounter) {
     enemies: encounter.enemies,
     skills: SKILL_CATALOG,
     rewards: encounter.rewards,
+    rules: encounter.rules,
     rng: () => 0.99,
   });
   let actions = 0;
