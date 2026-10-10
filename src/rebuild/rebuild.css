@@ -264,6 +264,16 @@ button { font: inherit; }
 .map-decoration.resin { border:0; border-radius:38% 62% 46% 54%; background:repeating-radial-gradient(ellipse at 20% 40%,rgba(153,181,83,.2) 0 7%,rgba(20,28,16,.9) 8% 19%); box-shadow:inset 0 0 10px #050704,0 0 7px rgba(172,225,83,.18); }
 .map-decoration.vein, .map-decoration.ovipositor { align-self:center; height:26%; margin-block:auto; border:0; border-radius:50%; background:repeating-linear-gradient(90deg,rgba(52,69,34,.4) 0 7%,color-mix(in srgb,var(--map-glow) 42%,#26321e) 8% 11%,rgba(17,24,14,.8) 12% 19%); box-shadow:0 0 9px rgba(191,255,97,.24); animation:hivePulse 2.3s ease-in-out infinite; }
 .map-decoration.ovipositor { height:48%; background:repeating-linear-gradient(90deg,#171d12 0 6%,#73834d 7% 10%,#252e1b 11% 18%); }
+.map-decoration.tatami { background:repeating-linear-gradient(90deg,rgba(190,172,119,.14) 0 5%,rgba(31,29,25,.92) 5% 10%); border-color:rgba(216,197,141,.22); box-shadow:inset 0 0 0 2px rgba(151,129,85,.12); }
+.map-decoration.shoji { background:linear-gradient(90deg,transparent 46%,rgba(208,198,177,.28) 47% 53%,transparent 54%),linear-gradient(transparent 46%,rgba(208,198,177,.25) 47% 53%,transparent 54%),rgba(188,179,164,.08); border-color:rgba(218,203,177,.28); }
+.map-decoration.tape { border-radius:3px; background:radial-gradient(circle at 30% 50%,#09090b 0 12%,#74727b 13% 19%,transparent 20%),radial-gradient(circle at 70% 50%,#09090b 0 12%,#74727b 13% 19%,transparent 20%),linear-gradient(#3a3740,#111015); border-color:rgba(190,179,217,.38); box-shadow:0 0 13px color-mix(in srgb,var(--map-glow) 23%,transparent); }
+.map-decoration.sutra { background:repeating-linear-gradient(90deg,rgba(232,208,139,.16) 0 8%,rgba(34,27,20,.94) 8% 12%); border-color:rgba(255,212,114,.32); box-shadow:inset 0 0 10px #070504,0 0 10px rgba(255,194,85,.15); }
+.map-decoration.altar { background:linear-gradient(180deg,#403326 0 18%,#19130f 19% 72%,#5a3d25 73%); border:2px ridge color-mix(in srgb,var(--map-glow) 32%,#3b2e22); box-shadow:inset 0 0 12px #000,0 -5px 13px color-mix(in srgb,var(--map-glow) 18%,transparent); }
+.map-decoration.hair, .map-decoration.blacktide { border:0; border-radius:48%; background:repeating-radial-gradient(ellipse at 50% 110%,#030204 0 5%,rgba(35,20,40,.9) 6% 8%,#050306 9% 14%); filter:drop-shadow(0 0 5px color-mix(in srgb,var(--map-glow) 32%,transparent)); animation:curseDrift 3.2s ease-in-out infinite; }
+.map-decoration.blacktide { background:radial-gradient(ellipse at 40% 60%,rgba(3,2,5,.98),rgba(32,15,38,.88) 42%,transparent 72%); filter:blur(1px); animation-duration:2.5s; }
+.map-decoration.lantern, .map-decoration.candle, .map-decoration.incense, .map-decoration.curse-eye { border-radius:50%; background:radial-gradient(circle,#fff6c8 0 9%,var(--map-glow) 10% 20%,rgba(51,25,55,.88) 22% 55%,transparent 58%); border:0; box-shadow:0 0 13px color-mix(in srgb,var(--map-glow) 42%,transparent); animation:mapSignal 2.3s ease-in-out infinite; }
+.map-decoration.seal, .map-decoration.footprint, .map-decoration.stain, .map-decoration.shoe { border:0; background:repeating-radial-gradient(circle at 35% 50%,color-mix(in srgb,var(--map-glow) 25%,transparent) 0 6%,transparent 7% 18%); opacity:.54; filter:blur(.4px); }
+.map-decoration.beamwood, .map-decoration.box { background:repeating-linear-gradient(90deg,#171319 0 10%,#3c303d 10% 14%,#171319 15% 26%); border-color:rgba(204,175,214,.2); }
 .map-entity { position: relative; z-index: 6; min-width: 0; min-height: 0; margin: 5%; padding: 0; display: grid; place-items: center; overflow: visible; color: #fff; background: radial-gradient(circle, color-mix(in srgb, var(--entity-color) 32%, #10141c), rgba(4,6,10,.92)); border: 1px solid color-mix(in srgb, var(--entity-color) 64%, transparent); border-radius: 8px; box-shadow: 0 0 18px color-mix(in srgb, var(--entity-color) 30%, transparent); pointer-events: none; }
 .map-entity span { font-family: "ZCOOL QingKe HuangYou"; color: var(--entity-color); font-size: clamp(12px,1.5vw,23px); text-shadow: 0 0 12px var(--entity-color); }
 .map-entity.item { animation:itemHover 2.1s ease-in-out infinite; }
@@ -297,6 +307,7 @@ button { font: inherit; }
 @keyframes mapSignal { 50% { opacity: .35; filter: brightness(1.55); } }
 @keyframes fanSpin { to { transform:rotate(360deg); } }
 @keyframes hivePulse { 50% { opacity:.58; filter:brightness(1.28) saturate(1.2); transform:scale(.94); } }
+@keyframes curseDrift { 50% { opacity:.46; transform:translateY(-3px) scale(1.05); filter:drop-shadow(0 0 9px color-mix(in srgb,var(--map-glow) 48%,transparent)); } }
 @keyframes lordGodFloat { 50% { transform:translateY(calc(-50% - 5px)) scale(1.025); filter:brightness(1.12); } }
 @keyframes lordGodOrbit { to { transform:rotate(360deg); } }
 @keyframes lordGodPulse { 50% { opacity:.45; transform:scale(1.2); } }
