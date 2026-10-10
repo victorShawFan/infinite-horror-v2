@@ -15,6 +15,8 @@
 html, body, #rebuild-app { width: 100%; min-height: 100%; margin: 0; }
 body { min-height: 100vh; overflow-x: hidden; background: #05070b; }
 button { font: inherit; }
+.audio-toggle { position: fixed; top: 14px; right: 14px; z-index: 100; padding: 8px 11px; color: #9aa7ba; background: rgba(5,8,14,.78); border: 1px solid rgba(255,255,255,.14); border-radius: 20px; cursor: pointer; backdrop-filter: blur(10px); font-size: 9px; letter-spacing: .08em; }
+.audio-toggle:hover { color: #fff; border-color: rgba(255,255,255,.34); }
 
 .screen {
   min-height: 100vh;

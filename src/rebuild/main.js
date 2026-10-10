@@ -3,11 +3,14 @@ import { learnSkill, equipSkill, unequipSkill } from './core/SkillLearning.js';
 import { createCampaignProgress, canLaunchEncounter, settleEncounter, getCampaignStatus } from './core/CampaignProgress.js';
 import { chooseEnemyAction, describeEnemyIntent } from './core/EnemyTurnAI.js';
 import { buildPresentationCues } from './core/BattlePresentation.js';
+import { RebuildAudio, getAudioCueForPresentation } from './core/RebuildAudio.js';
 import { SKILL_CATALOG } from './data/SkillCatalog.js';
 import { DEFAULT_PROFILE, CHAPTER_ONE_ENCOUNTERS, createParty, createEncounter } from './data/ChapterOneBattle.js';
 
 const app = document.getElementById('rebuild-app');
 const STORAGE_KEY = 'ih_rebuild_profile_v1';
+const AUDIO_KEY = 'ih_rebuild_audio_muted';
+const rebuildAudio = new RebuildAudio({ muted: localStorage.getItem(AUDIO_KEY) });
 
 let profile = loadProfile();
 let engine = null;
@@ -39,6 +42,23 @@ function toast(message, tone = 'normal') {
   node.textContent = message;
   document.body.appendChild(node);
   setTimeout(() => node.remove(), 2200);
+}
+
+function createAudioToggle() {
+  const button = document.createElement('button');
+  button.className = 'audio-toggle';
+  button.type = 'button';
+  button.setAttribute('aria-label', '切换声音');
+  const refresh = () => { button.textContent = rebuildAudio.muted ? '声音：关' : '声音：开'; };
+  refresh();
+  button.onclick = () => {
+    rebuildAudio.init();
+    rebuildAudio.toggleMuted();
+    localStorage.setItem(AUDIO_KEY, String(rebuildAudio.muted));
+    refresh();
+    if (!rebuildAudio.muted) rebuildAudio.play('click');
+  };
+  document.body.appendChild(button);
 }
 
 function renderTitle() {
@@ -368,6 +388,8 @@ async function runEnemyTurns() {
 async function playPresentation(events) {
   const cues = buildPresentationCues(events);
   for (const cue of cues) {
+    const audioCue = getAudioCueForPresentation(cue);
+    if (audioCue) rebuildAudio.play(audioCue);
     const actorCard = cue.actorId ? document.querySelector('[data-target="' + cue.actorId + '"]') : null;
     const targetCard = cue.targetId ? document.querySelector('[data-target="' + cue.targetId + '"]') : null;
     if (cue.type === 'attack' || cue.type === 'cast') {
@@ -428,6 +450,7 @@ function appendEvents(events) {
       logs.push('<strong class="accent">' + boss.name + '进入狂暴阶段！</strong> 肌肉组织突破限制，ATK +' + event.atkBonus + '。');
     } else if (event.type === 'battle_end') {
       logs.push(event.result === 'victory' ? '<strong>敌方战线崩溃，蜂巢入口已清理。</strong>' : '<strong>中洲队失去战斗能力。</strong>');
+      rebuildAudio.play(event.result === 'victory' ? 'victory' : 'defeat');
     }
   }
 }
@@ -500,3 +523,9 @@ function delay(ms) {
 }
 
 renderTitle();
+createAudioToggle();
+document.addEventListener('pointerdown', event => {
+  if (!event.target.closest('button') || event.target.closest('.audio-toggle')) return;
+  rebuildAudio.init();
+  rebuildAudio.play('click');
+}, { capture: true });
